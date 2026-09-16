@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: zgrada_container
+    restart: always
+    environment:
+      POSTGRES_USER: zgrada_user
+      POSTGRES_PASSWORD: zgrada_pass
+      POSTGRES_DB: zgrada_db
+    ports:
+        - "5432:5432"
+    volumes:
+        - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
