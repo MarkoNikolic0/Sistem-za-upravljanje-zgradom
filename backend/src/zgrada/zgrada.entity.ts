@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Stan } from "../stan/stan.entity.js";
 
 @Entity()
 export class Zgrada {
@@ -16,4 +17,7 @@ export class Zgrada {
 
     @Column({nullable: true})
     brojStanova: number;
+
+    @OneToMany('Stan', 'zgrada')
+    stanovi: Stan[];
 }
