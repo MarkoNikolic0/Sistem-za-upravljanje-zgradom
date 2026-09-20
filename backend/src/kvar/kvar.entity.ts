@@ -2,38 +2,7 @@ import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } f
 import { Zgrada } from "../zgrada/zgrada.entity.js";
 import { Stan } from "../stan/stan.entity.js";
 import { Korisnik } from "../korisnik/korisnik.entity.js";
-
-export enum KategorijaKvara {
-  VODOVOD = 'vodovod',
-  STRUJA = 'struja',
-  LIFT = 'lift',
-  GREJANJE = 'grejanje',
-  GRADJEVINA = 'gradjevina',
-  STOLARIJA = 'stolarija',
-  CISCENJE = 'ciscenje',
-  OSTALO = 'ostalo',
-}
-
-export enum LokacijaTip {
-    ZAJEDNICKI_PROSTOR = 'zajednicki_prostor',
-    PRIVATNI_STAN = 'privatni_stan',
-}
-
-export enum Prioritet {
-    NIZAK = 'nizak',
-    SREDNJI = 'srednji',
-    VISOK = 'visok',
-}
-
-export enum StatusKvara {
-  PRIJAVLJEN = 'prijavljen',
-  PRIHVACEN = 'prihvacen',
-  DODELJEN = 'dodeljen',
-  U_TOKU = 'u_toku',
-  RESEN = 'resen',
-  ZATVOREN = 'zatvoren',
-  ODBIJEN = 'odbijen',
-}
+import { KategorijaKvara, LokacijaTip, Prioritet, StatusKvara } from "../shared/enums/kvar.enums.js";
 
 @Entity()
 export class Kvar {
@@ -61,7 +30,7 @@ export class Kvar {
     @Column({
         type: "enum",
         enum: Prioritet,
-        default: Prioritet.SREDNJI
+        default: Prioritet.SREDNJE
     })
     prioritet: Prioritet;
 

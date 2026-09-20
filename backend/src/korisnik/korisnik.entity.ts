@@ -1,44 +1,58 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Zgrada } from "../zgrada/zgrada.entity.js";
-import { Stan } from "../stan/stan.entity.js";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { Stan } from '../stan/stan.entity.js';
+import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
 
 export enum Uloga {
-    STANAR = 'stanar',
-    UPRAVNIK = 'upravnik',
-    SERVISER = 'serviser',
-    ADMIN = 'admin'
+  STANAR = 'stanar',
+  UPRAVNIK = 'upravnik',
+  SERVISER = 'serviser',
+  ADMIN = 'admin',
 }
 
 @Entity()
 export class Korisnik {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    ime: string;
+  @Column()
+  ime: string;
 
-    @Column()
-    prezime: string;
+  @Column()
+  prezime: string;
 
-    @Column({unique: true})
-    email: string;
+  @Column({ unique: true })
+  email: string;
 
-    @Column()
-    lozinka: string;
+  @Column()
+  lozinka: string;
 
-    @Column({
-        type: "enum",
-        enum: Uloga,
-        default: Uloga.STANAR
-    })
-    uloga: Uloga;
+  @Column({
+    type: 'enum',
+    enum: Uloga,
+    default: Uloga.STANAR,
+  })
+  uloga: Uloga;
 
-    @ManyToOne(() => Stan, { nullable: true })
-    stan: Stan;
+  @Column({
+    type: 'enum',
+    enum: KategorijaKvara,
+    nullable: true,
+  })
+  specijalnost: KategorijaKvara;
 
-    @ManyToOne(() => Zgrada, { nullable: true })
-    zgrada: Zgrada;
+  @ManyToOne(() => Stan, { nullable: true })
+  stan: Stan;
 
-    @CreateDateColumn()
-    kreiranDatum: Date;
+  @ManyToOne(() => Zgrada, { nullable: true })
+  zgrada: Zgrada;
+
+  @CreateDateColumn()
+  kreiranDatum: Date;
 }
