@@ -8,13 +8,7 @@ import {
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
-
-export enum Uloga {
-  STANAR = 'stanar',
-  UPRAVNIK = 'upravnik',
-  SERVISER = 'serviser',
-  ADMIN = 'admin',
-}
+import { Uloga } from '../shared/enums/uloga.enum.js';
 
 @Entity()
 export class Korisnik {
