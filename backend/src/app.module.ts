@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { AuthModule } from './auth/auth.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,7 +27,8 @@ const __dirname = dirname(__filename);
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, //samo za razvoj na true
       })
-    })
+    }),
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
