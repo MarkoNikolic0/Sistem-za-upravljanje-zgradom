@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { AuthModule } from './auth/auth.module.js';
+import { ZgradaController } from './zgrada/zgrada.controller.js';
+import { ZgradaService } from './zgrada/zgrada.service.js';
+import { ZgradaModule } from './zgrada/zgrada.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +18,7 @@ const __dirname = dirname(__filename);
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRootAsync({ 
+    TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
@@ -26,9 +29,10 @@ const __dirname = dirname(__filename);
         database: configService.get<string>('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true, //samo za razvoj na true
-      })
+      }),
     }),
-    AuthModule
+    AuthModule,
+    ZgradaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
