@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { ZgradaController } from './zgrada/zgrada.controller.js';
 import { ZgradaService } from './zgrada/zgrada.service.js';
 import { ZgradaModule } from './zgrada/zgrada.module.js';
+import { StanModule } from './stan/stan.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,6 +34,7 @@ const __dirname = dirname(__filename);
     }),
     AuthModule,
     ZgradaModule,
+    StanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

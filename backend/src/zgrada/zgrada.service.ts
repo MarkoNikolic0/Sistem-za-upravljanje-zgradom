@@ -11,13 +11,13 @@ export class ZgradaService {
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
   ) {}
 
-  create(dto: CreateZgradaDto) {
+  async create(dto: CreateZgradaDto) {
     const zgrada = this.zgradaRepository.create(dto);
-    return this.zgradaRepository.save(zgrada);
+    return await this.zgradaRepository.save(zgrada);
   }
 
-  findAll() {
-    return this.zgradaRepository.find();
+  async findAll() {
+    return await this.zgradaRepository.find();
   }
 
   async findOne(id: number) {
@@ -31,11 +31,11 @@ export class ZgradaService {
   async update(id: number, dto: UpdateZgradaDto) {
     const zgrada = await this.findOne(id);
     Object.assign(zgrada, dto);
-    return this.zgradaRepository.save(zgrada);
+    return await this.zgradaRepository.save(zgrada);
   }
 
   async remove(id: number) {
     const zgrada = await this.findOne(id);
-    return this.zgradaRepository.remove(zgrada);
+    return await this.zgradaRepository.remove(zgrada);
   }
 }
