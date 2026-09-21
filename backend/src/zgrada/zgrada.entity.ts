@@ -1,23 +1,23 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Stan } from "../stan/stan.entity.js";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import type { Stan } from '../stan/stan.entity.js';
 
 @Entity()
 export class Zgrada {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    naziv: string;
+  @Column()
+  naziv: string;
 
-    @Column()
-    adresa: string;
+  @Column()
+  adresa: string;
 
-    @Column({nullable: true})
-    brojSpratova: number;
+  @Column({ nullable: true })
+  brojSpratova: number;
 
-    @Column({nullable: true})
-    brojStanova: number;
+  @Column({ nullable: true })
+  brojStanova: number;
 
-    @OneToMany('Stan', 'zgrada')
-    stanovi: Stan[];
+  @OneToMany('Stan', 'zgrada')
+  stanovi: Stan[];
 }

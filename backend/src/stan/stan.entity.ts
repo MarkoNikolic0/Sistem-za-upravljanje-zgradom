@@ -1,5 +1,5 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Zgrada } from "../zgrada/zgrada.entity.js";
+import type { Zgrada } from "../zgrada/zgrada.entity.js";
 
 @Entity()
 export class Stan {
