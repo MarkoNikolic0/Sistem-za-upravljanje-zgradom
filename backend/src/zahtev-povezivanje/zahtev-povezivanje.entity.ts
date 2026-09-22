@@ -1,12 +1,7 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Korisnik } from "../korisnik/korisnik.entity.js";
 import { Stan } from "../stan/stan.entity.js";
-
-export enum StatusZahteva {
-    NA_CEKANJU = 'na_cekanju',
-    PRIHVACEN = 'prihvacen',
-    ODBIJEN = 'odbijen'
-}
+import { StatusZahteva } from "../shared/enums/status-zahteva.enum.js";
 
 @Entity()
 export class ZahtevPovezivanje {
