@@ -9,6 +9,7 @@ import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Korisnik {
@@ -25,6 +26,7 @@ export class Korisnik {
   email: string;
 
   @Column()
+  @Exclude()
   lozinka: string;
 
   @Column({

@@ -11,6 +11,7 @@ import { ZgradaService } from './zgrada/zgrada.service.js';
 import { ZgradaModule } from './zgrada/zgrada.module.js';
 import { StanModule } from './stan/stan.module.js';
 import { ZahtevPovezivanjeModule } from './zahtev-povezivanje/zahtev-povezivanje.module.js';
+import { KvarModule } from './kvar/kvar.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,6 +38,7 @@ const __dirname = dirname(__filename);
     ZgradaModule,
     StanModule,
     ZahtevPovezivanjeModule,
+    KvarModule,
   ],
   controllers: [AppController],
   providers: [AppService],
