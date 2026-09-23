@@ -19,6 +19,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
+import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 
 @Injectable()
 export class KvarService {
@@ -27,6 +28,8 @@ export class KvarService {
     @InjectRepository(Stan) private stanRepository: Repository<Stan>,
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
+    @InjectRepository(ServiserSpecijalnost)
+    private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
   ) {}
 
   async create(korisnikId: number, dto: CreateKvarDto) {
@@ -127,9 +130,11 @@ export class KvarService {
   }
 
   async findDostupneServisere(kategorija: KategorijaKvara) {
-    return await this.korisnikRepository.find({
-      where: { uloga: Uloga.SERVISER, specijalnost: kategorija },
+    const specijalnosti = await this.serviserSpecijanostRepository.find({
+      where: { kategorija },
+      relations: { korisnik: true },
     });
+    return specijalnosti.map((s) => s.korisnik);
   }
 
   async prihvati(id: number) {

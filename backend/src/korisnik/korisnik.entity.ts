@@ -36,13 +36,6 @@ export class Korisnik {
   })
   uloga: Uloga;
 
-  @Column({
-    type: 'enum',
-    enum: KategorijaKvara,
-    nullable: true,
-  })
-  specijalnost: KategorijaKvara;
-
   @ManyToOne(() => Stan, { nullable: true })
   stan: Stan;
 

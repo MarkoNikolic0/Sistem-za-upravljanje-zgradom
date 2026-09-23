@@ -6,10 +6,14 @@ import { Kvar } from './kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Kvar, Korisnik, Stan]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Kvar, Korisnik, Stan, ServiserSpecijalnost]),
+    AuthModule,
+  ],
   controllers: [KvarController],
-  providers: [KvarService]
+  providers: [KvarService],
 })
 export class KvarModule {}
