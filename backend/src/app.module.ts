@@ -13,6 +13,7 @@ import { StanModule } from './stan/stan.module.js';
 import { ZahtevPovezivanjeModule } from './zahtev-povezivanje/zahtev-povezivanje.module.js';
 import { KvarModule } from './kvar/kvar.module.js';
 import { ServiserSpecijalnostModule } from './serviser-specijalnost/serviser-specijalnost.module.js';
+import { KomentarKvarModule } from './komentar-kvar/komentar-kvar.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,6 +42,7 @@ const __dirname = dirname(__filename);
     ZahtevPovezivanjeModule,
     KvarModule,
     ServiserSpecijalnostModule,
+    KomentarKvarModule,
   ],
   controllers: [AppController],
   providers: [AppService],
