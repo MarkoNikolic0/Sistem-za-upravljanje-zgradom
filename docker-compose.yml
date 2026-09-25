@@ -8,9 +8,27 @@ services:
       POSTGRES_PASSWORD: zgrada_pass
       POSTGRES_DB: zgrada_db
     ports:
-        - "5432:5432"
+      - "5432:5432"
     volumes:
-        - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
+
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: zgrada_garage
+    restart: always
+    environment:
+      GARAGE_RPC_SECRET: "${GARAGE_RPC_SECRET}"
+    ports:
+      - "3900:3900"
+      - "3901:3901"
+      - "3902:3902"
+      - "3903:3903"
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
 
 volumes:
   postgres_data:
+  garage_meta:
+  garage_data:
