@@ -1,21 +1,27 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Kvar } from "../kvar/kvar.entity.js";
-import { Korisnik } from "../korisnik/korisnik.entity.js";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Kvar } from '../kvar/kvar.entity.js';
+import { Korisnik } from '../korisnik/korisnik.entity.js';
 
 @Entity()
 export class KomentarKvar {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({type: 'text'})
-    tekst: string;
+  @Column({ type: 'text' })
+  tekst: string;
 
-    @ManyToOne(() => Kvar, { onDelete: 'CASCADE' })
-    kvar: Kvar;
+  @ManyToOne(() => Kvar, { onDelete: 'CASCADE' })
+  kvar: Kvar;
 
-    @ManyToOne(() => Korisnik)
-    korisnik: Korisnik;
+  @ManyToOne(() => Korisnik)
+  korisnik: Korisnik;
 
-    @CreateDateColumn()
-    datumKreiranja: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  datumKreiranja: Date;
 }

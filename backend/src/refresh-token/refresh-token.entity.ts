@@ -1,4 +1,11 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 
 @Entity()
@@ -14,15 +21,15 @@ export class RefreshToken {
   @Column({ type: 'uuid' })
   porodicaId: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   datumIsteka: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   datumOpoziva: Date | null;
 
   @ManyToOne(() => Korisnik, { onDelete: 'CASCADE' })
   korisnik: Korisnik;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumKreiranja: Date;
 }

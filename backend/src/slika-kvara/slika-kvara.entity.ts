@@ -18,6 +18,6 @@ export class SlikaKvara {
   @ManyToOne(() => Kvar, { onDelete: 'CASCADE' })
   kvar: Kvar;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumOtpremanja: Date;
 }

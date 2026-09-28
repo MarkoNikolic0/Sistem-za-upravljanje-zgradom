@@ -42,6 +42,6 @@ export class Korisnik {
   @ManyToOne(() => Zgrada, { nullable: true })
   zgrada: Zgrada;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   kreiranDatum: Date;
 }

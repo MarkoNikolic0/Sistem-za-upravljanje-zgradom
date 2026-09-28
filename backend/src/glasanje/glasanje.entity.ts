@@ -24,7 +24,7 @@ export class Glasanje {
   @Column({ type: 'text', nullable: true })
   opis: string;
 
-  @Column()
+  @Column({ type: 'timestamptz' })
   rok: Date;
 
   @Column({
@@ -40,6 +40,6 @@ export class Glasanje {
   @ManyToOne(() => Korisnik)
   kreirao: Korisnik;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumKreiranja: Date;
 }

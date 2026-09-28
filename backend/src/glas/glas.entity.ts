@@ -22,6 +22,6 @@ export class Glas {
   @ManyToOne(() => Stan)
   stan: Stan;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumGlasanja: Date;
 }

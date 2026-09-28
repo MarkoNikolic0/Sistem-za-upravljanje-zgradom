@@ -35,6 +35,6 @@ export class Notifikacija {
   @ManyToOne(() => Korisnik, { onDelete: 'CASCADE' })
   korisnik: Korisnik;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumKreiranja: Date;
 }

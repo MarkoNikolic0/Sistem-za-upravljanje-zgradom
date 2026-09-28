@@ -19,7 +19,7 @@ export class Sastanak {
   @Column({ type: 'text', nullable: true })
   opis: string;
 
-  @Column()
+  @Column({ type: 'timestamptz' })
   datumVreme: Date;
 
   @Column()
@@ -34,6 +34,6 @@ export class Sastanak {
   @ManyToOne(() => Korisnik)
   organizator: Korisnik;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumKreiranja: Date;
 }

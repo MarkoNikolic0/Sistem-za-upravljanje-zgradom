@@ -64,6 +64,6 @@ export class Kvar {
   @ManyToOne(() => Korisnik, { nullable: true })
   serviser: Korisnik;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumPrijave: Date;
 }

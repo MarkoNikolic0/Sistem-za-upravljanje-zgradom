@@ -25,6 +25,6 @@ export class OglasnaTabla {
   @ManyToMany(() => Korisnik)
   kreirao: Korisnik;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   datumKreiranja: Date;
 }
