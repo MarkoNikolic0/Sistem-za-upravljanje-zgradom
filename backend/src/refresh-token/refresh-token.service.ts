@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
 import { generisiToken } from './refresh-token.util.js';
@@ -32,5 +32,44 @@ export class RefreshTokenService {
     await this.refreshTokenRepository.save(zapis);
 
     return { token, datumIsteka };
+  }
+
+  async rotiraj(token: string) {
+    const tokenHash = hesirajToken(token);
+    const sada = new Date();
+
+    const rezultat = await this.refreshTokenRepository.update(
+      { tokenHash, datumOpoziva: IsNull(), datumIsteka: MoreThan(sada) },
+      { datumOpoziva: sada },
+    );
+
+    if (rezultat.affected === 0) {
+      const postojeci = await this.refreshTokenRepository.findOne({
+        where: { tokenHash },
+      });
+      if (postojeci?.datumOpoziva) {
+        await this.opozoviPorodicu(postojeci.porodicaId);
+      }
+      throw new UnauthorizedException('Nevažeća sesija.');
+    }
+
+    const zapis = await this.refreshTokenRepository.findOneOrFail({
+      where: { tokenHash },
+      relations: { korisnik: true },
+    });
+
+    const { token: noviToken, datumIsteka } = await this.kreiraj(
+      zapis.korisnik,
+      zapis.porodicaId,
+    );
+
+    return { korisnik: zapis.korisnik, noviToken, datumIsteka };
+  }
+
+  async opozoviPorodicu(porodicaId: string) {
+    await this.refreshTokenRepository.update(
+      { porodicaId, datumOpoziva: IsNull() },
+      { datumOpoziva: new Date() },
+    );
   }
 }
