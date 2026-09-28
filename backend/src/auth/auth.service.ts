@@ -10,6 +10,7 @@ import { RegisterDto } from './dto/register.dto.js';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
+import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
     private jwtService: JwtService,
+    private refreshTokenService: RefreshTokenService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -61,8 +63,10 @@ export class AuthService {
       email: korisnik.email,
       uloga: korisnik.uloga,
     };
-    const token = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload);
+    const { token: refreshToken, datumIsteka } =
+      await this.refreshTokenService.kreiraj(korisnik);
 
-    return { access_token: token };
+    return { accessToken, refreshToken, datumIsteka };
   }
 }

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -6,10 +14,16 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
 import { RolesGuard } from '../guards/roles.guard.js';
 import { Roles } from './decorators/roles.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { ConfigService } from '@nestjs/config';
+import { REFRESH_COOKIE, refreshCookieOpcije } from './refresh-cookie.js';
+import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly config: ConfigService,
+  ) {}
 
   @Post('register')
   async register(@Body() dto: RegisterDto) {
@@ -17,8 +31,21 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken, datumIsteka } =
+      await this.authService.login(dto);
+
+    const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
+    res.cookie(
+      REFRESH_COOKIE,
+      refreshToken,
+      refreshCookieOpcije(jeProdukcija, datumIsteka),
+    );
+
+    return { accessToken };
   }
 
   @UseGuards(JwtAuthGuard)
