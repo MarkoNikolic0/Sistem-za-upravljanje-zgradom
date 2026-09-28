@@ -5,6 +5,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
@@ -16,7 +17,8 @@ import { Roles } from './decorators/roles.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ConfigService } from '@nestjs/config';
 import { REFRESH_COOKIE, refreshCookieOpcije } from './refresh-cookie.js';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
+import { RefreshToken } from '../refresh-token/refresh-token.entity.js';
 
 @Controller('auth')
 export class AuthController {
@@ -59,5 +61,31 @@ export class AuthController {
   @Get('admin-only')
   getAdminOnly(@Req() req: any) {
     return { poruka: 'Samo admin može ovo da vidi', korisnik: req.user };
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.[REFRESH_COOKIE];
+    if (!refreshToken) {
+      throw new UnauthorizedException('Nevazeca sesija');
+    }
+
+    const {
+      accessToken,
+      refreshToken: noviToken,
+      datumIsteka,
+    } = await this.authService.refresh(refreshToken);
+
+    const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
+    res.cookie(
+      REFRESH_COOKIE,
+      noviToken,
+      refreshCookieOpcije(jeProdukcija, datumIsteka),
+    );
+
+    return { accessToken };
   }
 }

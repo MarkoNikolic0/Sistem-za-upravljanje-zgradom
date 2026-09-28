@@ -69,4 +69,18 @@ export class AuthService {
 
     return { accessToken, refreshToken, datumIsteka };
   }
+
+  async refresh(refreshToken: string) {
+    const { korisnik, noviToken, datumIsteka } =
+      await this.refreshTokenService.rotiraj(refreshToken);
+
+    const payload = {
+      sub: korisnik.id,
+      email: korisnik.email,
+      uloga: korisnik.uloga,
+    };
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    return { accessToken, refreshToken: noviToken, datumIsteka };
+  }
 }
