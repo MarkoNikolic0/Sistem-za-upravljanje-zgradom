@@ -3,13 +3,17 @@ import { AppModule } from './app.module.js';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
+  app.use(cookieParser());
+
   app.enableCors({
     origin: configService.get<string>('FRONTEND_URL'),
+    credentials: true,
   });
 
   app.useGlobalPipes(
