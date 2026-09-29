@@ -3,7 +3,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { CardModule } from 'primeng/card';
