@@ -18,10 +18,12 @@ export class RefreshTokenService {
     private config: ConfigService,
   ) {}
 
-  async kreiraj(korisnik: Korisnik, porodicaId: string = randomUUID()) {
+  async kreiraj(
+    korisnik: Korisnik,
+    porodicaId: string = randomUUID(),
+    datumIsteka: Date = this.noviDatumIsteka(),
+  ) {
     const token = generisiToken();
-    const trajanjeDana = Number(this.config.get('REFRESH_TOKEN_TTL_DANI') ?? 7);
-    const datumIsteka = new Date(Date.now() + trajanjeDana * MS_PO_DANU);
 
     const zapis = this.refreshTokenRepository.create({
       tokenHash: hesirajToken(token),
@@ -61,6 +63,7 @@ export class RefreshTokenService {
     const { token: noviToken, datumIsteka } = await this.kreiraj(
       zapis.korisnik,
       zapis.porodicaId,
+      zapis.datumIsteka,
     );
 
     return { korisnik: zapis.korisnik, noviToken, datumIsteka };
@@ -80,5 +83,10 @@ export class RefreshTokenService {
     if (zapis) {
       await this.opozoviPorodicu(zapis.porodicaId);
     }
+  }
+
+  private noviDatumIsteka(): Date {
+    const trajanjeDana = Number(this.config.get('REFRESH_TOKEN_TTL_DANI') ?? 7);
+    return new Date(Date.now() + trajanjeDana * MS_PO_DANU);
   }
 }
