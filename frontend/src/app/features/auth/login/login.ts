@@ -2,8 +2,6 @@ import { Component, ElementRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
-import { AuthService } from '../auth-service';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { InputPasswordModule } from 'primeng/inputpassword';
@@ -11,6 +9,7 @@ import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthShell } from '../auth-shell/auth-shell';
+import { AuthStore } from '../auth-store';
 
 @Component({
   imports: [
@@ -30,7 +29,7 @@ import { AuthShell } from '../auth-shell/auth-shell';
 })
 export class Login {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
+  private authStore = inject(AuthStore);
   private router = inject(Router);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -51,7 +50,7 @@ export class Login {
     return kontrola.invalid && kontrola.touched;
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       this.host.nativeElement.querySelector<HTMLElement>('input.ng-invalid')?.focus();
@@ -63,17 +62,17 @@ export class Login {
     this.obavestenje.set('');
     this.salje.set(true);
 
-    this.authService
-      .login(email, lozinka)
-      .pipe(finalize(() => this.salje.set(false)))
-      .subscribe({
-        next: () => this.router.navigate(['/']),
-        error: (err: HttpErrorResponse) =>
-          this.greska.set(
-            err.status === 401
-              ? 'Email ili lozinka nisu ispravni.'
-              : 'Server trenutno nije dostupan. Pokušaj ponovo za nekoliko trenutaka.',
-          ),
-      });
+    try {
+      await this.authStore.login(email, lozinka);
+      await this.router.navigate(['/']);
+    } catch (err) {
+      this.greska.set(
+        err instanceof HttpErrorResponse && err.status === 401
+          ? 'Email ili lozinka nisu ispravni.'
+          : 'Server trenutno nije dostupan. Pokušaj ponovo za nekoliko trenutaka.',
+      );
+    } finally {
+      this.salje.set(false);
+    }
   }
 }
