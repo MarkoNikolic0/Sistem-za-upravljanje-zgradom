@@ -7,12 +7,14 @@ import { KorisnikResponse, LoginResponse } from '../models/auth.model';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl;
+  private apiUrl = `${environment.apiUrl}/auth`;
 
   login(email: string, lozinka: string): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, lozinka })
-      .pipe(tap((res) => localStorage.setItem('token', res.access_token)));
+    return this.http.post<LoginResponse>(
+      `${this.apiUrl}/login`,
+      { email, lozinka },
+      { withCredentials: true },
+    );
   }
 
   register(
@@ -21,7 +23,7 @@ export class AuthService {
     email: string,
     lozinka: string,
   ): Observable<KorisnikResponse> {
-    return this.http.post<KorisnikResponse>(`${this.apiUrl}/auth/register`, {
+    return this.http.post<KorisnikResponse>(`${this.apiUrl}/register`, {
       ime,
       prezime,
       email,
@@ -29,15 +31,15 @@ export class AuthService {
     });
   }
 
-  logout() {
-    localStorage.removeItem('token');
+  refresh(): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, null, {
+      withCredentials: true,
+    });
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
-  isLoggedIn(): boolean {
-    return !!this.getToken();
+  logout(): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/logout`, null, {
+      withCredentials: true,
+    });
   }
 }

@@ -1,12 +1,14 @@
+export type Uloga = 'stanar' | 'upravnik' | 'serviser' | 'admin';
+
 export interface LoginResponse {
-    access_token: string
+  accessToken: string;
 }
 
 export interface KorisnikResponse {
-    id:number,
-    ime:string,
-    prezime: string,
-    email: string,
-    uloga: string,
-    kreiranDatum: string
+  id: number;
+  ime: string;
+  prezime: string;
+  email: string;
+  uloga: Uloga;
+  kreiranDatum: string;
 }
