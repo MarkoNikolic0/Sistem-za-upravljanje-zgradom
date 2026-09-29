@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { KomentarKvarService } from './komentar-kvar.service.js';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 
 @Controller('komentar-kvar')

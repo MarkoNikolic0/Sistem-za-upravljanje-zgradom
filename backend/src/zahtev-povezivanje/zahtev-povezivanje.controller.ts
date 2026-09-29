@@ -10,10 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ZahtevPovezivanjeService } from './zahtev-povezivanje.service.js';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateZahtevDto } from './dto/create-zahtev.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
-import { RolesGuard } from '../guards/roles.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 

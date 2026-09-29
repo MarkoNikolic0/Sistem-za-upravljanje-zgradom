@@ -1,16 +1,29 @@
-import { Controller, Delete, Get, Param, ParseIntPipe, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { SlikaKvaraService } from './slika-kvara.service.js';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('slika-kvara')
 export class SlikaKvaraController {
-    constructor(private readonly slikaService: SlikaKvaraService) {}
+  constructor(private readonly slikaService: SlikaKvaraService) {}
 
   @UseGuards(JwtAuthGuard)
   @Post(':kvarId/upload')
   @UseInterceptors(FileInterceptor('file'))
-  upload(@Param('kvarId', ParseIntPipe) kvarId: number, @UploadedFile() file: Express.Multer.File) {
+  upload(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     return this.slikaService.upload(kvarId, file);
   }
 

@@ -11,9 +11,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { KvarService } from './kvar.service.js';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
-import { RolesGuard } from '../guards/roles.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KategorijaKvara } from '../shared/enums/kvar.enums.js';

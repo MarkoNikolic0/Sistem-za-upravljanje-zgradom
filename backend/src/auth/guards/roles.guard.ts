@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../auth/decorators/roles.decorator.js';
-import { Uloga } from '../shared/enums/uloga.enum.js';
+import { ROLES_KEY } from '../decorators/roles.decorator.js';
+import { Uloga } from '../../shared/enums/uloga.enum.js';
 import { Observable } from 'rxjs';
 
 @Injectable()
