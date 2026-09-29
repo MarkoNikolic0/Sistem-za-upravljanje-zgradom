@@ -1,63 +1,132 @@
-<div class="min-h-screen flex items-center justify-center bg-slate-100 px-4">
-  <p-card class="w-full max-w-md shadow-lg">
-    <div class="flex flex-col gap-1 mb-6">
-      <h1 class="text-2xl font-semibold text-slate-800">Registracija</h1>
-      <p class="text-sm text-slate-500">Napravi nalog za sistem za upravljanje zgradom</p>
-    </div>
+<app-auth-shell>
+  <h1 class="font-display text-4xl font-semibold tracking-tight">Napravi nalog</h1>
+  <p class="mt-2 text-priguseno">
+    Već imaš nalog?
+    <a routerLink="/login" class="font-medium text-tinta underline underline-offset-4 hover:no-underline">Prijavi se</a>
+  </p>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
-      <p-floatlabel variant="on">
-        <input pInputText id="ime" formControlName="ime" class="w-full" />
-        <label for="ime">Ime</label>
-      </p-floatlabel>
+  <div aria-live="polite" class="mt-6 empty:hidden">
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
 
-      <p-floatlabel variant="on">
-        <input pInputText id="prezime" formControlName="prezime" class="w-full" />
-        <label for="prezime">Prezime</label>
-      </p-floatlabel>
-
-      <p-floatlabel variant="on">
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="mt-8 flex flex-col gap-5">
+    <div class="grid gap-5 sm:grid-cols-2 sm:gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label for="ime" class="text-sm font-medium">Ime</label>
         <input
           pInputText
-          id="email"
-          formControlName="email"
-          type="email"
-          class="w-full"
-          autocomplete="email"
+          id="ime"
+          name="ime"
+          formControlName="ime"
+          autocomplete="given-name"
+          enterkeyhint="next"
+          required
+          [fluid]="true"
+          [invalid]="nevazece('ime')"
+          [attr.aria-invalid]="nevazece('ime')"
+          [attr.aria-describedby]="nevazece('ime') ? 'ime-greska' : null"
         />
-        <label for="email">Email</label>
-      </p-floatlabel>
+        @if (nevazece('ime')) {
+          <small id="ime-greska" class="text-sm text-greska">Unesi ime.</small>
+        }
+      </div>
 
-      <p-floatlabel variant="on">
-        <p-iconfield>
-          <input
-            pInputPassword
-            id="lozinka"
-            formControlName="lozinka"
-            [type]="prikaziLozinku ? 'text' : 'password'"
-            class="w-full"
-            autocomplete="new-password"
-          />
-          <p-inputicon
-            [class]="prikaziLozinku ? 'pi pi-eye-slash' : 'pi pi-eye'"
-            (click)="prikaziLozinku = !prikaziLozinku"
-          />
-        </p-iconfield>
-        <label for="lozinka">Lozinka</label>
-      </p-floatlabel>
+      <div class="flex flex-col gap-1.5">
+        <label for="prezime" class="text-sm font-medium">Prezime</label>
+        <input
+          pInputText
+          id="prezime"
+          name="prezime"
+          formControlName="prezime"
+          autocomplete="family-name"
+          enterkeyhint="next"
+          required
+          [fluid]="true"
+          [invalid]="nevazece('prezime')"
+          [attr.aria-invalid]="nevazece('prezime')"
+          [attr.aria-describedby]="nevazece('prezime') ? 'prezime-greska' : null"
+        />
+        @if (nevazece('prezime')) {
+          <small id="prezime-greska" class="text-sm text-greska">Unesi prezime.</small>
+        }
+      </div>
+    </div>
 
-      @if (greska()) {
-        <p-message severity="error">{{ greska() }}</p-message>
+    <div class="flex flex-col gap-1.5">
+      <label for="email" class="text-sm font-medium">Email</label>
+      <input
+        pInputText
+        id="email"
+        name="email"
+        type="email"
+        formControlName="email"
+        autocomplete="username"
+        enterkeyhint="next"
+        required
+        [fluid]="true"
+        [invalid]="nevazece('email')"
+        [attr.aria-invalid]="nevazece('email')"
+        [attr.aria-describedby]="nevazece('email') ? 'email-greska' : null"
+      />
+      @if (nevazece('email')) {
+        <small id="email-greska" class="text-sm text-greska">
+          @if (registerForm.controls.email.hasError('required')) {
+            Unesi email adresu.
+          } @else {
+            Email adresa nije ispravna. Proveri da li sadrži &#64; i domen.
+          }
+        </small>
       }
+    </div>
 
-      <button pButton type="submit" [disabled]="registerForm.invalid" class="w-full justify-center">
-        Registruj se
-      </button>
-    </form>
+    <div class="flex flex-col gap-1.5">
+      <label for="new-password" class="text-sm font-medium">Lozinka</label>
+      <p-iconfield>
+        <input
+          pInputPassword
+          id="new-password"
+          name="new-password"
+          formControlName="lozinka"
+          autocomplete="new-password"
+          enterkeyhint="done"
+          minlength="6"
+          required
+          aria-describedby="lozinka-pomoc"
+          [mask]="sakrijLozinku()"
+          [fluid]="true"
+          [invalid]="nevazece('lozinka')"
+          [attr.aria-invalid]="nevazece('lozinka')"
+        />
+        <p-inputicon>
+          <button
+            type="button"
+            class="prikaz-lozinke"
+            aria-label="Prikaži lozinku"
+            [attr.aria-pressed]="!sakrijLozinku()"
+            (click)="sakrijLozinku.set(!sakrijLozinku())"
+          >
+            <i [class]="sakrijLozinku() ? 'pi pi-eye' : 'pi pi-eye-slash'" aria-hidden="true"></i>
+          </button>
+        </p-inputicon>
+      </p-iconfield>
+      <small id="lozinka-pomoc" class="text-sm" [class]="nevazece('lozinka') ? 'text-greska' : 'text-priguseno'">
+        @if (registerForm.controls.lozinka.hasError('required') && nevazece('lozinka')) {
+          Unesi lozinku.
+        } @else {
+          Najmanje 6 karaktera.
+        }
+      </small>
+    </div>
 
-    <p class="text-center mt-6 text-sm text-slate-500">
-      Već imaš nalog?
-      <a routerLink="/login" class="text-blue-600 font-medium hover:underline">Prijavi se</a>
-    </p>
-  </p-card>
-</div>
+    <button pButton type="submit" size="large" [disabled]="salje()" class="mt-2 w-full justify-center">
+      @if (salje()) {
+        <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+        Pravljenje naloga…
+      } @else {
+        Napravi nalog
+      }
+    </button>
+  </form>
+</app-auth-shell>

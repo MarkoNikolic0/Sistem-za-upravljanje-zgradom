@@ -1,0 +1,27 @@
+<div class="okvir">
+  <section class="panel">
+    <p class="brend">
+      <span class="brend-znak" aria-hidden="true"></span>
+      Upravljanje zgradom
+    </p>
+    <p class="slogan">Sastanci, kvarovi i obaveštenja tvoje zgrade na jednom mestu.</p>
+
+    <div class="zgrada" aria-hidden="true">
+      <div class="prozori">
+        @for (prozor of prozori; track $index) {
+          <span
+            class="prozor"
+            [class.upaljen]="prozor.upaljen"
+            [style.--kasnjenje]="prozor.kasnjenje"
+          ></span>
+        }
+      </div>
+    </div>
+  </section>
+
+  <main class="sadrzaj">
+    <div class="w-full max-w-sm">
+      <ng-content />
+    </div>
+  </main>
+</div>
