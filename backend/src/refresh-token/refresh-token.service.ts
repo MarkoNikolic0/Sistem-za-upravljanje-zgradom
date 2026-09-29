@@ -72,4 +72,13 @@ export class RefreshTokenService {
       { datumOpoziva: new Date() },
     );
   }
+
+  async opozoviPoTokenu(token: string) {
+    const zapis = await this.refreshTokenRepository.findOne({
+      where: { tokenHash: hesirajToken(token) },
+    });
+    if (zapis) {
+      await this.opozoviPorodicu(zapis.porodicaId);
+    }
+  }
 }

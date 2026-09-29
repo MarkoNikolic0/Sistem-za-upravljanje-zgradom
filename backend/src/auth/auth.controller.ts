@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   Res,
@@ -16,9 +18,12 @@ import { RolesGuard } from './guards/roles.guard.js';
 import { Roles } from './decorators/roles.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ConfigService } from '@nestjs/config';
-import { REFRESH_COOKIE, refreshCookieOpcije } from './refresh-cookie.js';
+import {
+  REFRESH_COOKIE,
+  refreshCookieOpcije,
+  brisanjeCookieOpcije,
+} from './refresh-cookie.js';
 import type { Response, Request } from 'express';
-import { RefreshToken } from '../refresh-token/refresh-token.entity.js';
 
 @Controller('auth')
 export class AuthController {
@@ -60,7 +65,7 @@ export class AuthController {
   @Roles(Uloga.ADMIN)
   @Get('admin-only')
   getAdminOnly(@Req() req: any) {
-    return { poruka: 'Samo admin može ovo da vidi', korisnik: req.user };
+    return { poruka: 'Samo admin moze ovo da vidi', korisnik: req.user };
   }
 
   @Post('refresh')
@@ -70,7 +75,7 @@ export class AuthController {
   ) {
     const refreshToken = req.cookies?.[REFRESH_COOKIE];
     if (!refreshToken) {
-      throw new UnauthorizedException('Nevazeca sesija');
+      throw new UnauthorizedException('Nevažeća sesija.');
     }
 
     const {
@@ -87,5 +92,14 @@ export class AuthController {
     );
 
     return { accessToken };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    await this.authService.logout(req.cookies?.[REFRESH_COOKIE]);
+
+    const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
+    res.clearCookie(REFRESH_COOKIE, brisanjeCookieOpcije(jeProdukcija));
   }
 }

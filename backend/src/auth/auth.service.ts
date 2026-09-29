@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
-import { Repository } from 'typeorm/browser/repository/Repository.js';
+import { Repository } from 'typeorm';
 import { RegisterDto } from './dto/register.dto.js';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto.js';
@@ -27,7 +27,7 @@ export class AuthService {
     });
 
     if (postojeciKorisnik) {
-      throw new ConflictException('Korisnik sa ovim emailom već postoji');
+      throw new ConflictException('Korisnik sa ovim emailom vec postoji');
     }
 
     const hesiranaLozinka = await bcrypt.hash(dto.lozinka, 10);
@@ -82,5 +82,12 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync(payload);
 
     return { accessToken, refreshToken: noviToken, datumIsteka };
+  }
+
+  async logout(refreshToken: string | undefined) {
+    if (!refreshToken) {
+      return;
+    }
+    await this.refreshTokenService.opozoviPoTokenu(refreshToken);
   }
 }
