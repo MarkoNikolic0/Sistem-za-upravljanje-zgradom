@@ -1,9 +1,5 @@
 <app-auth-shell>
-  <h1 class="font-display text-4xl font-semibold tracking-tight">Prijava</h1>
-  <p class="mt-2 text-priguseno">
-    Nemaš nalog?
-    <a routerLink="/register" class="font-medium text-tinta underline underline-offset-4 hover:no-underline">Registruj se</a>
-  </p>
+  <h1 class="font-display text-4xl font-semibold tracking-tight">Prijavi se</h1>
 
   <div aria-live="polite" class="mt-6 empty:hidden">
     @if (obavestenje()) {
@@ -76,7 +72,13 @@
       }
     </div>
 
-    <button pButton type="submit" size="large" [disabled]="salje()" class="mt-2 w-full justify-center">
+    <button
+      pButton
+      type="submit"
+      size="large"
+      [disabled]="salje()"
+      class="mt-2 w-full justify-center"
+    >
       @if (salje()) {
         <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
         Prijavljivanje…
@@ -85,4 +87,13 @@
       }
     </button>
   </form>
+
+  <p class="mt-6 text-center text-priguseno">
+    Nemaš nalog?
+    <a
+      routerLink="/register"
+      class="font-medium text-tinta underline underline-offset-4 hover:no-underline"
+      >Registruj se</a
+    >
+  </p>
 </app-auth-shell>

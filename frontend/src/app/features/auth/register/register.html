@@ -1,9 +1,5 @@
 <app-auth-shell>
   <h1 class="font-display text-4xl font-semibold tracking-tight">Napravi nalog</h1>
-  <p class="mt-2 text-priguseno">
-    Već imaš nalog?
-    <a routerLink="/login" class="font-medium text-tinta underline underline-offset-4 hover:no-underline">Prijavi se</a>
-  </p>
 
   <div aria-live="polite" class="mt-6 empty:hidden">
     @if (greska()) {
@@ -129,4 +125,9 @@
       }
     </button>
   </form>
+
+  <p class="mt-6 text-center text-priguseno">
+    Već imaš nalog?
+    <a routerLink="/login" class="font-medium text-tinta underline underline-offset-4 hover:no-underline">Prijavi se</a>
+  </p>
 </app-auth-shell>

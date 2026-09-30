@@ -1,19 +1,24 @@
 <div class="okvir">
   <section class="panel">
     <p class="brend">
+      <app-logo class="brend-logo" />
       <span class="brend-znak" aria-hidden="true"></span>
       Upravljanje zgradom
     </p>
     <p class="slogan">Sastanci, kvarovi i obaveštenja tvoje zgrade na jednom mestu.</p>
 
     <div class="zgrada" aria-hidden="true">
-      <div class="prozori">
-        @for (prozor of prozori; track $index) {
-          <span
-            class="prozor"
-            [class.upaljen]="prozor.upaljen"
-            [style.--kasnjenje]="prozor.kasnjenje"
-          ></span>
+      <div class="spratovi">
+        @for (sprat of spratovi; track $index) {
+          <div class="sprat">
+            @for (prozor of sprat; track $index) {
+              <span
+                class="prozor"
+                [class.upaljen]="prozor.upaljen"
+                [style.--kasnjenje]="prozor.kasnjenje"
+              ></span>
+            }
+          </div>
         }
       </div>
     </div>
