@@ -1,11 +1,12 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { ZahtevPovezivanje } from './zahtev-povezivanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -13,6 +14,8 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { CreateZahtevDto } from './dto/create-zahtev.dto.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
+import { Uloga } from '../shared/enums/uloga.enum.js';
+import { KorisnikService } from '../korisnik/korisnik.service.js';
 
 @Injectable()
 export class ZahtevPovezivanjeService {
@@ -23,6 +26,7 @@ export class ZahtevPovezivanjeService {
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
     private dataSource: DataSource,
+    private korisnikService: KorisnikService,
   ) {}
 
   async create(korisnikId: number, dto: CreateZahtevDto) {
@@ -59,26 +63,59 @@ export class ZahtevPovezivanjeService {
     return await this.zahtevRepository.save(zahtev);
   }
 
-  async findAllNaCekanju() {
-    return await this.zahtevRepository.find({
-      where: {
-        status: StatusZahteva.NA_CEKANJU,
-      },
-      relations: { korisnik: true, stan: true },
+  async findAllNaCekanju(korisnikId: number, uloga: Uloga) {
+    return await this.findVidljive(korisnikId, uloga, {
+      status: StatusZahteva.NA_CEKANJU,
     });
   }
 
-  async findAll() {
-    return await this.zahtevRepository.find();
+  async findAll(korisnikId: number, uloga: Uloga) {
+    return await this.findVidljive(korisnikId, uloga, {});
   }
 
-  async zahtevResponse(zahtevId: number, dto: ResponseZahtevDto) {
+  private async findVidljive(
+    korisnikId: number,
+    uloga: Uloga,
+    where: FindOptionsWhere<ZahtevPovezivanje>,
+  ) {
+    const relations = { korisnik: true, stan: { zgrada: true } };
+
+    if (uloga === Uloga.ADMIN) {
+      return await this.zahtevRepository.find({ where, relations });
+    }
+
+    const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
+    if (zgradaId === null) {
+      return [];
+    }
+
+    return await this.zahtevRepository.find({
+      where: { ...where, stan: { zgrada: { id: zgradaId } } },
+      relations,
+    });
+  }
+
+  async zahtevResponse(
+    zahtevId: number,
+    korisnikId: number,
+    uloga: Uloga,
+    dto: ResponseZahtevDto,
+  ) {
     const zahtev = await this.zahtevRepository.findOne({
       where: { id: zahtevId },
-      relations: { korisnik: true, stan: true },
+      relations: { korisnik: true, stan: { zgrada: true } },
     });
     if (!zahtev) {
       throw new NotFoundException(`Zahtev sa id-jem ${zahtevId} ne postoji!`);
+    }
+
+    if (uloga !== Uloga.ADMIN) {
+      const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
+      if (zahtev.stan.zgrada.id !== zgradaId) {
+        throw new ForbiddenException(
+          'Možete obrađivati samo zahteve za svoju zgradu!',
+        );
+      }
     }
     if (zahtev.status !== StatusZahteva.NA_CEKANJU) {
       throw new BadRequestException('Zahtev je već obradjen!');

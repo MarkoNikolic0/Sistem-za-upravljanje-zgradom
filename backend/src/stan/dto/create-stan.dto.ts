@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsString, Min } from "class-validator";
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 export class CreateStanDto {
   @IsString()
@@ -7,12 +7,12 @@ export class CreateStanDto {
 
   @IsInt()
   @IsNotEmpty()
-  sprat?: number;
+  sprat: number;
 
   @IsInt()
   @IsNotEmpty()
   @Min(1)
-  kvadratura?: number;
+  kvadratura: number;
 
   @IsInt()
   zgradaId: number;

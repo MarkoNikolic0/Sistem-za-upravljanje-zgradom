@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { StanService } from './stan.service.js';
@@ -24,11 +25,11 @@ import { UpdateStanDto } from './dto/update-stan.dto.js';
 export class StanController {
   constructor(private readonly stanService: StanService) {}
 
-  @UseGuards(RolesGuard)
+    @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Post()
-  create(@Body() dto: CreateStanDto) {
-    return this.stanService.create(dto);
+  create(@Req() req: any, @Body() dto: CreateStanDto) {
+    return this.stanService.create(req.user.id, req.user.uloga, dto);
   }
 
   @Get()
@@ -44,14 +45,18 @@ export class StanController {
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStanDto) {
-    return this.stanService.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
+    @Body() dto: UpdateStanDto,
+  ) {
+    return this.stanService.update(id, req.user.id, req.user.uloga, dto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.stanService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.stanService.remove(id, req.user.id, req.user.uloga);
   }
 }

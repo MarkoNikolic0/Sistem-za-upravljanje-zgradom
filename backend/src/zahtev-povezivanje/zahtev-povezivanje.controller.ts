@@ -29,11 +29,11 @@ export class ZahtevPovezivanjeController {
     return this.zahtevService.create(req.user.id, dto);
   }
 
-  @UseGuards(RolesGuard)
+    @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('na-cekanju')
-  findAllNaCekanju() {
-    return this.zahtevService.findAllNaCekanju();
+  findAllNaCekanju(@Req() req: any) {
+    return this.zahtevService.findAllNaCekanju(req.user.id, req.user.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -41,15 +41,16 @@ export class ZahtevPovezivanjeController {
   @Patch(':id/obradjen')
   response(
     @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
     @Body() dto: ResponseZahtevDto,
   ) {
-    return this.zahtevService.zahtevResponse(id, dto);
+    return this.zahtevService.zahtevResponse(id, req.user.id, req.user.uloga, dto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('svi')
-  getAll() {
-    return this.zahtevService.findAll();
+  getAll(@Req() req: any) {
+    return this.zahtevService.findAll(req.user.id, req.user.uloga);
   }
 }

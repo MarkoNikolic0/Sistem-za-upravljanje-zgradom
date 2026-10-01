@@ -15,6 +15,7 @@ import { KvarModule } from './kvar/kvar.module.js';
 import { ServiserSpecijalnostModule } from './serviser-specijalnost/serviser-specijalnost.module.js';
 import { KomentarKvarModule } from './komentar-kvar/komentar-kvar.module.js';
 import { SlikaKvaraModule } from './slika-kvara/slika-kvara.module.js';
+import { KorisnikModule } from './korisnik/korisnik.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,6 +46,7 @@ const __dirname = dirname(__filename);
     ServiserSpecijalnostModule,
     KomentarKvarModule,
     SlikaKvaraModule,
+    KorisnikModule,
   ],
   controllers: [AppController],
   providers: [AppService],
