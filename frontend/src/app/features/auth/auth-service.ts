@@ -2,7 +2,7 @@ import { inject, Service } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { KorisnikResponse, LoginResponse } from './auth-models';
+import { KorisnikResponse, LoginResponse, RegisterRequest } from './auth-models';
 
 @Service()
 export class AuthService {
@@ -17,18 +17,8 @@ export class AuthService {
     );
   }
 
-  register(
-    ime: string,
-    prezime: string,
-    email: string,
-    lozinka: string,
-  ): Observable<KorisnikResponse> {
-    return this.http.post<KorisnikResponse>(`${this.apiUrl}/register`, {
-      ime,
-      prezime,
-      email,
-      lozinka,
-    });
+  register(podaci: RegisterRequest): Observable<KorisnikResponse> {
+    return this.http.post<KorisnikResponse>(`${this.apiUrl}/register`, podaci);
   }
 
   refresh(): Observable<LoginResponse> {

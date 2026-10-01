@@ -78,6 +78,37 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
+      <label for="telefon" class="text-sm font-medium">Telefon</label>
+      <input
+        pInputText
+        id="telefon"
+        name="telefon"
+        type="tel"
+        formControlName="telefon"
+        autocomplete="tel"
+        enterkeyhint="next"
+        required
+        aria-describedby="telefon-pomoc"
+        [fluid]="true"
+        [invalid]="nevazece('telefon')"
+        [attr.aria-invalid]="nevazece('telefon')"
+      />
+      <small
+        id="telefon-pomoc"
+        class="text-sm"
+        [class]="nevazece('telefon') ? 'text-greska' : 'text-priguseno'"
+      >
+        @if (registerForm.controls.telefon.hasError('required') && nevazece('telefon')) {
+          Unesi broj telefona.
+        } @else if (registerForm.controls.telefon.hasError('server')) {
+          {{ registerForm.controls.telefon.getError('server') }}
+        } @else {
+          Npr. 064 123 4567
+        }
+      </small>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
       <label for="new-password" class="text-sm font-medium">Lozinka</label>
       <p-iconfield>
         <input
@@ -107,7 +138,11 @@
           </button>
         </p-inputicon>
       </p-iconfield>
-      <small id="lozinka-pomoc" class="text-sm" [class]="nevazece('lozinka') ? 'text-greska' : 'text-priguseno'">
+      <small
+        id="lozinka-pomoc"
+        class="text-sm"
+        [class]="nevazece('lozinka') ? 'text-greska' : 'text-priguseno'"
+      >
         @if (registerForm.controls.lozinka.hasError('required') && nevazece('lozinka')) {
           Unesi lozinku.
         } @else {
@@ -116,7 +151,13 @@
       </small>
     </div>
 
-    <button pButton type="submit" size="large" [disabled]="salje()" class="mt-2 w-full justify-center">
+    <button
+      pButton
+      type="submit"
+      size="large"
+      [disabled]="salje()"
+      class="mt-2 w-full justify-center"
+    >
       @if (salje()) {
         <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
         Pravljenje naloga…
@@ -128,6 +169,10 @@
 
   <p class="mt-6 text-center text-priguseno">
     Već imaš nalog?
-    <a routerLink="/login" class="font-medium text-tinta underline underline-offset-4 hover:no-underline">Prijavi se</a>
+    <a
+      routerLink="/login"
+      class="font-medium text-tinta underline underline-offset-4 hover:no-underline"
+      >Prijavi se</a
+    >
   </p>
 </app-auth-shell>

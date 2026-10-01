@@ -9,6 +9,15 @@ export interface KorisnikResponse {
   ime: string;
   prezime: string;
   email: string;
+  telefon: string;
   uloga: Uloga;
   kreiranDatum: string;
+}
+
+export interface RegisterRequest {
+  ime: string;
+  prezime: string;
+  email: string;
+  telefon: string;
+  lozinka: string;
 }

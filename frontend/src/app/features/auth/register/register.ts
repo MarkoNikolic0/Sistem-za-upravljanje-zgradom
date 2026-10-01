@@ -12,7 +12,8 @@ import { MessageModule } from 'primeng/message';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthShell } from '../auth-shell/auth-shell';
 
-type Polje = 'ime' | 'prezime' | 'email' | 'lozinka';
+type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
+const PORUKA_TELEFON = 'Broj telefona nije ispravan.';
 
 @Component({
   imports: [
@@ -44,6 +45,7 @@ export class Register {
     ime: ['', Validators.required],
     prezime: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
+    telefon: ['', Validators.required],
     lozinka: ['', [Validators.required, Validators.minLength(6)]],
   });
 
@@ -59,21 +61,32 @@ export class Register {
       return;
     }
 
-    const { ime, prezime, email, lozinka } = this.registerForm.getRawValue();
+    const podaci = this.registerForm.getRawValue();
     this.greska.set('');
     this.salje.set(true);
 
     this.authService
-      .register(ime, prezime, email, lozinka)
+      .register(podaci)
       .pipe(finalize(() => this.salje.set(false)))
       .subscribe({
-        next: () => this.router.navigate(['/login'], { state: { registrovanEmail: email } }),
-        error: (err: HttpErrorResponse) =>
-          this.greska.set(
-            err.status === 409
-              ? 'Nalog sa ovom email adresom već postoji. Prijavi se ili koristi drugu adresu.'
-              : 'Registracija nije uspela. Pokušaj ponovo za nekoliko trenutaka.',
-          ),
+        next: () => this.router.navigate(['/login'], { state: { registrovanEmail: podaci.email } }),
+        error: (err: HttpErrorResponse) => this.obradiGresku(err),
       });
+  }
+
+  private obradiGresku(err: HttpErrorResponse): void {
+    const poruke: unknown = err.error?.message;
+
+    if (err.status === 400 && Array.isArray(poruke) && poruke.includes(PORUKA_TELEFON)) {
+      this.registerForm.controls.telefon.setErrors({ server: PORUKA_TELEFON });
+      this.host.nativeElement.querySelector<HTMLElement>('#telefon')?.focus();
+      return;
+    }
+
+    this.greska.set(
+      err.status === 409
+        ? 'Nalog sa ovom email adresom već postoji. Prijavi se ili koristi drugu adresu.'
+        : 'Registracija nije uspela. Pokušaj ponovo za nekoliko trenutaka.',
+    );
   }
 }
