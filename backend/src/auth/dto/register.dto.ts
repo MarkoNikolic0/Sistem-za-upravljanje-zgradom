@@ -1,20 +1,30 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsPhoneNumber,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterDto {
-    @IsString()
-    @IsNotEmpty()
-    ime:string
+  @IsString()
+  @IsNotEmpty()
+  ime: string;
 
-    @IsString()
-    @IsNotEmpty()
-    prezime:string
+  @IsString()
+  @IsNotEmpty()
+  prezime: string;
 
-    @IsEmail()
-    @IsNotEmpty()
-    email:string
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-    @IsString()
-    @MinLength(6)
-    @IsNotEmpty()
-    lozinka:string
+  @IsPhoneNumber('RS', { message: 'Broj telefona nije ispravan.' })
+  @IsNotEmpty()
+  telefon: string;
+
+  @IsString()
+  @MinLength(6)
+  @IsNotEmpty()
+  lozinka: string;
 }

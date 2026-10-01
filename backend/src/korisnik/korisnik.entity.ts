@@ -25,6 +25,9 @@ export class Korisnik {
   @Column({ unique: true })
   email: string;
 
+  @Column({ type: 'varchar' })
+  telefon: string | null;
+
   @Column()
   @Exclude()
   lozinka: string;
