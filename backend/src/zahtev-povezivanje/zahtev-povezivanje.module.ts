@@ -6,9 +6,10 @@ import { ZahtevPovezivanje } from './zahtev-povezivanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ZahtevPovezivanje, Stan, Korisnik]), AuthModule],
+  imports: [TypeOrmModule.forFeature([ZahtevPovezivanje, Stan, Korisnik, StanarStana]), AuthModule],
   controllers: [ZahtevPovezivanjeController],
   providers: [ZahtevPovezivanjeService]
 })

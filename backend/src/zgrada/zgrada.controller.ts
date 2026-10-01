@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -17,6 +18,7 @@ import { CreateZgradaDto } from './dto/create-zgrada.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { UpdateZgradaDto } from './dto/update-zgrada.dto.js';
 
+@ApiBearerAuth()
 @Controller('zgrada')
 export class ZgradaController {
   constructor(private readonly zgradaService: ZgradaService) {}

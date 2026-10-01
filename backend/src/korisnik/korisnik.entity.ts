@@ -6,8 +6,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
-import { Stan } from '../stan/stan.entity.js';
-import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { Exclude } from 'class-transformer';
 
@@ -38,9 +36,6 @@ export class Korisnik {
     default: Uloga.STANAR,
   })
   uloga: Uloga;
-
-  @ManyToOne(() => Stan, { nullable: true })
-  stan: Stan;
 
   @ManyToOne(() => Zgrada, { nullable: true })
   zgrada: Zgrada;

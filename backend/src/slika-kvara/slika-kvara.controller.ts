@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Controller,
   Delete,
@@ -13,6 +14,7 @@ import { SlikaKvaraService } from './slika-kvara.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+@ApiBearerAuth()
 @Controller('slika-kvara')
 export class SlikaKvaraController {
   constructor(private readonly slikaService: SlikaKvaraService) {}

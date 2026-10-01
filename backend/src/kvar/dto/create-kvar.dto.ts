@@ -1,5 +1,17 @@
-import { IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { KategorijaKvara, LokacijaTip, Prioritet } from '../../shared/enums/kvar.enums.js';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
+import {
+  KategorijaKvara,
+  LokacijaTip,
+  Prioritet,
+} from '../../shared/enums/kvar.enums.js';
 
 export class CreateKvarDto {
   @IsString()
@@ -20,5 +32,9 @@ export class CreateKvarDto {
 
   @IsEnum(LokacijaTip)
   @IsNotEmpty()
-  lokacijaTip: LokacijaTip
+  lokacijaTip: LokacijaTip;
+
+  @IsInt()
+  @IsPositive()
+  stanId: number;
 }

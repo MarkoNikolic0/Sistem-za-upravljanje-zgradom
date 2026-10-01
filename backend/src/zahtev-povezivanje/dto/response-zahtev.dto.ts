@@ -1,7 +1,10 @@
-import { IsEnum } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional } from 'class-validator';
 import { StatusZahteva } from '../../shared/enums/status-zahteva.enum.js';
 
 export class ResponseZahtevDto {
-  @IsEnum(StatusZahteva)
+  @IsIn([StatusZahteva.PRIHVACEN, StatusZahteva.ODBIJEN])
   status: StatusZahteva;
+  @IsOptional()
+  @IsBoolean()
+  vlasnik?: boolean;
 }

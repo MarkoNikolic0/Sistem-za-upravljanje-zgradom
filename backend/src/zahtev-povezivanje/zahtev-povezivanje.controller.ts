@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -17,6 +18,7 @@ import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 
+@ApiBearerAuth()
 @Controller('zahtev-povezivanje')
 export class ZahtevPovezivanjeController {
   constructor(private readonly zahtevService: ZahtevPovezivanjeService) {}

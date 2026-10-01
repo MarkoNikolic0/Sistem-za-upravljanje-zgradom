@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -21,6 +22,7 @@ import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 
+@ApiBearerAuth()
 @Controller('kvar')
 export class KvarController {
   constructor(private readonly kvarService: KvarService) {}

@@ -7,10 +7,17 @@ import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Kvar, Korisnik, Stan, ServiserSpecijalnost]),
+    TypeOrmModule.forFeature([
+      Kvar,
+      Korisnik,
+      Stan,
+      ServiserSpecijalnost,
+      StanarStana,
+    ]),
     AuthModule,
   ],
   controllers: [KvarController],

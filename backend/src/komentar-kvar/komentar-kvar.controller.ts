@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -13,6 +14,7 @@ import { KomentarKvarService } from './komentar-kvar.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 
+@ApiBearerAuth()
 @Controller('komentar-kvar')
 export class KomentarKvarController {
   constructor(private readonly komentarKvarService: KomentarKvarService) {}

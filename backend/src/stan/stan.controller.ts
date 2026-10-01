@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -17,6 +18,7 @@ import { CreateStanDto } from './dto/create-stan.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { UpdateStanDto } from './dto/update-stan.dto.js';
 
+@ApiBearerAuth()
 @Controller('stan')
 export class StanController {
   constructor(private readonly stanService: StanService) {}

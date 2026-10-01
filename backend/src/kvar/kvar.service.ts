@@ -1,12 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Stan } from '../stan/stan.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import {
@@ -20,6 +21,7 @@ import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 
 @Injectable()
 export class KvarService {
@@ -30,23 +32,17 @@ export class KvarService {
     private korisnikRepository: Repository<Korisnik>,
     @InjectRepository(ServiserSpecijalnost)
     private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
+    @InjectRepository(StanarStana)
+    private stanarStanaRepository: Repository<StanarStana>,
   ) {}
 
   async create(korisnikId: number, dto: CreateKvarDto) {
-    const korisnik = await this.korisnikRepository.findOne({
-      where: { id: korisnikId },
-      relations: { zgrada: true, stan: true },
+    const veza = await this.stanarStanaRepository.findOne({
+      where: { korisnik: { id: korisnikId }, stan: { id: dto.stanId } },
+      relations: { korisnik: true, stan: { zgrada: true } },
     });
-    if (!korisnik) {
-      throw new NotFoundException(
-        `Korisnik sa id-jem ${korisnikId} ne postoji!`,
-      );
-    }
-    if (!korisnik.zgrada) {
-      throw new BadRequestException('Niste povezani ni sa jednom zgradom!');
-    }
-    if (dto.lokacijaTip === LokacijaTip.PRIVATNI_STAN && !korisnik.stan) {
-      throw new BadRequestException(`Niste povezani ni sa jednim stanom!`);
+    if (!veza) {
+      throw new ForbiddenException('Niste povezani sa ovim stanom!');
     }
 
     const kvar = this.kvarRepository.create({
@@ -56,11 +52,9 @@ export class KvarService {
       lokacijaTip: dto.lokacijaTip,
       prioritet: dto.prioritet ?? Prioritet.SREDNJE,
       stan:
-        dto.lokacijaTip === LokacijaTip.PRIVATNI_STAN
-          ? korisnik.stan!
-          : undefined,
-      zgrada: korisnik.zgrada,
-      korisnik: korisnik,
+        dto.lokacijaTip === LokacijaTip.PRIVATNI_STAN ? veza.stan : undefined,
+      zgrada: veza.stan.zgrada,
+      korisnik: veza.korisnik,
     });
 
     return await this.kvarRepository.save(kvar);
@@ -86,36 +80,29 @@ export class KvarService {
       });
     }
 
-    const korisnik = await this.korisnikRepository.findOne({
-      where: { id: korisnikId },
-      relations: { zgrada: true },
+    const veze = await this.stanarStanaRepository.find({
+      where: { korisnik: { id: korisnikId } },
+      relations: { stan: { zgrada: true } },
     });
-    if (!korisnik?.zgrada) {
+    if (veze.length === 0) {
       return [];
     }
 
-    const sopstveni = await this.kvarRepository.find({
-      where: { korisnik: { id: korisnikId } },
-      relations: { zgrada: true, stan: true, serviser: true },
+    const stanIds = veze.map((v) => v.stan.id);
+    const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
+
+    return await this.kvarRepository.find({
+      where: [
+        { stan: { id: In(stanIds) } },
+        {
+          zgrada: { id: In(zgradaIds) },
+          lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
+        },
+        { korisnik: { id: korisnikId } },
+      ],
+      relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
       order: { datumPrijave: 'DESC' },
     });
-
-    const zajednicki = await this.kvarRepository.find({
-      where: {
-        zgrada: { id: korisnik.zgrada.id },
-        lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
-      },
-      relations: { zgrada: true, korisnik: true, serviser: true },
-      order: { datumPrijave: 'DESC' },
-    });
-
-    const spojeno = [
-      ...sopstveni,
-      ...zajednicki.filter((k) => k.korisnik.id !== korisnikId),
-    ];
-    return spojeno.sort(
-      (a, b) => b.datumPrijave.getTime() - a.datumPrijave.getTime(),
-    );
   }
 
   async findOne(id: number) {

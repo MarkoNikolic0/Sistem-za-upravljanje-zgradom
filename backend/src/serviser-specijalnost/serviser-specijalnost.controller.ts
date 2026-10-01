@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -15,6 +16,7 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { DodajSpecijalnostDto } from './dto/dodaj-specijalnost.dto.js';
 
+@ApiBearerAuth()
 @Controller('serviser-specijalnost')
 export class ServiserSpecijalnostController {
   constructor(
