@@ -15,11 +15,11 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('slika-kvara')
 export class SlikaKvaraController {
   constructor(private readonly slikaService: SlikaKvaraService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post(':kvarId/upload')
   @UseInterceptors(FileInterceptor('file'))
   upload(
@@ -29,13 +29,11 @@ export class SlikaKvaraController {
     return this.slikaService.upload(kvarId, file);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('kvar/:kvarId')
   findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number) {
     return this.slikaService.findZaKvar(kvarId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.slikaService.remove(id);

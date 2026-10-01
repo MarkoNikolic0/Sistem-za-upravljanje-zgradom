@@ -23,17 +23,16 @@ import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('kvar')
 export class KvarController {
   constructor(private readonly kvarService: KvarService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Req() req: any, @Body() dto: CreateKvarDto) {
     return this.kvarService.create(req.user.id, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Req() req: any, @Query('zgradaId') zgradaId?: string) {
     return this.kvarService.findAllZaKorisnika(
@@ -43,34 +42,33 @@ export class KvarController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('serviseri/:kategorija')
   findDostupneServisere(@Param('kategorija') kategorija: KategorijaKvara) {
     return this.kvarService.findDostupneServisere(kategorija);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.kvarService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/prihvati')
   prihvati(@Param('id', ParseIntPipe) id: number) {
     return this.kvarService.prihvati(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/odbij')
   odbij(@Param('id', ParseIntPipe) id: number) {
     return this.kvarService.odbij(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Patch(':id/prioritet')
   postaviPrioritet(
@@ -80,7 +78,7 @@ export class KvarController {
     return this.kvarService.postaviPrioritet(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Patch(':id/dodeli')
   dodeliServisera(
@@ -90,7 +88,7 @@ export class KvarController {
     return this.kvarService.dodeliServisera(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.SERVISER)
   @Patch(':id/status')
   promeniStatus(
@@ -101,7 +99,7 @@ export class KvarController {
     return this.kvarService.promeniStatus(id, req.user.id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/zatvori')
   zatvori(@Param('id', ParseIntPipe) id: number) {

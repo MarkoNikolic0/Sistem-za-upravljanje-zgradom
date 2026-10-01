@@ -17,26 +17,26 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { DodajSpecijalnostDto } from './dto/dodaj-specijalnost.dto.js';
 
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('serviser-specijalnost')
 export class ServiserSpecijalnostController {
   constructor(
     private readonly specijalnostService: ServiserSpecijalnostService,
   ) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Post()
   dodaj(@Body() dto: DodajSpecijalnostDto) {
     return this.specijalnostService.dodaj(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('serviser/:korisnikId')
   findZaServisera(@Param('korisnikId', ParseIntPipe) korisnikId: number) {
     return this.specijalnostService.findZaServisera(korisnikId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Delete(':id')
   ukloni(@Param('id', ParseIntPipe) id: number) {

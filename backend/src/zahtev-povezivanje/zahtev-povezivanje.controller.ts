@@ -19,24 +19,24 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('zahtev-povezivanje')
 export class ZahtevPovezivanjeController {
   constructor(private readonly zahtevService: ZahtevPovezivanjeService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Req() req: any, @Body() dto: CreateZahtevDto) {
     return this.zahtevService.create(req.user.id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('na-cekanju')
   findAllNaCekanju() {
     return this.zahtevService.findAllNaCekanju();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/obradjen')
   response(
@@ -46,7 +46,7 @@ export class ZahtevPovezivanjeController {
     return this.zahtevService.zahtevResponse(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('svi')
   getAll() {
