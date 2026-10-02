@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 @Entity()
 export class Korisnik {
@@ -21,10 +21,12 @@ export class Korisnik {
   prezime: string;
 
   @Column({ unique: true })
+  @Expose({ groups: ['kontakt'] })
   email: string;
 
   @Column({ type: 'varchar' })
-  telefon: string | null;
+  @Expose({ groups: ['kontakt'] })
+  telefon: string;
 
   @Column()
   @Exclude()

@@ -1,9 +1,10 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import { KontaktSerializerInterceptor } from './korisnik/kontakt-serializer.interceptor.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,7 +23,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+    app.useGlobalInterceptors(new KontaktSerializerInterceptor(app.get(Reflector)));
 
   const config = new DocumentBuilder()
     .setTitle('Sistem za upravljanje zgradom')
