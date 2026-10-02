@@ -33,7 +33,8 @@ export class Login {
   private router = inject(Router);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  private registrovanEmail: string | undefined = history.state?.registrovanEmail;
+  private registrovanEmail: string | undefined =
+    this.router.currentNavigation()?.extras.state?.['registrovanEmail'];
 
   greska = signal('');
   obavestenje = signal(this.registrovanEmail ? 'Nalog je napravljen. Prijavi se.' : '');
