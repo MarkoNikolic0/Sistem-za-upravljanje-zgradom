@@ -6,11 +6,13 @@ import { KomentarKvar } from './komentar-kvar.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { KvarModule } from '../kvar/kvar.module.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([KomentarKvar, Kvar, Korisnik]),
+    TypeOrmModule.forFeature([KomentarKvar, Korisnik]),
     AuthModule,
+    KvarModule,
   ],
   controllers: [KomentarKvarController],
   providers: [KomentarKvarService],

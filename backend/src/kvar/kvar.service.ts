@@ -179,17 +179,26 @@ export class KvarService {
     }
   }
 
+  // Admin ili upravnik zgrade u kojoj je kvar; koriste ga i komentari i slike
+  async smeDaUpravlja(
+    kvar: Kvar,
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<boolean> {
+    if (uloga === Uloga.ADMIN) {
+      return true;
+    }
+    const zgradaUpravnika =
+      await this.korisnikService.zgradaUpravnika(korisnikId);
+    return zgradaUpravnika === kvar.zgrada.id;
+  }
+
   private async proveriUpravljanje(
     kvar: Kvar,
     korisnikId: number,
     uloga: Uloga,
   ) {
-    if (uloga === Uloga.ADMIN) {
-      return;
-    }
-    const zgradaUpravnika =
-      await this.korisnikService.zgradaUpravnika(korisnikId);
-    if (zgradaUpravnika !== kvar.zgrada.id) {
+    if (!(await this.smeDaUpravlja(kvar, korisnikId, uloga))) {
       throw new ForbiddenException(
         'Možete upravljati samo kvarovima svoje zgrade!',
       );

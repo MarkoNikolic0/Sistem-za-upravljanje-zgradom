@@ -5,29 +5,29 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { KomentarKvar } from './komentar-kvar.entity.js';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { KvarService } from '../kvar/kvar.service.js';
 
 @Injectable()
 export class KomentarKvarService {
   constructor(
     @InjectRepository(KomentarKvar)
     private komentarKvarRepository: Repository<KomentarKvar>,
-    @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
+    private kvarService: KvarService,
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
   ) {}
 
-  async create(korisnikId: number, dto: CreateKomentarDto) {
-    const kvar = await this.kvarRepository.findOne({
-      where: { id: dto.kvarId },
-    });
-    if (!kvar) {
-      throw new NotFoundException(`Kvar sa id-jem ${dto.kvarId} ne postoji!`);
-    }
+  async create(korisnikId: number, uloga: Uloga, dto: CreateKomentarDto) {
+    const kvar = await this.kvarService.findDostupan(
+      dto.kvarId,
+      korisnikId,
+      uloga,
+    );
 
     const korisnik = await this.korisnikRepository.findOne({
       where: { id: korisnikId },
@@ -47,7 +47,9 @@ export class KomentarKvarService {
     return await this.komentarKvarRepository.save(komentar);
   }
 
-  async findZaKvar(kvarId: number) {
+  async findZaKvar(kvarId: number, korisnikId: number, uloga: Uloga) {
+    await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
+
     return await this.komentarKvarRepository.find({
       where: { kvar: { id: kvarId } },
       relations: { korisnik: true },
@@ -58,7 +60,7 @@ export class KomentarKvarService {
   async remove(komentarId: number, korisnikId: number, uloga: Uloga) {
     const komentar = await this.komentarKvarRepository.findOne({
       where: { id: komentarId },
-      relations: { korisnik: true },
+      relations: { korisnik: true, kvar: { zgrada: true } },
     });
     if (!komentar) {
       throw new NotFoundException(
@@ -67,9 +69,10 @@ export class KomentarKvarService {
     }
 
     const autor = komentar.korisnik.id === korisnikId;
-    const moderator = uloga === Uloga.ADMIN || uloga === Uloga.UPRAVNIK;
-
-    if (!autor && !moderator) {
+    if (
+      !autor &&
+      !(await this.kvarService.smeDaUpravlja(komentar.kvar, korisnikId, uloga))
+    ) {
       throw new ForbiddenException(`Mozete brisati samo svoje komentare!`);
     }
 

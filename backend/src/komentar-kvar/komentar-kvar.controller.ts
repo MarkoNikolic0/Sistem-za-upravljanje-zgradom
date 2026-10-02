@@ -22,12 +22,16 @@ export class KomentarKvarController {
 
   @Post()
   create(@Req() req: any, @Body() dto: CreateKomentarDto) {
-    return this.komentarKvarService.create(req.user.id, dto);
+    return this.komentarKvarService.create(req.user.id, req.user.uloga, dto);
   }
 
   @Get('kvar/:kvarId')
-  findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number) {
-    return this.komentarKvarService.findZaKvar(kvarId);
+  findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number, @Req() req: any) {
+    return this.komentarKvarService.findZaKvar(
+      kvarId,
+      req.user.id,
+      req.user.uloga,
+    );
   }
 
   @Delete(':id')
