@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { Login } from './features/auth/login/login';
-import { Register } from './features/auth/register/register';
 import { Home } from './features/dashboard/home/home';
 import { prijavljenGuard } from './features/auth/prijavljen-guard';
 import { gostGuard } from './features/auth/gost-guard';

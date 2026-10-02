@@ -25,7 +25,7 @@ export class ServiserSpecijalnostController {
   ) {}
 
   @UseGuards(RolesGuard)
-  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
+  @Roles(Uloga.ADMIN)
   @Post()
   dodaj(@Body() dto: DodajSpecijalnostDto) {
     return this.specijalnostService.dodaj(dto);
@@ -37,7 +37,7 @@ export class ServiserSpecijalnostController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
+  @Roles(Uloga.ADMIN)
   @Delete(':id')
   ukloni(@Param('id', ParseIntPipe) id: number) {
     return this.specijalnostService.ukloni(id);

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -38,7 +39,7 @@ export class ServiserSpecijalnostService {
       where: { korisnik: { id: dto.korisnikId }, kategorija: dto.kategorija },
     });
     if (postojecaSpecijalnost) {
-      throw new BadRequestException('Serviser vec ima ovu specijalnost.');
+      throw new ConflictException('Serviser vec ima ovu specijalnost.');
     }
 
     const specijalnost = this.specijalnostRepository.create({
