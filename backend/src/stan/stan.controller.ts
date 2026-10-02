@@ -8,9 +8,10 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
+import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { StanService } from './stan.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -25,11 +26,14 @@ import { UpdateStanDto } from './dto/update-stan.dto.js';
 export class StanController {
   constructor(private readonly stanService: StanService) {}
 
-    @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Post()
-  create(@Req() req: any, @Body() dto: CreateStanDto) {
-    return this.stanService.create(req.user.id, req.user.uloga, dto);
+  create(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: CreateStanDto,
+  ) {
+    return this.stanService.create(korisnik.id, korisnik.uloga, dto);
   }
 
   @Get()
@@ -47,16 +51,19 @@ export class StanController {
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStanDto,
   ) {
-    return this.stanService.update(id, req.user.id, req.user.uloga, dto);
+    return this.stanService.update(id, korisnik.id, korisnik.uloga, dto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.stanService.remove(id, req.user.id, req.user.uloga);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.stanService.remove(id, korisnik.id, korisnik.uloga);
   }
 }

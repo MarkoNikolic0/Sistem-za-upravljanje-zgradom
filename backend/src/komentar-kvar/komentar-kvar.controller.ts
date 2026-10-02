@@ -7,9 +7,10 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
+import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { KomentarKvarService } from './komentar-kvar.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
@@ -21,21 +22,30 @@ export class KomentarKvarController {
   constructor(private readonly komentarKvarService: KomentarKvarService) {}
 
   @Post()
-  create(@Req() req: any, @Body() dto: CreateKomentarDto) {
-    return this.komentarKvarService.create(req.user.id, req.user.uloga, dto);
+  create(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: CreateKomentarDto,
+  ) {
+    return this.komentarKvarService.create(korisnik.id, korisnik.uloga, dto);
   }
 
   @Get('kvar/:kvarId')
-  findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number, @Req() req: any) {
+  findZaKvar(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
     return this.komentarKvarService.findZaKvar(
       kvarId,
-      req.user.id,
-      req.user.uloga,
+      korisnik.id,
+      korisnik.uloga,
     );
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.komentarKvarService.remove(id, req.user.id, req.user.uloga);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.komentarKvarService.remove(id, korisnik.id, korisnik.uloga);
   }
 }

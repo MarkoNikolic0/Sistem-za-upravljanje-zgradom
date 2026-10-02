@@ -17,6 +17,8 @@ import { LoginDto } from './dto/login.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { RolesGuard } from './guards/roles.guard.js';
 import { Roles } from './decorators/roles.decorator.js';
+import { TrenutniKorisnik } from './decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from './decorators/trenutni-korisnik.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -59,16 +61,16 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Req() req: Request & { user: any }) {
-    return req.user;
+  getProfile(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return korisnik;
   }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Uloga.ADMIN)
   @Get('admin-only')
-  getAdminOnly(@Req() req: any) {
-    return { poruka: 'Samo admin moze ovo da vidi', korisnik: req.user };
+  getAdminOnly(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return { poruka: 'Samo admin moze ovo da vidi', korisnik };
   }
 
   @Post('refresh')

@@ -7,9 +7,10 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
+import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { ZahtevPovezivanjeService } from './zahtev-povezivanje.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateZahtevDto } from './dto/create-zahtev.dto.js';
@@ -25,15 +26,18 @@ export class ZahtevPovezivanjeController {
   constructor(private readonly zahtevService: ZahtevPovezivanjeService) {}
 
   @Post()
-  create(@Req() req: any, @Body() dto: CreateZahtevDto) {
-    return this.zahtevService.create(req.user.id, dto);
+  create(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: CreateZahtevDto,
+  ) {
+    return this.zahtevService.create(korisnik.id, dto);
   }
 
-    @UseGuards(RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('na-cekanju')
-  findAllNaCekanju(@Req() req: any) {
-    return this.zahtevService.findAllNaCekanju(req.user.id, req.user.uloga);
+  findAllNaCekanju(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.zahtevService.findAllNaCekanju(korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -41,16 +45,21 @@ export class ZahtevPovezivanjeController {
   @Patch(':id/obradjen')
   response(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: ResponseZahtevDto,
   ) {
-    return this.zahtevService.zahtevResponse(id, req.user.id, req.user.uloga, dto);
+    return this.zahtevService.zahtevResponse(
+      id,
+      korisnik.id,
+      korisnik.uloga,
+      dto,
+    );
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('svi')
-  getAll(@Req() req: any) {
-    return this.zahtevService.findAll(req.user.id, req.user.uloga);
+  getAll(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.zahtevService.findAll(korisnik.id, korisnik.uloga);
   }
 }

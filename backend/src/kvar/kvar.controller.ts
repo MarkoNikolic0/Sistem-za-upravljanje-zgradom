@@ -8,9 +8,10 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
+import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { KvarService } from './kvar.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
@@ -29,15 +30,21 @@ export class KvarController {
   constructor(private readonly kvarService: KvarService) {}
 
   @Post()
-  create(@Req() req: any, @Body() dto: CreateKvarDto) {
-    return this.kvarService.create(req.user.id, dto);
+  create(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: CreateKvarDto,
+  ) {
+    return this.kvarService.create(korisnik.id, dto);
   }
 
   @Get()
-  findAll(@Req() req: any, @Query('zgradaId') zgradaId?: string) {
+  findAll(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Query('zgradaId') zgradaId?: string,
+  ) {
     return this.kvarService.findAllZaKorisnika(
-      req.user.id,
-      req.user.uloga,
+      korisnik.id,
+      korisnik.uloga,
       zgradaId ? Number(zgradaId) : undefined,
     );
   }
@@ -50,22 +57,31 @@ export class KvarController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.kvarService.findDostupan(id, req.user.id, req.user.uloga);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.kvarService.findDostupan(id, korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/prihvati')
-  prihvati(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.kvarService.prihvati(id, req.user.id, req.user.uloga);
+  prihvati(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.kvarService.prihvati(id, korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/odbij')
-  odbij(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.kvarService.odbij(id, req.user.id, req.user.uloga);
+  odbij(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.kvarService.odbij(id, korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -73,13 +89,13 @@ export class KvarController {
   @Patch(':id/prioritet')
   postaviPrioritet(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PostaviPrioritetDto,
   ) {
     return this.kvarService.postaviPrioritet(
       id,
-      req.user.id,
-      req.user.uloga,
+      korisnik.id,
+      korisnik.uloga,
       dto,
     );
   }
@@ -89,13 +105,13 @@ export class KvarController {
   @Patch(':id/dodeli')
   dodeliServisera(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: DodeliServiseraDto,
   ) {
     return this.kvarService.dodeliServisera(
       id,
-      req.user.id,
-      req.user.uloga,
+      korisnik.id,
+      korisnik.uloga,
       dto,
     );
   }
@@ -105,16 +121,19 @@ export class KvarController {
   @Patch(':id/status')
   promeniStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Req() req: any,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStatusKvarDto,
   ) {
-    return this.kvarService.promeniStatus(id, req.user.id, dto);
+    return this.kvarService.promeniStatus(id, korisnik.id, dto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/zatvori')
-  zatvori(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.kvarService.zatvori(id, req.user.id, req.user.uloga);
+  zatvori(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.kvarService.zatvori(id, korisnik.id, korisnik.uloga);
   }
 }

@@ -6,11 +6,12 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { SlikaKvaraService } from './slika-kvara.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -21,23 +22,29 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class SlikaKvaraController {
   constructor(private readonly slikaService: SlikaKvaraService) {}
 
-    @Post(':kvarId/upload')
+  @Post(':kvarId/upload')
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @Param('kvarId', ParseIntPipe) kvarId: number,
-    @Req() req: any,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.slikaService.upload(kvarId, req.user.id, req.user.uloga, file);
+    return this.slikaService.upload(kvarId, korisnik.id, korisnik.uloga, file);
   }
 
   @Get('kvar/:kvarId')
-  findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number, @Req() req: any) {
-    return this.slikaService.findZaKvar(kvarId, req.user.id, req.user.uloga);
+  findZaKvar(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.slikaService.findZaKvar(kvarId, korisnik.id, korisnik.uloga);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.slikaService.remove(id, req.user.id, req.user.uloga);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.slikaService.remove(id, korisnik.id, korisnik.uloga);
   }
 }
