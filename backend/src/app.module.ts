@@ -6,8 +6,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { AuthModule } from './auth/auth.module.js';
-import { ZgradaController } from './zgrada/zgrada.controller.js';
-import { ZgradaService } from './zgrada/zgrada.service.js';
 import { ZgradaModule } from './zgrada/zgrada.module.js';
 import { StanModule } from './stan/stan.module.js';
 import { ZahtevPovezivanjeModule } from './zahtev-povezivanje/zahtev-povezivanje.module.js';

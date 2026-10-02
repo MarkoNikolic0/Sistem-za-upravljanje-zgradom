@@ -12,7 +12,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { SlikaKvara } from './slika-kvara.entity.js';
 import { Repository } from 'typeorm';
-import { Kvar } from '../kvar/kvar.entity.js';
 import { ConfigService } from '@nestjs/config';
 import { createS3Client } from './s3.config.js';
 import { Express } from 'express';

@@ -6,7 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { KomentarKvar } from './komentar-kvar.entity.js';
 import { Repository } from 'typeorm';
-import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';

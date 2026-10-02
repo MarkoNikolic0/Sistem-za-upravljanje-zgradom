@@ -43,7 +43,7 @@ export class AuthService {
 
     const sacuvanKorsnik = await this.korisnikRepository.save(noviKorisnik);
 
-    const { lozinka, ...rezultat } = sacuvanKorsnik;
+    const { lozinka: _lozinka, ...rezultat } = sacuvanKorsnik;
     return rezultat;
   }
 
