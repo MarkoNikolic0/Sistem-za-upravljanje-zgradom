@@ -27,7 +27,7 @@ export class CreateKvarDto {
 
   @IsOptional()
   @IsEnum(Prioritet)
-  prioritet: Prioritet;
+  prioritet?: Prioritet;
 
   @IsEnum(LokacijaTip)
   @IsNotEmpty()
