@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -20,22 +21,23 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class SlikaKvaraController {
   constructor(private readonly slikaService: SlikaKvaraService) {}
 
-  @Post(':kvarId/upload')
+    @Post(':kvarId/upload')
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Req() req: any,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.slikaService.upload(kvarId, file);
+    return this.slikaService.upload(kvarId, req.user.id, req.user.uloga, file);
   }
 
   @Get('kvar/:kvarId')
-  findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number) {
-    return this.slikaService.findZaKvar(kvarId);
+  findZaKvar(@Param('kvarId', ParseIntPipe) kvarId: number, @Req() req: any) {
+    return this.slikaService.findZaKvar(kvarId, req.user.id, req.user.uloga);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.slikaService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.slikaService.remove(id, req.user.id, req.user.uloga);
   }
 }
