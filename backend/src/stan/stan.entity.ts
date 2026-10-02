@@ -1,20 +1,20 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import type { Zgrada } from "../zgrada/zgrada.entity.js";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import type { Zgrada } from '../zgrada/zgrada.entity.js';
 
 @Entity()
 export class Stan {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    broj: string;
+  @Column()
+  broj: string;
 
-    @Column()
-    kvadratura: number;
+  @Column()
+  kvadratura: number;
 
-    @Column()
-    sprat: number;
+  @Column()
+  sprat: number;
 
-    @ManyToOne('Zgrada', 'stanovi')
-    zgrada: Zgrada;
+  @ManyToOne('Zgrada', 'stanovi')
+  zgrada: Zgrada;
 }

@@ -23,7 +23,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-    app.useGlobalInterceptors(new KontaktSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalInterceptors(
+    new KontaktSerializerInterceptor(app.get(Reflector)),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Sistem za upravljanje zgradom')

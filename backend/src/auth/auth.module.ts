@@ -20,7 +20,7 @@ import { RefreshTokenModule } from '../refresh-token/refresh-token.module.js';
         signOptions: { expiresIn: '15m' },
       }),
     }),
-    RefreshTokenModule
+    RefreshTokenModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

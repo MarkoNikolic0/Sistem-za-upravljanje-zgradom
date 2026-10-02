@@ -24,6 +24,4 @@ export class PotvrdaPrisustva {
     default: StatusPrisustva.NE,
   })
   status: StatusPrisustva;
-
-  
 }

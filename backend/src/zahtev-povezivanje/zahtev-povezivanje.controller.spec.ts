@@ -9,7 +9,9 @@ describe('ZahtevPovezivanjeController', () => {
       controllers: [ZahtevPovezivanjeController],
     }).compile();
 
-    controller = module.get<ZahtevPovezivanjeController>(ZahtevPovezivanjeController);
+    controller = module.get<ZahtevPovezivanjeController>(
+      ZahtevPovezivanjeController,
+    );
   });
 
   it('should be defined', () => {
