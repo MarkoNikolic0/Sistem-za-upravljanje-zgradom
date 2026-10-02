@@ -22,6 +22,7 @@ import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import { KorisnikService } from '../korisnik/korisnik.service.js';
 
 @Injectable()
 export class KvarService {
@@ -34,6 +35,7 @@ export class KvarService {
     private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
+    private korisnikService: KorisnikService,
   ) {}
 
   async create(korisnikId: number, dto: CreateKvarDto) {
@@ -65,10 +67,24 @@ export class KvarService {
     uloga: Uloga,
     zgradaId?: number,
   ) {
-    if (uloga === Uloga.UPRAVNIK || uloga === Uloga.ADMIN) {
+    if (uloga === Uloga.ADMIN) {
       return await this.kvarRepository.find({
         where: zgradaId ? { zgrada: { id: zgradaId } } : {},
         relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
+        order: { datumPrijave: 'DESC' },
+      });
+    }
+
+    if (uloga === Uloga.UPRAVNIK) {
+      const zgradaUpravnika =
+        await this.korisnikService.zgradaUpravnika(korisnikId);
+      if (zgradaUpravnika === null) {
+        return [];
+      }
+      return await this.kvarRepository.find({
+        where: { zgrada: { id: zgradaUpravnika } },
+        relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
+        order: { datumPrijave: 'DESC' },
       });
     }
 
@@ -116,6 +132,70 @@ export class KvarService {
     return kvar;
   }
 
+  async findDostupan(id: number, korisnikId: number, uloga: Uloga) {
+    const kvar = await this.findOne(id);
+    if (!(await this.smeDaVidi(kvar, korisnikId, uloga))) {
+      throw new ForbiddenException('Nemate pristup ovom kvaru!');
+    }
+    return kvar;
+  }
+
+  private async smeDaVidi(
+    kvar: Kvar,
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<boolean> {
+    switch (uloga) {
+      case Uloga.ADMIN:
+        return true;
+
+      case Uloga.UPRAVNIK:
+        return (
+          (await this.korisnikService.zgradaUpravnika(korisnikId)) ===
+          kvar.zgrada.id
+        );
+
+      case Uloga.SERVISER:
+        return kvar.serviser?.id === korisnikId;
+
+      case Uloga.STANAR:
+        if (kvar.korisnik.id === korisnikId) {
+          return true;
+        }
+        if (kvar.stan) {
+          return await this.stanarStanaRepository.exists({
+            where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
+          });
+        }
+        return await this.stanarStanaRepository.exists({
+          where: {
+            korisnik: { id: korisnikId },
+            stan: { zgrada: { id: kvar.zgrada.id } },
+          },
+        });
+
+      default:
+        return false;
+    }
+  }
+
+  private async proveriUpravljanje(
+    kvar: Kvar,
+    korisnikId: number,
+    uloga: Uloga,
+  ) {
+    if (uloga === Uloga.ADMIN) {
+      return;
+    }
+    const zgradaUpravnika =
+      await this.korisnikService.zgradaUpravnika(korisnikId);
+    if (zgradaUpravnika !== kvar.zgrada.id) {
+      throw new ForbiddenException(
+        'Možete upravljati samo kvarovima svoje zgrade!',
+      );
+    }
+  }
+
   async findDostupneServisere(kategorija: KategorijaKvara) {
     const specijalnosti = await this.serviserSpecijanostRepository.find({
       where: { kategorija },
@@ -124,8 +204,9 @@ export class KvarService {
     return specijalnosti.map((s) => s.korisnik);
   }
 
-  async prihvati(id: number) {
+  async prihvati(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
+    await this.proveriUpravljanje(kvar, korisnikId, uloga);
     if (kvar.status !== StatusKvara.PRIJAVLJEN) {
       throw new BadRequestException(
         `Samo prijavljeni kvarovi mogu biti prihvaceni!`,
@@ -135,8 +216,9 @@ export class KvarService {
     return await this.kvarRepository.save(kvar);
   }
 
-  async odbij(id: number) {
+  async odbij(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
+    await this.proveriUpravljanje(kvar, korisnikId, uloga);
     if (kvar.status !== StatusKvara.PRIJAVLJEN) {
       throw new BadRequestException(
         `Samo prijavljeni kvarovi mogu biti odbijeni!`,
@@ -146,14 +228,26 @@ export class KvarService {
     return await this.kvarRepository.save(kvar);
   }
 
-  async postaviPrioritet(id: number, dto: PostaviPrioritetDto) {
+  async postaviPrioritet(
+    id: number,
+    korisnikId: number,
+    uloga: Uloga,
+    dto: PostaviPrioritetDto,
+  ) {
     const kvar = await this.findOne(id);
+    await this.proveriUpravljanje(kvar, korisnikId, uloga);
     kvar.prioritet = dto.prioritetKvara;
     return await this.kvarRepository.save(kvar);
   }
 
-  async dodeliServisera(id: number, dto: DodeliServiseraDto) {
+  async dodeliServisera(
+    id: number,
+    korisnikId: number,
+    uloga: Uloga,
+    dto: DodeliServiseraDto,
+  ) {
     const kvar = await this.findOne(id);
+    await this.proveriUpravljanje(kvar, korisnikId, uloga);
     if (kvar.status !== StatusKvara.PRIHVACEN) {
       throw new BadRequestException(
         `Kvar mora biti prihvacen pre dodele servisera!`,
@@ -179,7 +273,7 @@ export class KvarService {
   ) {
     const kvar = await this.findOne(id);
     if (kvar.serviser?.id !== korisnikId) {
-      throw new BadRequestException(
+      throw new ForbiddenException(
         `Samo dodeljeni serviser moze menjati status ovog kvara!`,
       );
     }
@@ -197,8 +291,9 @@ export class KvarService {
     return await this.kvarRepository.save(kvar);
   }
 
-  async zatvori(id: number) {
+  async zatvori(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
+    await this.proveriUpravljanje(kvar, korisnikId, uloga);
     if (kvar.status !== StatusKvara.RESEN) {
       throw new BadRequestException('Samo resen kvar moze biti zatvoren.');
     }

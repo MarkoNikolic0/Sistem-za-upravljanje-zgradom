@@ -50,22 +50,22 @@ export class KvarController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.kvarService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.kvarService.findDostupan(id, req.user.id, req.user.uloga);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/prihvati')
-  prihvati(@Param('id', ParseIntPipe) id: number) {
-    return this.kvarService.prihvati(id);
+  prihvati(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.kvarService.prihvati(id, req.user.id, req.user.uloga);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/odbij')
-  odbij(@Param('id', ParseIntPipe) id: number) {
-    return this.kvarService.odbij(id);
+  odbij(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.kvarService.odbij(id, req.user.id, req.user.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -73,9 +73,15 @@ export class KvarController {
   @Patch(':id/prioritet')
   postaviPrioritet(
     @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
     @Body() dto: PostaviPrioritetDto,
   ) {
-    return this.kvarService.postaviPrioritet(id, dto);
+    return this.kvarService.postaviPrioritet(
+      id,
+      req.user.id,
+      req.user.uloga,
+      dto,
+    );
   }
 
   @UseGuards(RolesGuard)
@@ -83,9 +89,15 @@ export class KvarController {
   @Patch(':id/dodeli')
   dodeliServisera(
     @Param('id', ParseIntPipe) id: number,
+    @Req() req: any,
     @Body() dto: DodeliServiseraDto,
   ) {
-    return this.kvarService.dodeliServisera(id, dto);
+    return this.kvarService.dodeliServisera(
+      id,
+      req.user.id,
+      req.user.uloga,
+      dto,
+    );
   }
 
   @UseGuards(RolesGuard)
@@ -102,7 +114,7 @@ export class KvarController {
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/zatvori')
-  zatvori(@Param('id', ParseIntPipe) id: number) {
-    return this.kvarService.zatvori(id);
+  zatvori(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.kvarService.zatvori(id, req.user.id, req.user.uloga);
   }
 }

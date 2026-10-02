@@ -8,6 +8,7 @@ import { Stan } from '../stan/stan.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import { KorisnikModule } from '../korisnik/korisnik.module.js';
 
 @Module({
   imports: [
@@ -19,8 +20,10 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
       StanarStana,
     ]),
     AuthModule,
+    KorisnikModule,
   ],
   controllers: [KvarController],
   providers: [KvarService],
+  exports: [KvarService],
 })
 export class KvarModule {}
