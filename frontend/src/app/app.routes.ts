@@ -6,13 +6,6 @@ import { gostGuard } from './features/auth/gost-guard';
 
 export const routes: Routes = [
   {
-    path: '',
-    pathMatch: 'full',
-    component: Home,
-    canActivate: [prijavljenGuard],
-    title: 'Početna | Upravljanje zgradom',
-  },
-  {
     path: 'login',
     component: Login,
     canActivate: [gostGuard],
@@ -23,6 +16,18 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
     canActivate: [gostGuard],
     title: 'Registracija | Upravljanje zgradom',
+  },
+  {
+    path: '',
+    loadComponent: () => import('./features/layout/app-layout/app-layout').then((m) => m.AppLayout),
+    canActivate: [prijavljenGuard],
+    children: [
+      {
+        path: '',
+        component: Home,
+        title: 'Početna | Upravljanje zgradom',
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,140 @@
+:host {
+  display: block;
+}
+
+.gornja-traka {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: env(safe-area-inset-top) 1rem 0;
+  border-bottom: 1px solid var(--color-linija);
+  background: var(--color-pozadina);
+}
+
+.brend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-naslov);
+
+  app-logo {
+    flex-shrink: 0;
+    width: 1.5rem;
+  }
+}
+
+.brend span {
+  white-space: nowrap;
+}
+
+.zaglavlje-sidebara {
+  justify-content: center;
+  height: 3.5rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid var(--color-linija);
+}
+
+.oznaka {
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-svetlo);
+
+  &::before {
+    content: '';
+    width: 1rem;
+    height: 1px;
+    background: currentColor;
+  }
+}
+
+.sadrzaj {
+  flex: 1;
+  padding: 1.5rem 1rem;
+}
+
+.aktivna i {
+  color: var(--color-svetlo);
+}
+
+.donja-traka {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--color-linija);
+  background: var(--color-pozadina);
+}
+
+.stavka-trake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 4rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-priguseno);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: -2px;
+  }
+}
+
+.ikonica {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 2rem;
+  border-radius: 9999px;
+  transition: background-color 150ms;
+}
+
+.stavka-trake.aktivna {
+  color: var(--color-naslov);
+
+  .ikonica {
+    background: rgb(245 184 61 / 0.16);
+    color: var(--color-svetlo);
+  }
+}
+
+// Desktop
+@media (min-width: 64rem) {
+  .gornja-traka {
+    padding-inline: 1.5rem;
+  }
+
+  .sadrzaj {
+    padding: 2.5rem 3rem;
+  }
+
+  .donja-traka {
+    display: none;
+  }
+
+  .brend.uz-sidebar {
+    display: none;
+  }
+}

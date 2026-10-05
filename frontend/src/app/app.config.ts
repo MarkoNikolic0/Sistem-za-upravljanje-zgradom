@@ -19,10 +19,15 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),
     providePrimeNG({
+      overlayAppendTo: 'body',
       theme: {
         preset: ZgradaPreset,
         options: {
           darkModeSelector: '.app-dark',
+          cssLayer: {
+            name: 'primeng',
+            order: 'theme, base, primeng',
+          },
         },
       },
     }),

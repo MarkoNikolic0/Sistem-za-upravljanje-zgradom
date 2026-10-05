@@ -1,0 +1,109 @@
+<p-sidebar-layout>
+  @if (imaNavigaciju()) {
+    <p-sidebar id="glavni-meni" class="max-lg:hidden">
+      <p-sidebar-spacer />
+      <p-sidebar-aside>
+        <p-sidebar-panel>
+          <p-sidebar-header class="zaglavlje-sidebara">
+            <a routerLink="/" class="brend">
+              <app-logo />
+              <span>Upravljanje zgradom</span>
+            </a>
+          </p-sidebar-header>
+          <p-sidebar-content>
+            <nav aria-label="Glavna navigacija">
+              <p-sidebar-group>
+                <p-sidebar-group-label class="oznaka">Meni</p-sidebar-group-label>
+                <p-sidebar-menu>
+                  @for (stavka of stavke(); track stavka.putanja) {
+                    <p-sidebar-menu-item>
+                      <a
+                        pSidebarMenuButton
+                        [routerLink]="stavka.putanja"
+                        routerLinkActive="aktivna"
+                        #rla="routerLinkActive"
+                        [routerLinkActiveOptions]="{ exact: stavka.putanja === '/' }"
+                        [isActive]="rla.isActive"
+                        ariaCurrentWhenActive="page"
+                      >
+                        <i [class]="stavka.ikonica" aria-hidden="true"></i>
+                        <span>{{ stavka.naziv }}</span>
+                      </a>
+                    </p-sidebar-menu-item>
+                  }
+                </p-sidebar-menu>
+              </p-sidebar-group>
+            </nav>
+          </p-sidebar-content>
+        </p-sidebar-panel>
+      </p-sidebar-aside>
+    </p-sidebar>
+  }
+
+  <p-sidebar-main>
+    <header class="gornja-traka">
+      @if (imaNavigaciju()) {
+        <button
+          pButton
+          pSidebarTrigger
+          target="glavni-meni"
+          type="button"
+          severity="secondary"
+          text
+          iconOnly
+          aria-label="Glavni meni"
+          class="max-lg:hidden"
+        >
+          <i class="pi pi-bars" aria-hidden="true"></i>
+        </button>
+      }
+
+      <a routerLink="/" class="brend" [class.uz-sidebar]="imaNavigaciju()">
+        <app-logo />
+        <span>Upravljanje zgradom</span>
+      </a>
+
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        text
+        iconOnly
+        aria-label="Meni naloga"
+        class="ml-auto"
+        (click)="nalog.toggle($event)"
+      >
+        <i class="pi pi-user" aria-hidden="true"></i>
+      </button>
+      <p-menu #nalog [model]="meniNaloga" [popup]="true" ariaLabel="Meni naloga" />
+    </header>
+
+    <main class="sadrzaj">
+      <router-outlet />
+    </main>
+
+    @if (imaNavigaciju()) {
+      <nav class="donja-traka" aria-label="Glavna navigacija">
+        @for (stavka of stavkeTrake(); track stavka.putanja) {
+          <a
+            class="stavka-trake"
+            [routerLink]="stavka.putanja"
+            routerLinkActive="aktivna"
+            [routerLinkActiveOptions]="{ exact: stavka.putanja === '/' }"
+            ariaCurrentWhenActive="page"
+          >
+            <span class="ikonica"><i [class]="stavka.ikonica" aria-hidden="true"></i></span>
+            <span class="naziv">{{ stavka.naziv }}</span>
+          </a>
+        }
+        @if (stavkeVise().length) {
+          <button type="button" class="stavka-trake" (click)="vise.toggle($event)">
+            <span class="ikonica"><i class="pi pi-ellipsis-h" aria-hidden="true"></i></span>
+            <span class="naziv">Više</span>
+          </button>
+        }
+      </nav>
+      <p-menu #vise [model]="stavkeVise()" [popup]="true" ariaLabel="Ostale stavke" />
+    }
+  </p-sidebar-main>
+</p-sidebar-layout>

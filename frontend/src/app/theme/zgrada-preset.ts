@@ -1,7 +1,6 @@
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
-// Tamna tema: grafitne povrsine i zuti akcenat (svetlo prozora #f5b83d = 400)
 export const ZgradaPreset = definePreset(Aura, {
   semantic: {
     primary: {
@@ -21,7 +20,6 @@ export const ZgradaPreset = definePreset(Aura, {
       hoverColor: '{primary.300}',
       activeColor: '{primary.200}',
     },
-    // Iste vrednosti kao tokeni u styles.scss (pozadina, povrsina, tekst...)
     surface: {
       0: '#ffffff',
       50: '#f5f5f5',
@@ -39,7 +37,6 @@ export const ZgradaPreset = definePreset(Aura, {
   },
   components: {
     button: {
-      // Manja slova jer su velika; vece dugme ostaje dovoljno visoko za prst
       root: {
         fontSize: '0.8125rem',
         lg: {
@@ -47,13 +44,34 @@ export const ZgradaPreset = definePreset(Aura, {
           paddingY: '0.75rem',
         },
       },
-      // Za velika slova i razmak nema tokena, pa ide CSS kroz preset (PrimeNG "Extend")
       css: () => `
         .p-button {
           text-transform: uppercase;
           letter-spacing: 0.12em;
         }
       `,
+    },
+    sidebar: {
+      root: {
+        borderColor: 'rgb(255 255 255 / 0.06)',
+      },
+      layout: {
+        background: '{surface.950}',
+      },
+      panel: {
+        background: '{surface.950}',
+      },
+      main: {
+        background: '{surface.950}',
+      },
+      menuButton: {
+        fontSize: '0.875rem',
+        color: '{surface.300}',
+        focusBackground: '{surface.900}',
+        focusColor: '{surface.0}',
+        activeBackground: '{surface.900}',
+        activeColor: '{surface.0}',
+      },
     },
   },
 });
