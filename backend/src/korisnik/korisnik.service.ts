@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { UpdateProfilDto } from './dto/update-profil.dto.js';
+import { Uloga } from '../shared/enums/uloga.enum.js';
 
 @Injectable()
 export class KorisnikService {
@@ -41,14 +42,15 @@ export class KorisnikService {
       telefon: korisnik.telefon,
       uloga: korisnik.uloga,
       kreiranDatum: korisnik.kreiranDatum,
-      // Zgrada kojom upravlja (samo upravnik)
-      zgrada: korisnik.zgrada
-        ? {
-            id: korisnik.zgrada.id,
-            naziv: korisnik.zgrada.naziv,
-            adresa: korisnik.zgrada.adresa,
-          }
-        : null,
+      // Samo upravnik ima zgradu kojom upravlja; stanar zgradu dobija preko stana
+      zgrada:
+        korisnik.uloga === Uloga.UPRAVNIK && korisnik.zgrada
+          ? {
+              id: korisnik.zgrada.id,
+              naziv: korisnik.zgrada.naziv,
+              adresa: korisnik.zgrada.adresa,
+            }
+          : null,
       stanovi: veze.map((veza) => ({
         id: veza.stan.id,
         broj: veza.stan.broj,

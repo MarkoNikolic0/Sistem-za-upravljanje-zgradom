@@ -27,6 +27,12 @@ export const routes: Routes = [
         component: Home,
         title: 'Početna | Upravljanje zgradom',
       },
+      {
+        path: 'profil',
+        loadComponent: () =>
+          import('./features/profile/my-profile/my-profile').then((m) => m.MyProfile),
+        title: 'Moj profil | Upravljanje zgradom',
+      },
     ],
   },
   { path: '**', redirectTo: '' },

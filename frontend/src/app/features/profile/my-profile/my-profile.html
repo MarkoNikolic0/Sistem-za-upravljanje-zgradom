@@ -1,0 +1,183 @@
+<div class="profil">
+  <!-- hasValue() prvi: value() baca gresku kad je resource u stanju greske -->
+  @if (profil.hasValue()) {
+    @let p = profil.value();
+    <p class="oznaka">Profil</p>
+    <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">
+      {{ p.ime }} {{ p.prezime }}
+    </h1>
+    <p class="mt-2 text-priguseno">{{ nazivUloge() }}</p>
+
+    <div aria-live="polite" class="mt-6 empty:hidden">
+      @if (sacuvano()) {
+        <p-message severity="success">Podaci su sačuvani.</p-message>
+      }
+      @if (greska()) {
+        <p-message severity="error">{{ greska() }}</p-message>
+      }
+    </div>
+
+    <section class="odeljak" aria-labelledby="licni-podaci">
+      <div class="zaglavlje-odeljka">
+        <h2 id="licni-podaci" class="naslov-odeljka">Lični podaci</h2>
+        @if (!izmena()) {
+          <button pButton type="button" outlined size="small" (click)="pocniIzmenu()">
+            Izmeni
+          </button>
+        }
+      </div>
+
+      @if (izmena()) {
+        <form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="mt-5 flex flex-col gap-5">
+          <div class="grid gap-5 sm:grid-cols-2 sm:gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label for="ime" class="text-sm font-medium">Ime</label>
+              <input
+                pInputText
+                id="ime"
+                name="ime"
+                formControlName="ime"
+                autocomplete="given-name"
+                enterkeyhint="next"
+                required
+                [fluid]="true"
+                [invalid]="nevazece('ime')"
+                [attr.aria-invalid]="nevazece('ime')"
+                [attr.aria-describedby]="nevazece('ime') ? 'ime-greska' : null"
+              />
+              @if (nevazece('ime')) {
+                <small id="ime-greska" class="text-sm text-greska">Unesi ime.</small>
+              }
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label for="prezime" class="text-sm font-medium">Prezime</label>
+              <input
+                pInputText
+                id="prezime"
+                name="prezime"
+                formControlName="prezime"
+                autocomplete="family-name"
+                enterkeyhint="next"
+                required
+                [fluid]="true"
+                [invalid]="nevazece('prezime')"
+                [attr.aria-invalid]="nevazece('prezime')"
+                [attr.aria-describedby]="nevazece('prezime') ? 'prezime-greska' : null"
+              />
+              @if (nevazece('prezime')) {
+                <small id="prezime-greska" class="text-sm text-greska">Unesi prezime.</small>
+              }
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label for="telefon" class="text-sm font-medium">Telefon</label>
+            <input
+              pInputText
+              id="telefon"
+              name="telefon"
+              type="tel"
+              formControlName="telefon"
+              autocomplete="tel"
+              enterkeyhint="done"
+              required
+              aria-describedby="telefon-pomoc"
+              [fluid]="true"
+              [invalid]="nevazece('telefon')"
+              [attr.aria-invalid]="nevazece('telefon')"
+            />
+            <small
+              id="telefon-pomoc"
+              class="text-sm"
+              [class]="nevazece('telefon') ? 'text-greska' : 'text-priguseno'"
+            >
+              @if (forma.controls.telefon.hasError('required') && nevazece('telefon')) {
+                Unesi broj telefona.
+              } @else if (forma.controls.telefon.hasError('server')) {
+                {{ forma.controls.telefon.getError('server') }}
+              } @else {
+                Npr. 064 123 4567
+              }
+            </small>
+          </div>
+
+          <div class="flex gap-3">
+            <button pButton type="submit" [disabled]="salje()">
+              @if (salje()) {
+                <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+                Čuvanje…
+              } @else {
+                Sačuvaj
+              }
+            </button>
+            <button pButton type="button" severity="secondary" text (click)="otkazi()">
+              Otkaži
+            </button>
+          </div>
+        </form>
+      } @else {
+        <dl>
+          <div class="red">
+            <dt>Email</dt>
+            <dd>{{ p.email }}</dd>
+          </div>
+          <div class="red">
+            <dt>Telefon</dt>
+            <dd>{{ telefon() }}</dd>
+          </div>
+        </dl>
+      }
+    </section>
+
+    @if (p.zgrada; as zgrada) {
+      <section class="odeljak" aria-labelledby="zgrada-upravnika">
+        <div class="zaglavlje-odeljka">
+          <h2 id="zgrada-upravnika" class="naslov-odeljka">Zgrada kojom upravljaš</h2>
+        </div>
+        <div class="red">
+          <div>
+            <p class="text-naslov">{{ zgrada.naziv }}</p>
+            <p class="mt-1 text-sm text-priguseno">{{ zgrada.adresa }}</p>
+          </div>
+        </div>
+      </section>
+    }
+
+    @if (p.uloga === 'stanar' || p.stanovi.length > 0) {
+      <section class="odeljak" aria-labelledby="moji-stanovi">
+        <div class="zaglavlje-odeljka">
+          <h2 id="moji-stanovi" class="naslov-odeljka">Moji stanovi</h2>
+        </div>
+        @for (stan of p.stanovi; track stan.id) {
+          <div class="red">
+            <div>
+              <p class="text-naslov">Stan {{ stan.broj }} · {{ stan.sprat }}. sprat</p>
+              <p class="mt-1 text-sm text-priguseno">
+                {{ stan.zgrada.naziv }}, {{ stan.zgrada.adresa }}
+              </p>
+            </div>
+            <span class="vrsta-stanara" [class.vlasnik]="stan.vlasnik">
+              {{ stan.vlasnik ? 'Vlasnik' : 'Stanar' }}
+            </span>
+          </div>
+        } @empty {
+          <p class="mt-4 text-priguseno">Još nisi povezan ni sa jednim stanom.</p>
+        }
+      </section>
+    }
+  } @else if (profil.error()) {
+    <p-message severity="error">Profil trenutno nije moguće učitati.</p-message>
+    <button pButton type="button" outlined class="mt-4" (click)="profil.reload()">
+      Pokušaj ponovo
+    </button>
+  } @else {
+    <div class="ucitavanje" aria-hidden="true">
+      <p-skeleton width="5rem" height="0.75rem" />
+      <p-skeleton width="16rem" height="2.5rem" styleClass="mt-3" />
+      <p-skeleton width="6rem" height="1rem" styleClass="mt-3" />
+      <p-skeleton height="8rem" styleClass="mt-10" />
+    </div>
+    <span class="sr-only">Učitavanje profila…</span>
+  }
+</div>

@@ -43,19 +43,9 @@
   border-bottom: 1px solid var(--color-linija);
 }
 
-.oznaka {
-  gap: 0.5rem;
-  font-size: 0.6875rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-svetlo);
-
-  &::before {
-    content: '';
-    width: 1rem;
-    height: 1px;
-    background: currentColor;
-  }
+// Crtica oznake u istoj liniji sa ikonicama stavki (isti razmak kao stavke menija)
+p-sidebar-group-label.oznaka {
+  padding: 0 0.625rem;
 }
 
 .sadrzaj {
