@@ -12,6 +12,7 @@ import { MessageModule } from 'primeng/message';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { greskaPolja } from '../../../shared/greske-servera';
+import { MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../pravila-lozinke';
 
 type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
 
@@ -40,13 +41,14 @@ export class Register {
   greska = signal('');
   salje = signal(false);
   sakrijLozinku = signal(true);
+  protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
 
   registerForm = this.fb.nonNullable.group({
     ime: ['', Validators.required],
     prezime: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     telefon: ['', Validators.required],
-    lozinka: ['', [Validators.required, Validators.minLength(6)]],
+        lozinka: ['', PRAVILA_LOZINKE],
   });
 
   nevazece(polje: Polje): boolean {

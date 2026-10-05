@@ -6,28 +6,6 @@
   max-width: 40rem;
 }
 
-.odeljak {
-  margin-top: 2.5rem;
-}
-
-.zaglavlje-odeljka {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 2.25rem;
-  margin-bottom: 0.75rem;
-}
-
-.naslov-odeljka {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-utisano);
-}
-
 dl {
   margin: 0;
 }

@@ -10,6 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { Uloga } from '../../auth/auth-models';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { ProfileService } from '../profile-service';
+import { ChangePassword } from '../change-password/change-password';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -29,7 +30,14 @@ function formatirajTelefon(telefon: string): string {
 }
 
 @Component({
-  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, MessageModule, SkeletonModule],
+  imports: [
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    MessageModule,
+    SkeletonModule,
+    ChangePassword,
+  ],
   selector: 'app-my-profile',
   styleUrl: './my-profile.scss',
   templateUrl: './my-profile.html',

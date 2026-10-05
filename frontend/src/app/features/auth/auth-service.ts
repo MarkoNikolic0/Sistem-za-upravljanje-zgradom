@@ -2,7 +2,12 @@ import { inject, Service } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { KorisnikResponse, LoginResponse, RegisterRequest } from './auth-models';
+import {
+  ChangePasswordRequest,
+  KorisnikResponse,
+  LoginResponse,
+  RegisterRequest,
+} from './auth-models';
 
 @Service()
 export class AuthService {
@@ -29,6 +34,12 @@ export class AuthService {
 
   logout(): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/logout`, null, {
+      withCredentials: true,
+    });
+  }
+
+  changePassword(podaci: ChangePasswordRequest): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/lozinka`, podaci, {
       withCredentials: true,
     });
   }

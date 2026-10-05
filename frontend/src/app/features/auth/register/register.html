@@ -118,7 +118,7 @@
           formControlName="lozinka"
           autocomplete="new-password"
           enterkeyhint="done"
-          minlength="6"
+          [minlength]="minDuzinaLozinke"
           required
           aria-describedby="lozinka-pomoc"
           [mask]="sakrijLozinku()"
@@ -146,7 +146,7 @@
         @if (registerForm.controls.lozinka.hasError('required') && nevazece('lozinka')) {
           Unesi lozinku.
         } @else {
-          Najmanje 6 karaktera.
+          Najmanje {{ minDuzinaLozinke }} znakova.
         }
       </small>
     </div>

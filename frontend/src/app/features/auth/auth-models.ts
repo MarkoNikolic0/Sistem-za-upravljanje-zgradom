@@ -21,3 +21,8 @@ export interface RegisterRequest {
   telefon: string;
   lozinka: string;
 }
+
+export interface ChangePasswordRequest {
+  trenutnaLozinka: string;
+  novaLozinka: string;
+}
