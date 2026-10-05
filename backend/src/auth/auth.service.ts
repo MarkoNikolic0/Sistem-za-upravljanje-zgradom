@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
-import { parsePhoneNumber } from 'libphonenumber-js/min';
+import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +37,7 @@ export class AuthService {
       ime: dto.ime,
       prezime: dto.prezime,
       email: dto.email,
-      telefon: parsePhoneNumber(dto.telefon, 'RS').number,
+      telefon: parsePhoneNumberWithError(dto.telefon, 'RS').number,
       lozinka: hesiranaLozinka,
     });
 

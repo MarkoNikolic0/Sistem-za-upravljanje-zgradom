@@ -8,7 +8,6 @@ export interface TrenutniKorisnikPodaci {
   uloga: Uloga;
 }
 
-// Daje ulogovanog korisnika u kontroleru, umesto rucnog citanja req.user
 export const TrenutniKorisnik = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): TrenutniKorisnikPodaci =>
     ctx.switchToHttp().getRequest().user,
