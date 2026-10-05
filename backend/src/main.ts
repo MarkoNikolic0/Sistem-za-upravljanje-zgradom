@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { KontaktSerializerInterceptor } from './korisnik/kontakt-serializer.interceptor.js';
+import { greskeValidacije } from './shared/greske-validacije.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: greskeValidacije,
     }),
   );
   app.useGlobalInterceptors(

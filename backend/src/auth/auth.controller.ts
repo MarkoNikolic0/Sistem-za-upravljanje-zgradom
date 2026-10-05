@@ -1,25 +1,16 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
-import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
-import { RolesGuard } from './guards/roles.guard.js';
-import { Roles } from './decorators/roles.decorator.js';
-import { TrenutniKorisnik } from './decorators/trenutni-korisnik.decorator.js';
-import type { TrenutniKorisnikPodaci } from './decorators/trenutni-korisnik.decorator.js';
-import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ConfigService } from '@nestjs/config';
 import {
   REFRESH_COOKIE,
@@ -56,21 +47,6 @@ export class AuthController {
     );
 
     return { accessToken };
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
-    return korisnik;
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Uloga.ADMIN)
-  @Get('admin-only')
-  getAdminOnly(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
-    return { poruka: 'Samo admin moze ovo da vidi', korisnik };
   }
 
   @Post('refresh')

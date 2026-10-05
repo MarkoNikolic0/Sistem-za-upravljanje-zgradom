@@ -11,9 +11,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { MessageModule } from 'primeng/message';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
+import { greskaPolja } from '../../../shared/greske-servera';
 
 type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
-const PORUKA_TELEFON = 'Broj telefona nije ispravan.';
 
 @Component({
   imports: [
@@ -75,10 +75,11 @@ export class Register {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    const poruke: unknown = err.error?.message;
+    const greskaTelefona = greskaPolja(err, 'telefon');
 
-    if (err.status === 400 && Array.isArray(poruke) && poruke.includes(PORUKA_TELEFON)) {
-      this.registerForm.controls.telefon.setErrors({ server: PORUKA_TELEFON });
+    if (greskaTelefona) {
+      this.registerForm.controls.telefon.setErrors({ server: greskaTelefona });
+      this.registerForm.controls.telefon.markAsTouched();
       this.host.nativeElement.querySelector<HTMLElement>('#telefon')?.focus();
       return;
     }
