@@ -33,6 +33,12 @@ export const routes: Routes = [
           import('./features/profile/my-profile/my-profile').then((m) => m.MyProfile),
         title: 'Moj profil | Upravljanje zgradom',
       },
+      {
+        path: 'povezivanje',
+        loadComponent: () =>
+          import('./features/zahtevi/novi-zahtev/novi-zahtev').then((m) => m.NoviZahtev),
+        title: 'Povezivanje sa stanom | Upravljanje zgradom',
+      },
     ],
   },
   { path: '**', redirectTo: '' },

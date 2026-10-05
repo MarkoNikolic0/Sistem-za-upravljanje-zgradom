@@ -51,11 +51,18 @@ export class AppLayout {
       })),
   );
 
-  protected readonly meniNaloga: MenuItem[] = [
-    { label: 'Moj profil', icon: 'pi pi-user', routerLink: '/profil' },
-    { separator: true },
-    { label: 'Odjavi se', icon: 'pi pi-sign-out', command: () => this.odjava() },
-  ];
+  protected readonly meniNaloga = computed((): MenuItem[] => {
+    const uloga = this.authStore.korisnik()?.uloga;
+    const zivi = uloga === 'stanar' || uloga === 'upravnik';
+    return [
+      { label: 'Moj profil', icon: 'pi pi-user', routerLink: '/profil' },
+      ...(zivi
+        ? [{ label: 'Povezivanje sa stanom', icon: 'pi pi-link', routerLink: '/povezivanje' }]
+        : []),
+      { separator: true },
+      { label: 'Odjavi se', icon: 'pi pi-sign-out', command: () => this.odjava() },
+    ];
+  });
 
   private async odjava() {
     await this.authStore.logout();

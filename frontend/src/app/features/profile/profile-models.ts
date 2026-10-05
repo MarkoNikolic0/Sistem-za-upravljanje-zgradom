@@ -1,15 +1,7 @@
 import { KorisnikResponse } from '../auth/auth-models';
+import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 
-export interface ZgradaOsnovno {
-  id: number;
-  naziv: string;
-  adresa: string;
-}
-
-export interface StanKorisnika {
-  id: number;
-  broj: string;
-  sprat: number;
+export interface StanKorisnika extends StanOsnovno {
   vlasnik: boolean;
   zgrada: ZgradaOsnovno;
 }

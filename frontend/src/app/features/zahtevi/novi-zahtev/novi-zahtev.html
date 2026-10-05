@@ -1,0 +1,105 @@
+<div class="stranica">
+  <p class="oznaka">Stan</p>
+  <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">Povezivanje sa stanom</h1>
+  <p class="mt-2 text-priguseno">
+    Izaberi zgradu i stan u kojem živiš. Upravnik zgrade će potvrditi zahtev.
+  </p>
+
+  <div aria-live="polite" class="mt-6 empty:hidden">
+    @if (poslat()) {
+      <p-message severity="success">Zahtev je poslat upravniku zgrade.</p-message>
+    }
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
+
+  <section class="odeljak" aria-labelledby="novi-zahtev-naslov">
+    <div class="zaglavlje-odeljka">
+      <h2 id="novi-zahtev-naslov" class="naslov-odeljka">Novi zahtev</h2>
+    </div>
+
+    <form [formGroup]="forma" (ngSubmit)="posalji()" class="flex flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label for="zgrada" class="text-sm font-medium">Zgrada</label>
+        <p-select
+          inputId="zgrada"
+          formControlName="zgradaId"
+          [options]="zgrade.hasValue() ? zgrade.value() : []"
+          optionLabel="naziv"
+          optionValue="id"
+          [filter]="true"
+          filterBy="naziv,adresa"
+          placeholder="Izaberi zgradu"
+          emptyMessage="Nema zgrada"
+          emptyFilterMessage="Nema zgrade sa tim nazivom"
+          [loading]="zgrade.isLoading()"
+          [fluid]="true"
+          [invalid]="nevazece('zgradaId')"
+        >
+          <ng-template #item let-zgrada>
+            <div>
+              <p>{{ zgrada.naziv }}</p>
+              <p class="text-sm text-priguseno">{{ zgrada.adresa }}</p>
+            </div>
+          </ng-template>
+        </p-select>
+        @if (nevazece('zgradaId')) {
+          <small class="text-sm text-greska">Izaberi zgradu.</small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="stan" class="text-sm font-medium">Stan</label>
+        <p-select
+          inputId="stan"
+          formControlName="stanId"
+          [options]="stanoviZaIzbor()"
+          optionLabel="naziv"
+          optionValue="id"
+          placeholder="Izaberi stan"
+          emptyMessage="Prvo izaberi zgradu"
+          [loading]="stanovi.isLoading()"
+          [fluid]="true"
+          [invalid]="nevazece('stanId')"
+        />
+        @if (nevazece('stanId')) {
+          <small class="text-sm text-greska">Izaberi stan.</small>
+        }
+      </div>
+
+      <div>
+        <button pButton type="submit" [disabled]="salje()">
+          @if (salje()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Slanje…
+          } @else {
+            Pošalji zahtev
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="odeljak" aria-labelledby="moji-zahtevi-naslov">
+    <div class="zaglavlje-odeljka">
+      <h2 id="moji-zahtevi-naslov" class="naslov-odeljka">Moji zahtevi</h2>
+    </div>
+
+    @for (zahtev of neobradjeni(); track zahtev.id) {
+      <div class="red">
+        <div>
+          <p class="text-naslov">Stan {{ zahtev.stan.broj }} · {{ zahtev.stan.sprat }}. sprat</p>
+          <p class="mt-1 text-sm text-priguseno">
+            {{ zahtev.stan.zgrada.naziv }}, {{ zahtev.stan.zgrada.adresa }}
+          </p>
+        </div>
+        <span class="status" [class.odbijen]="zahtev.status === 'odbijen'">
+          {{ naziviStatusa[zahtev.status] }}
+        </span>
+      </div>
+    } @empty {
+      <p class="text-priguseno">Nemaš zahteva koji čekaju odgovor.</p>
+    }
+  </section>
+</div>

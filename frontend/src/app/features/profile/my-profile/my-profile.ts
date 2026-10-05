@@ -11,6 +11,7 @@ import { Uloga } from '../../auth/auth-models';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { ProfileService } from '../profile-service';
 import { ChangePassword } from '../change-password/change-password';
+import { RouterLink } from '@angular/router';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -37,6 +38,7 @@ function formatirajTelefon(telefon: string): string {
     MessageModule,
     SkeletonModule,
     ChangePassword,
+    RouterLink,
   ],
   selector: 'app-my-profile',
   styleUrl: './my-profile.scss',
@@ -49,7 +51,6 @@ export class MyProfile {
 
   protected readonly profil = this.profileService.profile();
 
-  // hasValue() pre value(): value() baca gresku kad ucitavanje nije uspelo
   protected readonly nazivUloge = computed(() =>
     this.profil.hasValue() ? NAZIVI_ULOGA[this.profil.value().uloga] : '',
   );
