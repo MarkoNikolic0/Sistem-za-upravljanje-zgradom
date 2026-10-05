@@ -137,4 +137,12 @@ export class ZahtevPovezivanjeService {
       return obradjenZahtev;
     });
   }
+
+  async findMoji(korisnikId: number) {
+    return await this.zahtevRepository.find({
+      where: { korisnik: { id: korisnikId } },
+      relations: { stan: { zgrada: true } },
+      order: { datumPodnosenjaZahteva: 'DESC' },
+    });
+  }
 }

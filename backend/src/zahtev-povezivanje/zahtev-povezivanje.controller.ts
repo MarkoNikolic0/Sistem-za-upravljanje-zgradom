@@ -62,4 +62,9 @@ export class ZahtevPovezivanjeController {
   getAll(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
     return this.zahtevService.findAll(korisnik.id, korisnik.uloga);
   }
+
+  @Get('moji-zahtevi')
+  findMoji(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.zahtevService.findMoji(korisnik.id);
+  }
 }
