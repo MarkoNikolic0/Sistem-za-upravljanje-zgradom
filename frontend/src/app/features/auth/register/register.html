@@ -1,5 +1,5 @@
-<app-auth-shell>
-  <h1 class="font-display text-4xl font-semibold tracking-tight">Napravi nalog</h1>
+<app-auth-layout>
+  <h1 class="text-4xl font-extralight tracking-tight text-naslov">Napravi nalog</h1>
 
   <div aria-live="polite" class="mt-6 empty:hidden">
     @if (greska()) {
@@ -171,8 +171,8 @@
     Već imaš nalog?
     <a
       routerLink="/login"
-      class="font-medium text-tinta underline underline-offset-4 hover:no-underline"
+      class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
       >Prijavi se</a
     >
   </p>
-</app-auth-shell>
+</app-auth-layout>

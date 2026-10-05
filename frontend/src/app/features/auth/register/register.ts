@@ -10,7 +10,7 @@ import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { MessageModule } from 'primeng/message';
 import { InputIconModule } from 'primeng/inputicon';
-import { AuthShell } from '../auth-shell/auth-shell';
+import { AuthLayout } from '../auth-layout/auth-layout';
 
 type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
 const PORUKA_TELEFON = 'Broj telefona nije ispravan.';
@@ -25,7 +25,7 @@ const PORUKA_TELEFON = 'Broj telefona nije ispravan.';
     IconFieldModule,
     InputIconModule,
     RouterLink,
-    AuthShell,
+    AuthLayout,
   ],
   selector: 'app-register',
   styleUrl: './register.scss',

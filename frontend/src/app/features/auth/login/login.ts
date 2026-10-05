@@ -8,7 +8,7 @@ import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { AuthShell } from '../auth-shell/auth-shell';
+import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../auth-store';
 
 @Component({
@@ -21,7 +21,7 @@ import { AuthStore } from '../auth-store';
     IconFieldModule,
     InputIconModule,
     RouterLink,
-    AuthShell,
+    AuthLayout,
   ],
   selector: 'app-login',
   styleUrl: './login.scss',

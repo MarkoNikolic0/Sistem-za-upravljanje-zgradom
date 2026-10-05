@@ -1,41 +1,59 @@
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
-// Primarna paleta izvedena iz boje fasade (#1F2B45 = 900)
+// Tamna tema: grafitne povrsine i zuti akcenat (svetlo prozora #f5b83d = 400)
 export const ZgradaPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '#f1f4f9',
-      100: '#dde3ee',
-      200: '#bcc7db',
-      300: '#93a3c2',
-      400: '#6b7fa6',
-      500: '#4d618a',
-      600: '#3b4d72',
-      700: '#2f3e5e',
-      800: '#26334e',
-      900: '#1f2b45',
-      950: '#141c2e',
-      // Svetlo: boja fasade. Tamno: boja upaljenog prozora
-      color: 'light-dark({primary.800}, {amber.400})',
-      contrastColor: 'light-dark(#ffffff, {primary.950})',
-      hoverColor: 'light-dark({primary.900}, {amber.300})',
-      activeColor: 'light-dark({primary.950}, {amber.200})',
+      50: '#fef8ea',
+      100: '#fdeec9',
+      200: '#fbdc93',
+      300: '#f8ca5d',
+      400: '#f5b83d',
+      500: '#e8a01f',
+      600: '#c27e14',
+      700: '#9a5f13',
+      800: '#7b4b16',
+      900: '#663e16',
+      950: '#3b2009',
+      color: '{primary.400}',
+      contrastColor: '#111111',
+      hoverColor: '{primary.300}',
+      activeColor: '{primary.200}',
     },
-    // Plavkasto siva umesto podrazumevane zinc, da se slaze sa fasadom
+    // Iste vrednosti kao tokeni u styles.scss (pozadina, povrsina, tekst...)
     surface: {
       0: '#ffffff',
-      50: '{slate.50}',
-      100: '{slate.100}',
-      200: '{slate.200}',
-      300: '{slate.300}',
-      400: '{slate.400}',
-      500: '{slate.500}',
-      600: '{slate.600}',
-      700: '{slate.700}',
-      800: '{slate.800}',
-      900: '{slate.900}',
-      950: '{slate.950}',
+      50: '#f5f5f5',
+      100: '#e0e0e0',
+      200: '#c4c4c4',
+      300: '#9a9a9a',
+      400: '#7a7a7a',
+      500: '#666666',
+      600: '#3f3f44',
+      700: '#2a2a2f',
+      800: '#1c1c20',
+      900: '#111113',
+      950: '#090909',
+    },
+  },
+  components: {
+    button: {
+      // Manja slova jer su velika; vece dugme ostaje dovoljno visoko za prst
+      root: {
+        fontSize: '0.8125rem',
+        lg: {
+          fontSize: '0.875rem',
+          paddingY: '0.75rem',
+        },
+      },
+      // Za velika slova i razmak nema tokena, pa ide CSS kroz preset (PrimeNG "Extend")
+      css: () => `
+        .p-button {
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+        }
+      `,
     },
   },
 });

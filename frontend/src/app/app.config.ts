@@ -21,6 +21,9 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       theme: {
         preset: ZgradaPreset,
+        options: {
+          darkModeSelector: '.app-dark',
+        },
       },
     }),
   ],

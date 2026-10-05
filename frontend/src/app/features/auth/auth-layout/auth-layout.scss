@@ -15,8 +15,9 @@
   align-items: center;
   height: 4rem;
   padding: 0 1.25rem;
-  background: var(--color-fasada);
-  color: #e8ecf4;
+  border-bottom: 1px solid var(--color-linija);
+  background: var(--color-panel);
+  color: var(--color-tekst);
 }
 
 .brend {
@@ -24,19 +25,21 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.75rem;
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-naslov);
 }
 
 // Logo samo na telefonu
 .brend-znak {
   display: none;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 2px;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 1px;
   background: var(--color-svetlo);
   box-shadow: 0 0 0.75rem rgb(245 184 61 / 0.5);
 }
@@ -45,7 +48,6 @@
   display: none;
 }
 
-// Velika zgrada samo na desktopu; na telefonu njenu ulogu preuzima logo
 .zgrada {
   display: none;
 }
@@ -71,7 +73,7 @@
 .prozor {
   aspect-ratio: 3 / 4;
   border-radius: 1px;
-  background: #1a2440;
+  background: var(--color-prozor);
 }
 
 .prozor.upaljen {
@@ -88,7 +90,7 @@
 
 @keyframes pali-se {
   from {
-    background: #1a2440;
+    background: var(--color-prozor);
     box-shadow: none;
   }
 }
@@ -113,6 +115,8 @@
     align-items: stretch;
     height: 100dvh;
     padding: 3rem 3rem 0;
+    border-bottom: 0;
+    border-right: 1px solid var(--color-linija);
   }
 
   .brend-znak {
@@ -127,11 +131,11 @@
     display: block;
     max-width: 18ch;
     margin: 3.5rem 0 3rem;
-    font-family: var(--font-display);
     font-size: clamp(2rem, 2.6vw, 2.75rem);
-    font-weight: 600;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
+    font-weight: 200;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    color: var(--color-naslov);
     text-wrap: balance;
   }
 
@@ -142,8 +146,10 @@
     min-height: 0;
     width: min(100%, 22rem);
     padding: 1.25rem 1.25rem 0;
-    border-top: 0.625rem solid #36466b;
-    background: var(--color-fasada-okvir);
+    border: 1px solid var(--color-linija);
+    border-bottom: 0;
+    border-top: 0.625rem solid var(--color-fasada-krov);
+    background: var(--color-fasada);
   }
 
   .spratovi,

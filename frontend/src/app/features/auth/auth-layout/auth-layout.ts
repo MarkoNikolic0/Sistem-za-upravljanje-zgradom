@@ -13,12 +13,12 @@ interface Prozor {
 }
 
 @Component({
-  selector: 'app-auth-shell',
+  selector: 'app-auth-layout',
   imports: [Logo],
-  templateUrl: './auth-shell.html',
-  styleUrl: './auth-shell.scss',
+  templateUrl: './auth-layout.html',
+  styleUrl: './auth-layout.scss',
 })
-export class AuthShell {
+export class AuthLayout {
   protected readonly spratovi: Prozor[][] = Array.from({ length: SPRATOVI }, (_, sprat) =>
     Array.from({ length: KOLONE }, (_, kolona) => {
       const redosled = UPALJENI.indexOf(sprat * KOLONE + kolona);

@@ -4,25 +4,35 @@
 // static: Tailwind inace izbacuje promenljive koje ne koristi nijedna utility klasa,
 // a komponente ih koriste direktno preko var(...)
 @theme static {
-  --font-sans: 'Onest', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Bricolage Grotesque', 'Onest', ui-sans-serif, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  --color-fasada: #1f2b45;
-  --color-fasada-okvir: #2c3b5e;
+  // Povrsine, od najtamnije ka svetlijoj
+  --color-pozadina: #090909;
+  --color-panel: #0c0c0e;
+  --color-povrsina: #111113;
+
+  // Tekst
+  --color-naslov: #ffffff;
+  --color-tekst: #e0e0e0;
+  --color-priguseno: #9a9a9a;
+  --color-utisano: #666666;
+
+  // Linije i okviri
+  --color-linija: rgb(255 255 255 / 0.06);
+  --color-ivica: rgb(255 255 255 / 0.14);
+
+  // Akcenat i stanja
   --color-svetlo: #f5b83d;
-  --color-papir: #f5f6f8;
-  --color-tinta: #172033;
-  --color-priguseno: #58627a;
-  --color-greska: #b42318;
+  --color-greska: #f97066;
+
+  // Zgrada (fasada, krov i ugaseni prozor)
+  --color-fasada: #121214;
+  --color-fasada-krov: #1c1c20;
+  --color-prozor: #1a1a1e;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-papir: #0f172a;
-    --color-tinta: #e6e9f0;
-    --color-priguseno: #9aa3b8;
-    --color-greska: #f97066;
-  }
+:root {
+  color-scheme: dark;
 }
 
 // Dugme za prikaz lozinke unutar p-iconfield; pravo dugme, da radi i sa tastaturom
@@ -47,7 +57,8 @@
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--color-papir);
-  color: var(--color-tinta);
+  font-weight: 400;
+  background: var(--color-pozadina);
+  color: var(--color-tekst);
   -webkit-font-smoothing: antialiased;
 }
