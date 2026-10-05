@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +13,8 @@ import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
+import { greskaPolja } from '../shared/greske-validacije.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -91,5 +94,45 @@ export class AuthService {
       return;
     }
     await this.refreshTokenService.opozoviPoTokenu(refreshToken);
+  }
+
+  async promeniLozinku(
+    korisnikId: number,
+    dto: ChangePasswordDto,
+    refreshToken: string | undefined,
+  ) {
+    const korisnik = await this.korisnikRepository.findOne({
+      where: { id: korisnikId },
+    });
+    if (!korisnik) {
+      throw new NotFoundException('Korisnik ne postoji.');
+    }
+
+    const trenutnaIspravna = await bcrypt.compare(
+      dto.trenutnaLozinka,
+      korisnik.lozinka,
+    );
+    if (!trenutnaIspravna) {
+      throw greskaPolja('trenutnaLozinka', 'Trenutna lozinka nije ispravna.');
+    }
+
+    const istaKaoStara = await bcrypt.compare(
+      dto.novaLozinka,
+      korisnik.lozinka,
+    );
+    if (istaKaoStara) {
+      throw greskaPolja(
+        'novaLozinka',
+        'Nova lozinka mora biti drugačija od trenutne.',
+      );
+    }
+
+    korisnik.lozinka = await bcrypt.hash(dto.novaLozinka, 10);
+    await this.korisnikRepository.save(korisnik);
+
+    await this.refreshTokenService.opozoviOstaleSesije(
+      korisnikId,
+      refreshToken,
+    );
   }
 }

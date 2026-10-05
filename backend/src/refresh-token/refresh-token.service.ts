@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { IsNull, MoreThan, Repository } from 'typeorm';
+import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
 import { generisiToken } from './refresh-token.util.js';
@@ -83,6 +83,23 @@ export class RefreshTokenService {
     if (zapis) {
       await this.opozoviPorodicu(zapis.porodicaId);
     }
+  }
+
+  async opozoviOstaleSesije(korisnikId: number, token: string | undefined) {
+    const trenutna = token
+      ? await this.refreshTokenRepository.findOne({
+          where: { tokenHash: hesirajToken(token) },
+        })
+      : null;
+
+    await this.refreshTokenRepository.update(
+      {
+        korisnik: { id: korisnikId },
+        datumOpoziva: IsNull(),
+        ...(trenutna && { porodicaId: Not(trenutna.porodicaId) }),
+      },
+      { datumOpoziva: new Date() },
+    );
   }
 
   private noviDatumIsteka(): Date {

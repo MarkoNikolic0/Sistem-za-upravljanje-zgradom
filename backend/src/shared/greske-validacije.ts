@@ -21,3 +21,12 @@ export function greskeValidacije(
     greske,
   });
 }
+
+export function greskaPolja(polje: string, poruka: string): BadRequestException {
+  return new BadRequestException({
+    statusCode: 400,
+    error: 'Bad Request',
+    message: [poruka],
+    greske: { [polje]: poruka },
+  });
+}

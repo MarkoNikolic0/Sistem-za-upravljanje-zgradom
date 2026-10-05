@@ -3,10 +3,12 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
@@ -18,6 +20,13 @@ import {
   brisanjeCookieOpcije,
 } from './refresh-cookie.js';
 import type { Response, Request } from 'express';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import {
+  TrenutniKorisnik,
+  type TrenutniKorisnikPodaci,
+} from './decorators/trenutni-korisnik.decorator.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 
 @Controller('auth')
 export class AuthController {
@@ -84,5 +93,21 @@ export class AuthController {
 
     const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
     res.clearCookie(REFRESH_COOKIE, brisanjeCookieOpcije(jeProdukcija));
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Patch('lozinka')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async promeniLozinku(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
+    await this.authService.promeniLozinku(
+      korisnik.id,
+      dto,
+      req.cookies?.[REFRESH_COOKIE],
+    );
   }
 }

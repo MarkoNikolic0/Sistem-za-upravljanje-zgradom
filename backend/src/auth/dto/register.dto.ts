@@ -3,8 +3,8 @@ import {
   IsNotEmpty,
   IsPhoneNumber,
   IsString,
-  MinLength,
 } from 'class-validator';
+import { PravilaLozinke } from '../decorators/pravila-lozinke.decorator.js';
 
 export class RegisterDto {
   @IsString()
@@ -23,8 +23,6 @@ export class RegisterDto {
   @IsNotEmpty()
   telefon: string;
 
-  @IsString()
-  @MinLength(6)
-  @IsNotEmpty()
+  @PravilaLozinke()
   lozinka: string;
 }
