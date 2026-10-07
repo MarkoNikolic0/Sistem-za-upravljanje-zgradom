@@ -23,7 +23,6 @@
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  text-decoration: none;
   color: var(--color-naslov);
 
   app-logo {
@@ -77,12 +76,8 @@ p-sidebar-group-label.oznaka {
   gap: 0.25rem;
   min-height: 4rem;
   padding: 0.5rem 0;
-  border: 0;
-  background: none;
-  font: inherit;
   font-size: 0.75rem;
   font-weight: 500;
-  text-decoration: none;
   color: var(--color-priguseno);
   cursor: pointer;
 

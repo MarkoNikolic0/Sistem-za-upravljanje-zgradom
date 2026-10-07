@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.stranica {
+  max-width: 40rem;
+}
+
+.zahtev {
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--color-linija);
+
+  &:last-of-type {
+    border-bottom: 1px solid var(--color-linija);
+  }
+
+  h2 {
+    font-weight: 500;
+  }
+}
+
+.kontakt:hover {
+  color: var(--color-naslov);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.status {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-svetlo);
+
+  &.odbijen {
+    color: var(--color-greska);
+  }
+}

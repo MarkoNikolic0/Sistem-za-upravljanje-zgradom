@@ -3,6 +3,7 @@ import { Login } from './features/auth/login/login';
 import { Home } from './features/dashboard/home/home';
 import { prijavljenGuard } from './features/auth/pristup/prijavljen-guard';
 import { gostGuard } from './features/auth/pristup/gost-guard';
+import { ulogaGuard } from './features/auth/pristup/uloga-guard';
 
 export const routes: Routes = [
   {
@@ -38,6 +39,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/zahtevi/novi-zahtev/novi-zahtev').then((m) => m.NoviZahtev),
         title: 'Povezivanje sa stanom | Upravljanje zgradom',
+      },
+      {
+        path: 'zahtevi',
+        canActivate: [ulogaGuard('upravnik', 'admin')],
+        loadComponent: () =>
+          import('./features/zahtevi/zahtevi-upravnika/zahtevi-upravnika').then(
+            (m) => m.ZahteviUpravnika,
+          ),
+        title: 'Zahtevi | Upravljanje zgradom',
       },
     ],
   },

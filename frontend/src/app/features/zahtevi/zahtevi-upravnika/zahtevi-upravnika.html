@@ -1,0 +1,129 @@
+<div class="stranica">
+  <p class="oznaka">Zgrada</p>
+  <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">Zahtevi za povezivanje</h1>
+  <p class="mt-2 text-priguseno">Stanari koji žele da povežu nalog sa stanom u zgradi.</p>
+
+  <p-selectbutton
+    class="mt-6"
+    [options]="filteri"
+    optionLabel="label"
+    optionValue="value"
+    [allowEmpty]="false"
+    [ngModel]="store.filter()"
+    (ngModelChange)="store.promeniFilter($event)"
+    ariaLabelledBy="zahtevi-filter"
+  />
+  <span id="zahtevi-filter" class="sr-only">Prikaz zahteva</span>
+
+  <div aria-live="polite" class="mt-6 empty:hidden">
+    @if (store.poruka(); as poruka) {
+      <p-message [severity]="poruka.tip === 'uspeh' ? 'success' : 'error'">{{
+        poruka.tekst
+      }}</p-message>
+    }
+  </div>
+
+  <section class="odeljak" aria-label="Lista zahteva" [attr.aria-busy]="store.ucitava()">
+    @if (store.greskaUcitavanja()) {
+      <p-message severity="error">Zahtevi trenutno ne mogu da se učitaju.</p-message>
+      <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
+        Pokušaj ponovo
+      </button>
+    } @else if (store.ucitava() && store.zahtevi().length === 0) {
+      <div class="ucitavanje" aria-hidden="true">
+        <p-skeleton height="7rem" />
+        <p-skeleton height="7rem" styleClass="mt-3" />
+      </div>
+      <span class="sr-only">Učitavanje zahteva…</span>
+    } @else {
+      @for (zahtev of store.zahtevi(); track zahtev.id) {
+        <article class="zahtev" [attr.aria-labelledby]="'podnosilac-' + zahtev.id">
+          <div class="flex items-baseline justify-between gap-4">
+            <h2 [id]="'podnosilac-' + zahtev.id" class="text-naslov">
+              {{ zahtev.korisnik.ime }} {{ zahtev.korisnik.prezime }}
+            </h2>
+            <time
+              class="shrink-0 text-sm text-utisano"
+              [attr.datetime]="zahtev.datumPodnosenjaZahteva"
+            >
+              {{ zahtev.datumPodnosenjaZahteva | date: 'd. MMM y. HH:mm' }}
+            </time>
+          </div>
+          <p class="mt-1 text-sm text-priguseno">
+            <a class="kontakt" [href]="'mailto:' + zahtev.korisnik.email">{{
+              zahtev.korisnik.email
+            }}</a>
+            ·
+            <a class="kontakt" [href]="'tel:' + zahtev.korisnik.telefon">
+              {{ formatirajTelefon(zahtev.korisnik.telefon) }}
+            </a>
+          </p>
+          <p class="mt-2">
+            Stan {{ zahtev.stan.broj }} · {{ zahtev.stan.sprat | sprat }}
+            <span class="text-sm text-priguseno">· {{ zahtev.stan.zgrada.naziv }}</span>
+          </p>
+
+          @if (zahtev.status === 'na_cekanju') {
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button
+                pButton
+                type="button"
+                size="small"
+                [disabled]="store.zahtevUObradiId() === zahtev.id"
+                (click)="prihvatiKaoVlasnika($event, zahtev)"
+              >
+                Prihvati kao vlasnika
+              </button>
+              <button
+                pButton
+                type="button"
+                size="small"
+                outlined
+                [disabled]="store.zahtevUObradiId() === zahtev.id"
+                (click)="store.prihvati(zahtev, false)"
+              >
+                Prihvati kao stanara
+              </button>
+              <button
+                pButton
+                type="button"
+                size="small"
+                severity="danger"
+                text
+                [disabled]="store.zahtevUObradiId() === zahtev.id"
+                (click)="odbij($event, zahtev)"
+              >
+                Odbij
+              </button>
+            </div>
+          } @else {
+            <p class="status mt-3" [class.odbijen]="zahtev.status === 'odbijen'">
+              {{ naziviStatusa[zahtev.status] }}
+            </p>
+          }
+        </article>
+      } @empty {
+        <p class="text-priguseno">
+          {{
+            store.filter() === 'na_cekanju'
+              ? 'Nema zahteva koji čekaju odgovor.'
+              : 'Još nema zahteva.'
+          }}
+        </p>
+      }
+
+      @if (store.imaViseStrana()) {
+        <p-paginator
+          class="mt-6"
+          [rows]="poStrani"
+          [totalRecords]="store.ukupno()"
+          [first]="(store.strana() - 1) * poStrani"
+          (onPageChange)="promeniStranu($event)"
+        />
+      }
+    }
+  </section>
+
+  <!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+  <p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
+</div>

@@ -1,8 +1,6 @@
 @use 'tailwindcss';
 @import 'primeicons/primeicons.css';
 
-// static: Tailwind inace izbacuje promenljive koje ne koristi nijedna utility klasa,
-// a komponente ih koriste direktno preko var(...)
 @theme static {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
@@ -35,17 +33,13 @@
   color-scheme: dark;
 }
 
-// Dugme za prikaz lozinke unutar p-iconfield; pravo dugme, da radi i sa tastaturom
 .prikaz-lozinke {
   display: grid;
   place-items: center;
   width: 2rem;
   height: 2rem;
   margin: -0.5rem;
-  border: 0;
   border-radius: 0.375rem;
-  background: transparent;
-  color: inherit;
   cursor: pointer;
 
   &:focus-visible {
@@ -55,7 +49,6 @@
 }
 
 body {
-  margin: 0;
   font-family: var(--font-sans);
   font-weight: 400;
   background: var(--color-pozadina);
