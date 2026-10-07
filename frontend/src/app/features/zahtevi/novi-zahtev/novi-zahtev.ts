@@ -9,9 +9,10 @@ import { SelectModule } from 'primeng/select';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { ZahtevService } from '../zahtev-service';
 import { NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
+import { nazivSprata, SpratPipe } from '../../../shared/sprat-pipe';
 
 @Component({
-  imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule],
+  imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, SpratPipe],
   selector: 'app-novi-zahtev',
   styleUrl: './novi-zahtev.scss',
   templateUrl: './novi-zahtev.html',
@@ -44,7 +45,7 @@ export class NoviZahtev {
     this.stanovi.hasValue()
       ? this.stanovi.value().map((stan) => ({
           id: stan.id,
-          naziv: `Stan ${stan.broj} · ${stan.sprat}. sprat`,
+          naziv: `Stan ${stan.broj} · ${nazivSprata(stan.sprat)}`,
         }))
       : [],
   );

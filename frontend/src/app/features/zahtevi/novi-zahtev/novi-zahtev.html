@@ -89,7 +89,7 @@
     @for (zahtev of neobradjeni(); track zahtev.id) {
       <div class="red">
         <div>
-          <p class="text-naslov">Stan {{ zahtev.stan.broj }} · {{ zahtev.stan.sprat }}. sprat</p>
+          <p class="text-naslov">Stan {{ zahtev.stan.broj }} · {{ zahtev.stan.sprat | sprat }}</p>
           <p class="mt-1 text-sm text-priguseno">
             {{ zahtev.stan.zgrada.naziv }}, {{ zahtev.stan.zgrada.adresa }}
           </p>

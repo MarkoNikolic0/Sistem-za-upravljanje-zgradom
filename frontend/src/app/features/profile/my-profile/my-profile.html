@@ -152,7 +152,7 @@
         @for (stan of p.stanovi; track stan.id) {
           <div class="red">
             <div>
-              <p class="text-naslov">Stan {{ stan.broj }} · {{ stan.sprat }}. sprat</p>
+              <p class="text-naslov">Stan {{ stan.broj }} · {{ stan.sprat | sprat }}</p>
               <p class="mt-1 text-sm text-priguseno">
                 {{ stan.zgrada.naziv }}, {{ stan.zgrada.adresa }}
               </p>

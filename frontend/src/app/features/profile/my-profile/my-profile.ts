@@ -12,6 +12,7 @@ import { ProfileService } from '../profile-service';
 import { ChangePassword } from '../change-password/change-password';
 import { RouterLink } from '@angular/router';
 import { formatirajTelefon } from '../../../shared/telefon';
+import { SpratPipe } from '../../../shared/sprat-pipe';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -31,6 +32,7 @@ const NAZIVI_ULOGA: Record<Uloga, string> = {
     SkeletonModule,
     ChangePassword,
     RouterLink,
+    SpratPipe,
   ],
   selector: 'app-my-profile',
   styleUrl: './my-profile.scss',
