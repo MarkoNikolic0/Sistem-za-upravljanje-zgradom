@@ -33,13 +33,3 @@ dd {
     color: var(--color-svetlo);
   }
 }
-
-.ucitavanje {
-  animation: pojavi-se 200ms ease-out 300ms both;
-}
-
-@keyframes pojavi-se {
-  from {
-    opacity: 0;
-  }
-}

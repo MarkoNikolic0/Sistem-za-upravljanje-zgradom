@@ -120,3 +120,13 @@ body {
     margin: 0;
   }
 }
+
+.ucitavanje {
+  animation: pojavi-se 200ms ease-out 300ms both;
+}
+
+@keyframes pojavi-se {
+  from {
+    opacity: 0;
+  }
+}

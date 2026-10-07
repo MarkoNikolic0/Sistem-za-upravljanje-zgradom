@@ -1,1 +1,60 @@
-<p>home works!</p>
+<div class="pocetna">
+  @if (profil.hasValue() && zahteviStigli()) {
+    <p class="oznaka">Početna</p>
+    <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">
+      Zdravo, {{ profil.value().ime }}
+    </h1>
+
+    @switch (prviKorak()) {
+      @case ('povezi') {
+        <section class="prvi-korak" aria-labelledby="prvi-korak-naslov">
+          <h2 id="prvi-korak-naslov" class="naslov-odeljka">Prvi korak</h2>
+          <p class="mt-3 text-tekst">
+            Poveži nalog sa svojim stanom. Posle toga možeš da prijavljuješ kvarove, pratiš sastanke
+            i glasaš.
+          </p>
+          <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
+        </section>
+      }
+      @case ('ceka') {
+        @if (zahtevNaCekanju(); as zahtev) {
+          <section class="prvi-korak" aria-labelledby="prvi-korak-naslov">
+            <h2 id="prvi-korak-naslov" class="naslov-odeljka">Zahtev je poslat</h2>
+            <p class="mt-3 text-tekst">
+              Tvoj zahtev za <span class="text-naslov">Stan {{ zahtev.stan.broj }}</span> ({{
+                zahtev.stan.zgrada.naziv
+              }}) čeka potvrdu upravnika zgrade.
+            </p>
+            <a
+              routerLink="/povezivanje"
+              class="mt-4 inline-block font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+              >Pogledaj zahteve</a
+            >
+          </section>
+        }
+      }
+      @case ('odbijen') {
+        @if (odbijenZahtev(); as zahtev) {
+          <section class="prvi-korak" aria-labelledby="prvi-korak-naslov">
+            <h2 id="prvi-korak-naslov" class="naslov-odeljka">Zahtev nije prihvaćen</h2>
+            <p class="mt-3 text-tekst">
+              Upravnik je odbio zahtev za
+              <span class="text-naslov">Stan {{ zahtev.stan.broj }}</span>
+              ({{ zahtev.stan.zgrada.naziv }}). Proveri izbor stana i pošalji novi zahtev.
+            </p>
+            <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
+          </section>
+        }
+      }
+    }
+  } @else if (profil.error() || zahtevi.error()) {
+    <p-message severity="error">Početnu trenutno nije moguće učitati.</p-message>
+    <button pButton type="button" outlined class="mt-4" (click)="ponovo()">Pokušaj ponovo</button>
+  } @else {
+    <div class="ucitavanje" aria-hidden="true">
+      <p-skeleton width="5rem" height="0.75rem" />
+      <p-skeleton width="14rem" height="2.5rem" styleClass="mt-3" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  }
+</div>
