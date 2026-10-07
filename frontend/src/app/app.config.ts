@@ -1,5 +1,6 @@
 import {
   ApplicationConfig,
+  LOCALE_ID,
   provideBrowserGlobalErrorListeners,
   inject,
   provideAppInitializer,
@@ -11,6 +12,10 @@ import { providePrimeNG } from 'primeng/config';
 import { ZgradaPreset } from './theme/zgrada-preset';
 import { AuthStore } from './features/auth/auth-store';
 import { authInterceptor } from './features/auth/auth-interceptor';
+import { registerLocaleData } from '@angular/common';
+import localeSrLatn from '@angular/common/locales/sr-Latn';
+
+registerLocaleData(localeSrLatn);
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -18,6 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),
+    { provide: LOCALE_ID, useValue: 'sr-Latn' },
     providePrimeNG({
       overlayAppendTo: 'body',
       theme: {

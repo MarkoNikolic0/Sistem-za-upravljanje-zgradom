@@ -18,3 +18,31 @@ export interface ZahtevResponse {
 export interface CreateZahtevRequest {
   stanId: number;
 }
+
+export interface PodnosilacZahteva {
+  id: number;
+  ime: string;
+  prezime: string;
+  email: string;
+  telefon: string;
+}
+
+export interface ZahtevUpravnika extends ZahtevResponse {
+  korisnik: PodnosilacZahteva;
+}
+
+export interface StranicaZahteva {
+  stavke: ZahtevUpravnika[];
+  ukupno: number;
+}
+
+export interface UpitZahteva {
+  status?: StatusZahteva;
+  strana: number;
+  poStrani: number;
+}
+
+export interface ObradaZahtevaRequest {
+  status: 'prihvacen' | 'odbijen';
+  vlasnik?: boolean;
+}
