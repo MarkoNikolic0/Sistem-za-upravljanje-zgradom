@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { AuthStore } from '../../auth/auth-store';
+import { AuthStore } from '../../auth/sesija/auth-store';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MenuModule } from 'primeng/menu';
 import { SidebarModule } from 'primeng/sidebar';

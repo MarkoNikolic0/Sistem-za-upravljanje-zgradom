@@ -1,5 +1,5 @@
 import { inject, Service } from '@angular/core';
-import { AuthService } from './auth-service';
+import { AuthService } from '../auth-service';
 import { AuthStore } from './auth-store';
 import { finalize, map, Observable, shareReplay, tap } from 'rxjs';
 

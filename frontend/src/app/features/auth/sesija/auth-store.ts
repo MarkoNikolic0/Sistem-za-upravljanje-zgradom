@@ -1,8 +1,8 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from './auth-service';
-import { Uloga } from './auth-models';
+import { AuthService } from '../auth-service';
+import { Uloga } from '../auth-models';
 import { procitajJwtPayload } from './jwt-payload';
 
 export interface PrijavljenKorisnik {

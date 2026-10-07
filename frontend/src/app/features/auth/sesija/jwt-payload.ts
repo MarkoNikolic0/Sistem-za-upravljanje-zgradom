@@ -1,4 +1,4 @@
-import { Uloga } from './auth-models';
+import { Uloga } from '../auth-models';
 
 export interface JwtPayload {
   sub: number;

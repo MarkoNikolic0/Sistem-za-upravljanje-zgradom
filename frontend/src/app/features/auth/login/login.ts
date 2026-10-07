@@ -9,7 +9,7 @@ import { MessageModule } from 'primeng/message';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
-import { AuthStore } from '../auth-store';
+import { AuthStore } from '../sesija/auth-store';
 
 @Component({
   imports: [

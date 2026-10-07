@@ -10,8 +10,8 @@ import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { ZgradaPreset } from './theme/zgrada-preset';
-import { AuthStore } from './features/auth/auth-store';
-import { authInterceptor } from './features/auth/auth-interceptor';
+import { AuthStore } from './features/auth/sesija/auth-store';
+import { authInterceptor } from './features/auth/sesija/auth-interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeSrLatn from '@angular/common/locales/sr-Latn';
 
