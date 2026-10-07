@@ -2,10 +2,8 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Get,
   Param,
-  ParseEnumPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -21,7 +19,7 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
-import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
+import { ZahtevUpitDto } from './dto/zahtev-upit.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -63,17 +61,8 @@ export class ZahtevPovezivanjeController {
   @Get()
   findZaObradu(
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
-    @Query('status', new ParseEnumPipe(StatusZahteva, { optional: true }))
-    status: StatusZahteva | undefined,
-    @Query('strana', new DefaultValuePipe(1), ParseIntPipe) strana: number,
-    @Query('poStrani', new DefaultValuePipe(20), ParseIntPipe) poStrani: number,
+    @Query() upit: ZahtevUpitDto,
   ) {
-    return this.zahtevService.findZaObradu(
-      korisnik.id,
-      korisnik.uloga,
-      status,
-      strana,
-      poStrani,
-    );
+    return this.zahtevService.findZaObradu(korisnik.id, korisnik.uloga, upit);
   }
 }

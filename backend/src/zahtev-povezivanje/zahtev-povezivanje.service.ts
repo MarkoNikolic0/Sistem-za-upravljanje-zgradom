@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -16,8 +15,8 @@ import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
-
-const MAKS_PO_STRANI = 50;
+import { Stranica, stranicenje } from '../shared/stranicenje.js';
+import { ZahtevUpitDto } from './dto/zahtev-upit.dto.js';
 
 @Injectable()
 export class ZahtevPovezivanjeService {
@@ -68,18 +67,11 @@ export class ZahtevPovezivanjeService {
   async findZaObradu(
     korisnikId: number,
     uloga: Uloga,
-    status: StatusZahteva | undefined,
-    strana: number,
-    poStrani: number,
-  ) {
-    if (strana < 1 || poStrani < 1) {
-      throw new BadRequestException(
-        'Strana i broj po strani moraju biti veći od nule.',
-      );
-    }
-    const velicina = Math.min(poStrani, MAKS_PO_STRANI);
-
-    const where: FindOptionsWhere<ZahtevPovezivanje> = status ? { status } : {};
+    upit: ZahtevUpitDto,
+  ): Promise<Stranica<ZahtevPovezivanje>> {
+    const where: FindOptionsWhere<ZahtevPovezivanje> = upit.status
+      ? { status: upit.status }
+      : {};
 
     if (uloga !== Uloga.ADMIN) {
       const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
@@ -93,8 +85,7 @@ export class ZahtevPovezivanjeService {
       where,
       relations: { korisnik: true, stan: { zgrada: true } },
       order: { datumPodnosenjaZahteva: 'DESC', id: 'DESC' },
-      skip: (strana - 1) * velicina,
-      take: velicina,
+      ...stranicenje(upit),
     });
 
     return { stavke, ukupno };
