@@ -122,13 +122,16 @@ export class ZahtevPovezivanjeService {
         );
       }
     }
-    if (zahtev.status !== StatusZahteva.NA_CEKANJU) {
-      throw new BadRequestException('Zahtev je već obradjen!');
-    }
 
     return await this.dataSource.transaction(async (manager) => {
-      zahtev.status = dto.status;
-      const obradjenZahtev = await manager.save(zahtev);
+      const rezultat = await manager.update(
+        ZahtevPovezivanje,
+        { id: zahtevId, status: StatusZahteva.NA_CEKANJU },
+        { status: dto.status },
+      );
+      if (rezultat.affected === 0) {
+        throw new ConflictException('Zahtev je već obrađen.');
+      }
 
       if (dto.status === StatusZahteva.PRIHVACEN) {
         const veza = manager.create(StanarStana, {
@@ -139,7 +142,8 @@ export class ZahtevPovezivanjeService {
         await manager.save(veza);
       }
 
-      return obradjenZahtev;
+      zahtev.status = dto.status;
+      return zahtev;
     });
   }
 
