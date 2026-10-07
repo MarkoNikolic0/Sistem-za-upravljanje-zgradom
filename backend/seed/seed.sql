@@ -5,7 +5,9 @@
 --   docker exec -i zgrada_container sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < seed/seed.sql
 --
 -- Svi test nalozi imaju lozinku: Zgrada123!
--- Email adrese su na domenu example.com (rezervisan za primere, RFC 2606), da ne pripadaju stvarnim ljudima.
+-- Izuzetak: prvi nalozi napravljeni rucno (marko@, marija@, danijel@, petar@gmail.com) zadrzavaju
+-- lozinku koju vec imaju u bazi; Zgrada123! dobijaju samo ako ih skripta pravi u praznoj bazi.
+-- Email adrese novih naloga su na domenu example.com (rezervisan za primere, RFC 2606).
 -- Skripta se moze pokrenuti vise puta: postojeci podaci (isti email, zgrada, stan) se preskacu.
 
 BEGIN;
@@ -14,6 +16,7 @@ BEGIN;
 INSERT INTO zgrada (naziv, adresa, "brojSpratova", "brojStanova")
 SELECT v.naziv, v.adresa, v.spratovi, v.stanovi
 FROM (VALUES
+  ('Delta Residence', 'Bulevar Nemanjića 45, Niš', 6, 20),
   ('Stambena zgrada Obrenovićeva', 'Obrenovićeva 30, Niš', 5, 15),
   ('Lamela Vizantijski', 'Vizantijski bulevar 12, Niš', 8, 32)
 ) AS v(naziv, adresa, spratovi, stanovi)
@@ -23,11 +26,27 @@ WHERE NOT EXISTS (SELECT 1 FROM zgrada z WHERE z.adresa = v.adresa);
 INSERT INTO stan (broj, sprat, kvadratura, "zgradaId")
 SELECT v.broj, v.sprat, v.kvadratura, z.id
 FROM (VALUES
+  -- Delta Residence: svih 20 stanova
+  ('Bulevar Nemanjića 45, Niš', '1', 0, 38),
   ('Bulevar Nemanjića 45, Niš', '2', 1, 48),
+  ('Bulevar Nemanjića 45, Niš', '3', 1, 52),
+  ('Bulevar Nemanjića 45, Niš', '4', 1, 66),
   ('Bulevar Nemanjića 45, Niš', '5', 1, 72),
+  ('Bulevar Nemanjića 45, Niš', '6', 2, 45),
+  ('Bulevar Nemanjića 45, Niš', '7', 2, 58),
+  ('Bulevar Nemanjića 45, Niš', '8', 2, 61),
   ('Bulevar Nemanjića 45, Niš', '9', 2, 55),
+  ('Bulevar Nemanjića 45, Niš', '10', 3, 44),
+  ('Bulevar Nemanjića 45, Niš', '11', 3, 63),
+  ('Bulevar Nemanjića 45, Niš', '12', 3, 70),
+  ('Bulevar Nemanjića 45, Niš', '13', 3, 49),
+  ('Bulevar Nemanjića 45, Niš', '14', 3, 60),
   ('Bulevar Nemanjića 45, Niš', '15', 4, 64),
+  ('Bulevar Nemanjića 45, Niš', '16', 4, 57),
+  ('Bulevar Nemanjića 45, Niš', '17', 4, 82),
+  ('Bulevar Nemanjića 45, Niš', '18', 5, 46),
   ('Bulevar Nemanjića 45, Niš', '19', 5, 80),
+  ('Bulevar Nemanjića 45, Niš', '20', 5, 74),
   ('Obrenovićeva 30, Niš', '1', 0, 42),
   ('Obrenovićeva 30, Niš', '4', 1, 58),
   ('Obrenovićeva 30, Niš', '7', 2, 63),
@@ -49,6 +68,11 @@ SELECT v.ime, v.prezime, v.email, v.telefon,
        v.uloga::korisnik_uloga_enum,
        (SELECT id FROM zgrada WHERE adresa = v.zgrada)
 FROM (VALUES
+  -- prvi nalozi napravljeni rucno (zadrzavaju svoju lozinku ako vec postoje)
+  ('Marko', 'Nikolic', 'marko@gmail.com', '+381600000001', 'admin', NULL),
+  ('Marija', 'Stankovic', 'marija@gmail.com', '+381600000012', 'stanar', NULL),
+  ('Danijel', 'Stojanovic', 'danijel@gmail.com', '+381600000003', 'upravnik', 'Bulevar Nemanjića 45, Niš'),
+  ('Petar', 'Mirkovic', 'petar@gmail.com', '+381600000004', 'serviser', NULL),
   -- upravnici
   ('Jelena', 'Marković', 'jelena.markovic@example.com', '+381631234501', 'upravnik', 'Obrenovićeva 30, Niš'),
   ('Nikola', 'Ilić', 'nikola.ilic@example.com', '+381641234502', 'upravnik', 'Vizantijski bulevar 12, Niš'),
@@ -66,9 +90,19 @@ FROM (VALUES
   ('Aleksandar', 'Ristić', 'aleksandar.ristic@example.com', '+381601234512', 'stanar', NULL),
   ('Jovana', 'Mitić', 'jovana.mitic@example.com', '+381611234513', 'stanar', NULL),
   ('Uroš', 'Savić', 'uros.savic@example.com', '+381621234514', 'stanar', NULL),
+  -- stanari Delta Residence
+  ('Natalija', 'Stojadinović', 'natalija.stojadinovic@example.com', '+381631234525', 'stanar', NULL),
+  ('Vesna', 'Đokić', 'vesna.djokic@example.com', '+381601234517', 'stanar', NULL),
+  ('Dejan', 'Milosavljević', 'dejan.milosavljevic@example.com', '+381611234518', 'stanar', NULL),
+  ('Sanja', 'Milosavljević', 'sanja.milosavljevic@example.com', '+381621234519', 'stanar', NULL),
+  ('Bojan', 'Tasić', 'bojan.tasic@example.com', '+381631234520', 'stanar', NULL),
+  ('Marina', 'Cvetković', 'marina.cvetkovic@example.com', '+381641234521', 'stanar', NULL),
+  ('Goran', 'Stamenković', 'goran.stamenkovic@example.com', '+381651234522', 'stanar', NULL),
   -- stanari bez stana (za testiranje povezivanja)
   ('Katarina', 'Lazić', 'katarina.lazic@example.com', '+381631234515', 'stanar', NULL),
-  ('Luka', 'Živković', 'luka.zivkovic@example.com', '+381641234516', 'stanar', NULL)
+  ('Luka', 'Živković', 'luka.zivkovic@example.com', '+381641234516', 'stanar', NULL),
+  ('Milena', 'Jovanović', 'milena.jovanovic@example.com', '+381661234523', 'stanar', NULL),
+  ('Đorđe', 'Ranđelović', 'djordje.randjelovic@example.com', '+381601234524', 'stanar', NULL)
 ) AS v(ime, prezime, email, telefon, uloga, zgrada)
 ON CONFLICT (email) DO NOTHING;
 
@@ -76,6 +110,8 @@ ON CONFLICT (email) DO NOTHING;
 INSERT INTO serviser_specijalnost ("korisnikId", kategorija)
 SELECT k.id, v.kategorija::serviser_specijalnost_kategorija_enum
 FROM (VALUES
+  ('petar@gmail.com', 'vodovod'),
+  ('petar@gmail.com', 'grejanje'),
   ('dragan.petrovic@example.com', 'vodovod'),
   ('dragan.petrovic@example.com', 'grejanje'),
   ('zoran.djordjevic@example.com', 'struja'),
@@ -88,6 +124,16 @@ ON CONFLICT ("korisnikId", kategorija) DO NOTHING;
 INSERT INTO stanar_stana ("korisnikId", "stanId", vlasnik)
 SELECT k.id, s.id, v.vlasnik
 FROM (VALUES
+  -- stan 14 u Delta Residence: Marija je vlasnik, Natalija zivi sa njom
+  ('marija@gmail.com', 'Bulevar Nemanjića 45, Niš', '14', true),
+  ('natalija.stojadinovic@example.com', 'Bulevar Nemanjića 45, Niš', '14', false),
+  -- ostali stanari Delta Residence
+  ('vesna.djokic@example.com', 'Bulevar Nemanjića 45, Niš', '1', true),
+  ('dejan.milosavljevic@example.com', 'Bulevar Nemanjića 45, Niš', '6', true),
+  ('sanja.milosavljevic@example.com', 'Bulevar Nemanjića 45, Niš', '6', true),
+  ('bojan.tasic@example.com', 'Bulevar Nemanjića 45, Niš', '10', true),
+  ('marina.cvetkovic@example.com', 'Bulevar Nemanjića 45, Niš', '12', true),
+  ('goran.stamenkovic@example.com', 'Bulevar Nemanjića 45, Niš', '18', false),
   ('ana.jovanovic@example.com', 'Bulevar Nemanjića 45, Niš', '2', true),
   ('milan.stojkovic@example.com', 'Bulevar Nemanjića 45, Niš', '5', true),
   ('ivana.nikolic@example.com', 'Bulevar Nemanjića 45, Niš', '5', false),
@@ -110,7 +156,17 @@ ON CONFLICT ("korisnikId", "stanId") DO NOTHING;
 INSERT INTO zahtev_povezivanje ("korisnikId", "stanId", status, "datumPodnosenjaZahteva")
 SELECT k.id, s.id, v.status::zahtev_povezivanje_status_enum, now() - v.pre
 FROM (VALUES
+  -- Delta Residence: vise zahteva na cekanju i istorija (za stranu upravnika i paginaciju)
   ('katarina.lazic@example.com', 'Bulevar Nemanjića 45, Niš', '9', 'na_cekanju', interval '2 hours'),
+  ('milena.jovanovic@example.com', 'Bulevar Nemanjića 45, Niš', '20', 'na_cekanju', interval '30 minutes'),
+  ('djordje.randjelovic@example.com', 'Bulevar Nemanjića 45, Niš', '13', 'na_cekanju', interval '1 day'),
+  ('djordje.randjelovic@example.com', 'Bulevar Nemanjića 45, Niš', '3', 'odbijen', interval '4 days'),
+  ('natalija.stojadinovic@example.com', 'Bulevar Nemanjića 45, Niš', '14', 'prihvacen', interval '25 days'),
+  ('vesna.djokic@example.com', 'Bulevar Nemanjića 45, Niš', '1', 'prihvacen', interval '20 days'),
+  ('bojan.tasic@example.com', 'Bulevar Nemanjića 45, Niš', '10', 'prihvacen', interval '15 days'),
+  ('marina.cvetkovic@example.com', 'Bulevar Nemanjića 45, Niš', '12', 'prihvacen', interval '10 days'),
+  ('goran.stamenkovic@example.com', 'Bulevar Nemanjića 45, Niš', '18', 'prihvacen', interval '7 days'),
+  -- ostale zgrade
   ('luka.zivkovic@example.com', 'Obrenovićeva 30, Niš', '1', 'na_cekanju', interval '1 day'),
   ('luka.zivkovic@example.com', 'Vizantijski bulevar 12, Niš', '3', 'odbijen', interval '5 days'),
   ('uros.savic@example.com', 'Vizantijski bulevar 12, Niš', '30', 'na_cekanju', interval '3 hours')
@@ -130,6 +186,19 @@ SELECT v.naslov, v.opis,
        v.prioritet::kvar_prioritet_enum, v.status::kvar_status_enum,
        z.id, s.id, k.id, ser.id, now() - v.pre
 FROM (VALUES
+  -- prvi kvarovi (napravljeni rucno); lift je u zajednickom prostoru, bez stana
+  ('Curi slavina', 'Slavina u kupatilu curi neprestano',
+   'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '20 days'),
+  ('Ne radi lift', 'Lift zaglavljen između spratova',
+   'lift', 'zajednicki_prostor', 'srednje', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'marija@gmail.com', NULL, interval '4 days'),
+  ('Ne radi interfon', 'Interfon ne zvoni u stanovima na trećem spratu, ne može da se otvori ulaz.',
+   'struja', 'zajednicki_prostor', 'srednje', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', '10', 'bojan.tasic@example.com', NULL, interval '8 hours'),
+  ('Vlaga na zidu u spavaćoj sobi', 'Na zidu prema fasadi se pojavila vlaga i buđ, širi se posle kiše.',
+   'gradjevina', 'privatni_stan', 'srednje', 'prihvacen',
+   'Bulevar Nemanjića 45, Niš', '12', 'marina.cvetkovic@example.com', NULL, interval '3 days'),
   ('Curenje vode ispod sudopere', 'Od jutros curi voda ispod sudopere, ispod je mokar ormarić. Zatvorio sam ventil.',
    'vodovod', 'privatni_stan', 'srednje', 'prijavljen',
    'Bulevar Nemanjića 45, Niš', '2', 'ana.jovanovic@example.com', NULL, interval '3 hours'),
@@ -156,7 +225,7 @@ FROM (VALUES
    'Vizantijski bulevar 12, Niš', '22', 'uros.savic@example.com', NULL, interval '9 days')
 ) AS v(naslov, opis, kategorija, lokacija, prioritet, status, adresa, broj, email, serviser, pre)
 JOIN zgrada z ON z.adresa = v.adresa
-JOIN stan s ON s."zgradaId" = z.id AND s.broj = v.broj
+LEFT JOIN stan s ON s."zgradaId" = z.id AND s.broj = v.broj
 JOIN korisnik k ON k.email = v.email
 LEFT JOIN korisnik ser ON ser.email = v.serviser
 WHERE NOT EXISTS (SELECT 1 FROM kvar kv WHERE kv.naslov = v.naslov AND kv."zgradaId" = z.id);

@@ -17,6 +17,8 @@ import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 
+const MAKS_PO_STRANI = 50;
+
 @Injectable()
 export class ZahtevPovezivanjeService {
   constructor(
@@ -63,36 +65,39 @@ export class ZahtevPovezivanjeService {
     return await this.zahtevRepository.save(zahtev);
   }
 
-  async findAllNaCekanju(korisnikId: number, uloga: Uloga) {
-    return await this.findVidljive(korisnikId, uloga, {
-      status: StatusZahteva.NA_CEKANJU,
-    });
-  }
-
-  async findAll(korisnikId: number, uloga: Uloga) {
-    return await this.findVidljive(korisnikId, uloga, {});
-  }
-
-  private async findVidljive(
+  async findZaObradu(
     korisnikId: number,
     uloga: Uloga,
-    where: FindOptionsWhere<ZahtevPovezivanje>,
+    status: StatusZahteva | undefined,
+    strana: number,
+    poStrani: number,
   ) {
-    const relations = { korisnik: true, stan: { zgrada: true } };
+    if (strana < 1 || poStrani < 1) {
+      throw new BadRequestException(
+        'Strana i broj po strani moraju biti veći od nule.',
+      );
+    }
+    const velicina = Math.min(poStrani, MAKS_PO_STRANI);
 
-    if (uloga === Uloga.ADMIN) {
-      return await this.zahtevRepository.find({ where, relations });
+    const where: FindOptionsWhere<ZahtevPovezivanje> = status ? { status } : {};
+
+    if (uloga !== Uloga.ADMIN) {
+      const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
+      if (zgradaId === null) {
+        return { stavke: [], ukupno: 0 };
+      }
+      where.stan = { zgrada: { id: zgradaId } };
     }
 
-    const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
-    if (zgradaId === null) {
-      return [];
-    }
-
-    return await this.zahtevRepository.find({
-      where: { ...where, stan: { zgrada: { id: zgradaId } } },
-      relations,
+    const [stavke, ukupno] = await this.zahtevRepository.findAndCount({
+      where,
+      relations: { korisnik: true, stan: { zgrada: true } },
+      order: { datumPodnosenjaZahteva: 'DESC', id: 'DESC' },
+      skip: (strana - 1) * velicina,
+      take: velicina,
     });
+
+    return { stavke, ukupno };
   }
 
   async zahtevResponse(

@@ -2,11 +2,14 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
+  ParseEnumPipe,
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
@@ -18,6 +21,7 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
+import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -31,13 +35,6 @@ export class ZahtevPovezivanjeController {
     @Body() dto: CreateZahtevDto,
   ) {
     return this.zahtevService.create(korisnik.id, dto);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
-  @Get('na-cekanju')
-  findAllNaCekanju(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
-    return this.zahtevService.findAllNaCekanju(korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -56,15 +53,27 @@ export class ZahtevPovezivanjeController {
     );
   }
 
-  @UseGuards(RolesGuard)
-  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
-  @Get('svi')
-  getAll(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
-    return this.zahtevService.findAll(korisnik.id, korisnik.uloga);
-  }
-
   @Get('moji-zahtevi')
   findMoji(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
     return this.zahtevService.findMoji(korisnik.id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
+  @Get()
+  findZaObradu(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Query('status', new ParseEnumPipe(StatusZahteva, { optional: true }))
+    status: StatusZahteva | undefined,
+    @Query('strana', new DefaultValuePipe(1), ParseIntPipe) strana: number,
+    @Query('poStrani', new DefaultValuePipe(20), ParseIntPipe) poStrani: number,
+  ) {
+    return this.zahtevService.findZaObradu(
+      korisnik.id,
+      korisnik.uloga,
+      status,
+      strana,
+      poStrani,
+    );
   }
 }
