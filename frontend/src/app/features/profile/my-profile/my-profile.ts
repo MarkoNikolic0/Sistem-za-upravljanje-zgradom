@@ -2,7 +2,6 @@ import { Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
-import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -12,6 +11,7 @@ import { greskaPolja } from '../../../shared/greske-servera';
 import { ProfileService } from '../profile-service';
 import { ChangePassword } from '../change-password/change-password';
 import { RouterLink } from '@angular/router';
+import { formatirajTelefon } from '../../../shared/telefon';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -21,14 +21,6 @@ const NAZIVI_ULOGA: Record<Uloga, string> = {
   serviser: 'Serviser',
   admin: 'Administrator',
 };
-
-function formatirajTelefon(telefon: string): string {
-  try {
-    return parsePhoneNumberWithError(telefon).formatNational();
-  } catch {
-    return telefon;
-  }
-}
 
 @Component({
   imports: [

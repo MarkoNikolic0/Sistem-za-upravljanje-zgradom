@@ -46,3 +46,5 @@ export interface ObradaZahtevaRequest {
   status: 'prihvacen' | 'odbijen';
   vlasnik?: boolean;
 }
+
+export type FilterZahteva = 'na_cekanju' | 'svi';
