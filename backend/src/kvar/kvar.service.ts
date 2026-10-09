@@ -7,13 +7,14 @@ import {
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
-import { In, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Stan } from '../stan/stan.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import {
   KategorijaKvara,
   LokacijaTip,
   Prioritet,
+  StanjeKvara,
   StatusKvara,
 } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -23,6 +24,19 @@ import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
+import { KvarUpitDto } from './dto/kvar-upit.dto.js';
+import { Stranica, stranicenje } from '../shared/stranicenje.js';
+
+const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
+  [StanjeKvara.AKTIVNI]: [
+    StatusKvara.PRIJAVLJEN,
+    StatusKvara.PRIHVACEN,
+    StatusKvara.DODELJEN,
+    StatusKvara.U_TOKU,
+    StatusKvara.RESEN,
+  ],
+  [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
+};
 
 @Injectable()
 export class KvarService {
@@ -65,60 +79,68 @@ export class KvarService {
   async findAllZaKorisnika(
     korisnikId: number,
     uloga: Uloga,
-    zgradaId?: number,
-  ) {
-    if (uloga === Uloga.ADMIN) {
-      return await this.kvarRepository.find({
-        where: zgradaId ? { zgrada: { id: zgradaId } } : {},
-        relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
-        order: { datumPrijave: 'DESC' },
-      });
+    upit: KvarUpitDto,
+  ): Promise<Stranica<Kvar>> {
+    const vidljivi = await this.usloviVidljivosti(
+      korisnikId,
+      uloga,
+      upit.zgradaId,
+    );
+    if (vidljivi === null) {
+      return { stavke: [], ukupno: 0 };
     }
 
-    if (uloga === Uloga.UPRAVNIK) {
-      const zgradaUpravnika =
-        await this.korisnikService.zgradaUpravnika(korisnikId);
-      if (zgradaUpravnika === null) {
-        return [];
-      }
-      return await this.kvarRepository.find({
-        where: { zgrada: { id: zgradaUpravnika } },
-        relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
-        order: { datumPrijave: 'DESC' },
-      });
-    }
-
-    if (uloga === Uloga.SERVISER) {
-      return this.kvarRepository.find({
-        where: { serviser: { id: korisnikId } },
-        relations: { zgrada: true, stan: true, korisnik: true },
-        order: { datumPrijave: 'DESC' },
-      });
-    }
-
-    const veze = await this.stanarStanaRepository.find({
-      where: { korisnik: { id: korisnikId } },
-      relations: { stan: { zgrada: true } },
-    });
-    if (veze.length === 0) {
-      return [];
-    }
-
-    const stanIds = veze.map((v) => v.stan.id);
-    const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
-
-    return await this.kvarRepository.find({
-      where: [
-        { stan: { id: In(stanIds) } },
-        {
-          zgrada: { id: In(zgradaIds) },
-          lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
-        },
-        { korisnik: { id: korisnikId } },
-      ],
+    const status = In(STATUSI_PO_STANJU[upit.stanje]);
+    const [stavke, ukupno] = await this.kvarRepository.findAndCount({
+      where: vidljivi.map((uslov) => ({ ...uslov, status })),
       relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
-      order: { datumPrijave: 'DESC' },
+      order: { datumPrijave: 'DESC', id: 'DESC' },
+      ...stranicenje(upit),
     });
+
+    return { stavke, ukupno };
+  }
+
+  private async usloviVidljivosti(
+    korisnikId: number,
+    uloga: Uloga,
+    zgradaId?: number,
+  ): Promise<FindOptionsWhere<Kvar>[] | null> {
+    switch (uloga) {
+      case Uloga.ADMIN:
+        return [zgradaId ? { zgrada: { id: zgradaId } } : {}];
+
+      case Uloga.UPRAVNIK: {
+        const zgradaUpravnika =
+          await this.korisnikService.zgradaUpravnika(korisnikId);
+        return zgradaUpravnika === null
+          ? null
+          : [{ zgrada: { id: zgradaUpravnika } }];
+      }
+
+      case Uloga.SERVISER:
+        return [{ serviser: { id: korisnikId } }];
+
+      default: {
+        const veze = await this.stanarStanaRepository.find({
+          where: { korisnik: { id: korisnikId } },
+          relations: { stan: { zgrada: true } },
+        });
+        if (veze.length === 0) {
+          return null;
+        }
+        const stanIds = veze.map((v) => v.stan.id);
+        const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
+        return [
+          { stan: { id: In(stanIds) } },
+          {
+            zgrada: { id: In(zgradaIds) },
+            lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
+          },
+          { korisnik: { id: korisnikId } },
+        ];
+      }
+    }
   }
 
   async findOne(id: number) {

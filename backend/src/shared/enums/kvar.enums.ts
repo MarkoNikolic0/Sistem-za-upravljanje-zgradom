@@ -29,3 +29,8 @@ export enum StatusKvara {
   ZATVOREN = 'zatvoren',
   ODBIJEN = 'odbijen',
 }
+
+export enum StanjeKvara {
+  AKTIVNI = 'aktivni',
+  ZAVRSENI = 'zavrseni',
+}

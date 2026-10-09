@@ -22,6 +22,7 @@ import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
 import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
+import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -40,12 +41,12 @@ export class KvarController {
   @Get()
   findAll(
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
-    @Query('zgradaId') zgradaId?: string,
+    @Query() upit: KvarUpitDto,
   ) {
     return this.kvarService.findAllZaKorisnika(
       korisnik.id,
       korisnik.uloga,
-      zgradaId ? Number(zgradaId) : undefined,
+      upit,
     );
   }
 
