@@ -97,7 +97,7 @@
               </button>
             </div>
           } @else {
-            <p class="status mt-3" [class.odbijen]="zahtev.status === 'odbijen'">
+            <p class="oznaka-statusa mt-3" [class.greska]="zahtev.status === 'odbijen'">
               {{ naziviStatusa[zahtev.status] }}
             </p>
           }

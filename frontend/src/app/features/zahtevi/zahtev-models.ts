@@ -1,3 +1,4 @@
+import { UpitStrane } from '../../shared/stranica';
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 
 export type StatusZahteva = 'na_cekanju' | 'prihvacen' | 'odbijen';
@@ -36,10 +37,8 @@ export interface StranicaZahteva {
   ukupno: number;
 }
 
-export interface UpitZahteva {
+export interface UpitZahteva extends UpitStrane {
   status?: StatusZahteva;
-  strana: number;
-  poStrani: number;
 }
 
 export interface ObradaZahtevaRequest {

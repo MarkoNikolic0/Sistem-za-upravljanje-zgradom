@@ -5,16 +5,3 @@
 .stranica {
   max-width: 40rem;
 }
-
-.status {
-  flex-shrink: 0;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-svetlo);
-
-  &.odbijen {
-    color: var(--color-greska);
-  }
-}

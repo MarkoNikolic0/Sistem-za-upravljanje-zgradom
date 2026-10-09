@@ -157,7 +157,7 @@
                 {{ stan.zgrada.naziv }}, {{ stan.zgrada.adresa }}
               </p>
             </div>
-            <span class="vrsta-stanara" [class.vlasnik]="stan.vlasnik">
+            <span class="oznaka-statusa" [class.prigusena]="!stan.vlasnik">
               {{ stan.vlasnik ? 'Vlasnik' : 'Stanar' }}
             </span>
           </div>

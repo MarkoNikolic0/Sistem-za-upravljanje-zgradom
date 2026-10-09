@@ -94,7 +94,7 @@
             {{ zahtev.stan.zgrada.naziv }}, {{ zahtev.stan.zgrada.adresa }}
           </p>
         </div>
-        <span class="status" [class.odbijen]="zahtev.status === 'odbijen'">
+        <span class="oznaka-statusa" [class.greska]="zahtev.status === 'odbijen'">
           {{ naziviStatusa[zahtev.status] }}
         </span>
       </div>

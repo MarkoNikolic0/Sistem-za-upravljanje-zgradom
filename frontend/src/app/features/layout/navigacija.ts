@@ -7,7 +7,6 @@ export interface StavkaNavigacije {
   uloge: Uloga[];
 }
 
-// Redosled ovde je i redosled prikaza u sidebar-u i donjoj traci
 export const STAVKE_NAVIGACIJE: StavkaNavigacije[] = [
   {
     naziv: 'Početna',

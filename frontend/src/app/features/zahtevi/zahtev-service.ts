@@ -2,10 +2,10 @@ import { inject, Service } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { Stranica } from '../../shared/stranica';
 import {
   CreateZahtevRequest,
   ObradaZahtevaRequest,
-  StranicaZahteva,
   UpitZahteva,
   ZahtevResponse,
   ZahtevUpravnika,
@@ -26,12 +26,12 @@ export class ZahtevService {
     return this.http.post<ZahtevResponse>(this.apiUrl, podaci);
   }
 
-  zahteviZaObradu(upit: UpitZahteva): Observable<StranicaZahteva> {
+  zahteviZaObradu(upit: UpitZahteva): Observable<Stranica<ZahtevUpravnika>> {
     let params = new HttpParams().set('strana', upit.strana).set('poStrani', upit.poStrani);
     if (upit.status) {
       params = params.set('status', upit.status);
     }
-    return this.http.get<StranicaZahteva>(this.apiUrl, { params });
+    return this.http.get<Stranica<ZahtevUpravnika>>(this.apiUrl, { params });
   }
 
   obradi(id: number, podaci: ObradaZahtevaRequest): Observable<ZahtevUpravnika> {

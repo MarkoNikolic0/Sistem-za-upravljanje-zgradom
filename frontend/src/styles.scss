@@ -97,6 +97,23 @@ body {
   color: var(--color-utisano);
 }
 
+.oznaka-statusa {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-svetlo);
+
+  &.greska {
+    color: var(--color-greska);
+  }
+
+  &.prigusena {
+    color: var(--color-priguseno);
+  }
+}
+
 .red {
   display: flex;
   align-items: center;
