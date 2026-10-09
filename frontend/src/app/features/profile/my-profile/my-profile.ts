@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Uloga } from '../../auth/auth-models';
+import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { ProfileService } from '../profile-service';
 import { ChangePassword } from '../change-password/change-password';
@@ -15,13 +15,6 @@ import { formatirajTelefon } from '../../../shared/telefon';
 import { SpratPipe } from '../../../shared/sprat-pipe';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
-
-const NAZIVI_ULOGA: Record<Uloga, string> = {
-  stanar: 'Stanar',
-  upravnik: 'Upravnik',
-  serviser: 'Serviser',
-  admin: 'Administrator',
-};
 
 @Component({
   imports: [

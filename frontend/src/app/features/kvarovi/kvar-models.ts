@@ -1,5 +1,6 @@
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { UpitStrane } from '../../shared/stranica';
+import { Uloga } from '../auth/auth-models';
 
 export type StatusKvara =
   'prijavljen' | 'prihvacen' | 'dodeljen' | 'u_toku' | 'resen' | 'zatvoren' | 'odbijen';
@@ -38,6 +39,7 @@ export interface KorisnikOsnovno {
   id: number;
   ime: string;
   prezime: string;
+  uloga: Uloga;
   email?: string;
   telefon?: string;
 }
@@ -71,4 +73,13 @@ export interface PrijavaKvaraRequest {
   lokacijaTip: LokacijaKvara;
   stanId: number;
   prioritet?: PrioritetKvara;
+}
+
+export const MAKS_KOMENTAR_KVARA = 1000;
+
+export interface KomentarKvara {
+  id: number;
+  tekst: string;
+  datumKreiranja: string;
+  korisnik: KorisnikOsnovno;
 }

@@ -1,5 +1,12 @@
 export type Uloga = 'stanar' | 'upravnik' | 'serviser' | 'admin';
 
+export const NAZIVI_ULOGA: Record<Uloga, string> = {
+  stanar: 'Stanar',
+  upravnik: 'Upravnik',
+  serviser: 'Serviser',
+  admin: 'Administrator',
+};
+
 export interface LoginResponse {
   accessToken: string;
 }
