@@ -1,6 +1,6 @@
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { UpitStrane } from '../../shared/stranica';
-import { Uloga } from '../auth/auth-models';
+import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
 
 export type StatusKvara =
   'prijavljen' | 'prihvacen' | 'dodeljen' | 'u_toku' | 'resen' | 'zatvoren' | 'odbijen';
@@ -35,15 +35,6 @@ export const NAZIVI_KATEGORIJA_KVARA: Record<KategorijaKvara, string> = {
   ostalo: 'Ostalo',
 };
 
-export interface KorisnikOsnovno {
-  id: number;
-  ime: string;
-  prezime: string;
-  uloga: Uloga;
-  email?: string;
-  telefon?: string;
-}
-
 export interface Kvar {
   id: number;
   naslov: string;
@@ -55,8 +46,8 @@ export interface Kvar {
   datumPrijave: string;
   zgrada: ZgradaOsnovno;
   stan: StanOsnovno | null;
-  korisnik: KorisnikOsnovno;
-  serviser: KorisnikOsnovno | null;
+  korisnik: KorisnikOsnovno & Partial<Kontakt>;
+  serviser: (KorisnikOsnovno & Partial<Kontakt>) | null;
 }
 
 export interface UpitKvarova extends UpitStrane {

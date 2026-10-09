@@ -7,6 +7,18 @@ export const NAZIVI_ULOGA: Record<Uloga, string> = {
   admin: 'Administrator',
 };
 
+export interface KorisnikOsnovno {
+  id: number;
+  ime: string;
+  prezime: string;
+  uloga: Uloga;
+}
+
+export interface Kontakt {
+  email: string;
+  telefon: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
 }

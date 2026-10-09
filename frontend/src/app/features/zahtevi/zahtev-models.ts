@@ -1,4 +1,5 @@
 import { UpitStrane } from '../../shared/stranica';
+import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 
 export type StatusZahteva = 'na_cekanju' | 'prihvacen' | 'odbijen';
@@ -20,16 +21,8 @@ export interface CreateZahtevRequest {
   stanId: number;
 }
 
-export interface PodnosilacZahteva {
-  id: number;
-  ime: string;
-  prezime: string;
-  email: string;
-  telefon: string;
-}
-
 export interface ZahtevUpravnika extends ZahtevResponse {
-  korisnik: PodnosilacZahteva;
+  korisnik: KorisnikOsnovno & Kontakt;
 }
 
 export interface UpitZahteva extends UpitStrane {
