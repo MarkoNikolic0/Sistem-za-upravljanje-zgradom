@@ -2,7 +2,6 @@ import { Component, computed, effect, ElementRef, inject, signal } from '@angula
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
@@ -14,7 +13,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { nazivSprata } from '../../../shared/sprat-pipe';
 import { ProfileService } from '../../profile/profile-service';
-import { KvarService } from '../kvar-service';
+import { KvarStore } from '../kvar-store';
 import {
   KategorijaKvara,
   LokacijaKvara,
@@ -45,7 +44,7 @@ const NIJE_PRAZNO = /\S/;
   templateUrl: './prijava-kvara.html',
 })
 export class PrijavaKvara {
-  private kvarService = inject(KvarService);
+  protected readonly store = inject(KvarStore);
   private profileService = inject(ProfileService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -55,7 +54,6 @@ export class PrijavaKvara {
   protected readonly maksOpis = MAKS_OPIS_KVARA;
 
   protected readonly profil = this.profileService.profile();
-  protected readonly salje = signal(false);
   protected readonly greska = signal('');
 
   protected readonly stanovi = computed(() =>
@@ -110,7 +108,7 @@ export class PrijavaKvara {
     return kontrola.invalid && kontrola.touched;
   }
 
-  protected posalji(): void {
+  protected async posalji(): Promise<void> {
     const { stanId, lokacijaTip, kategorija, naslov, opis, hitno } = this.forma.getRawValue();
     if (this.forma.invalid || stanId === null || kategorija === null) {
       this.forma.markAllAsTouched();
@@ -119,25 +117,27 @@ export class PrijavaKvara {
     }
 
     this.greska.set('');
-    this.salje.set(true);
-
-    this.kvarService
-      .prijavi({
+    try {
+      await this.store.prijavi({
         stanId,
         lokacijaTip,
         kategorija,
         naslov: naslov.trim(),
         opis: opis.trim(),
         prioritet: hitno ? 'hitno' : undefined,
-      })
-      .pipe(finalize(() => this.salje.set(false)))
-      .subscribe({
-        next: () => this.router.navigate(['/kvarovi']),
-        error: (err: HttpErrorResponse) => this.obradiGresku(err),
       });
+      // Store je već osvežio listu, pa je nova prijava prva
+      await this.router.navigate(['/kvarovi']);
+    } catch (err) {
+      this.obradiGresku(err);
+    }
   }
 
-  private obradiGresku(err: HttpErrorResponse): void {
+  private obradiGresku(err: unknown): void {
+    if (!(err instanceof HttpErrorResponse)) {
+      this.greska.set('Kvar nije prijavljen. Pokušaj ponovo za nekoliko trenutaka.');
+      return;
+    }
     for (const polje of ['naslov', 'opis'] as const) {
       const poruka = greskaPolja(err, polje);
       if (poruka) {

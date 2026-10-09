@@ -133,8 +133,8 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-4">
-          <button pButton type="submit" [disabled]="salje()">
-            @if (salje()) {
+          <button pButton type="submit" [disabled]="store.prijavaUToku()">
+            @if (store.prijavaUToku()) {
               <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
               Slanje…
             } @else {

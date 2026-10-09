@@ -9,9 +9,9 @@ import {
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { pipe, switchMap, tap } from 'rxjs';
+import { firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import { KvarService } from './kvar-service';
-import { Kvar, StanjeKvara } from './kvar-models';
+import { Kvar, PrijavaKvaraRequest, StanjeKvara } from './kvar-models';
 
 export const KVAROVA_PO_STRANI = 10;
 
@@ -22,6 +22,7 @@ interface KvaroviState {
   strana: number;
   ucitava: boolean;
   greskaUcitavanja: boolean;
+  prijavaUToku: boolean;
 }
 
 const pocetnoStanje: KvaroviState = {
@@ -31,6 +32,7 @@ const pocetnoStanje: KvaroviState = {
   strana: 1,
   ucitava: false,
   greskaUcitavanja: false,
+  prijavaUToku: false,
 };
 
 export const KvarStore = signalStore(
@@ -71,6 +73,16 @@ export const KvarStore = signalStore(
       promeniStranu(strana: number): void {
         patchState(store, { strana });
         ucitaj();
+      },
+      async prijavi(podaci: PrijavaKvaraRequest): Promise<void> {
+        patchState(store, { prijavaUToku: true });
+        try {
+          await firstValueFrom(kvarService.prijavi(podaci));
+          patchState(store, { stanje: 'aktivni', strana: 1 });
+          ucitaj();
+        } finally {
+          patchState(store, { prijavaUToku: false });
+        }
       },
     };
   }),

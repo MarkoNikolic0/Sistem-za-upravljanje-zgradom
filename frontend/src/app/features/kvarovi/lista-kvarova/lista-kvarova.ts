@@ -25,7 +25,6 @@ import { RouterLink } from '@angular/router';
     SpratPipe,
     RouterLink,
   ],
-  providers: [KvarStore],
   selector: 'app-lista-kvarova',
   styleUrl: './lista-kvarova.scss',
   templateUrl: './lista-kvarova.html',

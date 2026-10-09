@@ -5,7 +5,7 @@ import {
   inject,
   provideAppInitializer,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withAutoCleanupInjectors } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
@@ -20,7 +20,7 @@ registerLocaleData(localeSrLatn);
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(routes, withAutoCleanupInjectors()),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),
     { provide: LOCALE_ID, useValue: 'sr-Latn' },

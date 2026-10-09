@@ -43,16 +43,7 @@ export const routes: Routes = [
       {
         path: 'kvarovi',
         canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
-        loadComponent: () =>
-          import('./features/kvarovi/lista-kvarova/lista-kvarova').then((m) => m.ListaKvarova),
-        title: 'Kvarovi | Upravljanje zgradom',
-      },
-      {
-        path: 'kvarovi/novi',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
-        loadComponent: () =>
-          import('./features/kvarovi/prijava-kvara/prijava-kvara').then((m) => m.PrijavaKvara),
-        title: 'Prijava kvara | Upravljanje zgradom',
+        loadChildren: () => import('./features/kvarovi/kvarovi.routes'),
       },
       {
         path: 'zahtevi',
