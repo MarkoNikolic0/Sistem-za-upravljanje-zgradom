@@ -15,7 +15,7 @@ import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisni
 import { KomentarKvarService } from './komentar-kvar.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
-import { StranicenjeDto } from '../shared/stranicenje.js';
+import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -35,7 +35,7 @@ export class KomentarKvarController {
   findZaKvar(
     @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
-    @Query() upit: StranicenjeDto,
+    @Query() upit: KomentarUpitDto,
   ) {
     return this.komentarKvarService.findZaKvar(
       kvarId,

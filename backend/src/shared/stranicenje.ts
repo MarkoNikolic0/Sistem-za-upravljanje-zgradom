@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsInt, Min } from 'class-validator';
 
-const MAKS_PO_STRANI = 50;
+export const MAKS_PO_STRANI = 50;
 
 export class StranicenjeDto {
   @Type(() => Number)

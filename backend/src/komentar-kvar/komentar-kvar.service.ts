@@ -5,16 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { KomentarKvar } from './komentar-kvar.entity.js';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KvarService } from '../kvar/kvar.service.js';
-import {
-  Stranica,
-  StranicenjeDto,
-  stranicenje,
-} from '../shared/stranicenje.js';
+import { MAKS_PO_STRANI, Stranica } from '../shared/stranicenje.js';
+import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -55,15 +52,18 @@ export class KomentarKvarService {
     kvarId: number,
     korisnikId: number,
     uloga: Uloga,
-    upit: StranicenjeDto,
+    upit: KomentarUpitDto,
   ): Promise<Stranica<KomentarKvar>> {
     await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
     const [stavke, ukupno] = await this.komentarKvarRepository.findAndCount({
-      where: { kvar: { id: kvarId } },
+      where: {
+        kvar: { id: kvarId },
+        ...(upit.preId ? { id: LessThan(upit.preId) } : {}),
+      },
       relations: { korisnik: true },
-      order: { datumKreiranja: 'DESC', id: 'DESC' },
-      ...stranicenje(upit),
+      order: { id: 'DESC' },
+      take: Math.min(upit.poStrani, MAKS_PO_STRANI),
     });
 
     return { stavke, ukupno };
