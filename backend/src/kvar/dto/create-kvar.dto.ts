@@ -5,20 +5,26 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  MaxLength,
 } from 'class-validator';
 import {
   KategorijaKvara,
   LokacijaTip,
   Prioritet,
 } from '../../shared/enums/kvar.enums.js';
+import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 
 export class CreateKvarDto {
+  @UkloniRazmake()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   naslov: string;
 
+  @UkloniRazmake()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(2000)
   opis: string;
 
   @IsEnum(KategorijaKvara)
