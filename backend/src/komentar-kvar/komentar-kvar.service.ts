@@ -10,6 +10,11 @@ import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KvarService } from '../kvar/kvar.service.js';
+import {
+  Stranica,
+  StranicenjeDto,
+  stranicenje,
+} from '../shared/stranicenje.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -39,21 +44,29 @@ export class KomentarKvarService {
 
     const komentar = this.komentarKvarRepository.create({
       tekst: dto.tekst,
-      kvar,
+      kvar: { id: kvar.id },
       korisnik,
     });
 
     return await this.komentarKvarRepository.save(komentar);
   }
 
-  async findZaKvar(kvarId: number, korisnikId: number, uloga: Uloga) {
+  async findZaKvar(
+    kvarId: number,
+    korisnikId: number,
+    uloga: Uloga,
+    upit: StranicenjeDto,
+  ): Promise<Stranica<KomentarKvar>> {
     await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
-    return await this.komentarKvarRepository.find({
+    const [stavke, ukupno] = await this.komentarKvarRepository.findAndCount({
       where: { kvar: { id: kvarId } },
       relations: { korisnik: true },
-      order: { datumKreiranja: 'ASC' },
+      order: { datumKreiranja: 'DESC', id: 'DESC' },
+      ...stranicenje(upit),
     });
+
+    return { stavke, ukupno };
   }
 
   async remove(komentarId: number, korisnikId: number, uloga: Uloga) {

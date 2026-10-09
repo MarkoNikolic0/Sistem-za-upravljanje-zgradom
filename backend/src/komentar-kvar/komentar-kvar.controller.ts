@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
@@ -14,6 +15,7 @@ import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisni
 import { KomentarKvarService } from './komentar-kvar.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
+import { StranicenjeDto } from '../shared/stranicenje.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -33,11 +35,13 @@ export class KomentarKvarController {
   findZaKvar(
     @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Query() upit: StranicenjeDto,
   ) {
     return this.komentarKvarService.findZaKvar(
       kvarId,
       korisnik.id,
       korisnik.uloga,
+      upit,
     );
   }
 

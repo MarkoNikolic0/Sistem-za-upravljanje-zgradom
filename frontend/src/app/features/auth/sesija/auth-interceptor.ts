@@ -6,7 +6,6 @@ import { environment } from '../../../../environments/environment';
 import { AuthStore } from './auth-store';
 import { TokenRefresh } from './token-refresh';
 
-// Rute koje rade preko kolacica ili bez prijave, pa im Bearer token ne treba
 const BEZ_TOKENA = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].map(
   (putanja) => `${environment.apiUrl}${putanja}`,
 );

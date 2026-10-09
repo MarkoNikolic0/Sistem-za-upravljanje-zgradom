@@ -126,7 +126,6 @@ export class PrijavaKvara {
         opis: opis.trim(),
         prioritet: hitno ? 'hitno' : undefined,
       });
-      // Store je već osvežio listu, pa je nova prijava prva
       await this.router.navigate(['/kvarovi']);
     } catch (err) {
       this.obradiGresku(err);
