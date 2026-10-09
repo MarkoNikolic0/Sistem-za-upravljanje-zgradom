@@ -10,6 +10,8 @@ import { SpratPipe } from '../../../shared/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { NAZIVI_KATEGORIJA_KVARA, NAZIVI_STATUSA_KVARA, StanjeKvara } from '../kvar-models';
 import { KVAROVA_PO_STRANI, KvarStore } from '../kvar-store';
+import { ProfileService } from '../../profile/profile-service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   imports: [
@@ -21,6 +23,7 @@ import { KVAROVA_PO_STRANI, KvarStore } from '../kvar-store';
     SelectButtonModule,
     SkeletonModule,
     SpratPipe,
+    RouterLink,
   ],
   providers: [KvarStore],
   selector: 'app-lista-kvarova',
@@ -30,13 +33,24 @@ import { KVAROVA_PO_STRANI, KvarStore } from '../kvar-store';
 export class ListaKvarova {
   protected readonly store = inject(KvarStore);
   private authStore = inject(AuthStore);
+  private profileService = inject(ProfileService);
 
   protected readonly poStrani = KVAROVA_PO_STRANI;
   protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
 
-  // Samo admin vidi kvarove više zgrada, pa samo njemu treba naziv zgrade
   protected readonly prikaziZgradu = computed(() => this.authStore.korisnik()?.uloga === 'admin');
+
+  private readonly profil = this.profileService.profile();
+  protected readonly imaStan = computed(
+    () => this.profil.hasValue() && this.profil.value().stanovi.length > 0,
+  );
+  protected readonly stanarBezStana = computed(
+    () =>
+      this.profil.hasValue() &&
+      this.profil.value().uloga === 'stanar' &&
+      this.profil.value().stanovi.length === 0,
+  );
 
   protected readonly filteri: { label: string; value: StanjeKvara }[] = [
     { label: 'Aktivni', value: 'aktivni' },

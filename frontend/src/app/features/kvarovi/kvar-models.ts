@@ -60,3 +60,15 @@ export interface Kvar {
 export interface UpitKvarova extends UpitStrane {
   stanje: StanjeKvara;
 }
+
+export const MAKS_NASLOV_KVARA = 100;
+export const MAKS_OPIS_KVARA = 2000;
+
+export interface PrijavaKvaraRequest {
+  naslov: string;
+  opis: string;
+  kategorija: KategorijaKvara;
+  lokacijaTip: LokacijaKvara;
+  stanId: number;
+  prioritet?: PrioritetKvara;
+}

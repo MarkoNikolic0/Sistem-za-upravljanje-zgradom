@@ -1,0 +1,163 @@
+<div class="stranica">
+  <p class="oznaka">Kvarovi</p>
+  <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">Prijava kvara</h1>
+  <p class="mt-2 text-priguseno">Opiši šta ne radi. Upravnik zgrade će pregledati prijavu.</p>
+
+  @if (profil.hasValue()) {
+    @if (stanovi().length === 0) {
+      <section class="odeljak">
+        <p class="text-tekst">Da bi prijavio kvar, poveži nalog sa stanom u kojem živiš.</p>
+        <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
+      </section>
+    } @else {
+      <div aria-live="polite" class="mt-6 empty:hidden">
+        @if (greska()) {
+          <p-message severity="error">{{ greska() }}</p-message>
+        }
+      </div>
+
+      <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-5">
+        @if (stanovi().length > 1) {
+          <div class="flex flex-col gap-1.5">
+            <label for="stanId" class="text-sm font-medium">Stan</label>
+            <p-select
+              inputId="stanId"
+              formControlName="stanId"
+              [options]="stanoviZaIzbor()"
+              optionLabel="naziv"
+              optionValue="id"
+              placeholder="Izaberi stan"
+              [fluid]="true"
+              [invalid]="nevazece('stanId')"
+            />
+            @if (nevazece('stanId')) {
+              <small class="text-sm text-greska">Izaberi stan.</small>
+            }
+          </div>
+        } @else {
+          <div class="flex flex-col gap-1.5">
+            <p class="text-sm font-medium">Stan</p>
+            <p class="text-naslov">{{ stanoviZaIzbor()[0].naziv }}</p>
+          </div>
+        }
+
+        <div class="flex flex-col gap-1.5">
+          <span id="lokacija-oznaka" class="text-sm font-medium">Gde je kvar</span>
+          <p-selectbutton
+            formControlName="lokacijaTip"
+            [options]="lokacije"
+            optionLabel="label"
+            optionValue="value"
+            [allowEmpty]="false"
+            ariaLabelledBy="lokacija-oznaka"
+          />
+          @if (forma.controls.lokacijaTip.value === 'zajednicki_prostor') {
+            <small class="text-sm text-priguseno">
+              Lift, stepenište, ulaz, podrum i ostali prostori koje koriste svi stanari.
+            </small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="kategorija" class="text-sm font-medium">Vrsta kvara</label>
+          <p-select
+            inputId="kategorija"
+            formControlName="kategorija"
+            [options]="kategorije"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Izaberi vrstu"
+            [fluid]="true"
+            [invalid]="nevazece('kategorija')"
+          />
+          @if (nevazece('kategorija')) {
+            <small class="text-sm text-greska">Izaberi vrstu kvara.</small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="naslov" class="text-sm font-medium">Naslov</label>
+          <input
+            pInputText
+            id="naslov"
+            formControlName="naslov"
+            placeholder="npr. Curi slavina u kupatilu"
+            autocomplete="off"
+            enterkeyhint="next"
+            [attr.maxlength]="maksNaslov"
+            [fluid]="true"
+            [invalid]="nevazece('naslov')"
+            [attr.aria-invalid]="nevazece('naslov')"
+            [attr.aria-describedby]="nevazece('naslov') ? 'naslov-greska' : null"
+          />
+          @if (nevazece('naslov')) {
+            <small id="naslov-greska" class="text-sm text-greska">
+              {{ forma.controls.naslov.errors?.['server'] ?? 'Unesi kratak naslov.' }}
+            </small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="opis" class="text-sm font-medium">Opis</label>
+          <textarea
+            pTextarea
+            id="opis"
+            formControlName="opis"
+            rows="4"
+            [autoResize]="true"
+            [attr.maxlength]="maksOpis"
+            [fluid]="true"
+            [invalid]="nevazece('opis')"
+            [attr.aria-invalid]="nevazece('opis')"
+            [attr.aria-describedby]="nevazece('opis') ? 'opis-greska' : 'opis-pomoc'"
+          ></textarea>
+          @if (nevazece('opis')) {
+            <small id="opis-greska" class="text-sm text-greska">
+              {{ forma.controls.opis.errors?.['server'] ?? 'Opiši kvar.' }}
+            </small>
+          } @else {
+            <small id="opis-pomoc" class="text-sm text-priguseno">
+              Šta se desilo, od kada i gde tačno.
+            </small>
+          }
+        </div>
+
+        <div class="flex items-start gap-3">
+          <p-checkbox inputId="hitno" formControlName="hitno" [binary]="true" />
+          <div>
+            <label for="hitno" class="font-medium">Hitno je</label>
+            <p class="mt-0.5 text-sm text-priguseno">
+              Na primer: curi voda, nema struje ili grejanja.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <button pButton type="submit" [disabled]="salje()">
+            @if (salje()) {
+              <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+              Slanje…
+            } @else {
+              Prijavi kvar
+            }
+          </button>
+          <a pButton routerLink="/kvarovi" text>Odustani</a>
+        </div>
+      </form>
+    }
+  } @else if (profil.error()) {
+    <section class="odeljak">
+      <p-message severity="error">Podaci za prijavu trenutno ne mogu da se učitaju.</p-message>
+      <button pButton type="button" outlined class="mt-4" (click)="profil.reload()">
+        Pokušaj ponovo
+      </button>
+    </section>
+  } @else {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="2.5rem" styleClass="mt-5" />
+      <p-skeleton height="7rem" styleClass="mt-5" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  }
+</div>

@@ -3,6 +3,19 @@
   <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">Kvarovi</h1>
   <p class="mt-2 text-priguseno">Prijavljeni kvarovi i tok njihove popravke.</p>
 
+  @if (imaStan()) {
+    <a pButton routerLink="/kvarovi/novi" class="mt-6">Prijavi kvar</a>
+  } @else if (stanarBezStana()) {
+    <p class="mt-6 text-sm text-priguseno">
+      Da bi prijavio kvar,
+      <a
+        routerLink="/povezivanje"
+        class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+        >poveži nalog sa stanom</a
+      >.
+    </p>
+  }
+
   <p-selectbutton
     class="mt-6"
     [options]="filteri"

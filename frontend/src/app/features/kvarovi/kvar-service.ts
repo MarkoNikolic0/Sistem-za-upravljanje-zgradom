@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
-import { Kvar, UpitKvarova } from './kvar-models';
+import { Kvar, PrijavaKvaraRequest, UpitKvarova } from './kvar-models';
 
 @Service()
 export class KvarService {
@@ -16,5 +16,9 @@ export class KvarService {
       .set('strana', upit.strana)
       .set('poStrani', upit.poStrani);
     return this.http.get<Stranica<Kvar>>(this.apiUrl, { params });
+  }
+
+  prijavi(podaci: PrijavaKvaraRequest): Observable<Kvar> {
+    return this.http.post<Kvar>(this.apiUrl, podaci);
   }
 }

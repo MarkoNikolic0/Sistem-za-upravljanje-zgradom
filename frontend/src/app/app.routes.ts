@@ -48,6 +48,13 @@ export const routes: Routes = [
         title: 'Kvarovi | Upravljanje zgradom',
       },
       {
+        path: 'kvarovi/novi',
+        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
+        loadComponent: () =>
+          import('./features/kvarovi/prijava-kvara/prijava-kvara').then((m) => m.PrijavaKvara),
+        title: 'Prijava kvara | Upravljanje zgradom',
+      },
+      {
         path: 'zahtevi',
         canActivate: [ulogaGuard('upravnik', 'admin')],
         loadComponent: () =>
