@@ -1,13 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withHooks,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import { EMPTY, exhaustMap, firstValueFrom, forkJoin, pipe, switchMap, tap } from 'rxjs';
@@ -25,13 +18,12 @@ interface KvaroviState {
   strana: number;
   ucitava: boolean;
   greskaUcitavanja: boolean;
+  listaZatrazena: boolean;
   prijavaUToku: boolean;
-  // Detalj (izabrani kvar i njegovi komentari, hronološki)
   kvar: Kvar | null;
   ucitavaDetalj: boolean;
   greskaDetalja: 'nije-pronadjen' | 'greska' | null;
   komentari: KomentarKvara[];
-  // Koliko starijih komentara još nije učitano
   preostaloStarijih: number;
   ucitavaStarije: boolean;
   slanjeKomentara: boolean;
@@ -44,6 +36,7 @@ const pocetnoStanje: KvaroviState = {
   strana: 1,
   ucitava: false,
   greskaUcitavanja: false,
+  listaZatrazena: false,
   prijavaUToku: false,
   kvar: null,
   ucitavaDetalj: false,
@@ -62,7 +55,9 @@ export const KvarStore = signalStore(
   withMethods((store, kvarService = inject(KvarService)) => {
     const ucitaj = rxMethod<void>(
       pipe(
-        tap(() => patchState(store, { ucitava: true, greskaUcitavanja: false })),
+        tap(() =>
+          patchState(store, { ucitava: true, greskaUcitavanja: false, listaZatrazena: true }),
+        ),
         switchMap(() =>
           kvarService
             .lista({ stanje: store.stanje(), strana: store.strana(), poStrani: KVAROVA_PO_STRANI })
@@ -148,6 +143,11 @@ export const KvarStore = signalStore(
 
     return {
       ucitaj,
+      prikaziListu(): void {
+        if (!store.listaZatrazena()) {
+          ucitaj();
+        }
+      },
       ucitajDetalj,
       ucitajStarijeKomentare,
       promeniStanje(stanje: StanjeKvara): void {
@@ -187,10 +187,5 @@ export const KvarStore = signalStore(
         patchState(store, { komentari: store.komentari().filter((k) => k.id !== id) });
       },
     };
-  }),
-  withHooks({
-    onInit(store) {
-      store.ucitaj();
-    },
   }),
 );

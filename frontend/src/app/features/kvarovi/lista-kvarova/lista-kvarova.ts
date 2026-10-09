@@ -56,6 +56,10 @@ export class ListaKvarova {
     { label: 'Završeni', value: 'zavrseni' },
   ];
 
+  constructor() {
+    this.store.prikaziListu();
+  }
+
   protected promeniStranu(event: PaginatorState): void {
     this.store.promeniStranu((event.page ?? 0) + 1);
   }
