@@ -1,0 +1,190 @@
+<div class="stranica">
+  <a routerLink="/kvarovi" class="nazad">← Svi kvarovi</a>
+
+  @if (store.kvar(); as kvar) {
+    <p class="oznaka mt-6">Kvar</p>
+    <h1 class="mt-3 text-3xl font-extralight tracking-tight text-naslov">{{ kvar.naslov }}</h1>
+    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+      <span
+        class="oznaka-statusa"
+        [class.greska]="kvar.status === 'odbijen'"
+        [class.prigusena]="kvar.status === 'zatvoren'"
+      >
+        {{ naziviStatusa[kvar.status] }}
+      </span>
+      @if (kvar.prioritet === 'hitno' && kvar.status !== 'zatvoren' && kvar.status !== 'odbijen') {
+        <span class="oznaka-statusa greska">Hitno</span>
+      }
+    </p>
+
+    <section class="odeljak" aria-labelledby="podaci-naslov">
+      <div class="zaglavlje-odeljka">
+        <h2 id="podaci-naslov" class="naslov-odeljka">Podaci</h2>
+      </div>
+      <dl>
+        <div class="red">
+          <dt>Gde</dt>
+          <dd>
+            @if (kvar.stan; as stan) {
+              Stan {{ stan.broj }} · {{ stan.sprat | sprat }}
+            } @else {
+              Zajednički prostor
+            }
+          </dd>
+        </div>
+        <div class="red">
+          <dt>Zgrada</dt>
+          <dd>{{ kvar.zgrada.naziv }}</dd>
+        </div>
+        <div class="red">
+          <dt>Vrsta</dt>
+          <dd>{{ naziviKategorija[kvar.kategorija] }}</dd>
+        </div>
+        <div class="red">
+          <dt>Prijavljen</dt>
+          <dd>
+            <time [attr.datetime]="kvar.datumPrijave">
+              {{ kvar.datumPrijave | date: 'd. MMM y. HH:mm' }}
+            </time>
+          </dd>
+        </div>
+        <div class="red">
+          <dt>Prijavio</dt>
+          <dd>
+            {{ kvar.korisnik.ime }} {{ kvar.korisnik.prezime }}
+            @if (kvar.korisnik.telefon; as telefon) {
+              <a class="kontakt" [href]="'tel:' + telefon">{{ formatirajTelefon(telefon) }}</a>
+            }
+          </dd>
+        </div>
+        <div class="red">
+          <dt>Serviser</dt>
+          <dd>
+            @if (kvar.serviser; as serviser) {
+              {{ serviser.ime }} {{ serviser.prezime }}
+              @if (serviser.telefon; as telefon) {
+                <a class="kontakt" [href]="'tel:' + telefon">{{ formatirajTelefon(telefon) }}</a>
+              }
+            } @else {
+              <span class="text-priguseno">Još nije dodeljen</span>
+            }
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="odeljak" aria-labelledby="opis-naslov">
+      <div class="zaglavlje-odeljka">
+        <h2 id="opis-naslov" class="naslov-odeljka">Opis</h2>
+      </div>
+      <p class="opis">{{ kvar.opis }}</p>
+    </section>
+
+    <section class="odeljak" aria-labelledby="komentari-naslov">
+      <div class="zaglavlje-odeljka">
+        <h2 id="komentari-naslov" class="naslov-odeljka">Komentari</h2>
+      </div>
+
+      @if (store.preostaloStarijih() > 0) {
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          class="mb-2"
+          [disabled]="store.ucitavaStarije()"
+          (click)="store.ucitajStarijeKomentare()"
+        >
+          Prikaži starije komentare ({{ store.preostaloStarijih() }})
+        </button>
+      }
+
+      @for (komentar of store.komentari(); track komentar.id) {
+        <article class="komentar" [attr.aria-label]="'Komentar: ' + komentar.korisnik.ime">
+          <div class="flex items-baseline justify-between gap-4">
+            <p class="text-sm">
+              <span class="font-medium text-naslov">
+                {{ komentar.korisnik.ime }} {{ komentar.korisnik.prezime }}
+              </span>
+              @if (komentar.korisnik.uloga !== 'stanar') {
+                <span class="text-priguseno"> · {{ naziviUloga[komentar.korisnik.uloga] }}</span>
+              }
+            </p>
+            <time class="shrink-0 text-sm text-utisano" [attr.datetime]="komentar.datumKreiranja">
+              {{ komentar.datumKreiranja | date: 'd. MMM HH:mm' }}
+            </time>
+          </div>
+          <p class="opis mt-1">{{ komentar.tekst }}</p>
+          @if (smeDaBrise(komentar)) {
+            <button
+              pButton
+              type="button"
+              text
+              size="small"
+              severity="danger"
+              class="mt-1 -ml-2"
+              (click)="obrisi($event, komentar)"
+            >
+              Obriši
+            </button>
+          }
+        </article>
+      } @empty {
+        <p class="text-priguseno">Još nema komentara.</p>
+      }
+
+      <form [formGroup]="forma" (ngSubmit)="posaljiKomentar()" class="mt-6 flex flex-col gap-1.5">
+        <label for="komentar" class="text-sm font-medium">Novi komentar</label>
+        <textarea
+          pTextarea
+          id="komentar"
+          formControlName="tekst"
+          rows="2"
+          [autoResize]="true"
+          [attr.maxlength]="maksKomentar"
+          [fluid]="true"
+          [invalid]="forma.controls.tekst.invalid && forma.controls.tekst.touched"
+          [attr.aria-invalid]="forma.controls.tekst.invalid && forma.controls.tekst.touched"
+          [attr.aria-describedby]="greskaKomentara() ? 'komentar-greska' : null"
+        ></textarea>
+        <div aria-live="polite" class="empty:hidden">
+          @if (greskaKomentara()) {
+            <small id="komentar-greska" class="text-sm text-greska">{{ greskaKomentara() }}</small>
+          } @else if (forma.controls.tekst.invalid && forma.controls.tekst.touched) {
+            <small class="text-sm text-greska">Napiši komentar.</small>
+          }
+        </div>
+        <div class="mt-2">
+          <button pButton type="submit" size="small" [disabled]="store.slanjeKomentara()">
+            @if (store.slanjeKomentara()) {
+              <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+              Slanje…
+            } @else {
+              Pošalji
+            }
+          </button>
+        </div>
+      </form>
+    </section>
+  } @else if (store.greskaDetalja() === 'nije-pronadjen') {
+    <section class="odeljak">
+      <p-message severity="warn">Kvar ne postoji ili nemaš pristup njemu.</p-message>
+    </section>
+  } @else if (store.greskaDetalja() === 'greska') {
+    <section class="odeljak">
+      <p-message severity="error">Kvar trenutno ne može da se učita.</p-message>
+      <button pButton type="button" outlined class="mt-4" (click)="store.ucitajDetalj(id())">
+        Pokušaj ponovo
+      </button>
+    </section>
+  } @else {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton width="60%" height="2.25rem" />
+      <p-skeleton height="12rem" styleClass="mt-8" />
+    </div>
+    <span class="sr-only">Učitavanje kvara…</span>
+  }
+
+  <!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+  <p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
+</div>

@@ -118,7 +118,7 @@ export class PrijavaKvara {
 
     this.greska.set('');
     try {
-      await this.store.prijavi({
+      const kvar = await this.store.prijavi({
         stanId,
         lokacijaTip,
         kategorija,
@@ -126,7 +126,7 @@ export class PrijavaKvara {
         opis: opis.trim(),
         prioritet: hitno ? 'hitno' : undefined,
       });
-      await this.router.navigate(['/kvarovi']);
+      await this.router.navigate(['/kvarovi', kvar.id]);
     } catch (err) {
       this.obradiGresku(err);
     }

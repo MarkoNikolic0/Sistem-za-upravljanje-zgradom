@@ -44,7 +44,9 @@
       @for (kvar of store.kvarovi(); track kvar.id) {
         <article class="kvar" [attr.aria-labelledby]="'kvar-' + kvar.id">
           <div class="flex items-baseline justify-between gap-4">
-            <h2 [id]="'kvar-' + kvar.id" class="text-naslov">{{ kvar.naslov }}</h2>
+            <h2 [id]="'kvar-' + kvar.id" class="text-naslov">
+              <a [routerLink]="['/kvarovi', kvar.id]" class="kartica-link">{{ kvar.naslov }}</a>
+            </h2>
             <time class="shrink-0 text-sm text-utisano" [attr.datetime]="kvar.datumPrijave">
               {{ kvar.datumPrijave | date: 'd. MMM y. HH:mm' }}
             </time>
