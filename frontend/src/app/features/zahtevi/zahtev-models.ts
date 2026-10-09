@@ -32,11 +32,6 @@ export interface ZahtevUpravnika extends ZahtevResponse {
   korisnik: PodnosilacZahteva;
 }
 
-export interface StranicaZahteva {
-  stavke: ZahtevUpravnika[];
-  ukupno: number;
-}
-
 export interface UpitZahteva extends UpitStrane {
   status?: StatusZahteva;
 }

@@ -41,6 +41,13 @@ export const routes: Routes = [
         title: 'Povezivanje sa stanom | Upravljanje zgradom',
       },
       {
+        path: 'kvarovi',
+        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
+        loadComponent: () =>
+          import('./features/kvarovi/lista-kvarova/lista-kvarova').then((m) => m.ListaKvarova),
+        title: 'Kvarovi | Upravljanje zgradom',
+      },
+      {
         path: 'zahtevi',
         canActivate: [ulogaGuard('upravnik', 'admin')],
         loadComponent: () =>
