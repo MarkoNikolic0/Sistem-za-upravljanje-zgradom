@@ -19,7 +19,7 @@
       <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-5">
         @if (stanovi().length > 1) {
           <div class="flex flex-col gap-1.5">
-            <label id="stan-oznaka" for="stanId" class="text-sm font-medium">Stan</label>
+            <span id="stan-oznaka" class="text-sm font-medium">Stan</span>
             <p-select
               inputId="stanId"
               ariaLabelledBy="stan-oznaka"
@@ -60,9 +60,7 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label id="kategorija-oznaka" for="kategorija" class="text-sm font-medium"
-            >Vrsta kvara</label
-          >
+          <span id="kategorija-oznaka" class="text-sm font-medium">Vrsta kvara</span>
           <p-select
             inputId="kategorija"
             ariaLabelledBy="kategorija-oznaka"

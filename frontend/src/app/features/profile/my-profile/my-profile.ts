@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
@@ -35,7 +35,6 @@ type Polje = 'ime' | 'prezime' | 'telefon';
 export class MyProfile {
   private profileService = inject(ProfileService);
   private fb = inject(FormBuilder);
-  private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly profil = this.profileService.profile();
@@ -88,7 +87,7 @@ export class MyProfile {
   sacuvaj(): void {
     if (this.forma.invalid) {
       this.forma.markAllAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('input.ng-invalid')?.focus();
+      this.fokusiraj('input.ng-invalid');
       return;
     }
 
@@ -115,7 +114,7 @@ export class MyProfile {
     if (greskaTelefona) {
       this.forma.controls.telefon.setErrors({ server: greskaTelefona });
       this.forma.controls.telefon.markAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('#telefon')?.focus();
+      this.fokusiraj('#telefon');
       return;
     }
 

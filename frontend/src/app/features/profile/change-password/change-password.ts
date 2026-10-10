@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
@@ -29,7 +29,6 @@ type Polje = 'trenutnaLozinka' | 'novaLozinka';
 export class ChangePassword {
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
-  private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
@@ -72,7 +71,7 @@ export class ChangePassword {
   sacuvaj(): void {
     if (this.forma.invalid) {
       this.forma.markAllAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('input.ng-invalid')?.focus();
+      this.fokusiraj('input.ng-invalid');
       return;
     }
 
@@ -99,7 +98,7 @@ export class ChangePassword {
         const kontrola = this.forma.controls[polje];
         kontrola.setErrors({ server: poruka });
         kontrola.markAsTouched();
-        this.host.nativeElement.querySelector<HTMLElement>(`#${polje}`)?.focus();
+        this.fokusiraj(`#${polje}`);
         return;
       }
     }

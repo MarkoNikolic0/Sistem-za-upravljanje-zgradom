@@ -72,7 +72,6 @@
         iconOnly
         aria-label="Meni naloga"
         aria-haspopup="true"
-        aria-controls="meni-naloga_list"
         [attr.aria-expanded]="nalogOtvoren()"
         class="ml-auto"
         (click)="nalog.toggle($event)"
@@ -81,7 +80,6 @@
       </button>
       <p-menu
         #nalog
-        id="meni-naloga"
         [model]="meniNaloga()"
         [popup]="true"
         ariaLabel="Meni naloga"
@@ -90,7 +88,7 @@
       />
     </header>
 
-    <main #sadrzaj id="sadrzaj" tabindex="-1" class="sadrzaj">
+    <main id="sadrzaj" tabindex="-1" class="sadrzaj">
       <router-outlet />
     </main>
 
@@ -113,7 +111,6 @@
             type="button"
             class="stavka-trake"
             aria-haspopup="true"
-            aria-controls="vise-stavki_list"
             [attr.aria-expanded]="viseOtvoreno()"
             (click)="vise.toggle($event)"
           >
@@ -124,7 +121,6 @@
       </nav>
       <p-menu
         #vise
-        id="vise-stavki"
         [model]="stavkeVise()"
         [popup]="true"
         ariaLabel="Ostale stavke"

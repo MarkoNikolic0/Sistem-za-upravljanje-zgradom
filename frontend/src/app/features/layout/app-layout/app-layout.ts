@@ -1,13 +1,4 @@
-import {
-  afterNextRender,
-  Component,
-  computed,
-  ElementRef,
-  inject,
-  Injector,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MenuModule } from 'primeng/menu';
@@ -16,6 +7,7 @@ import { STAVKE_NAVIGACIJE } from '../navigacija';
 import { MenuItem } from 'primeng/api';
 import { Logo } from '../../../shared/logo/logo';
 import { ButtonModule } from 'primeng/button';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { filter, skip } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -39,8 +31,7 @@ const NAJVISE_U_TRACI = 5;
 export class AppLayout {
   private authStore = inject(AuthStore);
   private router = inject(Router);
-  private injector = inject(Injector);
-  private readonly sadrzaj = viewChild.required<ElementRef<HTMLElement>>('sadrzaj');
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly nalogOtvoren = signal(false);
   protected readonly viseOtvoreno = signal(false);
@@ -52,14 +43,12 @@ export class AppLayout {
         skip(1),
         takeUntilDestroyed(),
       )
-      .subscribe(() =>
-        afterNextRender(() => this.sadrzaj().nativeElement.focus(), { injector: this.injector }),
-      );
+      .subscribe(() => this.fokusiraj('#sadrzaj'));
   }
 
   protected preskoci(event: Event): void {
     event.preventDefault();
-    this.sadrzaj().nativeElement.focus();
+    this.fokusiraj('#sadrzaj');
   }
 
   protected readonly stavke = computed(() => {

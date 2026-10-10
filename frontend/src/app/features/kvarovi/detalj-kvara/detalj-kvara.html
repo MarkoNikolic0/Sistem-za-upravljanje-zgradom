@@ -143,14 +143,14 @@
           [autoResize]="true"
           [attr.maxlength]="maksKomentar"
           [fluid]="true"
-          [invalid]="forma.controls.tekst.invalid && forma.controls.tekst.touched"
-          [attr.aria-invalid]="forma.controls.tekst.invalid && forma.controls.tekst.touched"
+          [invalid]="komentarNevazeci()"
+          [attr.aria-invalid]="komentarNevazeci()"
           [attr.aria-describedby]="imaGreskuKomentara() ? 'komentar-greska' : null"
         ></textarea>
         <div aria-live="polite" class="empty:hidden">
           @if (greskaKomentara()) {
             <small id="komentar-greska" class="text-sm text-greska">{{ greskaKomentara() }}</small>
-          } @else if (forma.controls.tekst.invalid && forma.controls.tekst.touched) {
+          } @else if (komentarNevazeci()) {
             <small id="komentar-greska" class="text-sm text-greska">Napiši komentar.</small>
           }
         </div>

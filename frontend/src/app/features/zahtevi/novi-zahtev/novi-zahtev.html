@@ -21,9 +21,8 @@
 
     <form [formGroup]="forma" (ngSubmit)="posalji()" class="flex flex-col gap-5">
       <div class="flex flex-col gap-1.5">
-        <label id="zgrada-oznaka" for="zgrada" class="text-sm font-medium">Zgrada</label>
+        <span id="zgrada-oznaka" class="text-sm font-medium">Zgrada</span>
         <p-select
-          inputId="zgrada"
           ariaLabelledBy="zgrada-oznaka"
           formControlName="zgradaId"
           [options]="zgrade.hasValue() ? zgrade.value() : []"
@@ -51,9 +50,8 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label id="stan-oznaka" for="stan" class="text-sm font-medium">Stan</label>
+        <span id="stan-oznaka" class="text-sm font-medium">Stan</span>
         <p-select
-          inputId="stan"
           ariaLabelledBy="stan-oznaka"
           formControlName="stanId"
           [options]="stanoviZaIzbor()"
