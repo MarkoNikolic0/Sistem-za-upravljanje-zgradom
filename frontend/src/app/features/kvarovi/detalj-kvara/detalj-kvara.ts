@@ -77,6 +77,11 @@ export class DetaljKvara {
     this.store.ucitajDetalj(this.id);
   }
 
+  protected imaGreskuKomentara(): boolean {
+    const tekst = this.forma.controls.tekst;
+    return !!this.greskaKomentara() || (tekst.invalid && tekst.touched);
+  }
+
   protected smeDaBrise(komentar: KomentarKvara): boolean {
     const ja = this.authStore.korisnik();
     return (
