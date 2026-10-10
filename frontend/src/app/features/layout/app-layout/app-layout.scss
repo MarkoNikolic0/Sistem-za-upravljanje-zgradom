@@ -50,6 +50,10 @@ p-sidebar-group-label.oznaka {
 .sadrzaj {
   flex: 1;
   padding: 1.5rem 1rem;
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .aktivna i {
@@ -121,5 +125,21 @@ p-sidebar-group-label.oznaka {
 
   .brend.uz-sidebar {
     display: none;
+  }
+}
+
+.preskoci {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--color-svetlo);
+  color: #111111;
+  font-weight: 500;
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: none;
   }
 }

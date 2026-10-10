@@ -1,3 +1,4 @@
+<a href="#sadrzaj" class="preskoci" (click)="preskoci($event)">Preskoči na sadržaj</a>
 <p-sidebar-layout>
   @if (imaNavigaciju()) {
     <p-sidebar id="glavni-meni" width="17rem" class="max-lg:hidden">
@@ -70,15 +71,26 @@
         text
         iconOnly
         aria-label="Meni naloga"
+        aria-haspopup="true"
+        aria-controls="meni-naloga_list"
+        [attr.aria-expanded]="nalogOtvoren()"
         class="ml-auto"
         (click)="nalog.toggle($event)"
       >
         <i class="pi pi-user" aria-hidden="true"></i>
       </button>
-      <p-menu #nalog [model]="meniNaloga()" [popup]="true" ariaLabel="Meni naloga" />
+      <p-menu
+        #nalog
+        id="meni-naloga"
+        [model]="meniNaloga()"
+        [popup]="true"
+        ariaLabel="Meni naloga"
+        (onShow)="nalogOtvoren.set(true)"
+        (onHide)="nalogOtvoren.set(false)"
+      />
     </header>
 
-    <main class="sadrzaj">
+    <main #sadrzaj id="sadrzaj" tabindex="-1" class="sadrzaj">
       <router-outlet />
     </main>
 
@@ -97,13 +109,28 @@
           </a>
         }
         @if (stavkeVise().length) {
-          <button type="button" class="stavka-trake" (click)="vise.toggle($event)">
+          <button
+            type="button"
+            class="stavka-trake"
+            aria-haspopup="true"
+            aria-controls="vise-stavki_list"
+            [attr.aria-expanded]="viseOtvoreno()"
+            (click)="vise.toggle($event)"
+          >
             <span class="ikonica"><i class="pi pi-ellipsis-h" aria-hidden="true"></i></span>
             <span class="naziv">Više</span>
           </button>
         }
       </nav>
-      <p-menu #vise [model]="stavkeVise()" [popup]="true" ariaLabel="Ostale stavke" />
+      <p-menu
+        #vise
+        id="vise-stavki"
+        [model]="stavkeVise()"
+        [popup]="true"
+        ariaLabel="Ostale stavke"
+        (onShow)="viseOtvoreno.set(true)"
+        (onHide)="viseOtvoreno.set(false)"
+      />
     }
   </p-sidebar-main>
 </p-sidebar-layout>
