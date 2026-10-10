@@ -18,6 +18,7 @@ import { AuthStore } from './features/auth/sesija/auth-store';
 import { authInterceptor } from './features/auth/sesija/auth-interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeSrLatn from '@angular/common/locales/sr-Latn';
+import { PREVOD_PRIMENG } from './theme/prevod-primeng';
 
 registerLocaleData(localeSrLatn);
 
@@ -30,6 +31,7 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'sr-Latn' },
     providePrimeNG({
       overlayAppendTo: 'body',
+      translation: PREVOD_PRIMENG,
       theme: {
         preset: ZgradaPreset,
         options: {
