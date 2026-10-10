@@ -134,3 +134,7 @@ body {
     opacity: 0;
   }
 }
+
+[tabindex='-1']:focus:not(:focus-visible) {
+  outline: none;
+}

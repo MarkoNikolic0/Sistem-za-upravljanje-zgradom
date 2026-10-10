@@ -13,6 +13,7 @@ import { ChangePassword } from '../change-password/change-password';
 import { RouterLink } from '@angular/router';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { SpratPipe } from '../../../shared/sprat-pipe';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -35,6 +36,7 @@ export class MyProfile {
   private profileService = inject(ProfileService);
   private fb = inject(FormBuilder);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly profil = this.profileService.profile();
 
@@ -75,10 +77,12 @@ export class MyProfile {
     this.greska.set('');
     this.sacuvano.set(false);
     this.izmena.set(true);
+    this.fokusiraj('#ime');
   }
 
   otkazi(): void {
     this.izmena.set(false);
+    this.fokusiraj('#izmeni-podatke');
   }
 
   sacuvaj(): void {
@@ -99,6 +103,7 @@ export class MyProfile {
           this.profil.set(profil);
           this.izmena.set(false);
           this.sacuvano.set(true);
+          this.fokusiraj('#izmeni-podatke');
         },
         error: (err: HttpErrorResponse) => this.obradiGresku(err),
       });

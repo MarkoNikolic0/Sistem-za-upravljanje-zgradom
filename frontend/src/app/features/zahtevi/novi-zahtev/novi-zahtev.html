@@ -5,7 +5,7 @@
     Izaberi zgradu i stan u kojem živiš. Upravnik zgrade će potvrditi zahtev.
   </p>
 
-  <div aria-live="polite" class="mt-6 empty:hidden">
+  <div id="poruka-zahteva" tabindex="-1" aria-live="polite" class="mt-6 empty:hidden">
     @if (poslat()) {
       <p-message severity="success">Zahtev je poslat upravniku zgrade.</p-message>
     }

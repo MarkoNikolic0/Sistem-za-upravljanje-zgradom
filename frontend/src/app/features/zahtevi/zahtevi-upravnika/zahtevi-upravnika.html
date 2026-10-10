@@ -15,7 +15,7 @@
   />
   <span id="zahtevi-filter" class="sr-only">Prikaz zahteva</span>
 
-  <div aria-live="polite" class="mt-6 empty:hidden">
+  <div #porukaObrade tabindex="-1" aria-live="polite" class="mt-6 empty:hidden">
     @if (store.poruka(); as poruka) {
       <p-message [severity]="poruka.tip === 'uspeh' ? 'success' : 'error'">{{
         poruka.tekst

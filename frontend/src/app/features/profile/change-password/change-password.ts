@@ -10,6 +10,7 @@ import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../auth/auth-service';
 import { MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../../auth/pravila-lozinke';
 import { greskaPolja } from '../../../shared/greske-servera';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 
 type Polje = 'trenutnaLozinka' | 'novaLozinka';
 
@@ -29,6 +30,7 @@ export class ChangePassword {
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
 
@@ -56,10 +58,12 @@ export class ChangePassword {
     this.greska.set('');
     this.promenjena.set(false);
     this.otvoreno.set(true);
+    this.fokusiraj('#trenutnaLozinka');
   }
 
   otkazi(): void {
     this.otvoreno.set(false);
+    this.fokusiraj('#promeni-lozinku');
   }
 
   sacuvaj(): void {
@@ -79,6 +83,7 @@ export class ChangePassword {
         next: () => {
           this.otvoreno.set(false);
           this.promenjena.set(true);
+          this.fokusiraj('#promeni-lozinku');
         },
         error: (err: HttpErrorResponse) => this.obradiGresku(err),
       });

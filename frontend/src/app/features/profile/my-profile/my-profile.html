@@ -21,7 +21,14 @@
       <div class="zaglavlje-odeljka">
         <h2 id="licni-podaci" class="naslov-odeljka">Lični podaci</h2>
         @if (!izmena()) {
-          <button pButton type="button" outlined size="small" (click)="pocniIzmenu()">
+          <button
+            pButton
+            id="izmeni-podatke"
+            type="button"
+            outlined
+            size="small"
+            (click)="pocniIzmenu()"
+          >
             Izmeni
           </button>
         }

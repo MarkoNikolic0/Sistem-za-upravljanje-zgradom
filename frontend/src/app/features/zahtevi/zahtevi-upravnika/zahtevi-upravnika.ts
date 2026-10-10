@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { afterRenderEffect, Component, ElementRef, inject, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService } from 'primeng/api';
@@ -33,6 +33,7 @@ import { ZAHTEVA_PO_STRANI, ZahteviStore } from '../zahtev-store';
 export class ZahteviUpravnika {
   protected readonly store = inject(ZahteviStore);
   private confirmationService = inject(ConfirmationService);
+  private readonly porukaObrade = viewChild.required<ElementRef<HTMLElement>>('porukaObrade');
 
   protected readonly poStrani = ZAHTEVA_PO_STRANI;
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
@@ -42,6 +43,14 @@ export class ZahteviUpravnika {
     { label: 'Na čekanju', value: 'na_cekanju' },
     { label: 'Svi', value: 'svi' },
   ];
+
+  constructor() {
+    afterRenderEffect(() => {
+      if (this.store.poruka()) {
+        this.porukaObrade().nativeElement.focus();
+      }
+    });
+  }
 
   protected promeniStranu(event: PaginatorState): void {
     this.store.promeniStranu((event.page ?? 0) + 1);

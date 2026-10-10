@@ -10,6 +10,7 @@ import { ZgradaService } from '../../zgrade/zgrada-service';
 import { ZahtevService } from '../zahtev-service';
 import { NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
 import { nazivSprata, SpratPipe } from '../../../shared/sprat-pipe';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 
 @Component({
   imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, SpratPipe],
@@ -21,6 +22,7 @@ export class NoviZahtev {
   private zahtevService = inject(ZahtevService);
   private zgradaService = inject(ZgradaService);
   private fb = inject(FormBuilder);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
 
@@ -84,13 +86,16 @@ export class NoviZahtev {
           this.forma.reset();
           this.poslat.set(true);
           this.zahtevi.reload();
+          this.fokusiraj('#poruka-zahteva');
         },
-        error: (err: HttpErrorResponse) =>
+        error: (err: HttpErrorResponse) => {
           this.greska.set(
             err.status === 409
               ? err.error?.message
               : 'Zahtev nije poslat. Pokušaj ponovo za nekoliko trenutaka.',
-          ),
+          );
+          this.fokusiraj('#poruka-zahteva');
+        },
       });
   }
 }

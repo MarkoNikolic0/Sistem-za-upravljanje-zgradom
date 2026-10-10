@@ -12,6 +12,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { SpratPipe } from '../../../shared/sprat-pipe';
 import { formatirajTelefon } from '../../../shared/telefon';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import {
@@ -47,6 +48,7 @@ export class DetaljKvara {
   private authStore = inject(AuthStore);
   private confirmationService = inject(ConfirmationService);
   private fb = inject(FormBuilder);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly id = input.required({ transform: numberAttribute });
 
@@ -59,11 +61,14 @@ export class DetaljKvara {
   protected readonly forma = this.fb.nonNullable.group({
     tekst: [
       '',
-      [
-        Validators.required,
-        Validators.pattern(NIJE_PRAZNO),
-        Validators.maxLength(MAKS_KOMENTAR_KVARA),
-      ],
+      {
+        validators: [
+          Validators.required,
+          Validators.pattern(NIJE_PRAZNO),
+          Validators.maxLength(MAKS_KOMENTAR_KVARA),
+        ],
+        updateOn: 'submit',
+      },
     ],
   });
   protected readonly greskaKomentara = signal('');
@@ -83,15 +88,18 @@ export class DetaljKvara {
     const tekst = this.forma.controls.tekst;
     if (tekst.invalid) {
       tekst.markAsTouched();
+      this.fokusiraj('#komentar');
       return;
     }
     this.greskaKomentara.set('');
     try {
       await this.store.dodajKomentar(tekst.value.trim());
       this.forma.reset();
+      this.fokusiraj('#komentar');
     } catch (err) {
       const poruka = err instanceof HttpErrorResponse ? greskaPolja(err, 'tekst') : undefined;
       this.greskaKomentara.set(poruka ?? 'Komentar nije poslat. Pokušaj ponovo.');
+      this.fokusiraj('#komentar');
     }
   }
 
@@ -106,8 +114,10 @@ export class DetaljKvara {
       accept: async () => {
         try {
           await this.store.obrisiKomentar(komentar.id);
+          this.fokusiraj('#komentari-naslov');
         } catch {
           this.greskaKomentara.set('Komentar nije obrisan. Pokušaj ponovo.');
+          this.fokusiraj('#komentar');
         }
       },
       reject: () => dugme.focus(),
