@@ -41,10 +41,13 @@ export class ChangePassword {
   protected readonly sakrijTrenutnu = signal(true);
   protected readonly sakrijNovu = signal(true);
 
-  protected readonly forma = this.fb.nonNullable.group({
-    trenutnaLozinka: ['', Validators.required],
-    novaLozinka: ['', PRAVILA_LOZINKE],
-  });
+  protected readonly forma = this.fb.nonNullable.group(
+    {
+      trenutnaLozinka: ['', Validators.required],
+      novaLozinka: ['', PRAVILA_LOZINKE],
+    },
+    { updateOn: 'submit' },
+  );
 
   nevazece(polje: Polje): boolean {
     const kontrola = this.forma.controls[polje];
