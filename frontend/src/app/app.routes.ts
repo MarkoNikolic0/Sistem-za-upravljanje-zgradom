@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { Login } from './features/auth/login/login';
-import { Home } from './features/dashboard/home/home';
 import { prijavljenGuard } from './features/auth/pristup/prijavljen-guard';
 import { gostGuard } from './features/auth/pristup/gost-guard';
 import { ulogaGuard } from './features/auth/pristup/uloga-guard';
@@ -8,7 +6,7 @@ import { ulogaGuard } from './features/auth/pristup/uloga-guard';
 export const routes: Routes = [
   {
     path: 'login',
-    component: Login,
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
     canActivate: [gostGuard],
     title: 'Prijava | Upravljanje zgradom',
   },
@@ -25,7 +23,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        component: Home,
+        loadComponent: () => import('./features/dashboard/home/home').then((m) => m.Home),
         title: 'Početna | Upravljanje zgradom',
       },
       {
