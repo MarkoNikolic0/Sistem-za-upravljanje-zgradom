@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseEnumPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -60,7 +61,10 @@ export class KvarController {
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('serviseri/:kategorija')
-  findDostupneServisere(@Param('kategorija') kategorija: KategorijaKvara) {
+  findDostupneServisere(
+    @Param('kategorija', new ParseEnumPipe(KategorijaKvara))
+    kategorija: KategorijaKvara,
+  ) {
     return this.kvarService.findDostupneServisere(kategorija);
   }
 

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,8 +9,6 @@ import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
 import { FindOptionsWhere, In, Repository } from 'typeorm';
-import { Stan } from '../stan/stan.entity.js';
-import { Korisnik } from '../korisnik/korisnik.entity.js';
 import {
   KategorijaKvara,
   LokacijaTip,
@@ -20,13 +19,17 @@ import {
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
-import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
+import {
+  StatusRadaServisera,
+  UpdateStatusKvarDto,
+} from './dto/update-status-kvar.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
 
 const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.AKTIVNI]: [
@@ -39,13 +42,15 @@ const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
 };
 
+const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
+  [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
+  [StatusKvara.RESEN]: StatusKvara.U_TOKU,
+};
+
 @Injectable()
 export class KvarService {
   constructor(
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
-    @InjectRepository(Stan) private stanRepository: Repository<Stan>,
-    @InjectRepository(Korisnik)
-    private korisnikRepository: Repository<Korisnik>,
     @InjectRepository(ServiserSpecijalnost)
     private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
     @InjectRepository(StanarStana)
@@ -255,25 +260,17 @@ export class KvarService {
   async prihvati(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    if (kvar.status !== StatusKvara.PRIJAVLJEN) {
-      throw new BadRequestException(
-        `Samo prijavljeni kvarovi mogu biti prihvaceni!`,
-      );
-    }
-    kvar.status = StatusKvara.PRIHVACEN;
-    return await this.kvarRepository.save(kvar);
+    return await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
+      status: StatusKvara.PRIHVACEN,
+    });
   }
 
   async odbij(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    if (kvar.status !== StatusKvara.PRIJAVLJEN) {
-      throw new BadRequestException(
-        `Samo prijavljeni kvarovi mogu biti odbijeni!`,
-      );
-    }
-    kvar.status = StatusKvara.ODBIJEN;
-    return await this.kvarRepository.save(kvar);
+    return await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
+      status: StatusKvara.ODBIJEN,
+    });
   }
 
   async postaviPrioritet(
@@ -284,8 +281,9 @@ export class KvarService {
   ) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    kvar.prioritet = dto.prioritetKvara;
-    return await this.kvarRepository.save(kvar);
+    return await this.izmeniAkoJeU(id, STATUSI_PO_STANJU[StanjeKvara.AKTIVNI], {
+      prioritet: dto.prioritet,
+    });
   }
 
   async dodeliServisera(
@@ -296,22 +294,22 @@ export class KvarService {
   ) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    if (kvar.status !== StatusKvara.PRIHVACEN) {
-      throw new BadRequestException(
-        `Kvar mora biti prihvacen pre dodele servisera!`,
-      );
-    }
-    const serviser = await this.korisnikRepository.findOne({
-      where: { id: dto.serviserId },
+    const imaStruku = await this.serviserSpecijanostRepository.exists({
+      where: {
+        korisnik: { id: dto.serviserId, uloga: Uloga.SERVISER },
+        kategorija: kvar.kategorija,
+      },
     });
-    if (!serviser || serviser.uloga !== Uloga.SERVISER) {
-      throw new NotFoundException(
-        `Serviser sa id-jem ${dto.serviserId} ne postoji!`,
+    if (!imaStruku) {
+      throw new BadRequestException(
+        'Izabrani serviser nema struku za ovu vrstu kvara.',
       );
     }
-    kvar.serviser = serviser;
-    kvar.status = StatusKvara.DODELJEN;
-    return await this.kvarRepository.save(kvar);
+    return await this.izmeniAkoJeU(
+      id,
+      [StatusKvara.PRIHVACEN, StatusKvara.DODELJEN],
+      { status: StatusKvara.DODELJEN, serviser: { id: dto.serviserId } },
+    );
   }
 
   async promeniStatus(
@@ -322,30 +320,40 @@ export class KvarService {
     const kvar = await this.findOne(id);
     if (kvar.serviser?.id !== korisnikId) {
       throw new ForbiddenException(
-        `Samo dodeljeni serviser moze menjati status ovog kvara!`,
+        'Samo dodeljeni serviser može da menja status ovog kvara!',
       );
     }
-    const dozvoljeniPrelazi: Record<string, StatusKvara[]> = {
-      [StatusKvara.DODELJEN]: [StatusKvara.U_TOKU],
-      [StatusKvara.U_TOKU]: [StatusKvara.RESEN],
-    };
-    const dozvoljeni = dozvoljeniPrelazi[kvar.status] ?? [];
-    if (!dozvoljeni.includes(dto.status)) {
-      throw new BadRequestException(
-        `Nije moguc prelaz iz statusa ${kvar.status} u ${dto.status}`,
-      );
-    }
-    kvar.status = dto.status;
-    return await this.kvarRepository.save(kvar);
+    return await this.izmeniAkoJeU(
+      id,
+      [PRETHODNI_STATUS[dto.status]],
+      { status: dto.status },
+      { serviser: { id: korisnikId } },
+    );
   }
 
   async zatvori(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    if (kvar.status !== StatusKvara.RESEN) {
-      throw new BadRequestException('Samo resen kvar moze biti zatvoren.');
+    return await this.izmeniAkoJeU(id, [StatusKvara.RESEN], {
+      status: StatusKvara.ZATVOREN,
+    });
+  }
+
+  private async izmeniAkoJeU(
+    id: number,
+    statusi: StatusKvara[],
+    izmene: QueryDeepPartialEntity<Kvar>,
+    uslov: FindOptionsWhere<Kvar> = {},
+  ) {
+    const rezultat = await this.kvarRepository.update(
+      { ...uslov, id, status: In(statusi) },
+      izmene,
+    );
+    if (rezultat.affected === 0) {
+      throw new ConflictException(
+        'Akcija nije moguća u trenutnom statusu kvara. Osveži stranicu.',
+      );
     }
-    kvar.status = StatusKvara.ZATVOREN;
-    return await this.kvarRepository.save(kvar);
+    return await this.findOne(id);
   }
 }
