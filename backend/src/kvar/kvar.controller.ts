@@ -51,6 +51,13 @@ export class KvarController {
   }
 
   @UseGuards(RolesGuard)
+  @Roles(Uloga.SERVISER, Uloga.ADMIN)
+  @Get('zgrade')
+  findZgradeSaKvarovima(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.kvarService.findZgradeSaKvarovima(korisnik.id, korisnik.uloga);
+  }
+
+  @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Get('serviseri/:kategorija')
   findDostupneServisere(@Param('kategorija') kategorija: KategorijaKvara) {

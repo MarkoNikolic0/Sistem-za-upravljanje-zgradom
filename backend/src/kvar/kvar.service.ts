@@ -26,6 +26,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 
 const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.AKTIVNI]: [
@@ -49,6 +50,7 @@ export class KvarService {
     private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
+    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
   ) {}
 
@@ -119,7 +121,12 @@ export class KvarService {
       }
 
       case Uloga.SERVISER:
-        return [{ serviser: { id: korisnikId } }];
+        return [
+          {
+            serviser: { id: korisnikId },
+            ...(zgradaId ? { zgrada: { id: zgradaId } } : {}),
+          },
+        ];
 
       default: {
         const veze = await this.stanarStanaRepository.find({
@@ -201,7 +208,6 @@ export class KvarService {
     }
   }
 
-  // Admin ili upravnik zgrade u kojoj je kvar; koriste ga i komentari i slike
   async smeDaUpravlja(
     kvar: Kvar,
     korisnikId: number,
@@ -225,6 +231,17 @@ export class KvarService {
         'Možete upravljati samo kvarovima svoje zgrade!',
       );
     }
+  }
+
+  async findZgradeSaKvarovima(korisnikId: number, uloga: Uloga) {
+    const upit = this.zgradaRepository
+      .createQueryBuilder('zgrada')
+      .innerJoin(Kvar, 'kvar', 'kvar.zgrada = zgrada.id')
+      .orderBy('zgrada.naziv', 'ASC');
+    if (uloga === Uloga.SERVISER) {
+      upit.where('kvar.serviser = :korisnikId', { korisnikId });
+    }
+    return await upit.getMany();
   }
 
   async findDostupneServisere(kategorija: KategorijaKvara) {

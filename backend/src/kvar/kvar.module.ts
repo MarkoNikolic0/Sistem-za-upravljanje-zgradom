@@ -9,6 +9,7 @@ import { AuthModule } from '../auth/auth.module.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { KorisnikModule } from '../korisnik/korisnik.module.js';
       Stan,
       ServiserSpecijalnost,
       StanarStana,
+      Zgrada,
     ]),
     AuthModule,
     KorisnikModule,
