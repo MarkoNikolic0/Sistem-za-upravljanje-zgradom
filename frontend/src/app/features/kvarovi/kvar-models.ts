@@ -52,6 +52,7 @@ export interface Kvar {
 
 export interface UpitKvarova extends UpitStrane {
   stanje: StanjeKvara;
+  zgradaId: number | null;
 }
 
 export const MAKS_NASLOV_KVARA = 100;

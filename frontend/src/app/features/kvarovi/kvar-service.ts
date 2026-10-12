@@ -1,9 +1,10 @@
-import { inject, Service } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Service, Signal } from '@angular/core';
+import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
 import { KomentarKvara, Kvar, PrijavaKvaraRequest, UpitKvarova } from './kvar-models';
+import { ZgradaOsnovno } from '../zgrade/zgrada-models';
 
 @Service()
 export class KvarService {
@@ -12,11 +13,20 @@ export class KvarService {
   private komentariUrl = `${environment.apiUrl}/komentar-kvar`;
 
   lista(upit: UpitKvarova): Observable<Stranica<Kvar>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('stanje', upit.stanje)
       .set('strana', upit.strana)
       .set('poStrani', upit.poStrani);
+    if (upit.zgradaId !== null) {
+      params = params.set('zgradaId', upit.zgradaId);
+    }
     return this.http.get<Stranica<Kvar>>(this.apiUrl, { params });
+  }
+
+  zgradeSaKvarovima(ucitaj: Signal<boolean>) {
+    return httpResource<ZgradaOsnovno[]>(() => (ucitaj() ? `${this.apiUrl}/zgrade` : undefined), {
+      defaultValue: [],
+    });
   }
 
   prijavi(podaci: PrijavaKvaraRequest): Observable<Kvar> {

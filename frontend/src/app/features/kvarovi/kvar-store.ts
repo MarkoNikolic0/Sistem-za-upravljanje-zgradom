@@ -11,10 +11,10 @@ export const KVAROVA_PO_STRANI = 10;
 export const KOMENTARA_PO_STRANI = 20;
 
 interface KvaroviState {
-  // Lista
   kvarovi: Kvar[];
   ukupno: number;
   stanje: StanjeKvara;
+  zgradaId: number | null;
   strana: number;
   ucitava: boolean;
   greskaUcitavanja: boolean;
@@ -33,6 +33,7 @@ const pocetnoStanje: KvaroviState = {
   kvarovi: [],
   ukupno: 0,
   stanje: 'aktivni',
+  zgradaId: null,
   strana: 1,
   ucitava: false,
   greskaUcitavanja: false,
@@ -60,7 +61,12 @@ export const KvarStore = signalStore(
         ),
         switchMap(() =>
           kvarService
-            .lista({ stanje: store.stanje(), strana: store.strana(), poStrani: KVAROVA_PO_STRANI })
+            .lista({
+              stanje: store.stanje(),
+              zgradaId: store.zgradaId(),
+              strana: store.strana(),
+              poStrani: KVAROVA_PO_STRANI,
+            })
             .pipe(
               tapResponse({
                 next: ({ stavke, ukupno }) => {
@@ -152,6 +158,10 @@ export const KvarStore = signalStore(
       ucitajStarijeKomentare,
       promeniStanje(stanje: StanjeKvara): void {
         patchState(store, { stanje, strana: 1 });
+        ucitaj();
+      },
+      promeniZgradu(zgradaId: number | null): void {
+        patchState(store, { zgradaId, strana: 1 });
         ucitaj();
       },
       promeniStranu(strana: number): void {

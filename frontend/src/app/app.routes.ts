@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { prijavljenGuard } from './features/auth/pristup/prijavljen-guard';
 import { gostGuard } from './features/auth/pristup/gost-guard';
 import { ulogaGuard } from './features/auth/pristup/uloga-guard';
+import { pocetnaGuard } from './features/auth/pristup/pocetna-guard';
 
 export const routes: Routes = [
   {
@@ -24,6 +25,7 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () => import('./features/dashboard/home/home').then((m) => m.Home),
+        canActivate: [pocetnaGuard],
         title: 'Početna | Upravljanje zgradom',
       },
       {
@@ -40,7 +42,7 @@ export const routes: Routes = [
       },
       {
         path: 'kvarovi',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
+        canActivate: [ulogaGuard('stanar', 'upravnik', 'serviser', 'admin')],
         loadChildren: () => import('./features/kvarovi/kvarovi.routes'),
       },
       {

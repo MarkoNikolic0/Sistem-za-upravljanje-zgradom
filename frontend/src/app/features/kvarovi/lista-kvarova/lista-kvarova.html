@@ -1,7 +1,11 @@
 <div class="stranica">
   <p class="oznaka">Zgrada</p>
   <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">Kvarovi</h1>
-  <p class="mt-2 text-priguseno">Prijavljeni kvarovi i tok njihove popravke.</p>
+  <p class="mt-2 text-priguseno">
+    {{
+      serviser() ? 'Kvarovi koji su ti dodeljeni.' : 'Prijavljeni kvarovi i tok njihove popravke.'
+    }}
+  </p>
 
   @if (imaStan()) {
     <a pButton routerLink="/kvarovi/novi" class="mt-6">Prijavi kvar</a>
@@ -27,6 +31,21 @@
     ariaLabelledBy="kvarovi-filter"
   />
   <span id="kvarovi-filter" class="sr-only">Prikaz kvarova</span>
+
+  @if (zgrade.value().length > 1) {
+    <div class="mt-4 flex flex-col gap-1.5 sm:max-w-xs">
+      <span id="kvarovi-zgrada" class="text-sm font-medium">Zgrada</span>
+      <p-select
+        ariaLabelledBy="kvarovi-zgrada"
+        [options]="opcijeZgrada()"
+        optionLabel="naziv"
+        optionValue="id"
+        [ngModel]="store.zgradaId()"
+        (ngModelChange)="store.promeniZgradu($event)"
+        [fluid]="true"
+      />
+    </div>
+  }
 
   <section class="odeljak" aria-label="Lista kvarova" [attr.aria-busy]="store.ucitava()">
     @if (store.greskaUcitavanja()) {
