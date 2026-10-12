@@ -223,6 +223,28 @@ FROM (VALUES
   ('Grafiti na fasadi', 'Na zidu pored ulaza neko je ispisao grafite.',
    'gradjevina', 'zajednicki_prostor', 'nisko', 'odbijen',
    'Vizantijski bulevar 12, Niš', NULL, 'uros.savic@example.com', NULL, interval '9 days'),
+  -- Petar (vodovod, grejanje) i u druge dve zgrade: filter po zgradi i svi statusi servisera
+  ('Curi cev u podrumu', 'Iz cevi pored vodomera u podrumu curi voda, pod je mokar.',
+   'vodovod', 'zajednicki_prostor', 'hitno', 'dodeljen',
+   'Obrenovićeva 30, Niš', NULL, 'nemanja.kostic@example.com', 'petar@gmail.com', interval '3 hours'),
+  ('Hladan radijator u kupatilu', 'Radijator u kupatilu je hladan, ostali u stanu greju.',
+   'grejanje', 'privatni_stan', 'srednje', 'u_toku',
+   'Obrenovićeva 30, Niš', '10', 'tijana.pavlovic@example.com', 'petar@gmail.com', interval '1 day'),
+  ('Slab pritisak vode', 'U kuhinji i kupatilu voda jedva teče, posebno uveče.',
+   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
+   'Obrenovićeva 30, Niš', '4', 'milica.djordjevic@example.com', 'petar@gmail.com', interval '25 days'),
+  ('Kaplje ventil na radijatoru', 'Ventil na radijatoru u dnevnoj sobi kaplje, stavio sam posudu ispod.',
+   'grejanje', 'privatni_stan', 'srednje', 'dodeljen',
+   'Vizantijski bulevar 12, Niš', '22', 'uros.savic@example.com', 'petar@gmail.com', interval '6 hours'),
+  ('Nema tople vode', 'Od jutros nema tople vode u stanu, bojler je uključen.',
+   'vodovod', 'privatni_stan', 'hitno', 'u_toku',
+   'Vizantijski bulevar 12, Niš', '16', 'jovana.mitic@example.com', 'petar@gmail.com', interval '4 hours'),
+  ('Lupaju cevi grejanja', 'Kad se uključi grejanje, cevi na stepeništu glasno lupaju.',
+   'grejanje', 'zajednicki_prostor', 'nisko', 'resen',
+   'Vizantijski bulevar 12, Niš', NULL, 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '3 days'),
+  ('Curi vodokotlić', 'Vodokotlić stalno pušta vodu u šolju.',
+   'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
+   'Vizantijski bulevar 12, Niš', '8', 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '14 days'),
   -- Delta Residence: vise aktivnih i zavrsenih (za listu, filter i paginaciju)
   ('Ne greje radijator u spavaćoj sobi', 'Radijator u spavaćoj sobi je hladan, ostali u stanu greju normalno.',
    'grejanje', 'privatni_stan', 'srednje', 'prijavljen',
@@ -288,6 +310,8 @@ FROM (VALUES
   ('Ne radi svetlo na stepeništu', 'danijel@gmail.com', 'Prihvaćeno, dodeliću električara.', interval '1 day'),
   ('Ne radi grejanje u celoj zgradi', 'danijel@gmail.com', 'Toplana javlja kvar na podstanici, serviser Petar je na licu mesta.', interval '1 hour'),
   ('Ne radi grejanje u celoj zgradi', 'marija@gmail.com', 'I kod nas u stanu 14 je hladno.', interval '50 minutes'),
+  ('Nema tople vode', 'jovana.mitic@example.com', 'Osigurač bojlera nije iskočio, a lampica na bojleru ne svetli.', interval '3 hours'),
+  ('Nema tople vode', 'petar@gmail.com', 'Dolazim danas oko 14h, ponesite ključ od podruma.', interval '2 hours'),
   ('Buka iz stana iznad', 'danijel@gmail.com', 'Ovo nije kvar u zgradi; razgovaraću sa komšijama na sledećem sastanku stanara.', interval '7 days')
 ) AS v(naslov, email, tekst, pre)
 JOIN kvar kv ON kv.naslov = v.naslov
