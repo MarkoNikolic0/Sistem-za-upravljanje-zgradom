@@ -10,6 +10,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../sesija/auth-store';
+import { greskaPolja } from '../../../shared/greske-servera';
 
 @Component({
   imports: [
@@ -67,13 +68,31 @@ export class Login {
       await this.authStore.login(email, lozinka);
       await this.router.navigate(['/']);
     } catch (err) {
-      this.greska.set(
-        err instanceof HttpErrorResponse && err.status === 401
-          ? 'Email ili lozinka nisu ispravni.'
-          : 'Server trenutno nije dostupan. Pokušaj ponovo za nekoliko trenutaka.',
-      );
+      this.obradiGresku(err);
     } finally {
       this.salje.set(false);
     }
+  }
+
+  private obradiGresku(err: unknown): void {
+    if (!(err instanceof HttpErrorResponse)) {
+      this.greska.set('Prijava nije uspela. Pokušaj ponovo za nekoliko trenutaka.');
+      return;
+    }
+
+    const greskaEmaila = greskaPolja(err, 'email');
+    if (greskaEmaila) {
+      const kontrola = this.loginForm.controls.email;
+      kontrola.setErrors({ server: greskaEmaila });
+      kontrola.markAsTouched();
+      this.host.nativeElement.querySelector<HTMLElement>('#email')?.focus();
+      return;
+    }
+
+    this.greska.set(
+      err.status === 401
+        ? 'Email ili lozinka nisu ispravni.'
+        : 'Server trenutno nije dostupan. Pokušaj ponovo za nekoliko trenutaka.',
+    );
   }
 }
