@@ -31,7 +31,7 @@ export class AuthService {
     });
 
     if (postojeciKorisnik) {
-      throw new ConflictException('Korisnik sa ovim emailom vec postoji');
+      throw new ConflictException('Nalog sa ovom email adresom već postoji.');
     }
 
     const hesiranaLozinka = await bcrypt.hash(dto.lozinka, 10);
@@ -44,9 +44,9 @@ export class AuthService {
       lozinka: hesiranaLozinka,
     });
 
-    const sacuvanKorsnik = await this.korisnikRepository.save(noviKorisnik);
+    const sacuvanKorisnik = await this.korisnikRepository.save(noviKorisnik);
 
-    const { lozinka: _lozinka, ...rezultat } = sacuvanKorsnik;
+    const { lozinka: _lozinka, ...rezultat } = sacuvanKorisnik;
     return rezultat;
   }
 
@@ -55,12 +55,12 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (!korisnik) {
-      throw new UnauthorizedException('Neispravan email ili lozinka');
+      throw new UnauthorizedException('Neispravan email ili lozinka.');
     }
 
     const lozinkaValidna = await bcrypt.compare(dto.lozinka, korisnik.lozinka);
     if (!lozinkaValidna) {
-      throw new UnauthorizedException('Neispravan email ili lozinka');
+      throw new UnauthorizedException('Neispravan email ili lozinka.');
     }
 
     const payload = {

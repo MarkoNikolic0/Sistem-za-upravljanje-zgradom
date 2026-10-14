@@ -32,8 +32,8 @@ export class AuthService {
     });
   }
 
-  logout(): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/logout`, null, {
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/logout`, null, {
       withCredentials: true,
     });
   }

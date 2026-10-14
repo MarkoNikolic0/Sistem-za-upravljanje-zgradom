@@ -5,7 +5,7 @@ export interface JwtPayload {
   email: string;
   uloga: Uloga;
   iat: number;
-  ext: number;
+  exp: number;
 }
 
 export function procitajJwtPayload(token: string): JwtPayload {

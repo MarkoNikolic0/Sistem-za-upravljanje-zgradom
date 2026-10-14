@@ -32,7 +32,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Sistem za upravljanje zgradom')
-    .setDescription('API dokumentacija - doplomski rad')
+    .setDescription('API dokumentacija - diplomski rad')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
