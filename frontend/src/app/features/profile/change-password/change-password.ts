@@ -9,7 +9,7 @@ import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../auth/auth-service';
 import { MAX_DUZINA_LOZINKE, MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../../auth/pravila-naloga';
-import { greskaPolja } from '../../../shared/greske-servera';
+import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 
 type Polje = 'trenutnaLozinka' | 'novaLozinka';
@@ -104,6 +104,10 @@ export class ChangePassword {
       }
     }
 
-    this.greska.set('Lozinka nije promenjena. Pokušaj ponovo za nekoliko trenutaka.');
+    this.greska.set(
+      err.status === 429
+        ? PREVISE_POKUSAJA
+        : 'Lozinka nije promenjena. Pokušaj ponovo za nekoliko trenutaka.',
+    );
   }
 }

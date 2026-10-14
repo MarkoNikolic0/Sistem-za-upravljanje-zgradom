@@ -14,6 +14,7 @@ import { ServiserSpecijalnostModule } from './serviser-specijalnost/serviser-spe
 import { KomentarKvarModule } from './komentar-kvar/komentar-kvar.module.js';
 import { SlikaKvaraModule } from './slika-kvara/slika-kvara.module.js';
 import { KorisnikModule } from './korisnik/korisnik.module.js';
+import { minutes, ThrottlerModule } from '@nestjs/throttler';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,6 +23,10 @@ const __dirname = dirname(__filename);
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: minutes(1), limit: 5 }],
+      errorMessage: 'Previše pokušaja. Sačekaj minut pa pokušaj ponovo.',
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

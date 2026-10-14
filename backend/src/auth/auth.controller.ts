@@ -27,6 +27,7 @@ import {
   type TrenutniKorisnikPodaci,
 } from './decorators/trenutni-korisnik.decorator.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -35,11 +36,13 @@ export class AuthController {
     private readonly config: ConfigService,
   ) {}
 
+  @UseGuards(ThrottlerGuard)
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  @UseGuards(ThrottlerGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -96,7 +99,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
   @Patch('lozinka')
   @HttpCode(HttpStatus.NO_CONTENT)
   async promeniLozinku(

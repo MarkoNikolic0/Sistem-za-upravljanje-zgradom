@@ -11,14 +11,14 @@ import { NormalizujEmail } from '../../shared/normalizuj-email.js';
 
 export class RegisterDto {
   @IsString()
-  @IsNotEmpty({ message: 'Unesi ime.' })
   @MaxLength(50, { message: 'Ime može imati najviše 50 znakova.' })
+  @IsNotEmpty({ message: 'Unesi ime.' })
   @UkloniRazmake()
   ime: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'Unesi prezime.' })
   @MaxLength(50, { message: 'Prezime može imati najviše 50 znakova.' })
+  @IsNotEmpty({ message: 'Unesi prezime.' })
   @UkloniRazmake()
   prezime: string;
 

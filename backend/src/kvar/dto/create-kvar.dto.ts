@@ -17,14 +17,14 @@ import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 export class CreateKvarDto {
   @UkloniRazmake()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(100)
+  @IsNotEmpty()
   naslov: string;
 
   @UkloniRazmake()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(2000)
+  @IsNotEmpty()
   opis: string;
 
   @IsEnum(KategorijaKvara)

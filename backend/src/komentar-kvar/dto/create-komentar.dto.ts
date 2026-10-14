@@ -8,7 +8,7 @@ export class CreateKomentarDto {
 
   @UkloniRazmake()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(1000)
+  @IsNotEmpty()
   tekst: string;
 }

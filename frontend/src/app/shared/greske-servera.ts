@@ -11,3 +11,5 @@ export function greskaPolja(err: HttpErrorResponse, polje: string): string | und
   const telo = err.error as TeloGreskeValidacije | null;
   return telo?.greske?.[polje];
 }
+
+export const PREVISE_POKUSAJA = 'Previše pokušaja. Sačekaj minut pa pokušaj ponovo.';

@@ -9,8 +9,8 @@ import {
 
 export function PravilaLozinke() {
   return applyDecorators(
-    IsString(),
     IsNotEmpty({ message: 'Unesi lozinku.' }),
+    IsString(),
     MinLength(8, { message: 'Lozinka mora imati najmanje 8 znakova.' }),
     MaxLength(64, { message: 'Lozinka može imati najviše 64 znaka.' }),
     IsByteLength(0, 72, {
