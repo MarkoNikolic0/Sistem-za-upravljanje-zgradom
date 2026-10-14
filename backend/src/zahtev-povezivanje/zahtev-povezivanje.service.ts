@@ -5,7 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOptionsWhere,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import { ZahtevPovezivanje } from './zahtev-povezivanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -45,23 +50,25 @@ export class ZahtevPovezivanjeService {
       throw new ConflictException('Već ste povezani sa ovim stanom!');
     }
 
-    const imaNaCekanju = await this.zahtevRepository.exists({
-      where: {
-        korisnik: { id: korisnikId },
-        stan: { id: dto.stanId },
-        status: StatusZahteva.NA_CEKANJU,
-      },
-    });
-    if (imaNaCekanju) {
-      throw new ConflictException('Već imate zahtev na čekanju za ovaj stan!');
-    }
-
     const zahtev = this.zahtevRepository.create({
       korisnik: { id: korisnikId } as Korisnik,
       stan,
     });
 
-    return await this.zahtevRepository.save(zahtev);
+    try {
+      return await this.zahtevRepository.save(zahtev);
+    } catch (greska) {
+      if (
+        greska instanceof QueryFailedError &&
+        'code' in greska.driverError &&
+        greska.driverError.code === '23505'
+      ) {
+        throw new ConflictException(
+          'Već imate zahtev na čekanju za ovaj stan!',
+        );
+      }
+      throw greska;
+    }
   }
 
   async findZaObradu(

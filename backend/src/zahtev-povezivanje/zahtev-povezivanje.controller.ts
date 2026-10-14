@@ -27,6 +27,8 @@ import { ZahtevUpitDto } from './dto/zahtev-upit.dto.js';
 export class ZahtevPovezivanjeController {
   constructor(private readonly zahtevService: ZahtevPovezivanjeService) {}
 
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.STANAR, Uloga.UPRAVNIK)
   @Post()
   create(
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,

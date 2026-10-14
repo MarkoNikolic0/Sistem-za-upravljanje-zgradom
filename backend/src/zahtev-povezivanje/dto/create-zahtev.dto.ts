@@ -1,7 +1,7 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsPositive } from 'class-validator';
 
 export class CreateZahtevDto {
   @IsInt()
-  @IsNotEmpty()
+  @IsPositive()
   stanId: number;
 }

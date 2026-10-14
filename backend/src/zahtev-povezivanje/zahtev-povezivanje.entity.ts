@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -10,14 +11,18 @@ import { Stan } from '../stan/stan.entity.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 
 @Entity()
+@Index(['korisnik', 'stan'], {
+  unique: true,
+  where: `"status" = '${StatusZahteva.NA_CEKANJU}'`,
+})
 export class ZahtevPovezivanje {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Korisnik)
+  @ManyToOne(() => Korisnik, { nullable: false })
   korisnik: Korisnik;
 
-  @ManyToOne(() => Stan)
+  @ManyToOne(() => Stan, { nullable: false })
   stan: Stan;
 
   @Column({
