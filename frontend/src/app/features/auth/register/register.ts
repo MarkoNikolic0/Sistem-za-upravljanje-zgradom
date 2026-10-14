@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -12,8 +12,14 @@ import { MessageModule } from 'primeng/message';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { greskaPolja } from '../../../shared/greske-servera';
-import { MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../pravila-lozinke';
-import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
+import {
+  MAX_DUZINA_IMENA,
+  MAX_DUZINA_LOZINKE,
+  MIN_DUZINA_LOZINKE,
+  PRAVILA_IMENA,
+  PRAVILA_LOZINKE,
+} from '../pravila-naloga';
 
 type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
 
@@ -37,16 +43,18 @@ export class Register {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   greska = signal('');
   salje = signal(false);
   sakrijLozinku = signal(true);
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
+  protected readonly maxDuzinaLozinke = MAX_DUZINA_LOZINKE;
+  protected readonly maxDuzinaImena = MAX_DUZINA_IMENA;
 
   registerForm = this.fb.nonNullable.group({
-    ime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
-    prezime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
+    ime: ['', PRAVILA_IMENA],
+    prezime: ['', PRAVILA_IMENA],
     email: ['', [Validators.required, Validators.email]],
     telefon: ['', Validators.required],
     lozinka: ['', PRAVILA_LOZINKE],
@@ -60,7 +68,7 @@ export class Register {
   onSubmit(): void {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('input.ng-invalid')?.focus();
+      this.fokusiraj('input.ng-invalid');
       return;
     }
 
@@ -78,13 +86,13 @@ export class Register {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    for (const polje of ['ime', 'prezime', 'email', 'telefon'] as const) {
+    for (const polje of ['ime', 'prezime', 'email', 'telefon', 'lozinka'] as const) {
       const poruka = greskaPolja(err, polje);
       if (poruka) {
         const kontrola = this.registerForm.controls[polje];
         kontrola.setErrors({ server: poruka });
         kontrola.markAsTouched();
-        this.host.nativeElement.querySelector<HTMLElement>(`#${polje}`)?.focus();
+        this.fokusiraj('input.ng-invalid');
         return;
       }
     }

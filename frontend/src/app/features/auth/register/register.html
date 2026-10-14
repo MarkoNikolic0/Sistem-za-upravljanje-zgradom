@@ -25,7 +25,15 @@
           [attr.aria-describedby]="nevazece('ime') ? 'ime-greska' : null"
         />
         @if (nevazece('ime')) {
-          <small id="ime-greska" class="text-sm text-greska">Unesi ime.</small>
+          <small id="ime-greska" class="text-sm text-greska">
+            @if (registerForm.controls.ime.hasError('server')) {
+              {{ registerForm.controls.ime.getError('server') }}
+            } @else if (registerForm.controls.ime.hasError('maxlength')) {
+              Ime može imati najviše {{ maxDuzinaImena }} znakova.
+            } @else {
+              Unesi ime.
+            }
+          </small>
         }
       </div>
 
@@ -45,7 +53,15 @@
           [attr.aria-describedby]="nevazece('prezime') ? 'prezime-greska' : null"
         />
         @if (nevazece('prezime')) {
-          <small id="prezime-greska" class="text-sm text-greska">Unesi prezime.</small>
+          <small id="prezime-greska" class="text-sm text-greska">
+            @if (registerForm.controls.prezime.hasError('server')) {
+              {{ registerForm.controls.prezime.getError('server') }}
+            } @else if (registerForm.controls.prezime.hasError('maxlength')) {
+              Prezime može imati najviše {{ maxDuzinaImena }} znakova.
+            } @else {
+              Unesi prezime.
+            }
+          </small>
         }
       </div>
     </div>
@@ -143,8 +159,12 @@
         class="text-sm"
         [class]="nevazece('lozinka') ? 'text-greska' : 'text-priguseno'"
       >
-        @if (registerForm.controls.lozinka.hasError('required') && nevazece('lozinka')) {
+        @if (registerForm.controls.lozinka.hasError('server')) {
+          {{ registerForm.controls.lozinka.getError('server') }}
+        } @else if (registerForm.controls.lozinka.hasError('required') && nevazece('lozinka')) {
           Unesi lozinku.
+        } @else if (registerForm.controls.lozinka.hasError('maxlength') && nevazece('lozinka')) {
+          Lozinka može imati najviše {{ maxDuzinaLozinke }} znaka.
         } @else {
           Najmanje {{ minDuzinaLozinke }} znakova.
         }

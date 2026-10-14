@@ -53,7 +53,15 @@
                 [attr.aria-describedby]="nevazece('ime') ? 'ime-greska' : null"
               />
               @if (nevazece('ime')) {
-                <small id="ime-greska" class="text-sm text-greska">Unesi ime.</small>
+                <small id="ime-greska" class="text-sm text-greska">
+                  @if (forma.controls.ime.hasError('server')) {
+                    {{ forma.controls.ime.getError('server') }}
+                  } @else if (forma.controls.ime.hasError('maxlength')) {
+                    Ime može imati najviše {{ maxDuzinaImena }} znakova.
+                  } @else {
+                    Unesi ime.
+                  }
+                </small>
               }
             </div>
 
@@ -73,7 +81,15 @@
                 [attr.aria-describedby]="nevazece('prezime') ? 'prezime-greska' : null"
               />
               @if (nevazece('prezime')) {
-                <small id="prezime-greska" class="text-sm text-greska">Unesi prezime.</small>
+                <small id="prezime-greska" class="text-sm text-greska">
+                  @if (forma.controls.prezime.hasError('server')) {
+                    {{ forma.controls.prezime.getError('server') }}
+                  } @else if (forma.controls.prezime.hasError('maxlength')) {
+                    Prezime može imati najviše {{ maxDuzinaImena }} znakova.
+                  } @else {
+                    Unesi prezime.
+                  }
+                </small>
               }
             </div>
           </div>

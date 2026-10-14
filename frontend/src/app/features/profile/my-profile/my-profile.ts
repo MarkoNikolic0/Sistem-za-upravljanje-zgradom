@@ -14,7 +14,7 @@ import { RouterLink } from '@angular/router';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { SpratPipe } from '../../../shared/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { MAX_DUZINA_IMENA, PRAVILA_IMENA } from '../../auth/pravila-naloga';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -53,9 +53,11 @@ export class MyProfile {
   protected readonly greska = signal('');
   protected readonly sacuvano = signal(false);
 
+  protected readonly maxDuzinaImena = MAX_DUZINA_IMENA;
+
   protected readonly forma = this.fb.nonNullable.group({
-    ime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
-    prezime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
+    ime: ['', PRAVILA_IMENA],
+    prezime: ['', PRAVILA_IMENA],
     telefon: ['', Validators.required],
   });
 

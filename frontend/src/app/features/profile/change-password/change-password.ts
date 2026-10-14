@@ -8,7 +8,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../auth/auth-service';
-import { MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../../auth/pravila-lozinke';
+import { MAX_DUZINA_LOZINKE, MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../../auth/pravila-naloga';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 
@@ -32,6 +32,7 @@ export class ChangePassword {
   private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
+  protected readonly maxDuzinaLozinke = MAX_DUZINA_LOZINKE;
 
   protected readonly otvoreno = signal(false);
   protected readonly salje = signal(false);
