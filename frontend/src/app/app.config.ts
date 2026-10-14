@@ -9,6 +9,7 @@ import {
   provideRouter,
   withAutoCleanupInjectors,
   withComponentInputBinding,
+  withInMemoryScrolling,
 } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -25,7 +26,12 @@ registerLocaleData(localeSrLatn);
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withAutoCleanupInjectors(), withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withAutoCleanupInjectors(),
+      withComponentInputBinding(),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+    ),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),
     { provide: LOCALE_ID, useValue: 'sr-Latn' },

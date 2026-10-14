@@ -31,6 +31,15 @@
 
 :root {
   color-scheme: dark;
+  --visina-gornje-trake: calc(3.5rem + env(safe-area-inset-top));
+  --visina-donje-trake: calc(4.5rem + env(safe-area-inset-bottom));
+  scroll-padding-top: var(--visina-gornje-trake);
+}
+
+@media (width < 64rem) {
+  :root {
+    scroll-padding-bottom: var(--visina-donje-trake);
+  }
 }
 
 .prikaz-lozinke {
