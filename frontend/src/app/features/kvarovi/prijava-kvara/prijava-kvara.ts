@@ -21,10 +21,9 @@ import {
   MAKS_OPIS_KVARA,
   NAZIVI_KATEGORIJA_KVARA,
 } from '../kvar-models';
+import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 
 type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
-
-const NIJE_PRAZNO = /\S/;
 
 @Component({
   imports: [

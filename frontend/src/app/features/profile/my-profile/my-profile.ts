@@ -14,6 +14,7 @@ import { RouterLink } from '@angular/router';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { SpratPipe } from '../../../shared/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -53,8 +54,8 @@ export class MyProfile {
   protected readonly sacuvano = signal(false);
 
   protected readonly forma = this.fb.nonNullable.group({
-    ime: ['', Validators.required],
-    prezime: ['', Validators.required],
+    ime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
+    prezime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
     telefon: ['', Validators.required],
   });
 
@@ -109,13 +110,15 @@ export class MyProfile {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    const greskaTelefona = greskaPolja(err, 'telefon');
-
-    if (greskaTelefona) {
-      this.forma.controls.telefon.setErrors({ server: greskaTelefona });
-      this.forma.controls.telefon.markAsTouched();
-      this.fokusiraj('#telefon');
-      return;
+    for (const polje of ['ime', 'prezime', 'telefon'] as const) {
+      const poruka = greskaPolja(err, polje);
+      if (poruka) {
+        const kontrola = this.forma.controls[polje];
+        kontrola.setErrors({ server: poruka });
+        kontrola.markAsTouched();
+        this.fokusiraj(`#${polje}`);
+        return;
+      }
     }
 
     this.greska.set('Podaci nisu sačuvani. Pokušaj ponovo za nekoliko trenutaka.');

@@ -22,9 +22,7 @@ import {
   NAZIVI_STATUSA_KVARA,
 } from '../kvar-models';
 import { KvarStore } from '../kvar-store';
-
-// Bar jedan znak koji nije razmak (Validators.required propušta „   “)
-const NIJE_PRAZNO = /\S/;
+import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 
 @Component({
   imports: [

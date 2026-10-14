@@ -13,6 +13,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../pravila-lozinke';
+import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 
 type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
 
@@ -44,11 +45,11 @@ export class Register {
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
 
   registerForm = this.fb.nonNullable.group({
-    ime: ['', Validators.required],
-    prezime: ['', Validators.required],
+    ime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
+    prezime: ['', [Validators.required, Validators.pattern(NIJE_PRAZNO)]],
     email: ['', [Validators.required, Validators.email]],
     telefon: ['', Validators.required],
-        lozinka: ['', PRAVILA_LOZINKE],
+    lozinka: ['', PRAVILA_LOZINKE],
   });
 
   nevazece(polje: Polje): boolean {
@@ -77,13 +78,15 @@ export class Register {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    const greskaTelefona = greskaPolja(err, 'telefon');
-
-    if (greskaTelefona) {
-      this.registerForm.controls.telefon.setErrors({ server: greskaTelefona });
-      this.registerForm.controls.telefon.markAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('#telefon')?.focus();
-      return;
+    for (const polje of ['ime', 'prezime', 'email', 'telefon'] as const) {
+      const poruka = greskaPolja(err, polje);
+      if (poruka) {
+        const kontrola = this.registerForm.controls[polje];
+        kontrola.setErrors({ server: poruka });
+        kontrola.markAsTouched();
+        this.host.nativeElement.querySelector<HTMLElement>(`#${polje}`)?.focus();
+        return;
+      }
     }
 
     this.greska.set(
