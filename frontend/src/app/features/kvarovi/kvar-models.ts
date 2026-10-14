@@ -24,6 +24,14 @@ export const NAZIVI_STATUSA_KVARA: Record<StatusKvara, string> = {
   odbijen: 'Odbijen',
 };
 
+export const NAZIVI_PRIORITETA_KVARA: Record<PrioritetKvara, string> = {
+  nisko: 'Nisko',
+  srednje: 'Srednje',
+  hitno: 'Hitno',
+};
+
+export type StatusRadaServisera = Extract<StatusKvara, 'u_toku' | 'resen'>;
+
 export const NAZIVI_KATEGORIJA_KVARA: Record<KategorijaKvara, string> = {
   vodovod: 'Vodovod',
   struja: 'Struja',
@@ -48,6 +56,10 @@ export interface Kvar {
   stan: StanOsnovno | null;
   korisnik: KorisnikOsnovno & Partial<Kontakt>;
   serviser: (KorisnikOsnovno & Partial<Kontakt>) | null;
+}
+
+export interface KvarDetalj extends Kvar {
+  smeDaUpravlja: boolean;
 }
 
 export interface UpitKvarova extends UpitStrane {

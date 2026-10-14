@@ -3,8 +3,18 @@ import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
-import { KomentarKvara, Kvar, PrijavaKvaraRequest, UpitKvarova } from './kvar-models';
+import {
+  KategorijaKvara,
+  KomentarKvara,
+  Kvar,
+  KvarDetalj,
+  PrijavaKvaraRequest,
+  PrioritetKvara,
+  StatusRadaServisera,
+  UpitKvarova,
+} from './kvar-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
+import { KorisnikOsnovno } from '../auth/auth-models';
 
 @Service()
 export class KvarService {
@@ -29,12 +39,46 @@ export class KvarService {
     });
   }
 
+  serviseri(kategorija: Signal<KategorijaKvara | undefined>) {
+    return httpResource<KorisnikOsnovno[]>(
+      () => {
+        const k = kategorija();
+        return k ? `${this.apiUrl}/serviseri/${k}` : undefined;
+      },
+      { defaultValue: [] },
+    );
+  }
+
   prijavi(podaci: PrijavaKvaraRequest): Observable<Kvar> {
     return this.http.post<Kvar>(this.apiUrl, podaci);
   }
 
-  nadjiKvar(id: number): Observable<Kvar> {
-    return this.http.get<Kvar>(`${this.apiUrl}/${id}`);
+  nadjiKvar(id: number): Observable<KvarDetalj> {
+    return this.http.get<KvarDetalj>(`${this.apiUrl}/${id}`);
+  }
+
+  prihvati(id: number): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/prihvati`, null);
+  }
+
+  odbij(id: number): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/odbij`, null);
+  }
+
+  postaviPrioritet(id: number, prioritet: PrioritetKvara): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/prioritet`, { prioritet });
+  }
+
+  dodeliServisera(id: number, serviserId: number): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/dodeli`, { serviserId });
+  }
+
+  promeniStatus(id: number, status: StatusRadaServisera): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/status`, { status });
+  }
+
+  zatvori(id: number): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/zatvori`, null);
   }
 
   komentari(kvarId: number, poStrani: number, preId?: number): Observable<Stranica<KomentarKvara>> {

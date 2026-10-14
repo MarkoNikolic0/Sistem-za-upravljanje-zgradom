@@ -3,12 +3,61 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { EMPTY, exhaustMap, firstValueFrom, forkJoin, pipe, switchMap, tap } from 'rxjs';
+import {
+  concatMap,
+  EMPTY,
+  exhaustMap,
+  firstValueFrom,
+  forkJoin,
+  Observable,
+  pipe,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { KvarService } from './kvar-service';
-import { KomentarKvara, Kvar, PrijavaKvaraRequest, StanjeKvara } from './kvar-models';
+import {
+  KomentarKvara,
+  Kvar,
+  KvarDetalj,
+  NAZIVI_PRIORITETA_KVARA,
+  PrijavaKvaraRequest,
+  PrioritetKvara,
+  StanjeKvara,
+  StatusRadaServisera,
+} from './kvar-models';
 
 export const KVAROVA_PO_STRANI = 10;
 export const KOMENTARA_PO_STRANI = 20;
+
+interface PorukaAkcije {
+  tip: 'uspeh' | 'greska';
+  tekst: string;
+  fokus: boolean;
+}
+
+interface Akcija {
+  zahtev: Observable<KvarDetalj>;
+  uspeh: (kvar: KvarDetalj) => string;
+  fokus: boolean;
+}
+
+function porukaGreske(err: HttpErrorResponse): string {
+  switch (err.status) {
+    case 409:
+      return 'Kvar je u međuvremenu promenjen. Prikazano je trenutno stanje.';
+    case 403:
+      return 'Nemaš pravo na ovu akciju.';
+    case 400: {
+      const telo = err.error as { message?: unknown } | null;
+      if (typeof telo?.message === 'string') {
+        return telo.message;
+      }
+      return 'Akcija nije izvršena. Pokušaj ponovo.';
+    }
+    default:
+      return 'Akcija nije izvršena. Pokušaj ponovo.';
+  }
+}
 
 interface KvaroviState {
   kvarovi: Kvar[];
@@ -20,13 +69,15 @@ interface KvaroviState {
   greskaUcitavanja: boolean;
   listaZatrazena: boolean;
   prijavaUToku: boolean;
-  kvar: Kvar | null;
+  kvar: KvarDetalj | null;
   ucitavaDetalj: boolean;
   greskaDetalja: 'nije-pronadjen' | 'greska' | null;
   komentari: KomentarKvara[];
   preostaloStarijih: number;
   ucitavaStarije: boolean;
   slanjeKomentara: boolean;
+  akcijaUToku: boolean;
+  porukaAkcije: PorukaAkcije | null;
 }
 
 const pocetnoStanje: KvaroviState = {
@@ -46,6 +97,8 @@ const pocetnoStanje: KvaroviState = {
   preostaloStarijih: 0,
   ucitavaStarije: false,
   slanjeKomentara: false,
+  akcijaUToku: false,
+  porukaAkcije: null,
 };
 
 export const KvarStore = signalStore(
@@ -92,6 +145,7 @@ export const KvarStore = signalStore(
             komentari: [],
             ucitavaDetalj: true,
             greskaDetalja: null,
+            porukaAkcije: null,
           }),
         ),
         switchMap((id) => {
@@ -147,6 +201,62 @@ export const KvarStore = signalStore(
       ),
     );
 
+    const osveziKvar = rxMethod<number>(
+      pipe(
+        switchMap((id) =>
+          kvarService.nadjiKvar(id).pipe(
+            tapResponse({
+              next: (kvar) => patchState(store, { kvar, listaZatrazena: false }),
+              error: (err: HttpErrorResponse) => {
+                if (err.status === 403 || err.status === 404) {
+                  patchState(store, { kvar: null, greskaDetalja: 'nije-pronadjen' });
+                }
+              },
+            }),
+          ),
+        ),
+      ),
+    );
+
+    const izvrsi = rxMethod<Akcija>(
+      pipe(
+        concatMap(({ zahtev, uspeh, fokus }) => {
+          patchState(store, { akcijaUToku: true, porukaAkcije: null });
+          return zahtev.pipe(
+            tapResponse({
+              next: (kvar) =>
+                patchState(store, {
+                  kvar,
+                  listaZatrazena: false,
+                  porukaAkcije: { tip: 'uspeh', tekst: uspeh(kvar), fokus },
+                }),
+              error: (err: HttpErrorResponse) => {
+                patchState(store, {
+                  porukaAkcije: { tip: 'greska', tekst: porukaGreske(err), fokus },
+                });
+                const kvar = store.kvar();
+                if (kvar) {
+                  osveziKvar(kvar.id);
+                }
+              },
+              finalize: () => patchState(store, { akcijaUToku: false }),
+            }),
+          );
+        }),
+      ),
+    );
+
+    function akcija(
+      zahtev: (id: number) => Observable<KvarDetalj>,
+      uspeh: (kvar: KvarDetalj) => string,
+      fokus = true,
+    ): void {
+      const kvar = store.kvar();
+      if (kvar) {
+        izvrsi({ zahtev: zahtev(kvar.id), uspeh, fokus });
+      }
+    }
+
     return {
       ucitaj,
       prikaziListu(): void {
@@ -195,6 +305,43 @@ export const KvarStore = signalStore(
       async obrisiKomentar(id: number): Promise<void> {
         await firstValueFrom(kvarService.obrisiKomentar(id));
         patchState(store, { komentari: store.komentari().filter((k) => k.id !== id) });
+      },
+      prihvati(): void {
+        akcija(
+          (id) => kvarService.prihvati(id),
+          () => 'Kvar je prihvaćen.',
+        );
+      },
+      odbij(): void {
+        akcija(
+          (id) => kvarService.odbij(id),
+          () => 'Kvar je odbijen.',
+        );
+      },
+      dodeliServisera(serviserId: number): void {
+        akcija(
+          (id) => kvarService.dodeliServisera(id, serviserId),
+          ({ serviser }) => `Kvar je dodeljen serviseru: ${serviser?.ime} ${serviser?.prezime}.`,
+        );
+      },
+      postaviPrioritet(prioritet: PrioritetKvara): void {
+        akcija(
+          (id) => kvarService.postaviPrioritet(id, prioritet),
+          (kvar) => `Prioritet je promenjen: ${NAZIVI_PRIORITETA_KVARA[kvar.prioritet]}.`,
+          false,
+        );
+      },
+      promeniStatus(status: StatusRadaServisera): void {
+        akcija(
+          (id) => kvarService.promeniStatus(id, status),
+          () => (status === 'u_toku' ? 'Rad na kvaru je započet.' : 'Kvar je označen kao rešen.'),
+        );
+      },
+      zatvori(): void {
+        akcija(
+          (id) => kvarService.zatvori(id),
+          () => 'Kvar je zatvoren.',
+        );
       },
     };
   }),
