@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Post,
@@ -46,6 +48,7 @@ export class KomentarKvarController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,

@@ -69,7 +69,11 @@ export class KomentarKvarService {
     return { stavke, ukupno };
   }
 
-  async remove(komentarId: number, korisnikId: number, uloga: Uloga) {
+  async remove(
+    komentarId: number,
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<void> {
     const komentar = await this.komentarKvarRepository.findOne({
       where: { id: komentarId },
       relations: { korisnik: true, kvar: { zgrada: true } },
@@ -88,6 +92,6 @@ export class KomentarKvarService {
       throw new ForbiddenException(`Mozete brisati samo svoje komentare!`);
     }
 
-    return await this.komentarKvarRepository.remove(komentar);
+    await this.komentarKvarRepository.remove(komentar);
   }
 }

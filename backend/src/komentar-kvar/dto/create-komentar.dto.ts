@@ -8,7 +8,7 @@ export class CreateKomentarDto {
 
   @UkloniRazmake()
   @IsString()
-  @MaxLength(1000)
-  @IsNotEmpty()
+  @MaxLength(1000, { message: 'Komentar može imati najviše 1000 znakova.' })
+  @IsNotEmpty({ message: 'Napiši komentar.' })
   tekst: string;
 }

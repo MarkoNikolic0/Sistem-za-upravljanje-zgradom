@@ -93,9 +93,6 @@ export class KvarService {
       uloga,
       upit.zgradaId,
     );
-    if (vidljivi === null) {
-      return { stavke: [], ukupno: 0 };
-    }
 
     const status = In(STATUSI_PO_STANJU[upit.stanje]);
     const [stavke, ukupno] = await this.kvarRepository.findAndCount({
@@ -112,7 +109,7 @@ export class KvarService {
     korisnikId: number,
     uloga: Uloga,
     zgradaId?: number,
-  ): Promise<FindOptionsWhere<Kvar>[] | null> {
+  ): Promise<FindOptionsWhere<Kvar>[]> {
     switch (uloga) {
       case Uloga.ADMIN:
         return [zgradaId ? { zgrada: { id: zgradaId } } : {}];
@@ -120,9 +117,10 @@ export class KvarService {
       case Uloga.UPRAVNIK: {
         const zgradaUpravnika =
           await this.korisnikService.zgradaUpravnika(korisnikId);
+        const uslovi = await this.usloviStanara(korisnikId);
         return zgradaUpravnika === null
-          ? null
-          : [{ zgrada: { id: zgradaUpravnika } }];
+          ? uslovi
+          : [{ zgrada: { id: zgradaUpravnika } }, ...uslovi];
       }
 
       case Uloga.SERVISER:
@@ -133,26 +131,32 @@ export class KvarService {
           },
         ];
 
-      default: {
-        const veze = await this.stanarStanaRepository.find({
-          where: { korisnik: { id: korisnikId } },
-          relations: { stan: { zgrada: true } },
-        });
-        if (veze.length === 0) {
-          return null;
-        }
-        const stanIds = veze.map((v) => v.stan.id);
-        const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
-        return [
-          { stan: { id: In(stanIds) } },
-          {
-            zgrada: { id: In(zgradaIds) },
-            lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
-          },
-          { korisnik: { id: korisnikId } },
-        ];
-      }
+      default:
+        return await this.usloviStanara(korisnikId);
     }
+  }
+
+  private async usloviStanara(
+    korisnikId: number,
+  ): Promise<FindOptionsWhere<Kvar>[]> {
+    const sopstveni: FindOptionsWhere<Kvar> = { korisnik: { id: korisnikId } };
+    const veze = await this.stanarStanaRepository.find({
+      where: { korisnik: { id: korisnikId } },
+      relations: { stan: { zgrada: true } },
+    });
+    if (veze.length === 0) {
+      return [sopstveni];
+    }
+    const stanIds = veze.map((v) => v.stan.id);
+    const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
+    return [
+      { stan: { id: In(stanIds) } },
+      {
+        zgrada: { id: In(zgradaIds) },
+        lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
+      },
+      sopstveni,
+    ];
   }
 
   async findOne(id: number) {
@@ -186,31 +190,35 @@ export class KvarService {
       case Uloga.UPRAVNIK:
         return (
           (await this.korisnikService.zgradaUpravnika(korisnikId)) ===
-          kvar.zgrada.id
+            kvar.zgrada.id || (await this.smeKaoStanar(kvar, korisnikId))
         );
 
       case Uloga.SERVISER:
         return kvar.serviser?.id === korisnikId;
 
       case Uloga.STANAR:
-        if (kvar.korisnik.id === korisnikId) {
-          return true;
-        }
-        if (kvar.stan) {
-          return await this.stanarStanaRepository.exists({
-            where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
-          });
-        }
-        return await this.stanarStanaRepository.exists({
-          where: {
-            korisnik: { id: korisnikId },
-            stan: { zgrada: { id: kvar.zgrada.id } },
-          },
-        });
+        return await this.smeKaoStanar(kvar, korisnikId);
 
       default:
         return false;
     }
+  }
+
+  private async smeKaoStanar(kvar: Kvar, korisnikId: number): Promise<boolean> {
+    if (kvar.korisnik.id === korisnikId) {
+      return true;
+    }
+    if (kvar.stan) {
+      return await this.stanarStanaRepository.exists({
+        where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
+      });
+    }
+    return await this.stanarStanaRepository.exists({
+      where: {
+        korisnik: { id: korisnikId },
+        stan: { zgrada: { id: kvar.zgrada.id } },
+      },
+    });
   }
 
   async smeDaUpravlja(

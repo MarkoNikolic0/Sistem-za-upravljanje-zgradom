@@ -17,14 +17,14 @@ import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 export class CreateKvarDto {
   @UkloniRazmake()
   @IsString()
-  @MaxLength(100)
-  @IsNotEmpty()
+  @MaxLength(100, { message: 'Naslov može imati najviše 100 znakova.' })
+  @IsNotEmpty({ message: 'Unesi kratak naslov.' })
   naslov: string;
 
   @UkloniRazmake()
   @IsString()
-  @MaxLength(2000)
-  @IsNotEmpty()
+  @MaxLength(2000, { message: 'Opis može imati najviše 2000 znakova.' })
+  @IsNotEmpty({ message: 'Opiši kvar.' })
   opis: string;
 
   @IsEnum(KategorijaKvara)

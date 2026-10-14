@@ -127,12 +127,12 @@ export const KvarStore = signalStore(
       pipe(
         exhaustMap(() => {
           const kvar = store.kvar();
-          const najstariji = store.komentari()[0];
-          if (!kvar || !najstariji) {
+          if (!kvar) {
             return EMPTY;
           }
           patchState(store, { ucitavaStarije: true });
-          return kvarService.komentari(kvar.id, KOMENTARA_PO_STRANI, najstariji.id).pipe(
+          const najstariji = store.komentari().at(0);
+          return kvarService.komentari(kvar.id, KOMENTARA_PO_STRANI, najstariji?.id).pipe(
             tapResponse({
               next: ({ stavke, ukupno }) =>
                 patchState(store, {
