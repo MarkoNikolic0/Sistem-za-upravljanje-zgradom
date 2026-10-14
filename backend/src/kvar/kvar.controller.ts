@@ -73,7 +73,7 @@ export class KvarController {
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.kvarService.findDostupan(id, korisnik.id, korisnik.uloga);
+    return this.kvarService.findDetalj(id, korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -136,7 +136,7 @@ export class KvarController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStatusKvarDto,
   ) {
-    return this.kvarService.promeniStatus(id, korisnik.id, dto);
+    return this.kvarService.promeniStatus(id, korisnik.id, korisnik.uloga, dto);
   }
 
   @UseGuards(RolesGuard)

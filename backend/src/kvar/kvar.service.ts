@@ -178,6 +178,13 @@ export class KvarService {
     return kvar;
   }
 
+  async findDetalj(id: number, korisnikId: number, uloga: Uloga) {
+    const kvar = await this.findDostupan(id, korisnikId, uloga);
+    return Object.assign(kvar, {
+      smeDaUpravlja: await this.smeDaUpravlja(kvar, korisnikId, uloga),
+    });
+  }
+
   private async smeDaVidi(
     kvar: Kvar,
     korisnikId: number,
@@ -229,6 +236,9 @@ export class KvarService {
     if (uloga === Uloga.ADMIN) {
       return true;
     }
+    if (uloga !== Uloga.UPRAVNIK) {
+      return false;
+    }
     const zgradaUpravnika =
       await this.korisnikService.zgradaUpravnika(korisnikId);
     return zgradaUpravnika === kvar.zgrada.id;
@@ -259,8 +269,9 @@ export class KvarService {
 
   async findDostupneServisere(kategorija: KategorijaKvara) {
     const specijalnosti = await this.serviserSpecijanostRepository.find({
-      where: { kategorija },
+      where: { kategorija, korisnik: { uloga: Uloga.SERVISER } },
       relations: { korisnik: true },
+      order: { korisnik: { prezime: 'ASC', ime: 'ASC' } },
     });
     return specijalnosti.map((s) => s.korisnik);
   }
@@ -268,17 +279,19 @@ export class KvarService {
   async prihvati(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    return await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
+    await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
       status: StatusKvara.PRIHVACEN,
     });
+    return await this.findDetalj(id, korisnikId, uloga);
   }
 
   async odbij(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    return await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
+    await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
       status: StatusKvara.ODBIJEN,
     });
+    return await this.findDetalj(id, korisnikId, uloga);
   }
 
   async postaviPrioritet(
@@ -289,9 +302,10 @@ export class KvarService {
   ) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    return await this.izmeniAkoJeU(id, STATUSI_PO_STANJU[StanjeKvara.AKTIVNI], {
+    await this.izmeniAkoJeU(id, STATUSI_PO_STANJU[StanjeKvara.AKTIVNI], {
       prioritet: dto.prioritet,
     });
+    return await this.findDetalj(id, korisnikId, uloga);
   }
 
   async dodeliServisera(
@@ -313,16 +327,17 @@ export class KvarService {
         'Izabrani serviser nema struku za ovu vrstu kvara.',
       );
     }
-    return await this.izmeniAkoJeU(
-      id,
-      [StatusKvara.PRIHVACEN, StatusKvara.DODELJEN],
-      { status: StatusKvara.DODELJEN, serviser: { id: dto.serviserId } },
-    );
+    await this.izmeniAkoJeU(id, [StatusKvara.PRIHVACEN, StatusKvara.DODELJEN], {
+      status: StatusKvara.DODELJEN,
+      serviser: { id: dto.serviserId },
+    });
+    return await this.findDetalj(id, korisnikId, uloga);
   }
 
   async promeniStatus(
     id: number,
     korisnikId: number,
+    uloga: Uloga,
     dto: UpdateStatusKvarDto,
   ) {
     const kvar = await this.findOne(id);
@@ -331,20 +346,22 @@ export class KvarService {
         'Samo dodeljeni serviser može da menja status ovog kvara!',
       );
     }
-    return await this.izmeniAkoJeU(
+    await this.izmeniAkoJeU(
       id,
       [PRETHODNI_STATUS[dto.status]],
       { status: dto.status },
       { serviser: { id: korisnikId } },
     );
+    return await this.findDetalj(id, korisnikId, uloga);
   }
 
   async zatvori(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    return await this.izmeniAkoJeU(id, [StatusKvara.RESEN], {
+    await this.izmeniAkoJeU(id, [StatusKvara.RESEN], {
       status: StatusKvara.ZATVOREN,
     });
+    return await this.findDetalj(id, korisnikId, uloga);
   }
 
   private async izmeniAkoJeU(
@@ -352,7 +369,7 @@ export class KvarService {
     statusi: StatusKvara[],
     izmene: QueryDeepPartialEntity<Kvar>,
     uslov: FindOptionsWhere<Kvar> = {},
-  ) {
+  ): Promise<void> {
     const rezultat = await this.kvarRepository.update(
       { ...uslov, id, status: In(statusi) },
       izmene,
@@ -362,6 +379,5 @@ export class KvarService {
         'Akcija nije moguća u trenutnom statusu kvara. Osveži stranicu.',
       );
     }
-    return await this.findOne(id);
   }
 }
