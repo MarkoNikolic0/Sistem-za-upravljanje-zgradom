@@ -62,12 +62,12 @@ export class NoviZahtev {
       .subscribe(() => this.forma.controls.stanId.reset());
   }
 
-  nevazece(polje: 'zgradaId' | 'stanId'): boolean {
+  protected nevazece(polje: 'zgradaId' | 'stanId'): boolean {
     const kontrola = this.forma.controls[polje];
     return kontrola.invalid && kontrola.touched;
   }
 
-  posalji(): void {
+  protected posalji(): void {
     const stanId = this.forma.controls.stanId.value;
     if (this.forma.invalid || stanId === null) {
       this.forma.markAllAsTouched();

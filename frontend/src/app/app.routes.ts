@@ -36,6 +36,7 @@ export const routes: Routes = [
       },
       {
         path: 'povezivanje',
+        canActivate: [ulogaGuard('stanar', 'upravnik')],
         loadComponent: () =>
           import('./features/zahtevi/novi-zahtev/novi-zahtev').then((m) => m.NoviZahtev),
         title: 'Povezivanje sa stanom | Upravljanje zgradom',

@@ -21,7 +21,7 @@ export class Home {
 
   protected readonly profil = this.profileService.profile();
   protected readonly zahtevi = this.zahtevService.mojiZahtevi();
-  
+
   protected readonly zahteviStigli = computed(
     () => this.zahtevi.hasValue() && !this.zahtevi.isLoading(),
   );
@@ -51,7 +51,7 @@ export class Home {
     return this.odbijenZahtev() ? 'odbijen' : 'povezi';
   });
 
-  ponovo(): void {
+  protected ponovo(): void {
     this.profil.reload();
     this.zahtevi.reload();
   }
