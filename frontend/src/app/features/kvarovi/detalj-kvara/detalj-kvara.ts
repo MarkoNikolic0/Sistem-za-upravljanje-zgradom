@@ -1,6 +1,17 @@
-import { Component, inject, input, numberAttribute, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  linkedSignal,
+  numberAttribute,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
@@ -19,19 +30,27 @@ import {
   KomentarKvara,
   MAKS_KOMENTAR_KVARA,
   NAZIVI_KATEGORIJA_KVARA,
+  NAZIVI_PRIORITETA_KVARA,
   NAZIVI_STATUSA_KVARA,
+  PrioritetKvara,
 } from '../kvar-models';
 import { KvarStore } from '../kvar-store';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { KvarService } from '../kvar-service';
 
 @Component({
   imports: [
     DatePipe,
+    FormsModule,
     ReactiveFormsModule,
     RouterLink,
     ButtonModule,
     ConfirmDialogModule,
     MessageModule,
+    SelectModule,
+    SelectButtonModule,
     SkeletonModule,
     TextareaModule,
     SpratPipe,
@@ -44,9 +63,11 @@ import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 export class DetaljKvara {
   protected readonly store = inject(KvarStore);
   private authStore = inject(AuthStore);
+  private kvarService = inject(KvarService);
   private confirmationService = inject(ConfirmationService);
   private fb = inject(FormBuilder);
   private readonly fokusiraj = fokusPosleCrtanja();
+  private readonly porukaAkcije = viewChild.required<ElementRef<HTMLElement>>('porukaAkcije');
 
   readonly id = input.required({ transform: numberAttribute });
 
@@ -55,6 +76,40 @@ export class DetaljKvara {
   protected readonly naziviUloga = NAZIVI_ULOGA;
   protected readonly formatirajTelefon = formatirajTelefon;
   protected readonly maksKomentar = MAKS_KOMENTAR_KVARA;
+
+  protected readonly prioriteti: { label: string; value: PrioritetKvara }[] = [
+    { label: NAZIVI_PRIORITETA_KVARA.nisko, value: 'nisko' },
+    { label: NAZIVI_PRIORITETA_KVARA.srednje, value: 'srednje' },
+    { label: NAZIVI_PRIORITETA_KVARA.hitno, value: 'hitno' },
+  ];
+
+  protected readonly upravlja = computed(() => {
+    const kvar = this.store.kvar();
+    return !!kvar?.smeDaUpravlja && kvar.status !== 'zatvoren' && kvar.status !== 'odbijen';
+  });
+
+  protected readonly mojRad = computed(() => {
+    const kvar = this.store.kvar();
+    const ja = this.authStore.korisnik();
+    return (
+      ja?.uloga === 'serviser' &&
+      kvar?.serviser?.id === ja.id &&
+      (kvar.status === 'dodeljen' || kvar.status === 'u_toku')
+    );
+  });
+
+  private readonly kategorijaZaDodelu = computed(() => {
+    const kvar = this.store.kvar();
+    return this.upravlja() && (kvar?.status === 'prihvacen' || kvar?.status === 'dodeljen')
+      ? kvar.kategorija
+      : undefined;
+  });
+  protected readonly serviseri = this.kvarService.serviseri(this.kategorijaZaDodelu);
+  protected readonly opcijeServisera = computed(() =>
+    this.serviseri.value().map((s) => ({ id: s.id, naziv: `${s.ime} ${s.prezime}` })),
+  );
+  protected readonly izabraniServiser = linkedSignal(() => this.store.kvar()?.serviser?.id ?? null);
+  protected readonly prioritet = linkedSignal(() => this.store.kvar()?.prioritet);
 
   protected readonly forma = this.fb.nonNullable.group({
     tekst: [
@@ -73,6 +128,11 @@ export class DetaljKvara {
 
   constructor() {
     this.store.ucitajDetalj(this.id);
+    afterRenderEffect(() => {
+      if (this.store.porukaAkcije()?.fokus) {
+        this.porukaAkcije().nativeElement.focus();
+      }
+    });
   }
 
   protected komentarNevazeci(): boolean {
@@ -85,10 +145,54 @@ export class DetaljKvara {
   }
 
   protected smeDaBrise(komentar: KomentarKvara): boolean {
-    const ja = this.authStore.korisnik();
     return (
-      !!ja && (komentar.korisnik.id === ja.id || ja.uloga === 'upravnik' || ja.uloga === 'admin')
+      komentar.korisnik.id === this.authStore.korisnik()?.id || !!this.store.kvar()?.smeDaUpravlja
     );
+  }
+
+  protected mozeDaDodeli(): boolean {
+    const izabran = this.izabraniServiser();
+    return (
+      izabran !== null && izabran !== this.store.kvar()?.serviser?.id && !this.store.akcijaUToku()
+    );
+  }
+
+  protected dodeli(): void {
+    const izabran = this.izabraniServiser();
+    if (izabran !== null) {
+      this.store.dodeliServisera(izabran);
+    }
+  }
+
+  protected promeniPrioritet(prioritet: PrioritetKvara): void {
+    this.prioritet.set(prioritet);
+    this.store.postaviPrioritet(prioritet);
+  }
+
+  protected odbij(event: Event): void {
+    const dugme = event.currentTarget as HTMLElement;
+    this.confirmationService.confirm({
+      header: 'Odbijanje prijave',
+      message: 'Odbiti ovu prijavu kvara? Kvar prelazi u završene i više ne može da se menja.',
+      defaultFocus: 'reject',
+      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'Odbij', severity: 'danger' },
+      accept: () => this.store.odbij(),
+      reject: () => dugme.focus(),
+    });
+  }
+
+  protected zatvori(event: Event): void {
+    const dugme = event.currentTarget as HTMLElement;
+    this.confirmationService.confirm({
+      header: 'Zatvaranje kvara',
+      message: 'Zatvoriti kvar? Kvar prelazi u završene i više ne može da se menja.',
+      defaultFocus: 'reject',
+      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'Zatvori kvar' },
+      accept: () => this.store.zatvori(),
+      reject: () => dugme.focus(),
+    });
   }
 
   protected async posaljiKomentar(): Promise<void> {
