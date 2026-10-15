@@ -1,3 +1,4 @@
+import { TagSeverity } from 'primeng/tag';
 import { UpitStrane } from '../../shared/stranica';
 import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
@@ -8,6 +9,12 @@ export const NAZIVI_STATUSA_ZAHTEVA: Record<StatusZahteva, string> = {
   na_cekanju: 'Na čekanju',
   prihvacen: 'Prihvaćen',
   odbijen: 'Odbijen',
+};
+
+export const BOJE_STATUSA_ZAHTEVA: Record<StatusZahteva, TagSeverity> = {
+  na_cekanju: 'secondary',
+  prihvacen: 'success',
+  odbijen: 'danger',
 };
 
 export interface ZahtevResponse {

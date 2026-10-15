@@ -15,6 +15,7 @@ import { formatirajTelefon } from '../../../shared/telefon';
 import { SpratPipe } from '../../../shared/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { MAX_DUZINA_IMENA, PRAVILA_IMENA } from '../../auth/pravila-naloga';
+import { TagModule } from 'primeng/tag';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -25,6 +26,7 @@ type Polje = 'ime' | 'prezime' | 'telefon';
     InputTextModule,
     MessageModule,
     SkeletonModule,
+    TagModule,
     ChangePassword,
     RouterLink,
     SpratPipe,

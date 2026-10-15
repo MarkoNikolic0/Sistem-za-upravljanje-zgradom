@@ -94,9 +94,12 @@
             {{ zahtev.stan.zgrada.naziv }}, {{ zahtev.stan.zgrada.adresa }}
           </p>
         </div>
-        <span class="oznaka-statusa" [class.greska]="zahtev.status === 'odbijen'">
-          {{ naziviStatusa[zahtev.status] }}
-        </span>
+        <p-tag
+          class="shrink-0"
+          [value]="naziviStatusa[zahtev.status]"
+          [severity]="bojeStatusa[zahtev.status]"
+          [rounded]="true"
+        />
       </div>
     } @empty {
       <p class="text-priguseno">Nemaš zahteva koji čekaju odgovor.</p>

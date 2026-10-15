@@ -177,9 +177,12 @@
                 {{ stan.zgrada.naziv }}, {{ stan.zgrada.adresa }}
               </p>
             </div>
-            <span class="oznaka-statusa" [class.prigusena]="!stan.vlasnik">
-              {{ stan.vlasnik ? 'Vlasnik' : 'Stanar' }}
-            </span>
+            <p-tag
+              class="shrink-0"
+              [value]="stan.vlasnik ? 'Vlasnik' : 'Stanar'"
+              [severity]="stan.vlasnik ? undefined : 'secondary'"
+              [rounded]="true"
+            />
           </div>
         } @empty {
           <p class="text-priguseno">Još nisi povezan ni sa jednim stanom.</p>

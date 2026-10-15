@@ -8,12 +8,13 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { ZahtevService } from '../zahtev-service';
-import { NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
+import { BOJE_STATUSA_ZAHTEVA, NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
 import { nazivSprata, SpratPipe } from '../../../shared/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { TagModule } from 'primeng/tag';
 
 @Component({
-  imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, SpratPipe],
+  imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, TagModule, SpratPipe],
   selector: 'app-novi-zahtev',
   styleUrl: './novi-zahtev.scss',
   templateUrl: './novi-zahtev.html',
@@ -25,6 +26,7 @@ export class NoviZahtev {
   private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
+  protected readonly bojeStatusa = BOJE_STATUSA_ZAHTEVA;
 
   protected readonly salje = signal(false);
   protected readonly greska = signal('');

@@ -10,8 +10,14 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { SpratPipe } from '../../../shared/sprat-pipe';
-import { FilterZahteva, NAZIVI_STATUSA_ZAHTEVA, ZahtevUpravnika } from '../zahtev-models';
+import {
+  BOJE_STATUSA_ZAHTEVA,
+  FilterZahteva,
+  NAZIVI_STATUSA_ZAHTEVA,
+  ZahtevUpravnika,
+} from '../zahtev-models';
 import { ZAHTEVA_PO_STRANI, ZahteviStore } from '../zahtev-store';
+import { TagModule } from 'primeng/tag';
 
 @Component({
   imports: [
@@ -23,6 +29,7 @@ import { ZAHTEVA_PO_STRANI, ZahteviStore } from '../zahtev-store';
     PaginatorModule,
     SelectButtonModule,
     SkeletonModule,
+    TagModule,
     SpratPipe,
   ],
   providers: [ZahteviStore, ConfirmationService],
@@ -37,6 +44,7 @@ export class ZahteviUpravnika {
 
   protected readonly poStrani = ZAHTEVA_PO_STRANI;
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
+  protected readonly bojeStatusa = BOJE_STATUSA_ZAHTEVA;
   protected readonly formatirajTelefon = formatirajTelefon;
 
   protected readonly filteri: { label: string; value: FilterZahteva }[] = [
