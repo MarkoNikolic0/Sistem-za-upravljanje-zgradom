@@ -248,6 +248,9 @@ FROM (VALUES
    'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
    'Vizantijski bulevar 12, Niš', '8', 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '14 days'),
   -- Delta Residence: vise aktivnih i zavrsenih (za listu, filter i paginaciju)
+  ('Ne radi bojler', 'Bojler u kupatilu ne greje vodu, lampica na njemu ne svetli.',
+   'vodovod', 'privatni_stan', 'srednje', 'resen',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '2 days'),
   ('Ne greje radijator u spavaćoj sobi', 'Radijator u spavaćoj sobi je hladan, ostali u stanu greju normalno.',
    'grejanje', 'privatni_stan', 'srednje', 'prijavljen',
    'Bulevar Nemanjića 45, Niš', '6', 'dejan.milosavljevic@example.com', NULL, interval '5 hours'),
@@ -306,7 +309,8 @@ UPDATE kvar kv SET "datumResenja" = now() - v.pre
 FROM (VALUES
   ('Iskače osigurač u kupatilu', interval '5 days'),
   ('Lupaju cevi grejanja', interval '2 days'),
-  ('Ne radi svetlo u liftu', interval '3 days')
+  ('Ne radi svetlo u liftu', interval '3 days'),
+  ('Ne radi bojler', interval '1 hour')
 ) AS v(naslov, pre)
 WHERE kv.naslov = v.naslov AND kv.status = 'resen' AND kv."datumResenja" IS NULL;
 
