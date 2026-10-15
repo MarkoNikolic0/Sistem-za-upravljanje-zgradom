@@ -66,4 +66,7 @@ export class Kvar {
 
   @CreateDateColumn({ type: 'timestamptz' })
   datumPrijave: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  datumResenja: Date | null;
 }

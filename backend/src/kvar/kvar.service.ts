@@ -3,12 +3,13 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindOptionsWhere, In, LessThan, Repository } from 'typeorm';
 import {
   KategorijaKvara,
   LokacijaTip,
@@ -30,6 +31,7 @@ import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.AKTIVNI]: [
@@ -47,8 +49,12 @@ const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.RESEN]: StatusKvara.U_TOKU,
 };
 
+const DANA_ZA_POTVRDU = 7;
+const MS_PO_DANU = 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class KvarService {
+  private readonly logger = new Logger(KvarService.name);
   constructor(
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(ServiserSpecijalnost)
@@ -182,6 +188,11 @@ export class KvarService {
     const kvar = await this.findDostupan(id, korisnikId, uloga);
     return Object.assign(kvar, {
       smeDaUpravlja: await this.smeDaUpravlja(kvar, korisnikId, uloga),
+      smeDaPotvrdi: await this.smeDaPotvrdi(kvar, korisnikId),
+      rokPotvrde:
+        kvar.status === StatusKvara.RESEN && kvar.datumResenja
+          ? new Date(kvar.datumResenja.getTime() + DANA_ZA_POTVRDU * MS_PO_DANU)
+          : null,
     });
   }
 
@@ -242,6 +253,15 @@ export class KvarService {
     const zgradaUpravnika =
       await this.korisnikService.zgradaUpravnika(korisnikId);
     return zgradaUpravnika === kvar.zgrada.id;
+  }
+
+  private async smeDaPotvrdi(kvar: Kvar, korisnikId: number): Promise<boolean> {
+    if (kvar.stan) {
+      return await this.stanarStanaRepository.exists({
+        where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
+      });
+    }
+    return kvar.korisnik.id === korisnikId;
   }
 
   private async proveriUpravljanje(
@@ -349,10 +369,38 @@ export class KvarService {
     await this.izmeniAkoJeU(
       id,
       [PRETHODNI_STATUS[dto.status]],
-      { status: dto.status },
+      {
+        status: dto.status,
+        datumResenja: dto.status === StatusKvara.RESEN ? new Date() : null,
+      },
       { serviser: { id: korisnikId } },
     );
     return await this.findDetalj(id, korisnikId, uloga);
+  }
+
+  async potvrdi(id: number, korisnikId: number, uloga: Uloga) {
+    const kvar = await this.findOne(id);
+    if (!(await this.smeDaPotvrdi(kvar, korisnikId))) {
+      throw new ForbiddenException(
+        'Rešenje potvrđuje neko iz stana, a za zajednički prostor onaj ko je prijavio kvar!',
+      );
+    }
+    await this.izmeniAkoJeU(id, [StatusKvara.RESEN], {
+      status: StatusKvara.ZATVOREN,
+    });
+    return await this.findDetalj(id, korisnikId, uloga);
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async zatvoriNepotvrdjene() {
+    const rok = new Date(Date.now() - DANA_ZA_POTVRDU * MS_PO_DANU);
+    const rezultat = await this.kvarRepository.update(
+      { status: StatusKvara.RESEN, datumResenja: LessThan(rok) },
+      { status: StatusKvara.ZATVOREN },
+    );
+    if (rezultat.affected) {
+      this.logger.log(`Automatski zatvoreno kvarova: ${rezultat.affected}`);
+    }
   }
 
   async zatvori(id: number, korisnikId: number, uloga: Uloga) {

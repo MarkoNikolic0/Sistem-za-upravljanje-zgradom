@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { Korisnik } from '../../korisnik/korisnik.entity.js';
 
 @Entity()
 export class RefreshToken {

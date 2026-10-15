@@ -301,6 +301,15 @@ WHERE NOT EXISTS (SELECT 1 FROM kvar kv WHERE kv.naslov = v.naslov AND kv."zgrad
 UPDATE kvar SET "stanId" = NULL
 WHERE "lokacijaTip" = 'zajednicki_prostor' AND "stanId" IS NOT NULL;
 
+-- Kada je serviser oznacio kvar kao resen (stanar ima 7 dana da potvrdi, posle se sam zatvara)
+UPDATE kvar kv SET "datumResenja" = now() - v.pre
+FROM (VALUES
+  ('Iskače osigurač u kupatilu', interval '5 days'),
+  ('Lupaju cevi grejanja', interval '2 days'),
+  ('Ne radi svetlo u liftu', interval '3 days')
+) AS v(naslov, pre)
+WHERE kv.naslov = v.naslov AND kv.status = 'resen' AND kv."datumResenja" IS NULL;
+
 -- KOMENTARI NA KVAROVE ----------------------------------------------------------------------
 INSERT INTO komentar_kvar (tekst, "kvarId", "korisnikId", "datumKreiranja")
 SELECT v.tekst, kv.id, k.id, now() - v.pre

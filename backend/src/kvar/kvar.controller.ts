@@ -139,6 +139,14 @@ export class KvarController {
     return this.kvarService.promeniStatus(id, korisnik.id, korisnik.uloga, dto);
   }
 
+  @Patch(':id/potvrdi')
+  potvrdi(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.kvarService.potvrdi(id, korisnik.id, korisnik.uloga);
+  }
+
   @UseGuards(RolesGuard)
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/zatvori')

@@ -2,11 +2,12 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { IsNull, MoreThan, Not, Repository } from 'typeorm';
-import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
+import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
 import { generisiToken } from './refresh-token.util.js';
 import { hesirajToken } from './refresh-token.util.js';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 const MS_PO_DANU = 24 * 60 * 60 * 1000;
 
@@ -100,6 +101,13 @@ export class RefreshTokenService {
       },
       { datumOpoziva: new Date() },
     );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async obrisiIstekle() {
+    await this.refreshTokenRepository.delete({
+      datumIsteka: LessThan(new Date()),
+    });
   }
 
   private noviDatumIsteka(): Date {

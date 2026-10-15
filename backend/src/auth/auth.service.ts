@@ -11,7 +11,7 @@ import { RegisterDto } from './dto/register.dto.js';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
-import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
+import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
