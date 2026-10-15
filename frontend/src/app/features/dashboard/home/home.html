@@ -1,9 +1,7 @@
 <div class="pocetna">
   @if (profil.hasValue() && zahteviStigli()) {
     <p class="oznaka">Početna</p>
-    <h1 class="mt-3 text-4xl font-extralight tracking-tight text-naslov">
-      Zdravo, {{ profil.value().ime }}
-    </h1>
+    <h1 class="naslov-stranice mt-3">Zdravo, {{ profil.value().ime }}</h1>
 
     @switch (prviKorak()) {
       @case ('povezi') {

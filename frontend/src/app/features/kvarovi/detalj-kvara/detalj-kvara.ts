@@ -31,7 +31,6 @@ import {
   MAKS_KOMENTAR_KVARA,
   NAZIVI_KATEGORIJA_KVARA,
   NAZIVI_PRIORITETA_KVARA,
-  NAZIVI_STATUSA_KVARA,
   PrioritetKvara,
 } from '../kvar-models';
 import { KvarStore } from '../kvar-store';
@@ -39,6 +38,8 @@ import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { KvarService } from '../kvar-service';
+import { OznakeKvara } from '../oznake-kvara/oznake-kvara';
+import { TokKvara } from '../tok-kvara/tok-kvara';
 
 @Component({
   imports: [
@@ -54,6 +55,8 @@ import { KvarService } from '../kvar-service';
     SkeletonModule,
     TextareaModule,
     SpratPipe,
+    OznakeKvara,
+    TokKvara,
   ],
   providers: [ConfirmationService],
   selector: 'app-detalj-kvara',
@@ -71,7 +74,6 @@ export class DetaljKvara {
 
   readonly id = input.required({ transform: numberAttribute });
 
-  protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
   protected readonly naziviUloga = NAZIVI_ULOGA;
   protected readonly formatirajTelefon = formatirajTelefon;

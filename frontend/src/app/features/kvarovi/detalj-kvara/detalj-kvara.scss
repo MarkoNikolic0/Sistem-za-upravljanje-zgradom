@@ -1,5 +1,6 @@
 :host {
   display: block;
+  container-type: inline-size;
 }
 
 .stranica {
@@ -48,5 +49,49 @@ dd {
 
   &:last-of-type {
     border-bottom: 1px solid var(--color-linija);
+  }
+}
+
+// Široko: opis, akcije i komentari levo, tok i podaci u desnoj koloni (kao GitHub issue)
+@container (width >= 55rem) {
+  .stranica {
+    max-width: 62rem;
+  }
+
+  .raspored {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 16rem;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'opis strana'
+      'akcije strana'
+      'komentari strana';
+    column-gap: 4rem;
+  }
+
+  .opis-kvara {
+    grid-area: opis;
+  }
+
+  .akcije {
+    grid-area: akcije;
+  }
+
+  .strana {
+    grid-area: strana;
+  }
+
+  .komentari {
+    grid-area: komentari;
+  }
+
+  // U uskoj koloni naziv stoji iznad vrednosti
+  .strana .red {
+    display: block;
+  }
+
+  .strana dd {
+    margin-top: 0.25rem;
+    text-align: start;
   }
 }

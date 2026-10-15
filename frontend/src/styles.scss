@@ -83,6 +83,17 @@ body {
   }
 }
 
+@layer components {
+  .naslov-stranice {
+    font-size: clamp(1.6875rem, 1rem + 3vw, 2.25rem);
+    font-weight: 200;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--color-naslov);
+    text-wrap: balance;
+  }
+}
+
 .odeljak {
   margin-top: 2.5rem;
 }

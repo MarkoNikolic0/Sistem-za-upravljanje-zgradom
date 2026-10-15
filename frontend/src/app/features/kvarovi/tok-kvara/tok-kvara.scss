@@ -1,0 +1,69 @@
+:host {
+  display: block;
+}
+
+.korak {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.25rem;
+  font-size: 0.875rem;
+  color: var(--color-utisano);
+
+  // Linija od ovog do sledećeg kružića
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: calc(50% + 0.625rem);
+    left: calc(0.625rem - 0.5px);
+    width: 1px;
+    height: calc(100% - 1.25rem);
+    background: var(--color-ivica);
+  }
+}
+
+.marker {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--color-utisano);
+  border-radius: 9999px;
+
+  // Veličina na samoj ikonici: PrimeNG svakoj .pi daje 14 px, pa nasleđivanje od kružića ne važi
+  .pi {
+    font-size: 0.75rem;
+  }
+}
+
+.zavrsen {
+  color: var(--color-tekst);
+}
+
+.trenutni {
+  font-weight: 500;
+  color: var(--color-naslov);
+
+  .marker {
+    border-color: var(--color-svetlo);
+
+    &::before {
+      content: '';
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 9999px;
+      background: var(--color-svetlo);
+    }
+  }
+}
+
+.odbijen {
+  font-weight: 500;
+  color: var(--color-greska);
+
+  .marker {
+    border-color: currentColor;
+  }
+}

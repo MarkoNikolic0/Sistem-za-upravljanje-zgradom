@@ -8,12 +8,13 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { NAZIVI_KATEGORIJA_KVARA, NAZIVI_STATUSA_KVARA, StanjeKvara } from '../kvar-models';
+import { NAZIVI_KATEGORIJA_KVARA, StanjeKvara } from '../kvar-models';
 import { KVAROVA_PO_STRANI, KvarStore } from '../kvar-store';
 import { ProfileService } from '../../profile/profile-service';
 import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
+import { OznakeKvara } from '../oznake-kvara/oznake-kvara';
 
 @Component({
   imports: [
@@ -26,6 +27,7 @@ import { KvarService } from '../kvar-service';
     SelectButtonModule,
     SkeletonModule,
     SpratPipe,
+    OznakeKvara,
     RouterLink,
   ],
   selector: 'app-lista-kvarova',
@@ -39,7 +41,6 @@ export class ListaKvarova {
   private kvarService = inject(KvarService);
 
   protected readonly poStrani = KVAROVA_PO_STRANI;
-  protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
 
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);

@@ -1,0 +1,21 @@
+<ol>
+  @for (korak of koraci(); track korak.status) {
+    <li class="korak" [class]="korak.stanje">
+      <span class="marker" aria-hidden="true">
+        @if (korak.stanje === 'zavrsen') {
+          <i class="pi pi-check"></i>
+        } @else if (korak.stanje === 'odbijen') {
+          <i class="pi pi-times"></i>
+        }
+      </span>
+      <span>
+        @if (korak.stanje === 'zavrsen') {
+          <span class="sr-only">Završeno: </span>
+        } @else if (korak.stanje === 'trenutni') {
+          <span class="sr-only">Trenutno: </span>
+        }
+        {{ naziviStatusa[korak.status] }}
+      </span>
+    </li>
+  }
+</ol>
