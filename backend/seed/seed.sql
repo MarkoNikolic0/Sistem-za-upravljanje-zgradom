@@ -145,7 +145,9 @@ FROM (VALUES
   ('jovana.mitic@example.com', 'Vizantijski bulevar 12, Niš', '16', true),
   ('uros.savic@example.com', 'Vizantijski bulevar 12, Niš', '22', false),
   -- upravnik Obrenoviceve je i vlasnik stana u svojoj zgradi
-  ('jelena.markovic@example.com', 'Obrenovićeva 30, Niš', '13', true)
+  ('jelena.markovic@example.com', 'Obrenovićeva 30, Niš', '13', true),
+  -- upravnik Delte je vlasnik stana 7 (upravnik bez stana za testove: nikola.ilic)
+  ('danijel@gmail.com', 'Bulevar Nemanjića 45, Niš', '7', true)
 ) AS v(email, adresa, broj, vlasnik)
 JOIN korisnik k ON k.email = v.email
 JOIN zgrada z ON z.adresa = v.adresa
