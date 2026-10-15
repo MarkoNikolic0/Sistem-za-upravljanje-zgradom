@@ -337,6 +337,12 @@ export const KvarStore = signalStore(
           () => (status === 'u_toku' ? 'Rad na kvaru je započet.' : 'Kvar je označen kao rešen.'),
         );
       },
+      potvrdi(): void {
+        akcija(
+          (id) => kvarService.potvrdi(id),
+          () => 'Hvala na potvrdi. Kvar je zatvoren.',
+        );
+      },
       zatvori(): void {
         akcija(
           (id) => kvarService.zatvori(id),

@@ -90,6 +90,11 @@ export class DetaljKvara {
     return !!kvar?.smeDaUpravlja && kvar.status !== 'zatvoren' && kvar.status !== 'odbijen';
   });
 
+  protected readonly potvrda = computed(() => {
+    const kvar = this.store.kvar();
+    return !!kvar?.smeDaPotvrdi && kvar.status === 'resen';
+  });
+
   protected readonly mojRad = computed(() => {
     const kvar = this.store.kvar();
     const ja = this.authStore.korisnik();

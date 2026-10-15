@@ -52,6 +52,7 @@ export interface Kvar {
   prioritet: PrioritetKvara;
   status: StatusKvara;
   datumPrijave: string;
+  datumResenja: string | null;
   zgrada: ZgradaOsnovno;
   stan: StanOsnovno | null;
   korisnik: KorisnikOsnovno & Partial<Kontakt>;
@@ -60,6 +61,8 @@ export interface Kvar {
 
 export interface KvarDetalj extends Kvar {
   smeDaUpravlja: boolean;
+  smeDaPotvrdi: boolean;
+  rokPotvrde: string | null;
 }
 
 export interface UpitKvarova extends UpitStrane {

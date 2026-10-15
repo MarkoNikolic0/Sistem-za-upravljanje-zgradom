@@ -22,129 +22,164 @@
         <p class="opis">{{ kvar.opis }}</p>
       </section>
 
-      @if (upravlja()) {
-        <section class="odeljak akcije" aria-labelledby="upravljanje-naslov">
-          <div class="zaglavlje-odeljka">
-            <h2 id="upravljanje-naslov" class="naslov-odeljka">Upravljanje</h2>
-          </div>
-
-          @if (kvar.status === 'prijavljen') {
-            <p class="text-priguseno">Pregledaj prijavu, pa je prihvati ili odbij.</p>
-            <div class="mt-4 flex flex-wrap gap-2">
-              <button
-                pButton
-                type="button"
-                size="small"
-                [disabled]="store.akcijaUToku()"
-                (click)="store.prihvati()"
-              >
-                Prihvati
-              </button>
-              <button
-                pButton
-                type="button"
-                size="small"
-                severity="danger"
-                text
-                [disabled]="store.akcijaUToku()"
-                (click)="odbij($event)"
-              >
-                Odbij
-              </button>
+      <div class="akcije">
+        @if (potvrda()) {
+          <section class="odeljak" aria-labelledby="potvrda-naslov">
+            <div class="zaglavlje-odeljka">
+              <h2 id="potvrda-naslov" class="naslov-odeljka">Potvrda</h2>
             </div>
-          } @else if (kvar.status === 'prihvacen' || kvar.status === 'dodeljen') {
-            <div class="flex flex-col gap-1.5 sm:max-w-xs">
-              <span id="serviser-oznaka" class="text-sm font-medium">
-                {{ kvar.serviser ? 'Promeni servisera' : 'Dodeli servisera' }}
-              </span>
-              <p-select
-                ariaLabelledBy="serviser-oznaka"
-                [options]="opcijeServisera()"
-                optionLabel="naziv"
-                optionValue="id"
-                placeholder="Izaberi servisera"
-                emptyMessage="Nema servisera za ovu vrstu kvara."
-                [loading]="serviseri.isLoading()"
-                [(ngModel)]="izabraniServiser"
-                [fluid]="true"
+            <p class="text-priguseno">
+              Serviser je označio kvar kao rešen. Ako je sve u redu, potvrdi.
+            </p>
+            @if (kvar.rokPotvrde; as rok) {
+              <p class="mt-2 text-sm text-priguseno">
+                Ako ne potvrdiš do {{ rok | date: 'd. MMM y.' }}, kvar će se sam zatvoriti.
+              </p>
+            }
+            <button
+              pButton
+              type="button"
+              size="small"
+              class="mt-4"
+              [disabled]="store.akcijaUToku()"
+              (click)="store.potvrdi()"
+            >
+              Potvrdi da je rešeno
+            </button>
+          </section>
+        }
+
+        @if (upravlja()) {
+          <section class="odeljak" aria-labelledby="upravljanje-naslov">
+            <div class="zaglavlje-odeljka">
+              <h2 id="upravljanje-naslov" class="naslov-odeljka">Upravljanje</h2>
+            </div>
+
+            @if (kvar.status === 'prijavljen') {
+              <p class="text-priguseno">Pregledaj prijavu, pa je prihvati ili odbij.</p>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button
+                  pButton
+                  type="button"
+                  size="small"
+                  [disabled]="store.akcijaUToku()"
+                  (click)="store.prihvati()"
+                >
+                  Prihvati
+                </button>
+                <button
+                  pButton
+                  type="button"
+                  size="small"
+                  severity="danger"
+                  text
+                  [disabled]="store.akcijaUToku()"
+                  (click)="odbij($event)"
+                >
+                  Odbij
+                </button>
+              </div>
+            } @else if (kvar.status === 'prihvacen' || kvar.status === 'dodeljen') {
+              <div class="flex flex-col gap-1.5 sm:max-w-xs">
+                <span id="serviser-oznaka" class="text-sm font-medium">
+                  {{ kvar.serviser ? 'Promeni servisera' : 'Dodeli servisera' }}
+                </span>
+                <p-select
+                  ariaLabelledBy="serviser-oznaka"
+                  [options]="opcijeServisera()"
+                  optionLabel="naziv"
+                  optionValue="id"
+                  placeholder="Izaberi servisera"
+                  emptyMessage="Nema servisera za ovu vrstu kvara."
+                  [loading]="serviseri.isLoading()"
+                  [(ngModel)]="izabraniServiser"
+                  [fluid]="true"
+                />
+                @if (serviseri.error()) {
+                  <small class="text-sm text-greska"
+                    >Serviseri trenutno ne mogu da se učitaju.</small
+                  >
+                }
+              </div>
+              <button
+                pButton
+                type="button"
+                size="small"
+                class="mt-3"
+                [disabled]="!mozeDaDodeli()"
+                (click)="dodeli()"
+              >
+                {{ kvar.serviser ? 'Promeni' : 'Dodeli' }}
+              </button>
+            } @else if (kvar.status === 'u_toku') {
+              <p class="text-priguseno">Serviser radi na kvaru.</p>
+            } @else if (kvar.status === 'resen') {
+              <p class="text-priguseno">
+                Serviser je označio kvar kao rešen.
+                @if (kvar.rokPotvrde; as rok) {
+                  Ako ga stanar ne potvrdi, zatvoriće se sam {{ rok | date: 'd. MMM y.' }}
+                }
+              </p>
+              <button
+                pButton
+                type="button"
+                size="small"
+                class="mt-4"
+                [disabled]="store.akcijaUToku()"
+                (click)="zatvori($event)"
+              >
+                Zatvori kvar
+              </button>
+            }
+
+            <div class="mt-6 flex flex-col gap-1.5">
+              <span id="prioritet-oznaka" class="text-sm font-medium">Prioritet</span>
+              <p-selectbutton
+                ariaLabelledBy="prioritet-oznaka"
+                [options]="prioriteti"
+                optionLabel="label"
+                optionValue="value"
+                [allowEmpty]="false"
+                [ngModel]="prioritet()"
+                (ngModelChange)="promeniPrioritet($event)"
               />
-              @if (serviseri.error()) {
-                <small class="text-sm text-greska">Serviseri trenutno ne mogu da se učitaju.</small>
-              }
             </div>
-            <button
-              pButton
-              type="button"
-              size="small"
-              class="mt-3"
-              [disabled]="!mozeDaDodeli()"
-              (click)="dodeli()"
-            >
-              {{ kvar.serviser ? 'Promeni' : 'Dodeli' }}
-            </button>
-          } @else if (kvar.status === 'u_toku') {
-            <p class="text-priguseno">Serviser radi na kvaru.</p>
-          } @else if (kvar.status === 'resen') {
-            <p class="text-priguseno">Serviser je označio kvar kao rešen.</p>
-            <button
-              pButton
-              type="button"
-              size="small"
-              class="mt-4"
-              [disabled]="store.akcijaUToku()"
-              (click)="zatvori($event)"
-            >
-              Zatvori kvar
-            </button>
-          }
+          </section>
+        }
 
-          <div class="mt-6 flex flex-col gap-1.5">
-            <span id="prioritet-oznaka" class="text-sm font-medium">Prioritet</span>
-            <p-selectbutton
-              ariaLabelledBy="prioritet-oznaka"
-              [options]="prioriteti"
-              optionLabel="label"
-              optionValue="value"
-              [allowEmpty]="false"
-              [ngModel]="prioritet()"
-              (ngModelChange)="promeniPrioritet($event)"
-            />
-          </div>
-        </section>
-      }
-
-      @if (mojRad()) {
-        <section class="odeljak akcije" aria-labelledby="moj-rad-naslov">
-          <div class="zaglavlje-odeljka">
-            <h2 id="moj-rad-naslov" class="naslov-odeljka">Moj rad</h2>
-          </div>
-          @if (kvar.status === 'dodeljen') {
-            <p class="text-priguseno">Kad počneš popravku, označi to ovde.</p>
-            <button
-              pButton
-              type="button"
-              size="small"
-              class="mt-4"
-              [disabled]="store.akcijaUToku()"
-              (click)="store.promeniStatus('u_toku')"
-            >
-              Počni rad
-            </button>
-          } @else {
-            <p class="text-priguseno">Kad završiš popravku, označi kvar kao rešen.</p>
-            <button
-              pButton
-              type="button"
-              size="small"
-              class="mt-4"
-              [disabled]="store.akcijaUToku()"
-              (click)="store.promeniStatus('resen')"
-            >
-              Označi kao rešen
-            </button>
-          }
-        </section>
-      }
+        @if (mojRad()) {
+          <section class="odeljak" aria-labelledby="moj-rad-naslov">
+            <div class="zaglavlje-odeljka">
+              <h2 id="moj-rad-naslov" class="naslov-odeljka">Moj rad</h2>
+            </div>
+            @if (kvar.status === 'dodeljen') {
+              <p class="text-priguseno">Kad počneš popravku, označi to ovde.</p>
+              <button
+                pButton
+                type="button"
+                size="small"
+                class="mt-4"
+                [disabled]="store.akcijaUToku()"
+                (click)="store.promeniStatus('u_toku')"
+              >
+                Počni rad
+              </button>
+            } @else {
+              <p class="text-priguseno">Kad završiš popravku, označi kvar kao rešen.</p>
+              <button
+                pButton
+                type="button"
+                size="small"
+                class="mt-4"
+                [disabled]="store.akcijaUToku()"
+                (click)="store.promeniStatus('resen')"
+              >
+                Označi kao rešen
+              </button>
+            }
+          </section>
+        }
+      </div>
 
       <div class="strana">
         <section class="odeljak" aria-labelledby="tok-naslov">
@@ -188,6 +223,16 @@
                 </time>
               </dd>
             </div>
+            @if (kvar.datumResenja; as datumResenja) {
+              <div class="red">
+                <dt>Rešen</dt>
+                <dd>
+                  <time [attr.datetime]="datumResenja">
+                    {{ datumResenja | date: 'd. MMM y. HH:mm' }}
+                  </time>
+                </dd>
+              </div>
+            }
             <div class="red">
               <dt>Prijavio</dt>
               <dd>
