@@ -14,6 +14,7 @@ import {
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { KvarService } from './kvar.service.js';
+import { KvarAkcijeService } from './kvar-akcije.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -24,12 +25,16 @@ import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
+import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('kvar')
 export class KvarController {
-  constructor(private readonly kvarService: KvarService) {}
+  constructor(
+    private readonly kvarService: KvarService,
+    private readonly kvarAkcijeService: KvarAkcijeService,
+  ) {}
 
   @Post()
   create(
@@ -83,7 +88,7 @@ export class KvarController {
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.kvarService.prihvati(id, korisnik.id, korisnik.uloga);
+    return this.kvarAkcijeService.prihvati(id, korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -93,7 +98,7 @@ export class KvarController {
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.kvarService.odbij(id, korisnik.id, korisnik.uloga);
+    return this.kvarAkcijeService.odbij(id, korisnik.id, korisnik.uloga);
   }
 
   @UseGuards(RolesGuard)
@@ -104,7 +109,7 @@ export class KvarController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PostaviPrioritetDto,
   ) {
-    return this.kvarService.postaviPrioritet(
+    return this.kvarAkcijeService.postaviPrioritet(
       id,
       korisnik.id,
       korisnik.uloga,
@@ -120,7 +125,7 @@ export class KvarController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: DodeliServiseraDto,
   ) {
-    return this.kvarService.dodeliServisera(
+    return this.kvarAkcijeService.dodeliServisera(
       id,
       korisnik.id,
       korisnik.uloga,
@@ -136,7 +141,12 @@ export class KvarController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStatusKvarDto,
   ) {
-    return this.kvarService.promeniStatus(id, korisnik.id, korisnik.uloga, dto);
+    return this.kvarAkcijeService.promeniStatus(
+      id,
+      korisnik.id,
+      korisnik.uloga,
+      dto,
+    );
   }
 
   @Patch(':id/potvrdi')
@@ -144,7 +154,16 @@ export class KvarController {
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.kvarService.potvrdi(id, korisnik.id, korisnik.uloga);
+    return this.kvarAkcijeService.potvrdi(id, korisnik.id, korisnik.uloga);
+  }
+
+  @Patch(':id/vrati')
+  vrati(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: VratiKvarDto,
+  ) {
+    return this.kvarAkcijeService.vrati(id, korisnik.id, korisnik.uloga, dto);
   }
 
   @UseGuards(RolesGuard)
@@ -154,6 +173,6 @@ export class KvarController {
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.kvarService.zatvori(id, korisnik.id, korisnik.uloga);
+    return this.kvarAkcijeService.zatvori(id, korisnik.id, korisnik.uloga);
   }
 }

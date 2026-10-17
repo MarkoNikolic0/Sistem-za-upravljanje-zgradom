@@ -1,60 +1,34 @@
 import {
-  BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
-import { FindOptionsWhere, In, LessThan, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import {
   KategorijaKvara,
   LokacijaTip,
   Prioritet,
-  StanjeKvara,
   StatusKvara,
 } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
-import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
-import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
-import {
-  StatusRadaServisera,
-  UpdateStatusKvarDto,
-} from './dto/update-status-kvar.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
-import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
-import { Cron, CronExpression } from '@nestjs/schedule';
-
-const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
-  [StanjeKvara.AKTIVNI]: [
-    StatusKvara.PRIJAVLJEN,
-    StatusKvara.PRIHVACEN,
-    StatusKvara.DODELJEN,
-    StatusKvara.U_TOKU,
-    StatusKvara.RESEN,
-  ],
-  [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
-};
-
-const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
-  [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
-  [StatusKvara.RESEN]: StatusKvara.U_TOKU,
-};
-
-const DANA_ZA_POTVRDU = 7;
-const MS_PO_DANU = 24 * 60 * 60 * 1000;
+import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
+import { KvarPravaService } from './kvar-prava.service.js';
+import {
+  DANA_ZA_POTVRDU,
+  MS_PO_DANU,
+  STATUSI_PO_STANJU,
+} from './kvar.constants.js';
 
 @Injectable()
 export class KvarService {
-  private readonly logger = new Logger(KvarService.name);
   constructor(
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(ServiserSpecijalnost)
@@ -62,7 +36,10 @@ export class KvarService {
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
-    private korisnikService: KorisnikService,
+    @InjectRepository(PromenaStatusaKvara)
+    private promenaRepository: Repository<PromenaStatusaKvara>,
+    private prava: KvarPravaService,
+    private dataSource: DataSource,
   ) {}
 
   async create(korisnikId: number, dto: CreateKvarDto) {
@@ -86,7 +63,15 @@ export class KvarService {
       korisnik: veza.korisnik,
     });
 
-    return await this.kvarRepository.save(kvar);
+    return await this.dataSource.transaction(async (manager) => {
+      const sacuvan = await manager.save(kvar);
+      await manager.insert(PromenaStatusaKvara, {
+        kvar: { id: sacuvan.id },
+        status: StatusKvara.PRIJAVLJEN,
+        korisnik: { id: korisnikId },
+      });
+      return sacuvan;
+    });
   }
 
   async findAllZaKorisnika(
@@ -94,7 +79,7 @@ export class KvarService {
     uloga: Uloga,
     upit: KvarUpitDto,
   ): Promise<Stranica<Kvar>> {
-    const vidljivi = await this.usloviVidljivosti(
+    const vidljivi = await this.prava.usloviVidljivosti(
       korisnikId,
       uloga,
       upit.zgradaId,
@@ -111,60 +96,6 @@ export class KvarService {
     return { stavke, ukupno };
   }
 
-  private async usloviVidljivosti(
-    korisnikId: number,
-    uloga: Uloga,
-    zgradaId?: number,
-  ): Promise<FindOptionsWhere<Kvar>[]> {
-    switch (uloga) {
-      case Uloga.ADMIN:
-        return [zgradaId ? { zgrada: { id: zgradaId } } : {}];
-
-      case Uloga.UPRAVNIK: {
-        const zgradaUpravnika =
-          await this.korisnikService.zgradaUpravnika(korisnikId);
-        const uslovi = await this.usloviStanara(korisnikId);
-        return zgradaUpravnika === null
-          ? uslovi
-          : [{ zgrada: { id: zgradaUpravnika } }, ...uslovi];
-      }
-
-      case Uloga.SERVISER:
-        return [
-          {
-            serviser: { id: korisnikId },
-            ...(zgradaId ? { zgrada: { id: zgradaId } } : {}),
-          },
-        ];
-
-      default:
-        return await this.usloviStanara(korisnikId);
-    }
-  }
-
-  private async usloviStanara(
-    korisnikId: number,
-  ): Promise<FindOptionsWhere<Kvar>[]> {
-    const sopstveni: FindOptionsWhere<Kvar> = { korisnik: { id: korisnikId } };
-    const veze = await this.stanarStanaRepository.find({
-      where: { korisnik: { id: korisnikId } },
-      relations: { stan: { zgrada: true } },
-    });
-    if (veze.length === 0) {
-      return [sopstveni];
-    }
-    const stanIds = veze.map((v) => v.stan.id);
-    const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
-    return [
-      { stan: { id: In(stanIds) } },
-      {
-        zgrada: { id: In(zgradaIds) },
-        lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
-      },
-      sopstveni,
-    ];
-  }
-
   async findOne(id: number) {
     const kvar = await this.kvarRepository.findOne({
       where: { id },
@@ -178,7 +109,7 @@ export class KvarService {
 
   async findDostupan(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
-    if (!(await this.smeDaVidi(kvar, korisnikId, uloga))) {
+    if (!(await this.prava.smeDaVidi(kvar, korisnikId, uloga))) {
       throw new ForbiddenException('Nemate pristup ovom kvaru!');
     }
     return kvar;
@@ -187,93 +118,18 @@ export class KvarService {
   async findDetalj(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findDostupan(id, korisnikId, uloga);
     return Object.assign(kvar, {
-      smeDaUpravlja: await this.smeDaUpravlja(kvar, korisnikId, uloga),
-      smeDaPotvrdi: await this.smeDaPotvrdi(kvar, korisnikId),
+      smeDaUpravlja: await this.prava.smeDaUpravlja(kvar, korisnikId, uloga),
+      smeDaPotvrdi: await this.prava.smeDaPotvrdi(kvar, korisnikId),
       rokPotvrde:
         kvar.status === StatusKvara.RESEN && kvar.datumResenja
           ? new Date(kvar.datumResenja.getTime() + DANA_ZA_POTVRDU * MS_PO_DANU)
           : null,
+      istorija: await this.promenaRepository.find({
+        where: { kvar: { id } },
+        relations: { korisnik: true, komentar: true },
+        order: { datum: 'ASC', id: 'ASC' },
+      }),
     });
-  }
-
-  private async smeDaVidi(
-    kvar: Kvar,
-    korisnikId: number,
-    uloga: Uloga,
-  ): Promise<boolean> {
-    switch (uloga) {
-      case Uloga.ADMIN:
-        return true;
-
-      case Uloga.UPRAVNIK:
-        return (
-          (await this.korisnikService.zgradaUpravnika(korisnikId)) ===
-            kvar.zgrada.id || (await this.smeKaoStanar(kvar, korisnikId))
-        );
-
-      case Uloga.SERVISER:
-        return kvar.serviser?.id === korisnikId;
-
-      case Uloga.STANAR:
-        return await this.smeKaoStanar(kvar, korisnikId);
-
-      default:
-        return false;
-    }
-  }
-
-  private async smeKaoStanar(kvar: Kvar, korisnikId: number): Promise<boolean> {
-    if (kvar.korisnik.id === korisnikId) {
-      return true;
-    }
-    if (kvar.stan) {
-      return await this.stanarStanaRepository.exists({
-        where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
-      });
-    }
-    return await this.stanarStanaRepository.exists({
-      where: {
-        korisnik: { id: korisnikId },
-        stan: { zgrada: { id: kvar.zgrada.id } },
-      },
-    });
-  }
-
-  async smeDaUpravlja(
-    kvar: Kvar,
-    korisnikId: number,
-    uloga: Uloga,
-  ): Promise<boolean> {
-    if (uloga === Uloga.ADMIN) {
-      return true;
-    }
-    if (uloga !== Uloga.UPRAVNIK) {
-      return false;
-    }
-    const zgradaUpravnika =
-      await this.korisnikService.zgradaUpravnika(korisnikId);
-    return zgradaUpravnika === kvar.zgrada.id;
-  }
-
-  private async smeDaPotvrdi(kvar: Kvar, korisnikId: number): Promise<boolean> {
-    if (kvar.stan) {
-      return await this.stanarStanaRepository.exists({
-        where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
-      });
-    }
-    return kvar.korisnik.id === korisnikId;
-  }
-
-  private async proveriUpravljanje(
-    kvar: Kvar,
-    korisnikId: number,
-    uloga: Uloga,
-  ) {
-    if (!(await this.smeDaUpravlja(kvar, korisnikId, uloga))) {
-      throw new ForbiddenException(
-        'Možete upravljati samo kvarovima svoje zgrade!',
-      );
-    }
   }
 
   async findZgradeSaKvarovima(korisnikId: number, uloga: Uloga) {
@@ -294,138 +150,5 @@ export class KvarService {
       order: { korisnik: { prezime: 'ASC', ime: 'ASC' } },
     });
     return specijalnosti.map((s) => s.korisnik);
-  }
-
-  async prihvati(id: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.findOne(id);
-    await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
-      status: StatusKvara.PRIHVACEN,
-    });
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  async odbij(id: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.findOne(id);
-    await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    await this.izmeniAkoJeU(id, [StatusKvara.PRIJAVLJEN], {
-      status: StatusKvara.ODBIJEN,
-    });
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  async postaviPrioritet(
-    id: number,
-    korisnikId: number,
-    uloga: Uloga,
-    dto: PostaviPrioritetDto,
-  ) {
-    const kvar = await this.findOne(id);
-    await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    await this.izmeniAkoJeU(id, STATUSI_PO_STANJU[StanjeKvara.AKTIVNI], {
-      prioritet: dto.prioritet,
-    });
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  async dodeliServisera(
-    id: number,
-    korisnikId: number,
-    uloga: Uloga,
-    dto: DodeliServiseraDto,
-  ) {
-    const kvar = await this.findOne(id);
-    await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    const imaStruku = await this.serviserSpecijanostRepository.exists({
-      where: {
-        korisnik: { id: dto.serviserId, uloga: Uloga.SERVISER },
-        kategorija: kvar.kategorija,
-      },
-    });
-    if (!imaStruku) {
-      throw new BadRequestException(
-        'Izabrani serviser nema struku za ovu vrstu kvara.',
-      );
-    }
-    await this.izmeniAkoJeU(id, [StatusKvara.PRIHVACEN, StatusKvara.DODELJEN], {
-      status: StatusKvara.DODELJEN,
-      serviser: { id: dto.serviserId },
-    });
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  async promeniStatus(
-    id: number,
-    korisnikId: number,
-    uloga: Uloga,
-    dto: UpdateStatusKvarDto,
-  ) {
-    const kvar = await this.findOne(id);
-    if (kvar.serviser?.id !== korisnikId) {
-      throw new ForbiddenException(
-        'Samo dodeljeni serviser može da menja status ovog kvara!',
-      );
-    }
-    await this.izmeniAkoJeU(
-      id,
-      [PRETHODNI_STATUS[dto.status]],
-      {
-        status: dto.status,
-        datumResenja: dto.status === StatusKvara.RESEN ? new Date() : null,
-      },
-      { serviser: { id: korisnikId } },
-    );
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  async potvrdi(id: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.findOne(id);
-    if (!(await this.smeDaPotvrdi(kvar, korisnikId))) {
-      throw new ForbiddenException(
-        'Rešenje potvrđuje neko iz stana, a za zajednički prostor onaj ko je prijavio kvar!',
-      );
-    }
-    await this.izmeniAkoJeU(id, [StatusKvara.RESEN], {
-      status: StatusKvara.ZATVOREN,
-    });
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  @Cron(CronExpression.EVERY_HOUR)
-  async zatvoriNepotvrdjene() {
-    const rok = new Date(Date.now() - DANA_ZA_POTVRDU * MS_PO_DANU);
-    const rezultat = await this.kvarRepository.update(
-      { status: StatusKvara.RESEN, datumResenja: LessThan(rok) },
-      { status: StatusKvara.ZATVOREN },
-    );
-    if (rezultat.affected) {
-      this.logger.log(`Automatski zatvoreno kvarova: ${rezultat.affected}`);
-    }
-  }
-
-  async zatvori(id: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.findOne(id);
-    await this.proveriUpravljanje(kvar, korisnikId, uloga);
-    await this.izmeniAkoJeU(id, [StatusKvara.RESEN], {
-      status: StatusKvara.ZATVOREN,
-    });
-    return await this.findDetalj(id, korisnikId, uloga);
-  }
-
-  private async izmeniAkoJeU(
-    id: number,
-    statusi: StatusKvara[],
-    izmene: QueryDeepPartialEntity<Kvar>,
-    uslov: FindOptionsWhere<Kvar> = {},
-  ): Promise<void> {
-    const rezultat = await this.kvarRepository.update(
-      { ...uslov, id, status: In(statusi) },
-      izmene,
-    );
-    if (rezultat.affected === 0) {
-      throw new ConflictException(
-        'Akcija nije moguća u trenutnom statusu kvara. Osveži stranicu.',
-      );
-    }
   }
 }

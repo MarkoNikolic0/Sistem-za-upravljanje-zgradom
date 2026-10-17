@@ -14,9 +14,10 @@ import { SlikaKvara } from './slika-kvara.entity.js';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { createS3Client } from './s3.config.js';
-import { Express } from 'express';
 import { randomUUID } from 'crypto';
 import { KvarService } from '../kvar/kvar.service.js';
+import { Express } from 'express';
+import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 
@@ -32,6 +33,7 @@ export class SlikaKvaraService {
     @InjectRepository(SlikaKvara)
     private slikaRepository: Repository<SlikaKvara>,
     private kvarService: KvarService,
+    private kvarPravaService: KvarPravaService,
     private config: ConfigService,
   ) {
     this.s3 = createS3Client(config);
@@ -99,7 +101,11 @@ export class SlikaKvaraService {
     const autor = slika.korisnik?.id === korisnikId;
     if (
       !autor &&
-      !(await this.kvarService.smeDaUpravlja(slika.kvar, korisnikId, uloga))
+      !(await this.kvarPravaService.smeDaUpravlja(
+        slika.kvar,
+        korisnikId,
+        uloga,
+      ))
     ) {
       throw new ForbiddenException('Možete brisati samo svoje slike!');
     }

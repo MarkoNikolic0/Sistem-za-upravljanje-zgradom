@@ -8,15 +8,24 @@ import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijal
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
+import { KvarPravaService } from './kvar-prava.service.js';
+import { KvarAkcijeService } from './kvar-akcije.service.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Kvar, ServiserSpecijalnost, StanarStana, Zgrada]),
+    TypeOrmModule.forFeature([
+      Kvar,
+      ServiserSpecijalnost,
+      StanarStana,
+      Zgrada,
+      PromenaStatusaKvara,
+    ]),
     AuthModule,
     KorisnikModule,
   ],
   controllers: [KvarController],
-  providers: [KvarService],
-  exports: [KvarService],
+  providers: [KvarService, KvarPravaService, KvarAkcijeService],
+  exports: [KvarService, KvarPravaService],
 })
 export class KvarModule {}

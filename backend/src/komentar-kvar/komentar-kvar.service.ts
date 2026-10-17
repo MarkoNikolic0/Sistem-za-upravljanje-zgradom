@@ -12,6 +12,8 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KvarService } from '../kvar/kvar.service.js';
 import { MAKS_PO_STRANI, Stranica } from '../shared/stranicenje.js';
 import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
+import { PromenaStatusaKvara } from '../kvar/promena-statusa-kvara.entity.js';
+import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -19,8 +21,11 @@ export class KomentarKvarService {
     @InjectRepository(KomentarKvar)
     private komentarKvarRepository: Repository<KomentarKvar>,
     private kvarService: KvarService,
+    private kvarPravaService: KvarPravaService,
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
+    @InjectRepository(PromenaStatusaKvara)
+    private promenaRepository: Repository<PromenaStatusaKvara>,
   ) {}
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateKomentarDto) {
@@ -84,12 +89,24 @@ export class KomentarKvarService {
       );
     }
 
-    const autor = komentar.korisnik.id === korisnikId;
     if (
-      !autor &&
-      !(await this.kvarService.smeDaUpravlja(komentar.kvar, korisnikId, uloga))
+      !(await this.kvarPravaService.smeDaUpravlja(
+        komentar.kvar,
+        korisnikId,
+        uloga,
+      ))
     ) {
-      throw new ForbiddenException(`Mozete brisati samo svoje komentare!`);
+      if (komentar.korisnik.id !== korisnikId) {
+        throw new ForbiddenException(`Mozete brisati samo svoje komentare!`);
+      }
+      const razlogVracanja = await this.promenaRepository.exists({
+        where: { komentar: { id: komentarId } },
+      });
+      if (razlogVracanja) {
+        throw new ForbiddenException(
+          'Komentar sa razlogom zašto kvar nije rešen ne može da se obriše.',
+        );
+      }
     }
 
     await this.komentarKvarRepository.remove(komentar);

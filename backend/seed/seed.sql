@@ -335,4 +335,37 @@ WHERE NOT EXISTS (
   SELECT 1 FROM komentar_kvar kk WHERE kk."kvarId" = kv.id AND kk.tekst = v.tekst
 );
 
+-- ISTORIJA STATUSA KVAROVA ------------------------------------------------------------------
+-- Kvarovi bez istorije (iz ove skripte ili napravljeni pre nego sto je istorija uvedena) dobijaju
+-- korake do trenutnog statusa. Datumi su izmisljeni, ali redom: od prijave do resenja (ako postoji),
+-- inace do malo pre sadasnjeg trenutka. Ko je promenio: prijavu i potvrdu stanar, rad serviser,
+-- ostalo upravnik zgrade.
+INSERT INTO promena_statusa_kvara (status, "kvarId", "korisnikId", datum)
+SELECT t.korak::promena_statusa_kvara_status_enum, kv.id,
+       CASE
+         WHEN t.korak IN ('prijavljen', 'zatvoren') THEN kv."korisnikId"
+         WHEN t.korak IN ('u_toku', 'resen') THEN kv."serviserId"
+         ELSE COALESCE(
+           (SELECT u.id FROM korisnik u WHERE u."zgradaId" = kv."zgradaId" AND u.uloga = 'upravnik' LIMIT 1),
+           kv."korisnikId")
+       END,
+       kv."datumPrijave" + CASE t.korak
+         WHEN 'prijavljen' THEN 0 WHEN 'prihvacen' THEN 0.1 WHEN 'odbijen' THEN 0.1
+         WHEN 'dodeljen' THEN 0.25 WHEN 'u_toku' THEN 0.5 WHEN 'resen' THEN 0.8 ELSE 1
+       END * CASE
+         WHEN kv."datumResenja" IS NOT NULL THEN (kv."datumResenja" - kv."datumPrijave") / 0.8
+         ELSE (now() - kv."datumPrijave") * 0.9
+       END
+FROM kvar kv
+CROSS JOIN LATERAL unnest(
+  CASE kv.status::text
+    WHEN 'odbijen' THEN ARRAY['prijavljen', 'odbijen']
+    ELSE (ARRAY['prijavljen', 'prihvacen', 'dodeljen', 'u_toku', 'resen', 'zatvoren'])
+         [1:array_position(ARRAY['prijavljen', 'prihvacen', 'dodeljen', 'u_toku', 'resen', 'zatvoren'],
+                           kv.status::text)]
+  END
+) WITH ORDINALITY AS t(korak, redni)
+WHERE NOT EXISTS (SELECT 1 FROM promena_statusa_kvara p WHERE p."kvarId" = kv.id)
+ORDER BY kv.id, t.redni;
+
 COMMIT;
