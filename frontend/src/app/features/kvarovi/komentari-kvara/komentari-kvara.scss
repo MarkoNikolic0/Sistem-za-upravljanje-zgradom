@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+.komentar {
+  padding: 1rem 0;
+  border-top: 1px solid var(--color-linija);
+
+  &:last-of-type {
+    border-bottom: 1px solid var(--color-linija);
+  }
+
+  &.razlog {
+    padding-left: 1rem;
+    border-left: 3px solid var(--p-tag-warn-color);
+  }
+}

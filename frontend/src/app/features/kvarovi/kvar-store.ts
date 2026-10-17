@@ -103,9 +103,25 @@ const pocetnoStanje: KvaroviState = {
 
 export const KvarStore = signalStore(
   withState(pocetnoStanje),
-  withComputed(({ ukupno }) => ({
-    imaViseStrana: computed(() => ukupno() > KVAROVA_PO_STRANI),
-  })),
+  withComputed(({ ukupno, kvar }) => {
+    const vracanja = computed(() => {
+      const istorija = kvar()?.istorija ?? [];
+      return istorija.filter(
+        (p, i) => p.status === 'u_toku' && istorija[i - 1]?.status === 'resen',
+      );
+    });
+    return {
+      imaViseStrana: computed(() => ukupno() > KVAROVA_PO_STRANI),
+      vracanja,
+      poslednjeVracanje: computed(() => {
+        const k = kvar();
+        const poslednja = k?.istorija.at(-1);
+        return k?.status === 'u_toku' && poslednja && vracanja().includes(poslednja)
+          ? poslednja
+          : undefined;
+      }),
+    };
+  }),
   withMethods((store, kvarService = inject(KvarService)) => {
     const ucitaj = rxMethod<void>(
       pipe(

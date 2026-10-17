@@ -1,0 +1,35 @@
+<section class="odeljak" aria-labelledby="moj-rad-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="moj-rad-naslov" class="naslov-odeljka">Moj rad</h2>
+  </div>
+  @if (kvar().status === 'dodeljen') {
+    <p class="text-priguseno">Kad počneš popravku, označi to ovde.</p>
+    <button
+      pButton
+      type="button"
+      size="small"
+      class="mt-4"
+      [disabled]="store.akcijaUToku()"
+      (click)="store.promeniStatus('u_toku')"
+    >
+      Počni rad
+    </button>
+  } @else {
+    @if (store.poslednjeVracanje(); as vracanje) {
+      <app-razlog-vracanja class="mt-4" [vracanje]="vracanje" />
+      <p class="mt-4 text-priguseno">Kad ga popraviš, ponovo ga označi kao rešen.</p>
+    } @else {
+      <p class="text-priguseno">Kad završiš popravku, označi kvar kao rešen.</p>
+    }
+    <button
+      pButton
+      type="button"
+      size="small"
+      class="mt-4"
+      [disabled]="store.akcijaUToku()"
+      (click)="store.promeniStatus('resen')"
+    >
+      Označi kao rešen
+    </button>
+  }
+</section>

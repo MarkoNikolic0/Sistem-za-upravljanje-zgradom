@@ -1,0 +1,105 @@
+<section class="odeljak" aria-labelledby="upravljanje-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="upravljanje-naslov" class="naslov-odeljka">Upravljanje</h2>
+  </div>
+
+  @if (kvar().status === 'prijavljen') {
+    <p class="text-priguseno">Pregledaj prijavu, pa je prihvati ili odbij.</p>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button
+        pButton
+        type="button"
+        size="small"
+        [disabled]="store.akcijaUToku()"
+        (click)="store.prihvati()"
+      >
+        Prihvati
+      </button>
+      <button
+        pButton
+        type="button"
+        size="small"
+        severity="danger"
+        text
+        [disabled]="store.akcijaUToku()"
+        (click)="odbij($event)"
+      >
+        Odbij
+      </button>
+    </div>
+  } @else if (kvar().status === 'prihvacen' || kvar().status === 'dodeljen') {
+    <div class="flex flex-col gap-1.5 sm:max-w-xs">
+      <span id="serviser-oznaka" class="text-sm font-medium">
+        {{ kvar().serviser ? 'Promeni servisera' : 'Dodeli servisera' }}
+      </span>
+      <p-select
+        ariaLabelledBy="serviser-oznaka"
+        [options]="opcijeServisera()"
+        optionLabel="naziv"
+        optionValue="id"
+        placeholder="Izaberi servisera"
+        emptyMessage="Nema servisera za ovu vrstu kvara."
+        [loading]="serviseri.isLoading()"
+        [(ngModel)]="izabraniServiser"
+        [fluid]="true"
+      />
+      @if (serviseri.error()) {
+        <small class="text-sm text-greska">Serviseri trenutno ne mogu da se učitaju.</small>
+      }
+    </div>
+    <button
+      pButton
+      type="button"
+      size="small"
+      class="mt-3"
+      [disabled]="!mozeDaDodeli()"
+      (click)="dodeli()"
+    >
+      {{ kvar().serviser ? 'Promeni' : 'Dodeli' }}
+    </button>
+  } @else if (kvar().status === 'u_toku') {
+    <p class="text-priguseno">Serviser radi na kvaru.</p>
+    @if (store.poslednjeVracanje(); as vracanje) {
+      <app-razlog-vracanja class="mt-4" [vracanje]="vracanje" />
+    }
+  } @else if (kvar().status === 'resen') {
+    <p class="text-priguseno">
+      Serviser je označio kvar kao rešen.
+      @if (kvar().rokPotvrde; as rok) {
+        Ako ga stanar ne potvrdi, zatvoriće se sam {{ rok | date: 'd. MMM y.' }}
+      }
+    </p>
+    <button
+      pButton
+      type="button"
+      size="small"
+      class="mt-4"
+      [disabled]="store.akcijaUToku()"
+      (click)="zatvori($event)"
+    >
+      Zatvori kvar
+    </button>
+  }
+
+  @if (store.vracanja().length > 0 && (kvar().status === 'u_toku' || kvar().status === 'resen')) {
+    <p class="mt-4 text-sm text-priguseno">
+      Broj vraćanja serviseru: {{ store.vracanja().length }}
+    </p>
+  }
+
+  <div class="mt-6 flex flex-col gap-1.5">
+    <span id="prioritet-oznaka" class="text-sm font-medium">Prioritet</span>
+    <p-selectbutton
+      ariaLabelledBy="prioritet-oznaka"
+      [options]="prioriteti"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="prioritet()"
+      (ngModelChange)="promeniPrioritet($event)"
+    />
+  </div>
+</section>
+
+<!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

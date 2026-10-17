@@ -1,0 +1,77 @@
+<section class="odeljak" aria-labelledby="potvrda-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="potvrda-naslov" class="naslov-odeljka">Potvrda</h2>
+  </div>
+  <p class="text-priguseno">Serviser je označio kvar kao rešen. Proveri da li sve radi.</p>
+  @if (kvar().rokPotvrde; as rok) {
+    <p class="mt-2 text-sm text-priguseno">
+      Ako ne odgovoriš do {{ rok | date: 'd. MMM y.' }}, kvar će se sam zatvoriti.
+    </p>
+  }
+  <div class="mt-4 flex flex-wrap gap-2">
+    <button
+      pButton
+      type="button"
+      size="small"
+      [disabled]="store.akcijaUToku()"
+      (click)="store.potvrdi()"
+    >
+      Potvrdi da je rešeno
+    </button>
+    <button
+      pButton
+      id="nije-reseno"
+      type="button"
+      size="small"
+      severity="secondary"
+      outlined
+      [attr.aria-expanded]="nijeResenoFormaOtvoreno()"
+      (click)="prebaciNijeReseno()"
+    >
+      Nije rešeno
+    </button>
+  </div>
+
+  @if (nijeResenoFormaOtvoreno()) {
+    <form
+      [formGroup]="formaVracanja"
+      (ngSubmit)="posaljiNijeReseno()"
+      class="mt-6 flex flex-col gap-1.5"
+    >
+      <label for="razlog" class="text-sm font-medium">Šta i dalje ne radi?</label>
+      <p id="razlog-pomoc" class="text-sm text-priguseno">
+        Kvar se vraća serviseru, a tvoj odgovor se upisuje u komentare.
+      </p>
+      <textarea
+        pTextarea
+        id="razlog"
+        formControlName="tekst"
+        rows="3"
+        [autoResize]="true"
+        [attr.maxlength]="maksKomentar"
+        [fluid]="true"
+        [invalid]="razlogNevazeci()"
+        [attr.aria-invalid]="razlogNevazeci()"
+        [attr.aria-describedby]="razlogNevazeci() ? 'razlog-pomoc razlog-greska' : 'razlog-pomoc'"
+      ></textarea>
+      <div aria-live="polite" class="empty:hidden">
+        @if (razlogNevazeci()) {
+          <small id="razlog-greska" class="text-sm text-greska">Napiši šta i dalje ne radi.</small>
+        }
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button pButton type="submit" size="small" [disabled]="store.akcijaUToku()">Pošalji</button>
+        <button
+          pButton
+          type="button"
+          size="small"
+          severity="secondary"
+          text
+          (click)="odustaniNijeReseno()"
+        >
+          Odustani
+        </button>
+      </div>
+    </form>
+  }
+</section>
