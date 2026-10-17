@@ -5,11 +5,9 @@ import { randomUUID } from 'node:crypto';
 import { IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
-import { generisiToken } from './refresh-token.util.js';
-import { hesirajToken } from './refresh-token.util.js';
+import { generisiToken, hesirajToken } from './refresh-token.util.js';
 import { Cron, CronExpression } from '@nestjs/schedule';
-
-const MS_PO_DANU = 24 * 60 * 60 * 1000;
+import { MS_PO_DANU } from '../../kvar/kvar.constants.js';
 
 @Injectable()
 export class RefreshTokenService {

@@ -22,7 +22,10 @@ export function greskeValidacije(
   });
 }
 
-export function greskaPolja(polje: string, poruka: string): BadRequestException {
+export function greskaPolja(
+  polje: string,
+  poruka: string,
+): BadRequestException {
   return new BadRequestException({
     statusCode: 400,
     error: 'Bad Request',

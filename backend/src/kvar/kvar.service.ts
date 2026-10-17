@@ -32,7 +32,7 @@ export class KvarService {
   constructor(
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(ServiserSpecijalnost)
-    private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
+    private serviserSpecijalnostRepository: Repository<ServiserSpecijalnost>,
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
@@ -144,7 +144,7 @@ export class KvarService {
   }
 
   async findDostupneServisere(kategorija: KategorijaKvara) {
-    const specijalnosti = await this.serviserSpecijanostRepository.find({
+    const specijalnosti = await this.serviserSpecijalnostRepository.find({
       where: { kategorija, korisnik: { uloga: Uloga.SERVISER } },
       relations: { korisnik: true },
       order: { korisnik: { prezime: 'ASC', ime: 'ASC' } },

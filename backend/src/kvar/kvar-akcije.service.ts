@@ -54,7 +54,7 @@ export class KvarAkcijeService {
   constructor(
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(ServiserSpecijalnost)
-    private serviserSpecijanostRepository: Repository<ServiserSpecijalnost>,
+    private serviserSpecijalnostRepository: Repository<ServiserSpecijalnost>,
     private kvarService: KvarService,
     private prava: KvarPravaService,
     private dataSource: DataSource,
@@ -106,7 +106,7 @@ export class KvarAkcijeService {
   ) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
-    const imaStruku = await this.serviserSpecijanostRepository.exists({
+    const imaStruku = await this.serviserSpecijalnostRepository.exists({
       where: {
         korisnik: { id: dto.serviserId, uloga: Uloga.SERVISER },
         kategorija: kvar.kategorija,
