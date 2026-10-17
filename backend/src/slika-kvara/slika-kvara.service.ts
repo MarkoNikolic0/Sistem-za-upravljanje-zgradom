@@ -55,7 +55,7 @@ export class SlikaKvaraService {
       );
     }
     if (file.size > MAX_VELICINA) {
-      throw new BadRequestException(`Fajl ne sme biti veci od 5MB.`);
+      throw new BadRequestException(`Fajl ne sme biti veći od 5MB.`);
     }
 
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);

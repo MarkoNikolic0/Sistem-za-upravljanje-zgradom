@@ -12,4 +12,3 @@ export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
 };
 
 export const DANA_ZA_POTVRDU = 7;
-export const MS_PO_DANU = 24 * 60 * 60 * 1000;

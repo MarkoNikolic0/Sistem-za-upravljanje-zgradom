@@ -31,11 +31,8 @@ import {
 import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
 import { KvarService } from './kvar.service.js';
 import { KvarPravaService } from './kvar-prava.service.js';
-import {
-  DANA_ZA_POTVRDU,
-  MS_PO_DANU,
-  STATUSI_PO_STANJU,
-} from './kvar.constants.js';
+import { DANA_ZA_POTVRDU, STATUSI_PO_STANJU } from './kvar.constants.js';
+import { MS_PO_DANU } from '../shared/vreme.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,

@@ -97,7 +97,7 @@ export class KomentarKvarService {
       ))
     ) {
       if (komentar.korisnik.id !== korisnikId) {
-        throw new ForbiddenException(`Mozete brisati samo svoje komentare!`);
+        throw new ForbiddenException(`Možete brisati samo svoje komentare!`);
       }
       const razlogVracanja = await this.promenaRepository.exists({
         where: { komentar: { id: komentarId } },

@@ -31,7 +31,7 @@ export class ServiserSpecijalnostService {
     }
     if (korisnik.uloga !== Uloga.SERVISER) {
       throw new BadRequestException(
-        'Specijalnost se moze dodeliti samo korisniku sa ulogom serviser.',
+        'Specijalnost se može dodeliti samo korisniku sa ulogom serviser.',
       );
     }
 
@@ -39,7 +39,7 @@ export class ServiserSpecijalnostService {
       where: { korisnik: { id: dto.korisnikId }, kategorija: dto.kategorija },
     });
     if (postojecaSpecijalnost) {
-      throw new ConflictException('Serviser vec ima ovu specijalnost.');
+      throw new ConflictException('Serviser već ima ovu specijalnost.');
     }
 
     const specijalnost = this.specijalnostRepository.create({

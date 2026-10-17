@@ -21,11 +21,8 @@ import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
 import { KvarPravaService } from './kvar-prava.service.js';
-import {
-  DANA_ZA_POTVRDU,
-  MS_PO_DANU,
-  STATUSI_PO_STANJU,
-} from './kvar.constants.js';
+import { DANA_ZA_POTVRDU, STATUSI_PO_STANJU } from './kvar.constants.js';
+import { MS_PO_DANU } from '../shared/vreme.js';
 
 @Injectable()
 export class KvarService {

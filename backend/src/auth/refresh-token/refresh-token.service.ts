@@ -7,7 +7,7 @@ import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
 import { generisiToken, hesirajToken } from './refresh-token.util.js';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { MS_PO_DANU } from '../../kvar/kvar.constants.js';
+import { MS_PO_DANU } from '../../shared/vreme.js';
 
 @Injectable()
 export class RefreshTokenService {
