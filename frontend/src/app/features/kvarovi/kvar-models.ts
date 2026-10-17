@@ -59,10 +59,19 @@ export interface Kvar {
   serviser: (KorisnikOsnovno & Partial<Kontakt>) | null;
 }
 
+export interface PromenaStatusaKvara {
+  id: number;
+  status: StatusKvara;
+  datum: string;
+  korisnik: KorisnikOsnovno | null;
+  komentar: Pick<KomentarKvara, 'id' | 'tekst'> | null;
+}
+
 export interface KvarDetalj extends Kvar {
   smeDaUpravlja: boolean;
   smeDaPotvrdi: boolean;
   rokPotvrde: string | null;
+  istorija: PromenaStatusaKvara[];
 }
 
 export interface UpitKvarova extends UpitStrane {

@@ -1,11 +1,13 @@
 import { Component, computed, input } from '@angular/core';
-import { NAZIVI_STATUSA_KVARA, StatusKvara } from '../kvar-models';
+import { NAZIVI_STATUSA_KVARA, PromenaStatusaKvara, StatusKvara } from '../kvar-models';
+import { DatePipe } from '@angular/common';
 
 type StanjeKoraka = 'zavrsen' | 'trenutni' | 'sledeci' | 'odbijen';
 
 interface Korak {
   status: StatusKvara;
   stanje: StanjeKoraka;
+  datum?: string;
 }
 
 const REDOSLED: StatusKvara[] = [
@@ -18,12 +20,14 @@ const REDOSLED: StatusKvara[] = [
 ];
 
 @Component({
+  imports: [DatePipe],
   selector: 'app-tok-kvara',
   styleUrl: './tok-kvara.scss',
   templateUrl: './tok-kvara.html',
 })
 export class TokKvara {
   readonly status = input.required<StatusKvara>();
+  readonly istorija = input.required<PromenaStatusaKvara[]>();
 
   protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
 
@@ -31,8 +35,8 @@ export class TokKvara {
     const status = this.status();
     if (status === 'odbijen') {
       return [
-        { status: 'prijavljen', stanje: 'zavrsen' },
-        { status: 'odbijen', stanje: 'odbijen' },
+        { status: 'prijavljen', stanje: 'zavrsen', datum: this.datum('prijavljen') },
+        { status: 'odbijen', stanje: 'odbijen', datum: this.datum('odbijen') },
       ];
     }
     const trenutni = REDOSLED.indexOf(status);
@@ -40,6 +44,14 @@ export class TokKvara {
       status: s,
       stanje:
         i < trenutni || status === 'zatvoren' ? 'zavrsen' : i === trenutni ? 'trenutni' : 'sledeci',
+      datum: i <= trenutni ? this.datum(s) : undefined,
     }));
   });
+
+  // Ako je kvar vraćen serviseru, korak je pređen više puta — prikazuje se poslednji put
+  private datum(status: StatusKvara): string | undefined {
+    return this.istorija()
+      .filter((p) => p.status === status)
+      .at(-1)?.datum;
+  }
 }

@@ -10,7 +10,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -40,6 +40,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { KvarService } from '../kvar-service';
 import { OznakeKvara } from '../oznake-kvara/oznake-kvara';
 import { TokKvara } from '../tok-kvara/tok-kvara';
+import { TagModule } from 'primeng/tag';
 
 @Component({
   imports: [
@@ -57,6 +58,8 @@ import { TokKvara } from '../tok-kvara/tok-kvara';
     SpratPipe,
     OznakeKvara,
     TokKvara,
+    NgTemplateOutlet,
+    TagModule,
   ],
   providers: [ConfirmationService],
   selector: 'app-detalj-kvara',
@@ -94,6 +97,26 @@ export class DetaljKvara {
     const kvar = this.store.kvar();
     return !!kvar?.smeDaPotvrdi && kvar.status === 'resen';
   });
+
+  protected readonly nijeResenoFormaOtvoreno = linkedSignal({
+    source: this.potvrda,
+    computation: () => false,
+  });
+
+  protected readonly vracanja = computed(() => {
+    const istorija = this.store.kvar()?.istorija ?? [];
+    return istorija.filter((p, i) => p.status === 'u_toku' && istorija[i - 1]?.status === 'resen');
+  });
+  protected readonly poslednjeVracanje = computed(() => {
+    const kvar = this.store.kvar();
+    const poslednja = kvar?.istorija.at(-1);
+    return kvar?.status === 'u_toku' && poslednja && this.vracanja().includes(poslednja)
+      ? poslednja
+      : undefined;
+  });
+  private readonly razloziVracanja = computed(
+    () => new Set(this.vracanja().map((p) => p.komentar?.id)),
+  );
 
   protected readonly mojRad = computed(() => {
     const kvar = this.store.kvar();
@@ -133,6 +156,20 @@ export class DetaljKvara {
   });
   protected readonly greskaKomentara = signal('');
 
+  protected readonly formaVracanja = this.fb.nonNullable.group({
+    tekst: [
+      '',
+      {
+        validators: [
+          Validators.required,
+          Validators.pattern(NIJE_PRAZNO),
+          Validators.maxLength(MAKS_KOMENTAR_KVARA),
+        ],
+        updateOn: 'submit',
+      },
+    ],
+  });
+
   constructor() {
     this.store.ucitajDetalj(this.id);
     afterRenderEffect(() => {
@@ -151,10 +188,44 @@ export class DetaljKvara {
     return !!this.greskaKomentara() || this.komentarNevazeci();
   }
 
+  protected razlogNevazeci(): boolean {
+    const tekst = this.formaVracanja.controls.tekst;
+    return tekst.invalid && tekst.touched;
+  }
+
+  protected jeRazlogVracanja(komentar: KomentarKvara): boolean {
+    return this.razloziVracanja().has(komentar.id);
+  }
+
   protected smeDaBrise(komentar: KomentarKvara): boolean {
-    return (
-      komentar.korisnik.id === this.authStore.korisnik()?.id || !!this.store.kvar()?.smeDaUpravlja
-    );
+    const autor =
+      komentar.korisnik.id === this.authStore.korisnik()?.id && !this.jeRazlogVracanja(komentar);
+    return autor || !!this.store.kvar()?.smeDaUpravlja;
+  }
+
+  protected prebaciNijeReseno(): void {
+    if (this.nijeResenoFormaOtvoreno()) {
+      this.nijeResenoFormaOtvoreno.set(false);
+      return;
+    }
+    this.formaVracanja.reset();
+    this.nijeResenoFormaOtvoreno.set(true);
+    this.fokusiraj('#razlog');
+  }
+
+  protected odustaniNijeReseno(): void {
+    this.nijeResenoFormaOtvoreno.set(false);
+    this.fokusiraj('#nije-reseno');
+  }
+
+  protected posaljiNijeReseno(): void {
+    const tekst = this.formaVracanja.controls.tekst;
+    if (tekst.invalid) {
+      tekst.markAsTouched();
+      this.fokusiraj('#razlog');
+      return;
+    }
+    this.store.vrati(tekst.value.trim());
   }
 
   protected mozeDaDodeli(): boolean {

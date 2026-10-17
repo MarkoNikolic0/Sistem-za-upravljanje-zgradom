@@ -52,7 +52,12 @@ dd {
   }
 }
 
-// Široko: opis, akcije i komentari levo, tok i podaci u desnoj koloni (kao GitHub issue)
+.vracen,
+.komentar.razlog {
+  padding-left: 1rem;
+  border-left: 3px solid var(--p-tag-warn-color);
+}
+
 @container (width >= 55rem) {
   .stranica {
     max-width: 62rem;

@@ -102,4 +102,8 @@ export class KvarService {
   obrisiKomentar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.komentariUrl}/${id}`);
   }
+
+  vrati(id: number, tekst: string): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/vrati`, { tekst });
+  }
 }

@@ -246,6 +246,23 @@ export const KvarStore = signalStore(
       ),
     );
 
+    const osveziKomentare = rxMethod<number>(
+      pipe(
+        switchMap((id) =>
+          kvarService.komentari(id, KOMENTARA_PO_STRANI).pipe(
+            tapResponse({
+              next: ({ stavke, ukupno }) =>
+                patchState(store, {
+                  komentari: [...stavke].reverse(),
+                  preostaloStarijih: ukupno - stavke.length,
+                }),
+              error: () => undefined,
+            }),
+          ),
+        ),
+      ),
+    );
+
     function akcija(
       zahtev: (id: number) => Observable<KvarDetalj>,
       uspeh: (kvar: KvarDetalj) => string,
@@ -341,6 +358,12 @@ export const KvarStore = signalStore(
         akcija(
           (id) => kvarService.potvrdi(id),
           () => 'Hvala na potvrdi. Kvar je zatvoren.',
+        );
+      },
+      vrati(tekst: string): void {
+        akcija(
+          (id) => kvarService.vrati(id, tekst).pipe(tap(() => osveziKomentare(id))),
+          () => 'Kvar je vraćen serviseru. Tvoj komentar je dodat.',
         );
       },
       zatvori(): void {

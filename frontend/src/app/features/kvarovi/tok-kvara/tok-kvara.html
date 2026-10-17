@@ -15,6 +15,9 @@
           <span class="sr-only">Trenutno: </span>
         }
         {{ naziviStatusa[korak.status] }}
+        @if (korak.datum; as datum) {
+          <time class="datum" [attr.datetime]="datum">{{ datum | date: 'd. MMM HH:mm' }}</time>
+        }
       </span>
     </li>
   }

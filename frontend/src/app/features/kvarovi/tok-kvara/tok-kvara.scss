@@ -32,10 +32,16 @@
   border: 1px solid var(--color-utisano);
   border-radius: 9999px;
 
-  // Veličina na samoj ikonici: PrimeNG svakoj .pi daje 14 px, pa nasleđivanje od kružića ne važi
   .pi {
     font-size: 0.75rem;
   }
+}
+
+.datum {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-utisano);
 }
 
 .zavrsen {

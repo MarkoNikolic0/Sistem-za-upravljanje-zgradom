@@ -29,23 +29,85 @@
               <h2 id="potvrda-naslov" class="naslov-odeljka">Potvrda</h2>
             </div>
             <p class="text-priguseno">
-              Serviser je označio kvar kao rešen. Ako je sve u redu, potvrdi.
+              Serviser je označio kvar kao rešen. Proveri da li sve radi.
             </p>
             @if (kvar.rokPotvrde; as rok) {
               <p class="mt-2 text-sm text-priguseno">
-                Ako ne potvrdiš do {{ rok | date: 'd. MMM y.' }}, kvar će se sam zatvoriti.
+                Ako ne odgovoriš do {{ rok | date: 'd. MMM y.' }}, kvar će se sam zatvoriti.
               </p>
             }
-            <button
-              pButton
-              type="button"
-              size="small"
-              class="mt-4"
-              [disabled]="store.akcijaUToku()"
-              (click)="store.potvrdi()"
-            >
-              Potvrdi da je rešeno
-            </button>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button
+                pButton
+                type="button"
+                size="small"
+                [disabled]="store.akcijaUToku()"
+                (click)="store.potvrdi()"
+              >
+                Potvrdi da je rešeno
+              </button>
+              <button
+                pButton
+                id="nije-reseno"
+                type="button"
+                size="small"
+                severity="secondary"
+                outlined
+                [attr.aria-expanded]="nijeResenoFormaOtvoreno()"
+                (click)="prebaciNijeReseno()"
+              >
+                Nije rešeno
+              </button>
+            </div>
+
+            @if (nijeResenoFormaOtvoreno()) {
+              <form
+                [formGroup]="formaVracanja"
+                (ngSubmit)="posaljiNijeReseno()"
+                class="mt-6 flex flex-col gap-1.5"
+              >
+                <label for="razlog" class="text-sm font-medium">Šta i dalje ne radi?</label>
+                <p id="razlog-pomoc" class="text-sm text-priguseno">
+                  Kvar se vraća serviseru, a tvoj odgovor se upisuje u komentare.
+                </p>
+                <textarea
+                  pTextarea
+                  id="razlog"
+                  formControlName="tekst"
+                  rows="3"
+                  [autoResize]="true"
+                  [attr.maxlength]="maksKomentar"
+                  [fluid]="true"
+                  [invalid]="razlogNevazeci()"
+                  [attr.aria-invalid]="razlogNevazeci()"
+                  [attr.aria-describedby]="
+                    razlogNevazeci() ? 'razlog-pomoc razlog-greska' : 'razlog-pomoc'
+                  "
+                ></textarea>
+                <div aria-live="polite" class="empty:hidden">
+                  @if (razlogNevazeci()) {
+                    <small id="razlog-greska" class="text-sm text-greska"
+                      >Napiši šta i dalje ne radi.</small
+                    >
+                  }
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <button pButton type="submit" size="small" [disabled]="store.akcijaUToku()">
+                    Pošalji
+                  </button>
+                  <button
+                    pButton
+                    type="button"
+                    size="small"
+                    severity="secondary"
+                    text
+                    (click)="odustaniNijeReseno()"
+                  >
+                    Odustani
+                  </button>
+                </div>
+              </form>
+            }
           </section>
         }
 
@@ -113,6 +175,12 @@
               </button>
             } @else if (kvar.status === 'u_toku') {
               <p class="text-priguseno">Serviser radi na kvaru.</p>
+              @if (poslednjeVracanje(); as vracanje) {
+                <ng-container
+                  [ngTemplateOutlet]="nijeReseno"
+                  [ngTemplateOutletContext]="{ $implicit: vracanje }"
+                />
+              }
             } @else if (kvar.status === 'resen') {
               <p class="text-priguseno">
                 Serviser je označio kvar kao rešen.
@@ -130,6 +198,12 @@
               >
                 Zatvori kvar
               </button>
+            }
+
+            @if (vracanja().length > 0 && (kvar.status === 'u_toku' || kvar.status === 'resen')) {
+              <p class="mt-4 text-sm text-priguseno">
+                Broj vraćanja serviseru: {{ vracanja().length }}
+              </p>
             }
 
             <div class="mt-6 flex flex-col gap-1.5">
@@ -165,7 +239,15 @@
                 Počni rad
               </button>
             } @else {
-              <p class="text-priguseno">Kad završiš popravku, označi kvar kao rešen.</p>
+              @if (poslednjeVracanje(); as vracanje) {
+                <ng-container
+                  [ngTemplateOutlet]="nijeReseno"
+                  [ngTemplateOutletContext]="{ $implicit: vracanje }"
+                />
+                <p class="mt-4 text-priguseno">Kad ga popraviš, ponovo ga označi kao rešen.</p>
+              } @else {
+                <p class="text-priguseno">Kad završiš popravku, označi kvar kao rešen.</p>
+              }
               <button
                 pButton
                 type="button"
@@ -186,7 +268,7 @@
           <div class="zaglavlje-odeljka">
             <h2 id="tok-naslov" class="naslov-odeljka">Tok popravke</h2>
           </div>
-          <app-tok-kvara [status]="kvar.status" />
+          <app-tok-kvara [status]="kvar.status" [istorija]="kvar.istorija" />
         </section>
 
         <section class="odeljak" aria-labelledby="podaci-naslov">
@@ -281,7 +363,20 @@
         }
 
         @for (komentar of store.komentari(); track komentar.id) {
-          <article class="komentar" [attr.aria-label]="'Komentar: ' + komentar.korisnik.ime">
+          <article
+            class="komentar"
+            [class.razlog]="jeRazlogVracanja(komentar)"
+            [attr.aria-label]="'Komentar: ' + komentar.korisnik.ime"
+          >
+            @if (jeRazlogVracanja(komentar)) {
+              <p-tag
+                value="Nije rešeno"
+                severity="warn"
+                icon="pi pi-replay"
+                [rounded]="true"
+                class="mb-2"
+              />
+            }
             <div class="flex items-baseline justify-between gap-4">
               <p class="text-sm">
                 <span class="font-medium text-naslov">
@@ -368,6 +463,19 @@
     </div>
     <span class="sr-only">Učitavanje kvara…</span>
   }
+
+  <ng-template #nijeReseno let-vracanje>
+    <div class="vracen mt-4">
+      <p class="text-sm font-medium text-naslov">Stanar javlja da kvar nije rešen</p>
+      @if (vracanje.komentar; as komentar) {
+        <p class="opis mt-1">{{ komentar.tekst }}</p>
+      }
+      <p class="mt-1 text-sm text-priguseno">
+        {{ vracanje.korisnik?.ime }} {{ vracanje.korisnik?.prezime }} ·
+        <time [attr.datetime]="vracanje.datum">{{ vracanje.datum | date: 'd. MMM HH:mm' }}</time>
+      </p>
+    </div>
+  </ng-template>
 
   <!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
   <p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
