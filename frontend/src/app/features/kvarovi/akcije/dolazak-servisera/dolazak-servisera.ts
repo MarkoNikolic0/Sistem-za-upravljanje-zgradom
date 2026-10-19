@@ -1,14 +1,15 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { KvarDetalj } from '../../kvar-models';
 import { KvarStore } from '../../kvar-store';
-import { dolazakUBuducnosti } from '../../pravila-kvara';
+import { dolazakUBuducnosti, najkasnijiDolazak } from '../../pravila-kvara';
+import { DatePipe } from '@angular/common';
 
 @Component({
-  imports: [ReactiveFormsModule, ButtonModule, DatePickerModule],
+  imports: [DatePipe, ReactiveFormsModule, ButtonModule, DatePickerModule],
   selector: 'app-dolazak-servisera',
   styleUrl: './dolazak-servisera.scss',
   templateUrl: './dolazak-servisera.html',
@@ -21,6 +22,7 @@ export class DolazakServisera {
   readonly kvar = input.required<KvarDetalj>();
 
   protected readonly sada = new Date();
+  protected readonly najkasnije = computed(() => najkasnijiDolazak(this.kvar().rokResavanja));
 
   protected readonly forma = this.fb.group({
     dolazak: this.fb.control<Date | null>(null, {

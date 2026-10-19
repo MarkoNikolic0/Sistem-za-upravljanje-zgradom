@@ -1,6 +1,9 @@
 <form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="flex flex-col gap-1.5">
   <label for="dolazak" class="text-sm font-medium">Kada dolaziš?</label>
-  <p class="text-sm text-priguseno">Stanar vidi datum i vreme na vrhu kvara.</p>
+  <p class="text-sm text-priguseno">
+    Stanar vidi datum i vreme na vrhu kvara. Najkasnije:
+    {{ najkasnije() | date: "EEEE, d. MMMM 'u' HH:mm" }}.
+  </p>
   <p-datepicker
     inputId="dolazak"
     formControlName="dolazak"
@@ -8,6 +11,7 @@
     hourFormat="24"
     [stepMinute]="15"
     [minDate]="sada"
+    [maxDate]="najkasnije()"
     [readonlyInput]="true"
     [showIcon]="true"
     [fluid]="true"

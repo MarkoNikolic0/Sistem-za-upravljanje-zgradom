@@ -29,3 +29,8 @@ export function rokResavanja(datumPrijave: Date, prioritet: Prioritet): Date {
     datumPrijave.getTime() + DANA_ZA_RESAVANJE[prioritet] * MS_PO_DANU,
   );
 }
+
+export function najkasnijiDolazak(rok: Date, sada = new Date()): Date {
+  const kaoHitno = rokResavanja(sada, Prioritet.HITNO);
+  return rok > kaoHitno ? rok : kaoHitno;
+}

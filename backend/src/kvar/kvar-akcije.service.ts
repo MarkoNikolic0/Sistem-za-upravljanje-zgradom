@@ -32,11 +32,13 @@ import { KvarService } from './kvar.service.js';
 import { KvarPravaService } from './kvar-prava.service.js';
 import {
   DANA_ZA_POTVRDU,
+  najkasnijiDolazak,
   rokResavanja,
   STATUSI_PO_STANJU,
 } from './kvar.constants.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
+import { greskaPolja } from '../shared/greske-validacije.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
@@ -161,6 +163,12 @@ export class KvarAkcijeService {
   ) {
     const kvar = await this.kvarService.findOne(id);
     this.prava.proveriServisera(kvar, korisnikId);
+    if (dto.dolazak && dto.dolazak > najkasnijiDolazak(kvar.rokResavanja)) {
+      throw greskaPolja(
+        'dolazak',
+        'Dolazak je posle roka. Za kasniji termin javi se upravniku.',
+      );
+    }
     await this.izmeniAkoJeU(
       id,
       [StatusKvara.DODELJEN, StatusKvara.U_TOKU],

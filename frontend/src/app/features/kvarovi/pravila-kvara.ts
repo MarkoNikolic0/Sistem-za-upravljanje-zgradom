@@ -1,6 +1,7 @@
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { NIJE_PRAZNO } from '../../shared/nije-prazno';
 import {
+  DANA_ZA_RESAVANJE,
   MAKS_KOMENTAR_KVARA,
   MAKS_SLIKA_KVARA,
   MAKS_VELICINA_SLIKE_MB,
@@ -34,6 +35,13 @@ export function stanjeRoka(status: StatusKvara, rok: string, sada = new Date()):
     return 'danas';
   }
   return kraj.toDateString() === sutra.toDateString() ? 'sutra' : null;
+}
+
+export function najkasnijiDolazak(rok: string, sada = new Date()): Date {
+  const kaoHitno = new Date(sada);
+  kaoHitno.setDate(sada.getDate() + DANA_ZA_RESAVANJE.hitno);
+  const kraj = new Date(rok);
+  return kraj > kaoHitno ? kraj : kaoHitno;
 }
 
 export function dolazakUBuducnosti(polje: AbstractControl<Date | null>): ValidationErrors | null {
