@@ -26,6 +26,7 @@ import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
+import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -142,6 +143,22 @@ export class KvarController {
     @Body() dto: UpdateStatusKvarDto,
   ) {
     return this.kvarAkcijeService.promeniStatus(
+      id,
+      korisnik.id,
+      korisnik.uloga,
+      dto,
+    );
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.SERVISER)
+  @Patch(':id/dolazak')
+  postaviDolazak(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: PostaviDolazakDto,
+  ) {
+    return this.kvarAkcijeService.postaviDolazak(
       id,
       korisnik.id,
       korisnik.uloga,

@@ -21,7 +21,11 @@ import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
 import { KvarPravaService } from './kvar-prava.service.js';
-import { DANA_ZA_POTVRDU, STATUSI_PO_STANJU } from './kvar.constants.js';
+import {
+  DANA_ZA_POTVRDU,
+  rokResavanja,
+  STATUSI_PO_STANJU,
+} from './kvar.constants.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 
 @Injectable()
@@ -48,12 +52,14 @@ export class KvarService {
       throw new ForbiddenException('Niste povezani sa ovim stanom!');
     }
 
+    const prioritet = dto.prioritet ?? Prioritet.SREDNJE;
     const kvar = this.kvarRepository.create({
       naslov: dto.naslov,
       opis: dto.opis,
       kategorija: dto.kategorija,
       lokacijaTip: dto.lokacijaTip,
-      prioritet: dto.prioritet ?? Prioritet.SREDNJE,
+      prioritet,
+      rokResavanja: rokResavanja(new Date(), prioritet),
       stan:
         dto.lokacijaTip === LokacijaTip.PRIVATNI_STAN ? veza.stan : undefined,
       zgrada: veza.stan.zgrada,

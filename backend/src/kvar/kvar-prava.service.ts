@@ -145,6 +145,14 @@ export class KvarPravaService {
     }
   }
 
+  proveriServisera(kvar: Kvar, korisnikId: number) {
+    if (kvar.serviser?.id !== korisnikId) {
+      throw new ForbiddenException(
+        'Samo dodeljeni serviser može da radi na ovom kvaru!',
+      );
+    }
+  }
+
   async proveriPotvrdu(kvar: Kvar, korisnikId: number) {
     if (!(await this.smeDaPotvrdi(kvar, korisnikId))) {
       throw new ForbiddenException(

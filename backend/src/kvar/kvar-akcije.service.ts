@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -31,8 +30,13 @@ import {
 import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
 import { KvarService } from './kvar.service.js';
 import { KvarPravaService } from './kvar-prava.service.js';
-import { DANA_ZA_POTVRDU, STATUSI_PO_STANJU } from './kvar.constants.js';
+import {
+  DANA_ZA_POTVRDU,
+  rokResavanja,
+  STATUSI_PO_STANJU,
+} from './kvar.constants.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
+import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
@@ -91,6 +95,7 @@ export class KvarAkcijeService {
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.izmeniAkoJeU(id, STATUSI_PO_STANJU[StanjeKvara.AKTIVNI], {
       prioritet: dto.prioritet,
+      rokResavanja: rokResavanja(kvar.datumPrijave, dto.prioritet),
     });
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -119,7 +124,7 @@ export class KvarAkcijeService {
       [StatusKvara.PRIHVACEN, StatusKvara.DODELJEN],
       StatusKvara.DODELJEN,
       korisnikId,
-      { izmene: { serviser: { id: dto.serviserId } } },
+      { izmene: { serviser: { id: dto.serviserId }, dolazakServisera: null } },
     );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -131,22 +136,36 @@ export class KvarAkcijeService {
     dto: UpdateStatusKvarDto,
   ) {
     const kvar = await this.kvarService.findOne(id);
-    if (kvar.serviser?.id !== korisnikId) {
-      throw new ForbiddenException(
-        'Samo dodeljeni serviser može da menja status ovog kvara!',
-      );
-    }
+    this.prava.proveriServisera(kvar, korisnikId);
     await this.prelaz(
       id,
       [PRETHODNI_STATUS[dto.status]],
       dto.status,
       korisnikId,
       {
-        izmene: {
-          datumResenja: dto.status === StatusKvara.RESEN ? new Date() : null,
-        },
+        izmene:
+          dto.status === StatusKvara.RESEN
+            ? { datumResenja: new Date(), dolazakServisera: null }
+            : { datumResenja: null },
         uslov: { serviser: { id: korisnikId } },
       },
+    );
+    return await this.kvarService.findDetalj(id, korisnikId, uloga);
+  }
+
+  async postaviDolazak(
+    id: number,
+    korisnikId: number,
+    uloga: Uloga,
+    dto: PostaviDolazakDto,
+  ) {
+    const kvar = await this.kvarService.findOne(id);
+    this.prava.proveriServisera(kvar, korisnikId);
+    await this.izmeniAkoJeU(
+      id,
+      [StatusKvara.DODELJEN, StatusKvara.U_TOKU],
+      { dolazakServisera: dto.dolazak },
+      { serviser: { id: korisnikId } },
     );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }

@@ -69,4 +69,10 @@ export class Kvar {
 
   @Column({ type: 'timestamptz', nullable: true })
   datumResenja: Date | null;
+
+  @Column({ type: 'timestamptz' })
+  rokResavanja: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  dolazakServisera: Date | null;
 }

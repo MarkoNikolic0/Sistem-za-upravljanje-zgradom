@@ -1,4 +1,9 @@
-import { StanjeKvara, StatusKvara } from '../shared/enums/kvar.enums.js';
+import {
+  Prioritet,
+  StanjeKvara,
+  StatusKvara,
+} from '../shared/enums/kvar.enums.js';
+import { MS_PO_DANU } from '../shared/vreme.js';
 
 export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.AKTIVNI]: [
@@ -12,3 +17,15 @@ export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
 };
 
 export const DANA_ZA_POTVRDU = 7;
+
+export const DANA_ZA_RESAVANJE: Record<Prioritet, number> = {
+  [Prioritet.HITNO]: 2,
+  [Prioritet.SREDNJE]: 7,
+  [Prioritet.NISKO]: 21,
+};
+
+export function rokResavanja(datumPrijave: Date, prioritet: Prioritet): Date {
+  return new Date(
+    datumPrijave.getTime() + DANA_ZA_RESAVANJE[prioritet] * MS_PO_DANU,
+  );
+}

@@ -188,12 +188,18 @@ WHERE NOT EXISTS (
 );
 
 -- KVAROVI (svi statusi) ---------------------------------------------------------------------
+-- rok za resavanje = prijava + 2 / 7 / 21 dan (isto kao DANA_ZA_RESAVANJE u kvar.constants.ts)
 INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status,
-                  "zgradaId", "stanId", "korisnikId", "serviserId", "datumPrijave")
+                  "zgradaId", "stanId", "korisnikId", "serviserId", "datumPrijave", "rokResavanja")
 SELECT v.naslov, v.opis,
        v.kategorija::kvar_kategorija_enum, v.lokacija::kvar_lokacijatip_enum,
        v.prioritet::kvar_prioritet_enum, v.status::kvar_status_enum,
-       z.id, s.id, k.id, ser.id, now() - v.pre
+       z.id, s.id, k.id, ser.id, now() - v.pre,
+       now() - v.pre + CASE v.prioritet
+         WHEN 'hitno' THEN interval '2 days'
+         WHEN 'srednje' THEN interval '7 days'
+         ELSE interval '21 days'
+       END
 FROM (VALUES
   -- prvi kvarovi (napravljeni rucno); lift je u zajednickom prostoru, bez stana
   ('Curi slavina', 'Slavina u kupatilu curi neprestano',
