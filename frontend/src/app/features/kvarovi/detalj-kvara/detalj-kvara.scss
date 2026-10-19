@@ -46,9 +46,10 @@ dd {
   .raspored {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 16rem;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
     grid-template-areas:
       'opis strana'
+      'slike strana'
       'akcije strana'
       'komentari strana';
     column-gap: 4rem;
@@ -56,6 +57,10 @@ dd {
 
   .opis-kvara {
     grid-area: opis;
+  }
+
+  .slike {
+    grid-area: slike;
   }
 
   .akcije {

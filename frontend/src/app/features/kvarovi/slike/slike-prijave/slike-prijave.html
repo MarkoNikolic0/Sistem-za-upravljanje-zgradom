@@ -1,0 +1,45 @@
+<span id="slike-oznaka" class="text-sm font-medium">
+  Slike <span class="font-normal text-priguseno">(nije obavezno)</span>
+</span>
+@if (pregled().length > 0) {
+  <ul
+    aria-labelledby="slike-oznaka"
+    class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3"
+  >
+    @for (slika of pregled(); track slika.url) {
+      <li>
+        <img
+          [src]="slika.url"
+          [alt]="slika.fajl.name"
+          class="block aspect-square w-full rounded-md object-cover"
+        />
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          severity="danger"
+          class="-ml-2"
+          [attr.aria-label]="'Ukloni ' + slika.fajl.name"
+          (click)="ukloni(slika.fajl)"
+        >
+          Ukloni
+        </button>
+      </li>
+    }
+  </ul>
+}
+@if (slike().length < maksSlika) {
+  <app-izbor-slika
+    [vecIma]="slike().length"
+    [otpremanje]="otpremanje()"
+    [greskaId]="greska() ? 'slike-greska' : undefined"
+    (izabrano)="dodaj($event)"
+    (greska)="greska.set($event)"
+  />
+}
+<div aria-live="polite" class="empty:hidden">
+  @if (greska()) {
+    <small id="slike-greska" class="text-sm text-greska">{{ greska() }}</small>
+  }
+</div>

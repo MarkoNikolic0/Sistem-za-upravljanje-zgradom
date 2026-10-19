@@ -1,0 +1,72 @@
+<section class="odeljak" aria-labelledby="slike-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="slike-naslov" class="naslov-odeljka" tabindex="-1">Slike</h2>
+  </div>
+
+  @if (store.isFulfilled()) {
+    @if (store.slike().length > 0) {
+      <ul class="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3">
+        @for (slika of store.slike(); track slika.id; let i = $index) {
+          <li>
+            <p-image
+              class="block"
+              imageClass="block aspect-square w-full rounded-md object-cover"
+              [src]="slika.urlSlicice"
+              [previewImageSrc]="slika.url"
+              [alt]="opis(slika, i + 1)"
+              [preview]="true"
+            />
+            @if (smeDaBrise(slika)) {
+              <button
+                pButton
+                type="button"
+                text
+                size="small"
+                severity="danger"
+                class="-ml-2"
+                (click)="obrisi($event, slika)"
+              >
+                Obriši
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="text-priguseno">Još nema slika.</p>
+    }
+
+    @if (mozeJos()) {
+      <app-izbor-slika
+        class="mt-4"
+        [vecIma]="store.slike().length"
+        [otpremanje]="otpremanje()"
+        (izabrano)="otpremi($event)"
+        (greska)="poruka.set({ tip: 'greska', tekst: $event })"
+      />
+    } @else {
+      <p class="mt-4 text-sm text-priguseno">
+        Kvar već ima {{ maksSlika }} slika, koliko je najviše moguće.
+      </p>
+    }
+  } @else if (store.error(); as greska) {
+    <p-message severity="error">{{ greska }}</p-message>
+    <button pButton type="button" size="small" outlined class="mt-4" (click)="ucitajPonovo()">
+      Pokušaj ponovo
+    </button>
+  } @else {
+    <p-skeleton width="6.5rem" height="6.5rem" styleClass="ucitavanje" aria-hidden="true" />
+    <span class="sr-only">Učitavanje slika…</span>
+  }
+
+  <div aria-live="polite" class="mt-2 empty:hidden">
+    @if (poruka(); as p) {
+      <p class="text-sm" [class]="p.tip === 'greska' ? 'text-greska' : 'text-priguseno'">
+        {{ p.tekst }}
+      </p>
+    }
+  </div>
+</section>
+
+<!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

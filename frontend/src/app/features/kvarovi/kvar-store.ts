@@ -78,6 +78,7 @@ interface KvaroviState {
   slanjeKomentara: boolean;
   akcijaUToku: boolean;
   porukaAkcije: PorukaAkcije | null;
+  porukaPosleUcitavanja: PorukaAkcije | null;
 }
 
 const pocetnoStanje: KvaroviState = {
@@ -99,6 +100,7 @@ const pocetnoStanje: KvaroviState = {
   slanjeKomentara: false,
   akcijaUToku: false,
   porukaAkcije: null,
+  porukaPosleUcitavanja: null,
 };
 
 export const KvarStore = signalStore(
@@ -166,7 +168,11 @@ export const KvarStore = signalStore(
         ),
         switchMap((id) => {
           if (!Number.isInteger(id) || id < 1) {
-            patchState(store, { ucitavaDetalj: false, greskaDetalja: 'nije-pronadjen' });
+            patchState(store, {
+              ucitavaDetalj: false,
+              greskaDetalja: 'nije-pronadjen',
+              porukaPosleUcitavanja: null,
+            });
             return EMPTY;
           }
           return forkJoin({
@@ -180,12 +186,15 @@ export const KvarStore = signalStore(
                   komentari: [...komentari.stavke].reverse(),
                   preostaloStarijih: komentari.ukupno - komentari.stavke.length,
                   ucitavaDetalj: false,
+                  porukaAkcije: store.porukaPosleUcitavanja(),
+                  porukaPosleUcitavanja: null,
                 }),
               error: (err: HttpErrorResponse) =>
                 patchState(store, {
                   ucitavaDetalj: false,
                   greskaDetalja:
                     err.status === 403 || err.status === 404 ? 'nije-pronadjen' : 'greska',
+                  porukaPosleUcitavanja: null,
                 }),
             }),
           );
@@ -311,12 +320,29 @@ export const KvarStore = signalStore(
         patchState(store, { strana });
         ucitaj();
       },
-      async prijavi(podaci: PrijavaKvaraRequest): Promise<Kvar> {
+      async prijavi(podaci: PrijavaKvaraRequest, slike: File[]): Promise<Kvar> {
         patchState(store, { prijavaUToku: true });
         try {
           const kvar = await firstValueFrom(kvarService.prijavi(podaci));
           patchState(store, { stanje: 'aktivni', strana: 1 });
           ucitaj();
+          let nisuDodate = 0;
+          for (const slika of slike) {
+            try {
+              await firstValueFrom(kvarService.dodajSliku(kvar.id, slika));
+            } catch {
+              nisuDodate++;
+            }
+          }
+          if (nisuDodate > 0) {
+            patchState(store, {
+              porukaPosleUcitavanja: {
+                tip: 'greska',
+                tekst: `Kvar je prijavljen, ali neke slike nisu dodate (${nisuDodate} od ${slike.length}). Dodaj ih ponovo u odeljku Slike.`,
+                fokus: true,
+              },
+            });
+          }
           return kvar;
         } finally {
           patchState(store, { prijavaUToku: false });

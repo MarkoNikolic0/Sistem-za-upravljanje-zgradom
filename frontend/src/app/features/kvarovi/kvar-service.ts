@@ -10,6 +10,7 @@ import {
   KvarDetalj,
   PrijavaKvaraRequest,
   PrioritetKvara,
+  SlikaKvara,
   StatusRadaServisera,
   UpitKvarova,
 } from './kvar-models';
@@ -21,6 +22,7 @@ export class KvarService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/kvar`;
   private komentariUrl = `${environment.apiUrl}/komentar-kvar`;
+  private slikeUrl = `${environment.apiUrl}/slika-kvara`;
 
   lista(upit: UpitKvarova): Observable<Stranica<Kvar>> {
     let params = new HttpParams()
@@ -105,5 +107,19 @@ export class KvarService {
 
   vrati(id: number, tekst: string): Observable<KvarDetalj> {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/vrati`, { tekst });
+  }
+
+  slike(kvarId: number): Observable<SlikaKvara[]> {
+    return this.http.get<SlikaKvara[]>(`${this.slikeUrl}/kvar/${kvarId}`);
+  }
+
+  dodajSliku(kvarId: number, slika: File): Observable<SlikaKvara> {
+    const podaci = new FormData();
+    podaci.append('slika', slika);
+    return this.http.post<SlikaKvara>(`${this.slikeUrl}/kvar/${kvarId}`, podaci);
+  }
+
+  obrisiSliku(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.slikeUrl}/${id}`);
   }
 }

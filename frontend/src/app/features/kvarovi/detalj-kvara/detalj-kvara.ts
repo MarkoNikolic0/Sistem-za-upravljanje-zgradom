@@ -24,6 +24,7 @@ import { OznakeKvara } from '../oznake-kvara/oznake-kvara';
 import { PotvrdaKvara } from '../potvrda-kvara/potvrda-kvara';
 import { TokKvara } from '../tok-kvara/tok-kvara';
 import { UpravljanjeKvarom } from '../upravljanje-kvarom/upravljanje-kvarom';
+import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
 
 @Component({
   imports: [
@@ -39,6 +40,7 @@ import { UpravljanjeKvarom } from '../upravljanje-kvarom/upravljanje-kvarom';
     PotvrdaKvara,
     TokKvara,
     UpravljanjeKvarom,
+    SlikeKvara,
   ],
   selector: 'app-detalj-kvara',
   styleUrl: './detalj-kvara.scss',

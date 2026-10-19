@@ -8,5 +8,11 @@ export const PREVOD_PRIMENG: Translation = {
     prevPageLabel: 'Prethodna strana',
     nextPageLabel: 'Sledeća strana',
     lastPageLabel: 'Poslednja strana',
+    zoomImage: 'Uvećaj sliku',
+    zoomIn: 'Uvećaj',
+    zoomOut: 'Umanji',
+    rotateRight: 'Okreni udesno',
+    rotateLeft: 'Okreni ulevo',
+    close: 'Zatvori',
   },
 };

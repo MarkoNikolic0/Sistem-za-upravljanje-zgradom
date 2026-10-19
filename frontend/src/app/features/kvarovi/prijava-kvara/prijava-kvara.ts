@@ -14,6 +14,7 @@ import { greskaPolja } from '../../../shared/greske-servera';
 import { nazivSprata } from '../../../shared/sprat-pipe';
 import { ProfileService } from '../../profile/profile-service';
 import { KvarStore } from '../kvar-store';
+import { SlikePrijave } from '../slike/slike-prijave/slike-prijave';
 import {
   KategorijaKvara,
   LokacijaKvara,
@@ -37,6 +38,7 @@ type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
     SelectButtonModule,
     SkeletonModule,
     TextareaModule,
+    SlikePrijave,
   ],
   selector: 'app-prijava-kvara',
   styleUrl: './prijava-kvara.scss',
@@ -54,6 +56,8 @@ export class PrijavaKvara {
 
   protected readonly profil = this.profileService.profile();
   protected readonly greska = signal('');
+
+  protected readonly slike = signal<File[]>([]);
 
   protected readonly stanovi = computed(() =>
     this.profil.hasValue() ? this.profil.value().stanovi : [],
@@ -117,14 +121,17 @@ export class PrijavaKvara {
 
     this.greska.set('');
     try {
-      const kvar = await this.store.prijavi({
-        stanId,
-        lokacijaTip,
-        kategorija,
-        naslov: naslov.trim(),
-        opis: opis.trim(),
-        prioritet: hitno ? 'hitno' : undefined,
-      });
+      const kvar = await this.store.prijavi(
+        {
+          stanId,
+          lokacijaTip,
+          kategorija,
+          naslov: naslov.trim(),
+          opis: opis.trim(),
+          prioritet: hitno ? 'hitno' : undefined,
+        },
+        this.slike(),
+      );
       await this.router.navigate(['/kvarovi', kvar.id]);
     } catch (err) {
       this.obradiGresku(err);

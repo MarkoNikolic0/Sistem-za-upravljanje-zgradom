@@ -126,6 +126,8 @@
           }
         </div>
 
+        <app-slike-prijave [(slike)]="slike" [otpremanje]="store.prijavaUToku()" />
+
         <div class="flex items-start gap-3">
           <p-checkbox inputId="hitno" formControlName="hitno" [binary]="true" />
           <div>

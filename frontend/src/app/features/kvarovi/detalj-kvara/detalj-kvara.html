@@ -22,6 +22,8 @@
         <p class="whitespace-pre-line wrap-anywhere">{{ kvar.opis }}</p>
       </section>
 
+      <app-slike-kvara class="slike" [kvar]="kvar" />
+
       <div class="akcije">
         @if (potvrda()) {
           <app-potvrda-kvara [kvar]="kvar" />
