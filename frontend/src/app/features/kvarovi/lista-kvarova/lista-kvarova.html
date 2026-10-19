@@ -81,7 +81,12 @@
               · {{ kvar.zgrada.naziv }}
             }
           </p>
-          <app-oznake-kvara class="mt-3" [status]="kvar.status" [prioritet]="kvar.prioritet" />
+          <app-oznake-kvara
+            class="mt-3"
+            [status]="kvar.status"
+            [prioritet]="kvar.prioritet"
+            [rok]="kvar.rokResavanja"
+          />
         </article>
       } @empty {
         <p class="text-priguseno">

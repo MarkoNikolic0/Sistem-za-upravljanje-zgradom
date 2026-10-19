@@ -30,6 +30,12 @@ export const NAZIVI_PRIORITETA_KVARA: Record<PrioritetKvara, string> = {
   hitno: 'Hitno',
 };
 
+export const DANA_ZA_RESAVANJE: Record<PrioritetKvara, number> = {
+  hitno: 2,
+  srednje: 7,
+  nisko: 21,
+};
+
 export type StatusRadaServisera = Extract<StatusKvara, 'u_toku' | 'resen'>;
 
 export const NAZIVI_KATEGORIJA_KVARA: Record<KategorijaKvara, string> = {
@@ -53,6 +59,8 @@ export interface Kvar {
   status: StatusKvara;
   datumPrijave: string;
   datumResenja: string | null;
+  rokResavanja: string;
+  dolazakServisera: string | null;
   zgrada: ZgradaOsnovno;
   stan: StanOsnovno | null;
   korisnik: KorisnikOsnovno & Partial<Kontakt>;

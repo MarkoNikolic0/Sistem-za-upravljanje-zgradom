@@ -75,6 +75,10 @@ export class KvarService {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/dodeli`, { serviserId });
   }
 
+  postaviDolazak(id: number, dolazak: Date | null): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/dolazak`, { dolazak });
+  }
+
   promeniStatus(id: number, status: StatusRadaServisera): Observable<KvarDetalj> {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/status`, { status });
   }

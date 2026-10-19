@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, LOCALE_ID } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
@@ -25,6 +25,7 @@ import {
   StanjeKvara,
   StatusRadaServisera,
 } from './kvar-models';
+import { formatDate } from '@angular/common';
 
 export const KVAROVA_PO_STRANI = 10;
 export const KOMENTARA_PO_STRANI = 20;
@@ -48,7 +49,11 @@ function porukaGreske(err: HttpErrorResponse): string {
     case 403:
       return 'Nemaš pravo na ovu akciju.';
     case 400: {
-      const telo = err.error as { message?: unknown } | null;
+      const telo = err.error as { message?: unknown; greske?: Record<string, string> } | null;
+      const greskaPolja = Object.values(telo?.greske ?? {}).at(0);
+      if (greskaPolja) {
+        return greskaPolja;
+      }
       if (typeof telo?.message === 'string') {
         return telo.message;
       }
@@ -124,7 +129,7 @@ export const KvarStore = signalStore(
       }),
     };
   }),
-  withMethods((store, kvarService = inject(KvarService)) => {
+  withMethods((store, kvarService = inject(KvarService), locale = inject(LOCALE_ID)) => {
     const ucitaj = rxMethod<void>(
       pipe(
         tap(() =>
@@ -386,8 +391,16 @@ export const KvarStore = signalStore(
       postaviPrioritet(prioritet: PrioritetKvara): void {
         akcija(
           (id) => kvarService.postaviPrioritet(id, prioritet),
-          (kvar) => `Prioritet je promenjen: ${NAZIVI_PRIORITETA_KVARA[kvar.prioritet]}.`,
+          (kvar) =>
+            `Prioritet je promenjen: ${NAZIVI_PRIORITETA_KVARA[kvar.prioritet]}. Novi rok: ${formatDate(kvar.rokResavanja, 'd. MMM y. HH:mm', locale)}.`,
           false,
+        );
+      },
+      postaviDolazak(dolazak: Date | null): void {
+        akcija(
+          (id) => kvarService.postaviDolazak(id, dolazak),
+          () =>
+            dolazak ? 'Dolazak je upisan. Stanar ga vidi na vrhu kvara.' : 'Dolazak je uklonjen.',
         );
       },
       promeniStatus(status: StatusRadaServisera): void {

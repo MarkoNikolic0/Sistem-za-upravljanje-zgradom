@@ -6,7 +6,12 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { KvarDetalj, NAZIVI_PRIORITETA_KVARA, PrioritetKvara } from '../../kvar-models';
+import {
+  DANA_ZA_RESAVANJE,
+  KvarDetalj,
+  NAZIVI_PRIORITETA_KVARA,
+  PrioritetKvara,
+} from '../../kvar-models';
 import { KvarService } from '../../kvar-service';
 import { KvarStore } from '../../kvar-store';
 import { RazlogVracanja } from '../razlog-vracanja/razlog-vracanja';
@@ -38,6 +43,8 @@ export class UpravljanjeKvarom {
     { label: NAZIVI_PRIORITETA_KVARA.srednje, value: 'srednje' },
     { label: NAZIVI_PRIORITETA_KVARA.hitno, value: 'hitno' },
   ];
+
+  protected readonly dana = DANA_ZA_RESAVANJE;
 
   private readonly kategorijaZaDodelu = computed(() => {
     const kvar = this.kvar();

@@ -1,0 +1,39 @@
+<form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="flex flex-col gap-1.5">
+  <label for="dolazak" class="text-sm font-medium">Kada dolaziš?</label>
+  <p class="text-sm text-priguseno">Stanar vidi datum i vreme na vrhu kvara.</p>
+  <p-datepicker
+    inputId="dolazak"
+    formControlName="dolazak"
+    [showTime]="true"
+    hourFormat="24"
+    [stepMinute]="15"
+    [minDate]="sada"
+    [readonlyInput]="true"
+    [showIcon]="true"
+    [fluid]="true"
+    [invalid]="!!greska()"
+  />
+  <div aria-live="polite" class="empty:hidden">
+    @if (greska(); as poruka) {
+      <small class="text-sm text-greska">{{ poruka }}</small>
+    }
+  </div>
+  <div class="mt-2 flex flex-wrap gap-2">
+    <button pButton type="submit" size="small" [disabled]="store.akcijaUToku()">
+      Sačuvaj dolazak
+    </button>
+    @if (kvar().dolazakServisera) {
+      <button
+        pButton
+        type="button"
+        size="small"
+        severity="secondary"
+        outlined
+        [disabled]="store.akcijaUToku()"
+        (click)="store.postaviDolazak(null)"
+      >
+        Ukloni dolazak
+      </button>
+    }
+  </div>
+</form>

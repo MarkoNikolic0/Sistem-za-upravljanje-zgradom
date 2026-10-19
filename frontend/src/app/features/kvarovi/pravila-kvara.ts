@@ -1,9 +1,10 @@
-import { Validators } from '@angular/forms';
+import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { NIJE_PRAZNO } from '../../shared/nije-prazno';
 import {
   MAKS_KOMENTAR_KVARA,
   MAKS_SLIKA_KVARA,
   MAKS_VELICINA_SLIKE_MB,
+  StatusKvara,
   TIPOVI_SLIKE,
 } from './kvar-models';
 
@@ -12,6 +13,33 @@ export const PRAVILA_KOMENTARA_KVARA = [
   Validators.pattern(NIJE_PRAZNO),
   Validators.maxLength(MAKS_KOMENTAR_KVARA),
 ];
+
+export function pratiRok(status: StatusKvara): boolean {
+  return ['prijavljen', 'prihvacen', 'dodeljen', 'u_toku'].includes(status);
+}
+
+export type StanjeRoka = 'prekoracen' | 'danas' | 'sutra';
+
+export function stanjeRoka(status: StatusKvara, rok: string, sada = new Date()): StanjeRoka | null {
+  if (!pratiRok(status)) {
+    return null;
+  }
+  const kraj = new Date(rok);
+  if (kraj <= sada) {
+    return 'prekoracen';
+  }
+  const sutra = new Date(sada);
+  sutra.setDate(sada.getDate() + 1);
+  if (kraj.toDateString() === sada.toDateString()) {
+    return 'danas';
+  }
+  return kraj.toDateString() === sutra.toDateString() ? 'sutra' : null;
+}
+
+export function dolazakUBuducnosti(polje: AbstractControl<Date | null>): ValidationErrors | null {
+  const dolazak = polje.value;
+  return dolazak && dolazak.getTime() <= Date.now() ? { proslost: true } : null;
+}
 
 export const POMOC_ZA_SLIKE = `JPG, PNG ili WEBP, do ${MAKS_VELICINA_SLIKE_MB} MB. Najviše ${MAKS_SLIKA_KVARA} slika.`;
 

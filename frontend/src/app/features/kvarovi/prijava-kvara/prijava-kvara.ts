@@ -16,6 +16,7 @@ import { ProfileService } from '../../profile/profile-service';
 import { KvarStore } from '../kvar-store';
 import { SlikePrijave } from '../slike/slike-prijave/slike-prijave';
 import {
+  DANA_ZA_RESAVANJE,
   KategorijaKvara,
   LokacijaKvara,
   MAKS_NASLOV_KVARA,
@@ -53,6 +54,7 @@ export class PrijavaKvara {
 
   protected readonly maksNaslov = MAKS_NASLOV_KVARA;
   protected readonly maksOpis = MAKS_OPIS_KVARA;
+  protected readonly danaZaHitno = DANA_ZA_RESAVANJE.hitno;
 
   protected readonly profil = this.profileService.profile();
   protected readonly greska = signal('');

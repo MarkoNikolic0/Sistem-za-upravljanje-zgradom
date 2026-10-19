@@ -2,3 +2,6 @@
 @if (hitno()) {
   <p-tag value="Hitno" severity="danger" icon="pi pi-exclamation-triangle" [rounded]="true" />
 }
+@if (oznakaRoka(); as oznaka) {
+  <p-tag [value]="oznaka.tekst" [severity]="oznaka.boja" icon="pi pi-clock" [rounded]="true" />
+}

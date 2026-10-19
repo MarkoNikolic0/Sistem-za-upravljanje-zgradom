@@ -1,0 +1,58 @@
+import { Component, effect, inject, input } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { DatePickerModule } from 'primeng/datepicker';
+import { fokusPosleCrtanja } from '../../../../shared/fokus';
+import { KvarDetalj } from '../../kvar-models';
+import { KvarStore } from '../../kvar-store';
+import { dolazakUBuducnosti } from '../../pravila-kvara';
+
+@Component({
+  imports: [ReactiveFormsModule, ButtonModule, DatePickerModule],
+  selector: 'app-dolazak-servisera',
+  styleUrl: './dolazak-servisera.scss',
+  templateUrl: './dolazak-servisera.html',
+})
+export class DolazakServisera {
+  protected readonly store = inject(KvarStore);
+  private fb = inject(FormBuilder);
+  private readonly fokusiraj = fokusPosleCrtanja();
+
+  readonly kvar = input.required<KvarDetalj>();
+
+  protected readonly sada = new Date();
+
+  protected readonly forma = this.fb.group({
+    dolazak: this.fb.control<Date | null>(null, {
+      validators: [Validators.required, dolazakUBuducnosti],
+      updateOn: 'submit',
+    }),
+  });
+
+  constructor() {
+    effect(() => {
+      const dolazak = this.kvar().dolazakServisera;
+      this.forma.reset({ dolazak: dolazak ? new Date(dolazak) : null });
+    });
+  }
+
+  protected greska(): string | null {
+    const dolazak = this.forma.controls.dolazak;
+    if (!dolazak.touched || dolazak.valid) {
+      return null;
+    }
+    return dolazak.hasError('required')
+      ? 'Unesi datum i vreme dolaska.'
+      : 'Dolazak ne može biti u prošlosti.';
+  }
+
+  protected sacuvaj(): void {
+    const dolazak = this.forma.controls.dolazak;
+    if (dolazak.invalid || !dolazak.value) {
+      dolazak.markAsTouched();
+      this.fokusiraj('#dolazak');
+      return;
+    }
+    this.store.postaviDolazak(dolazak.value);
+  }
+}
