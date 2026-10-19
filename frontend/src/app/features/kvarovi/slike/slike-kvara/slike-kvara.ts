@@ -16,7 +16,7 @@ import {
   MAKS_VELICINA_SLIKE_MB,
   SlikaKvara,
 } from '../../kvar-models';
-import { SlikeKvaraStore } from './slike-kvara-store';
+import { SlikeKvaraStore } from '../slike-kvara-store';
 
 interface Poruka {
   tip: 'uspeh' | 'greska';

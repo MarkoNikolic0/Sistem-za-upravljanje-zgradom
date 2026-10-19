@@ -3,10 +3,10 @@ import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { KvarDetalj, MAKS_KOMENTAR_KVARA } from '../kvar-models';
-import { KvarStore } from '../kvar-store';
-import { PRAVILA_KOMENTARA_KVARA } from '../pravila-kvara';
+import { fokusPosleCrtanja } from '../../../../shared/fokus';
+import { KvarDetalj, MAKS_KOMENTAR_KVARA } from '../../kvar-models';
+import { KvarStore } from '../../kvar-store';
+import { PRAVILA_KOMENTARA_KVARA } from '../../pravila-kvara';
 
 @Component({
   imports: [DatePipe, ReactiveFormsModule, ButtonModule, TextareaModule],

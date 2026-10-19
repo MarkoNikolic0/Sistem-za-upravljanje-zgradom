@@ -14,7 +14,7 @@ import { ProfileService } from '../../profile/profile-service';
 import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
-import { OznakeKvara } from '../oznake-kvara/oznake-kvara';
+import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
 
 @Component({
   imports: [

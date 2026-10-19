@@ -8,9 +8,9 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../../../shared/with-request-status';
-import { SlikaKvara } from '../../kvar-models';
-import { KvarService } from '../../kvar-service';
+} from '../../../shared/with-request-status';
+import { SlikaKvara } from '../kvar-models';
+import { KvarService } from '../kvar-service';
 
 interface SlikeKvaraState {
   slike: SlikaKvara[];

@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { NAZIVI_STATUSA_KVARA, PromenaStatusaKvara, StatusKvara } from '../kvar-models';
+import { NAZIVI_STATUSA_KVARA, PromenaStatusaKvara, StatusKvara } from '../../kvar-models';
 import { DatePipe } from '@angular/common';
 
 type StanjeKoraka = 'zavrsen' | 'trenutni' | 'sledeci' | 'odbijen';

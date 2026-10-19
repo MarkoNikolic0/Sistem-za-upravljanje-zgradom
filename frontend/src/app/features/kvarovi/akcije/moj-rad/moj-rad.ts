@@ -1,7 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { KvarDetalj } from '../kvar-models';
-import { KvarStore } from '../kvar-store';
+import { KvarDetalj } from '../../kvar-models';
+import { KvarStore } from '../../kvar-store';
 import { RazlogVracanja } from '../razlog-vracanja/razlog-vracanja';
 
 @Component({

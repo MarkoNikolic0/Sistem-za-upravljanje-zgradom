@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { TagModule, TagSeverity } from 'primeng/tag';
-import { NAZIVI_STATUSA_KVARA, PrioritetKvara, StatusKvara } from '../kvar-models';
+import { NAZIVI_STATUSA_KVARA, PrioritetKvara, StatusKvara } from '../../kvar-models';
 
 // Bez boje (undefined) Tag dobija primarnu boju teme — zutu
 const BOJE_STATUSA: Record<StatusKvara, TagSeverity | undefined> = {

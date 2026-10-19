@@ -19,11 +19,11 @@ import { AuthStore } from '../../auth/sesija/auth-store';
 import { KomentariKvara } from '../komentari-kvara/komentari-kvara';
 import { NAZIVI_KATEGORIJA_KVARA } from '../kvar-models';
 import { KvarStore } from '../kvar-store';
-import { MojRad } from '../moj-rad/moj-rad';
-import { OznakeKvara } from '../oznake-kvara/oznake-kvara';
-import { PotvrdaKvara } from '../potvrda-kvara/potvrda-kvara';
-import { TokKvara } from '../tok-kvara/tok-kvara';
-import { UpravljanjeKvarom } from '../upravljanje-kvarom/upravljanje-kvarom';
+import { MojRad } from '../akcije/moj-rad/moj-rad';
+import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
+import { PotvrdaKvara } from '../akcije/potvrda-kvara/potvrda-kvara';
+import { TokKvara } from '../status/tok-kvara/tok-kvara';
+import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvarom';
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
 
 @Component({

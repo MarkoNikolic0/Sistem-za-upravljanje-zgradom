@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { PromenaStatusaKvara } from '../kvar-models';
+import { PromenaStatusaKvara } from '../../kvar-models';
 
 @Component({
   imports: [DatePipe],

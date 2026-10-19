@@ -6,9 +6,9 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { KvarDetalj, NAZIVI_PRIORITETA_KVARA, PrioritetKvara } from '../kvar-models';
-import { KvarService } from '../kvar-service';
-import { KvarStore } from '../kvar-store';
+import { KvarDetalj, NAZIVI_PRIORITETA_KVARA, PrioritetKvara } from '../../kvar-models';
+import { KvarService } from '../../kvar-service';
+import { KvarStore } from '../../kvar-store';
 import { RazlogVracanja } from '../razlog-vracanja/razlog-vracanja';
 
 @Component({
