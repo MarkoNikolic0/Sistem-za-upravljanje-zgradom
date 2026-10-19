@@ -110,6 +110,9 @@ export class KvarAkcijeService {
   ) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
+    if (kvar.serviser?.id === dto.serviserId) {
+      throw new BadRequestException('Kvar je već dodeljen ovom serviseru.');
+    }
     const imaStruku = await this.serviserSpecijalnostRepository.exists({
       where: {
         korisnik: { id: dto.serviserId, uloga: Uloga.SERVISER },
@@ -163,7 +166,12 @@ export class KvarAkcijeService {
   ) {
     const kvar = await this.kvarService.findOne(id);
     this.prava.proveriServisera(kvar, korisnikId);
-    if (dto.dolazak && dto.dolazak > najkasnijiDolazak(kvar.rokResavanja)) {
+    const statusi = [StatusKvara.DODELJEN, StatusKvara.U_TOKU];
+    if (
+      dto.dolazak &&
+      statusi.includes(kvar.status) &&
+      dto.dolazak > najkasnijiDolazak(kvar.rokResavanja)
+    ) {
       throw greskaPolja(
         'dolazak',
         'Dolazak je posle roka. Za kasniji termin javi se upravniku.',
@@ -171,7 +179,7 @@ export class KvarAkcijeService {
     }
     await this.izmeniAkoJeU(
       id,
-      [StatusKvara.DODELJEN, StatusKvara.U_TOKU],
+      statusi,
       { dolazakServisera: dto.dolazak },
       { serviser: { id: korisnikId } },
     );

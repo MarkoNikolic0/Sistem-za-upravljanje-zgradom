@@ -31,9 +31,14 @@ export class DolazakServisera {
     }),
   });
 
+  private readonly upisanDolazak = computed(
+    () => ({ kvarId: this.kvar().id, dolazak: this.kvar().dolazakServisera }),
+    { equal: (a, b) => a.kvarId === b.kvarId && a.dolazak === b.dolazak },
+  );
+
   constructor() {
     effect(() => {
-      const dolazak = this.kvar().dolazakServisera;
+      const { dolazak } = this.upisanDolazak();
       this.forma.reset({ dolazak: dolazak ? new Date(dolazak) : null });
     });
   }
