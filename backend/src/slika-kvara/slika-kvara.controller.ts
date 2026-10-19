@@ -1,36 +1,42 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
+  ParseFilePipeBuilder,
   ParseIntPipe,
   Post,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { SlikaKvaraService } from './slika-kvara.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { greskaPolja } from '../shared/greske-validacije.js';
+import { MAKS_VELICINA_SLIKE, TIPOVI_SLIKE } from './slika-kvara.constants.js';
+import { SlikaUploadDto } from './dto/slika-upload.dto.js';
+
+const PROVERA_TIPA = new ParseFilePipeBuilder()
+  .addFileTypeValidator({
+    fileType: TIPOVI_SLIKE,
+    errorMessage: 'Izabrana slika mora biti JPG, PNG ili WEBP.',
+  })
+  .build({
+    fileIsRequired: false,
+    exceptionFactory: (poruka) => greskaPolja('slika', poruka),
+  });
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('slika-kvara')
 export class SlikaKvaraController {
   constructor(private readonly slikaService: SlikaKvaraService) {}
-
-  @Post(':kvarId/upload')
-  @UseInterceptors(FileInterceptor('file'))
-  upload(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
-    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    return this.slikaService.upload(kvarId, korisnik.id, korisnik.uloga, file);
-  }
 
   @Get('kvar/:kvarId')
   findZaKvar(
@@ -40,7 +46,22 @@ export class SlikaKvaraController {
     return this.slikaService.findZaKvar(kvarId, korisnik.id, korisnik.uloga);
   }
 
+  @Post('kvar/:kvarId')
+  @UseInterceptors(
+    FileInterceptor('slika', { limits: { fileSize: MAKS_VELICINA_SLIKE } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: SlikaUploadDto })
+  create(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @UploadedFile(PROVERA_TIPA) slika: Express.Multer.File | undefined,
+  ) {
+    return this.slikaService.create(kvarId, korisnik.id, korisnik.uloga, slika);
+  }
+
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
