@@ -8,7 +8,8 @@
 -- Izuzetak: prvi nalozi napravljeni rucno (marko@, marija@, danijel@, petar@gmail.com) zadrzavaju
 -- lozinku koju vec imaju u bazi; Zgrada123! dobijaju samo ako ih skripta pravi u praznoj bazi.
 -- Email adrese novih naloga su na domenu example.com (rezervisan za primere, RFC 2606).
--- Skripta se moze pokrenuti vise puta: postojeci podaci (isti email, zgrada, stan) se preskacu.
+-- Skripta se moze pokrenuti vise puta: postojeci podaci (isti email, zgrada, stan) se preskacu,
+-- a kvarovi iz skripte se vracaju na pocetno stanje sa svezim datumima (vidi KVAROVI).
 
 BEGIN;
 
@@ -187,193 +188,241 @@ WHERE NOT EXISTS (
   SELECT 1 FROM zahtev_povezivanje zp WHERE zp."korisnikId" = k.id AND zp."stanId" = s.id
 );
 
--- KVAROVI (svi statusi) ---------------------------------------------------------------------
+-- KVAROVI ------------------------------------------------------------------------------------
+-- Kvarovi iz ove skripte se pri svakom pokretanju vracaju na pocetno stanje: status, serviser i
+-- datumi se racunaju od sadasnjeg trenutka, a njihovi komentari, istorija i pratioci pisu iznova.
+-- Tako su glavni test primeri uvek na vrhu liste, sa svezim rokovima. Slike ostaju (fajlovi su u
+-- Garage-u), a kvarovi koji nisu iz skripte se ne diraju.
+--
+-- Glavni nalozi za proveru (Delta Residence):
+--   Marija (stan 14): sve faze kvara u stanu, rok prekoracen, potvrda resenja, vracen kvar,
+--     dolazak servisera; prati tudji zajednicki kvar, a njen lift prate drugi
+--   Danijel (upravnik): prihvati/odbij, dodeli, rok danas/sutra/prekoracen; kao vlasnik stana 7
+--     potvrdjuje resen kvar; prati Marijin lift
+--   Petar (serviser): dodeljen bez dolaska i sa dolaskom, u toku, vracen, resen, u sve tri zgrade
+-- Pri prijavi kvara u zajednickom prostoru Marija vidi: Lift (svoj), Grejanje (vec ga prati),
+-- Struja (interfon bez pratilaca, svetlo na stepenistu sa jednim pratiocem).
 -- rok za resavanje = prijava + 2 / 7 / 21 dan (isto kao DANA_ZA_RESAVANJE u kvar.constants.ts)
-INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status,
-                  "zgradaId", "stanId", "korisnikId", "serviserId", "datumPrijave", "rokResavanja")
+CREATE TEMP TABLE seed_kvar ON COMMIT DROP AS
 SELECT v.naslov, v.opis,
-       v.kategorija::kvar_kategorija_enum, v.lokacija::kvar_lokacijatip_enum,
-       v.prioritet::kvar_prioritet_enum, v.status::kvar_status_enum,
-       z.id, s.id, k.id, ser.id, now() - v.pre,
+       v.kategorija::kvar_kategorija_enum AS kategorija,
+       v.lokacija::kvar_lokacijatip_enum AS lokacija,
+       v.prioritet::kvar_prioritet_enum AS prioritet,
+       v.status::kvar_status_enum AS status,
+       z.id AS zgrada_id, s.id AS stan_id, k.id AS korisnik_id, ser.id AS serviser_id,
+       now() - v.pre AS datum_prijave,
        now() - v.pre + CASE v.prioritet
          WHEN 'hitno' THEN interval '2 days'
          WHEN 'srednje' THEN interval '7 days'
          ELSE interval '21 days'
-       END
+       END AS rok,
+       now() - v.resen AS datum_resenja,
+       v.dolazak
 FROM (VALUES
-  -- prvi kvarovi (napravljeni rucno); lift je u zajednickom prostoru, bez stana
-  ('Curi slavina', 'Slavina u kupatilu curi neprestano',
-   'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
-   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '20 days'),
-  ('Ne radi lift', 'Lift zaglavljen između spratova',
-   'lift', 'zajednicki_prostor', 'srednje', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'marija@gmail.com', NULL, interval '4 days'),
-  ('Ne radi interfon', 'Interfon ne zvoni u stanovima na trećem spratu, ne može da se otvori ulaz.',
-   'struja', 'zajednicki_prostor', 'srednje', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'bojan.tasic@example.com', NULL, interval '8 hours'),
-  ('Vlaga na zidu u spavaćoj sobi', 'Na zidu prema fasadi se pojavila vlaga i buđ, širi se posle kiše.',
-   'gradjevina', 'privatni_stan', 'srednje', 'prihvacen',
-   'Bulevar Nemanjića 45, Niš', '12', 'marina.cvetkovic@example.com', NULL, interval '3 days'),
-  ('Curenje vode ispod sudopere', 'Od jutros curi voda ispod sudopere, ispod je mokar ormarić. Zatvorio sam ventil.',
-   'vodovod', 'privatni_stan', 'srednje', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', '2', 'ana.jovanovic@example.com', NULL, interval '3 hours'),
-  ('Ne radi svetlo na stepeništu', 'Na trećem spratu ne radi svetlo već dva dana, mrak je uveče.',
-   'struja', 'zajednicki_prostor', 'srednje', 'prihvacen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'milan.stojkovic@example.com', NULL, interval '2 days'),
-  ('Pukla cev grejanja u dnevnoj sobi', 'Iz radijatora u dnevnoj sobi kaplje voda, ispod je bara.',
-   'grejanje', 'privatni_stan', 'hitno', 'dodeljen',
-   'Bulevar Nemanjića 45, Niš', '15', 'stefan.popovic@example.com', 'dragan.petrovic@example.com', interval '1 day'),
-  ('Lift stoji između spratova', 'Lift se zaustavio između drugog i trećeg sprata, ne reaguje na dugmad.',
-   'lift', 'zajednicki_prostor', 'hitno', 'u_toku',
-   'Obrenovićeva 30, Niš', NULL, 'milica.djordjevic@example.com', 'zoran.djordjevic@example.com', interval '5 hours'),
-  ('Ne zatvaraju se ulazna vrata zgrade', 'Brava na ulaznim vratima ne hvata, vrata ostaju otvorena.',
-   'stolarija', 'zajednicki_prostor', 'srednje', 'prijavljen',
-   'Obrenovićeva 30, Niš', NULL, 'nemanja.kostic@example.com', NULL, interval '6 hours'),
-  ('Iskače osigurač u kupatilu', 'Kad se uključi bojler, iskače osigurač za kupatilo.',
-   'struja', 'privatni_stan', 'srednje', 'resen',
-   'Vizantijski bulevar 12, Niš', '8', 'aleksandar.ristic@example.com', 'zoran.djordjevic@example.com', interval '6 days'),
-  ('Začepljen odvod u kadi', 'Voda se sporo odvodi iz kade, verovatno je začepljen sifon.',
-   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
-   'Vizantijski bulevar 12, Niš', '16', 'jovana.mitic@example.com', 'dragan.petrovic@example.com', interval '12 days'),
-  ('Grafiti na fasadi', 'Na zidu pored ulaza neko je ispisao grafite.',
-   'gradjevina', 'zajednicki_prostor', 'nisko', 'odbijen',
-   'Vizantijski bulevar 12, Niš', NULL, 'uros.savic@example.com', NULL, interval '9 days'),
-  -- Petar (vodovod, grejanje) i u druge dve zgrade: filter po zgradi i svi statusi servisera
-  ('Curi cev u podrumu', 'Iz cevi pored vodomera u podrumu curi voda, pod je mokar.',
-   'vodovod', 'zajednicki_prostor', 'hitno', 'dodeljen',
-   'Obrenovićeva 30, Niš', NULL, 'nemanja.kostic@example.com', 'petar@gmail.com', interval '3 hours'),
-  ('Hladan radijator u kupatilu', 'Radijator u kupatilu je hladan, ostali u stanu greju.',
-   'grejanje', 'privatni_stan', 'srednje', 'u_toku',
-   'Obrenovićeva 30, Niš', '10', 'tijana.pavlovic@example.com', 'petar@gmail.com', interval '1 day'),
-  ('Slab pritisak vode', 'U kuhinji i kupatilu voda jedva teče, posebno uveče.',
-   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
-   'Obrenovićeva 30, Niš', '4', 'milica.djordjevic@example.com', 'petar@gmail.com', interval '25 days'),
-  ('Kaplje ventil na radijatoru', 'Ventil na radijatoru u dnevnoj sobi kaplje, stavio sam posudu ispod.',
-   'grejanje', 'privatni_stan', 'srednje', 'dodeljen',
-   'Vizantijski bulevar 12, Niš', '22', 'uros.savic@example.com', 'petar@gmail.com', interval '6 hours'),
-  ('Nema tople vode', 'Od jutros nema tople vode u stanu, bojler je uključen.',
-   'vodovod', 'privatni_stan', 'hitno', 'u_toku',
-   'Vizantijski bulevar 12, Niš', '16', 'jovana.mitic@example.com', 'petar@gmail.com', interval '4 hours'),
-  ('Lupaju cevi grejanja', 'Kad se uključi grejanje, cevi na stepeništu glasno lupaju.',
-   'grejanje', 'zajednicki_prostor', 'nisko', 'resen',
-   'Vizantijski bulevar 12, Niš', NULL, 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '3 days'),
-  ('Curi vodokotlić', 'Vodokotlić stalno pušta vodu u šolju.',
-   'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
-   'Vizantijski bulevar 12, Niš', '8', 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '14 days'),
-  -- Delta Residence: vise aktivnih i zavrsenih (za listu, filter i paginaciju)
-  ('Ne radi bojler', 'Bojler u kupatilu ne greje vodu, lampica na njemu ne svetli.',
-   'vodovod', 'privatni_stan', 'srednje', 'resen',
-   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '2 days'),
-  ('Ne greje radijator u spavaćoj sobi', 'Radijator u spavaćoj sobi je hladan, ostali u stanu greju normalno.',
-   'grejanje', 'privatni_stan', 'srednje', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', '6', 'dejan.milosavljevic@example.com', NULL, interval '5 hours'),
-  ('Ne radi utičnica u kuhinji', 'Utičnica pored frižidera ne radi, osigurač nije iskočio.',
-   'struja', 'privatni_stan', 'srednje', 'prihvacen',
-   'Bulevar Nemanjića 45, Niš', '18', 'goran.stamenkovic@example.com', NULL, interval '2 days'),
-  ('Pokvaren poštanski sandučić', 'Vratanca sandučića za stan 1 su iskrivljena i ne mogu da se zaključaju.',
-   'ostalo', 'zajednicki_prostor', 'nisko', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'vesna.djokic@example.com', NULL, interval '1 day'),
-  ('Curi voda iz bojlera', 'Ispod bojlera u kupatilu stalno kaplje, isključila sam ga iz struje.',
-   'vodovod', 'privatni_stan', 'hitno', 'u_toku',
-   'Bulevar Nemanjića 45, Niš', '1', 'vesna.djokic@example.com', 'petar@gmail.com', interval '10 hours'),
-  ('Zaglavljena roletna u dnevnoj sobi', 'Roletna je zaglavljena na pola, kaiš ne može ni gore ni dole.',
-   'stolarija', 'privatni_stan', 'nisko', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', '10', 'bojan.tasic@example.com', NULL, interval '3 days'),
-  ('Neprijatan miris iz odvoda u podrumu', 'Iz podnog odvoda u podrumu se širi miris kanalizacije.',
-   'vodovod', 'zajednicki_prostor', 'srednje', 'dodeljen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'milan.stojkovic@example.com', 'dragan.petrovic@example.com', interval '2 days'),
-  ('Ne radi svetlo u liftu', 'U kabini lifta ne radi svetlo, vožnja je u mraku.',
-   'struja', 'zajednicki_prostor', 'srednje', 'resen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'ivana.nikolic@example.com', 'zoran.djordjevic@example.com', interval '4 days'),
-  ('Ne radi grejanje u celoj zgradi', 'Od jutros su hladni radijatori u svim stanovima koje sam pitao.',
-   'grejanje', 'zajednicki_prostor', 'hitno', 'u_toku',
-   'Bulevar Nemanjića 45, Niš', NULL, 'sanja.milosavljevic@example.com', 'petar@gmail.com', interval '2 hours'),
-  ('Prljavo stepenište posle renoviranja', 'Posle renoviranja stana na drugom spratu stepenište je puno prašine i šuta.',
-   'ciscenje', 'zajednicki_prostor', 'nisko', 'prihvacen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'stefan.popovic@example.com', NULL, interval '1 day'),
-  ('Kaplje česma u kupatilu', 'Česma na lavabou kaplje i kad je skroz zatvorena.',
-   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
-   'Bulevar Nemanjića 45, Niš', '2', 'ana.jovanovic@example.com', 'petar@gmail.com', interval '15 days'),
-  ('Treperi svetlo u hodniku', 'Svetlo u hodniku na trećem spratu treperi.',
-   'struja', 'zajednicki_prostor', 'nisko', 'zatvoren',
-   'Bulevar Nemanjića 45, Niš', NULL, 'marina.cvetkovic@example.com', 'zoran.djordjevic@example.com', interval '18 days'),
-  ('Hladni radijatori na petom spratu', 'Radijatori u stanovima na petom spratu su jedva mlaki.',
-   'grejanje', 'zajednicki_prostor', 'srednje', 'zatvoren',
-   'Bulevar Nemanjića 45, Niš', NULL, 'goran.stamenkovic@example.com', 'dragan.petrovic@example.com', interval '30 days'),
-  ('Buka iz stana iznad', 'Komšije iznad prave buku posle ponoći skoro svake noći.',
-   'ostalo', 'zajednicki_prostor', 'nisko', 'odbijen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'natalija.stojadinovic@example.com', NULL, interval '8 days'),
-  ('Ogrebotine na vratima lifta', 'Neko je ogrebao unutrašnja vrata lifta.',
-   'gradjevina', 'zajednicki_prostor', 'nisko', 'odbijen',
-   'Bulevar Nemanjića 45, Niš', NULL, 'dejan.milosavljevic@example.com', NULL, interval '11 days'),
-  -- Marijin stan 14: po jedan kvar u svakom statusu (zatvoren i resen su gore)
+  -- Marijin stan 14 i zajednicki kvarovi Delte: najnoviji, da budu na vrhu liste
   ('Ne radi ventilator u kupatilu', 'Ventilator u kupatilu ne radi, ogledalo se magli posle tuširanja.',
    'struja', 'privatni_stan', 'srednje', 'prijavljen',
-   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '5 hours'),
-  ('Ne zatvara se prozor u spavaćoj sobi', 'Krilo prozora u spavaćoj sobi ne može da se zatvori do kraja, duva.',
-   'stolarija', 'privatni_stan', 'srednje', 'prihvacen',
-   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '1 day'),
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '30 minutes', NULL, NULL),
+  ('Ne radi lift', 'Lift zaglavljen između spratova',
+   'lift', 'zajednicki_prostor', 'srednje', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'marija@gmail.com', NULL, interval '2 hours', NULL, NULL),
+  ('Ne radi grejanje u celoj zgradi', 'Od jutros su hladni radijatori u svim stanovima koje sam pitao.',
+   'grejanje', 'zajednicki_prostor', 'hitno', 'u_toku',
+   'Bulevar Nemanjića 45, Niš', NULL, 'sanja.milosavljevic@example.com', 'petar@gmail.com', interval '3 hours', NULL,
+   date_trunc('hour', now()) + interval '2 hours'),
   ('Curi ispod veš mašine', 'Posle pranja ispod veš mašine ostane bara, curi negde kod creva.',
    'vodovod', 'privatni_stan', 'srednje', 'dodeljen',
-   'Bulevar Nemanjića 45, Niš', '14', 'natalija.stojadinovic@example.com', 'petar@gmail.com', interval '2 days'),
-  ('Slab mlaz vode u tušu', 'Iz tuša jedva curi voda, ostale slavine rade normalno.',
-   'vodovod', 'privatni_stan', 'srednje', 'u_toku',
-   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '4 days'),
-  ('Napukla pločica u kupatilu', 'Jedna pločica na zidu pored kade je napukla.',
-   'gradjevina', 'privatni_stan', 'nisko', 'odbijen',
-   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '6 days'),
+   'Bulevar Nemanjića 45, Niš', '14', 'natalija.stojadinovic@example.com', 'petar@gmail.com', interval '6 hours', NULL,
+   (date_trunc('day', now() AT TIME ZONE 'Europe/Belgrade') + interval '1 day 10 hours') AT TIME ZONE 'Europe/Belgrade'),
+  ('Ne radi bojler', 'Bojler u kupatilu ne greje vodu, lampica na njemu ne svetli.',
+   'vodovod', 'privatni_stan', 'srednje', 'resen',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '1 day', interval '2 hours', NULL),
+  ('Curi voda iz bojlera', 'Ispod bojlera u kupatilu stalno kaplje, isključila sam ga iz struje.',
+   'vodovod', 'privatni_stan', 'hitno', 'u_toku',
+   'Bulevar Nemanjića 45, Niš', '1', 'vesna.djokic@example.com', 'petar@gmail.com', interval '1 day 2 hours', NULL, NULL),
   -- Danijel je i vlasnik stana 7: na resenom kvaru u svom stanu vidi i Potvrdu i Upravljanje
   ('Ne radi zvono na vratima stana', 'Zvono na ulaznim vratima stana ne zvoni, dugme se zaglavljuje.',
    'struja', 'privatni_stan', 'nisko', 'resen',
-   'Bulevar Nemanjića 45, Niš', '7', 'danijel@gmail.com', 'petar@gmail.com', interval '3 days')
-) AS v(naslov, opis, kategorija, lokacija, prioritet, status, adresa, broj, email, serviser, pre)
+   'Bulevar Nemanjića 45, Niš', '7', 'danijel@gmail.com', 'petar@gmail.com', interval '1 day 4 hours', interval '1 hour', NULL),
+  -- hitno, prihvacen pre skoro dva dana: rok istice danas
+  ('Ne radi svetlo na stepeništu', 'Na trećem spratu ne radi svetlo već dva dana, mrak je uveče.',
+   'struja', 'zajednicki_prostor', 'hitno', 'prihvacen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'milan.stojkovic@example.com', NULL, interval '1 day 20 hours', NULL, NULL),
+  -- vracen serviseru (istorija je niže)
+  ('Slab mlaz vode u tušu', 'Iz tuša jedva curi voda, ostale slavine rade normalno.',
+   'vodovod', 'privatni_stan', 'srednje', 'u_toku',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '2 days', NULL, NULL),
+  -- hitno, jos nije dodeljen: rok prekoracen
+  ('Ne zatvara se prozor u spavaćoj sobi', 'Krilo prozora u spavaćoj sobi ne može da se zatvori do kraja, duva.',
+   'stolarija', 'privatni_stan', 'hitno', 'prihvacen',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '2 days 6 hours', NULL, NULL),
+  ('Ne radi interfon', 'Interfon ne zvoni u stanovima na trećem spratu, ne može da se otvori ulaz.',
+   'struja', 'zajednicki_prostor', 'srednje', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'bojan.tasic@example.com', NULL, interval '2 days 12 hours', NULL, NULL),
+  ('Napukla pločica u kupatilu', 'Jedna pločica na zidu pored kade je napukla.',
+   'gradjevina', 'privatni_stan', 'nisko', 'odbijen',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '2 days 12 hours', NULL, NULL),
+  ('Curi slavina', 'Slavina u kupatilu curi neprestano',
+   'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '3 days', interval '2 days', NULL),
+  -- Petar u druge dve zgrade: filter po zgradi i svi statusi servisera
+  ('Nema tople vode', 'Od jutros nema tople vode u stanu, bojler je uključen.',
+   'vodovod', 'privatni_stan', 'hitno', 'u_toku',
+   'Vizantijski bulevar 12, Niš', '16', 'jovana.mitic@example.com', 'petar@gmail.com', interval '5 hours', NULL, NULL),
+  -- dodeljen, hitno, bez dolaska: rok prekoracen, Petar treba da upise dolazak
+  ('Curi cev u podrumu', 'Iz cevi pored vodomera u podrumu curi voda, pod je mokar.',
+   'vodovod', 'zajednicki_prostor', 'hitno', 'dodeljen',
+   'Obrenovićeva 30, Niš', NULL, 'nemanja.kostic@example.com', 'petar@gmail.com', interval '2 days 12 hours', NULL, NULL),
+  ('Hladan radijator u kupatilu', 'Radijator u kupatilu je hladan, ostali u stanu greju.',
+   'grejanje', 'privatni_stan', 'srednje', 'u_toku',
+   'Obrenovićeva 30, Niš', '10', 'tijana.pavlovic@example.com', 'petar@gmail.com', interval '3 days', NULL, NULL),
+  ('Lupaju cevi grejanja', 'Kad se uključi grejanje, cevi na stepeništu glasno lupaju.',
+   'grejanje', 'zajednicki_prostor', 'nisko', 'resen',
+   'Vizantijski bulevar 12, Niš', NULL, 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '3 days', interval '2 days', NULL),
+  ('Kaplje ventil na radijatoru', 'Ventil na radijatoru u dnevnoj sobi kaplje, stavio sam posudu ispod.',
+   'grejanje', 'privatni_stan', 'srednje', 'dodeljen',
+   'Vizantijski bulevar 12, Niš', '22', 'uros.savic@example.com', 'petar@gmail.com', interval '3 days 6 hours', NULL, NULL),
+  ('Slab pritisak vode', 'U kuhinji i kupatilu voda jedva teče, posebno uveče.',
+   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
+   'Obrenovićeva 30, Niš', '4', 'milica.djordjevic@example.com', 'petar@gmail.com', interval '25 days', NULL, NULL),
+  ('Curi vodokotlić', 'Vodokotlić stalno pušta vodu u šolju.',
+   'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
+   'Vizantijski bulevar 12, Niš', '8', 'aleksandar.ristic@example.com', 'petar@gmail.com', interval '14 days', NULL, NULL),
+  -- Ostali kvarovi (stariji, ispod glavnih): lista, filter i paginacija
+  ('Lift stoji između spratova', 'Lift se zaustavio između drugog i trećeg sprata, ne reaguje na dugmad.',
+   'lift', 'zajednicki_prostor', 'hitno', 'u_toku',
+   'Obrenovićeva 30, Niš', NULL, 'milica.djordjevic@example.com', 'zoran.djordjevic@example.com', interval '5 hours', NULL, NULL),
+  ('Ne zatvaraju se ulazna vrata zgrade', 'Brava na ulaznim vratima ne hvata, vrata ostaju otvorena.',
+   'stolarija', 'zajednicki_prostor', 'srednje', 'prijavljen',
+   'Obrenovićeva 30, Niš', NULL, 'nemanja.kostic@example.com', NULL, interval '1 day', NULL, NULL),
+  ('Curenje vode ispod sudopere', 'Od jutros curi voda ispod sudopere, ispod je mokar ormarić. Zatvorio sam ventil.',
+   'vodovod', 'privatni_stan', 'srednje', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', '2', 'ana.jovanovic@example.com', NULL, interval '3 days', NULL, NULL),
+  ('Ne greje radijator u spavaćoj sobi', 'Radijator u spavaćoj sobi je hladan, ostali u stanu greju normalno.',
+   'grejanje', 'privatni_stan', 'srednje', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', '6', 'dejan.milosavljevic@example.com', NULL, interval '3 days 12 hours', NULL, NULL),
+  ('Vlaga na zidu u spavaćoj sobi', 'Na zidu prema fasadi se pojavila vlaga i buđ, širi se posle kiše.',
+   'gradjevina', 'privatni_stan', 'srednje', 'prihvacen',
+   'Bulevar Nemanjića 45, Niš', '12', 'marina.cvetkovic@example.com', NULL, interval '4 days', NULL, NULL),
+  ('Pukla cev grejanja u dnevnoj sobi', 'Iz radijatora u dnevnoj sobi kaplje voda, ispod je bara.',
+   'grejanje', 'privatni_stan', 'hitno', 'dodeljen',
+   'Bulevar Nemanjića 45, Niš', '15', 'stefan.popovic@example.com', 'dragan.petrovic@example.com', interval '4 days', NULL, NULL),
+  ('Prljavo stepenište posle renoviranja', 'Posle renoviranja stana na drugom spratu stepenište je puno prašine i šuta.',
+   'ciscenje', 'zajednicki_prostor', 'nisko', 'prihvacen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'stefan.popovic@example.com', NULL, interval '4 days 2 hours', NULL, NULL),
+  ('Pokvaren poštanski sandučić', 'Vratanca sandučića za stan 1 su iskrivljena i ne mogu da se zaključaju.',
+   'ostalo', 'zajednicki_prostor', 'nisko', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'vesna.djokic@example.com', NULL, interval '4 days 6 hours', NULL, NULL),
+  ('Ne radi utičnica u kuhinji', 'Utičnica pored frižidera ne radi, osigurač nije iskočio.',
+   'struja', 'privatni_stan', 'srednje', 'prihvacen',
+   'Bulevar Nemanjića 45, Niš', '18', 'goran.stamenkovic@example.com', NULL, interval '5 days', NULL, NULL),
+  ('Neprijatan miris iz odvoda u podrumu', 'Iz podnog odvoda u podrumu se širi miris kanalizacije.',
+   'vodovod', 'zajednicki_prostor', 'srednje', 'dodeljen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'milan.stojkovic@example.com', 'dragan.petrovic@example.com', interval '5 days', NULL, NULL),
+  ('Ne radi svetlo u liftu', 'U kabini lifta ne radi svetlo, vožnja je u mraku.',
+   'struja', 'zajednicki_prostor', 'srednje', 'resen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'ivana.nikolic@example.com', 'zoran.djordjevic@example.com', interval '6 days', interval '3 days', NULL),
+  ('Zaglavljena roletna u dnevnoj sobi', 'Roletna je zaglavljena na pola, kaiš ne može ni gore ni dole.',
+   'stolarija', 'privatni_stan', 'nisko', 'prijavljen',
+   'Bulevar Nemanjića 45, Niš', '10', 'bojan.tasic@example.com', NULL, interval '6 days', NULL, NULL),
+  ('Iskače osigurač u kupatilu', 'Kad se uključi bojler, iskače osigurač za kupatilo.',
+   'struja', 'privatni_stan', 'srednje', 'resen',
+   'Vizantijski bulevar 12, Niš', '8', 'aleksandar.ristic@example.com', 'zoran.djordjevic@example.com', interval '6 days', interval '5 days', NULL),
+  ('Buka iz stana iznad', 'Komšije iznad prave buku posle ponoći skoro svake noći.',
+   'ostalo', 'zajednicki_prostor', 'nisko', 'odbijen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'natalija.stojadinovic@example.com', NULL, interval '8 days', NULL, NULL),
+  ('Grafiti na fasadi', 'Na zidu pored ulaza neko je ispisao grafite.',
+   'gradjevina', 'zajednicki_prostor', 'nisko', 'odbijen',
+   'Vizantijski bulevar 12, Niš', NULL, 'uros.savic@example.com', NULL, interval '9 days', NULL, NULL),
+  ('Ogrebotine na vratima lifta', 'Neko je ogrebao unutrašnja vrata lifta.',
+   'gradjevina', 'zajednicki_prostor', 'nisko', 'odbijen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'dejan.milosavljevic@example.com', NULL, interval '11 days', NULL, NULL),
+  ('Začepljen odvod u kadi', 'Voda se sporo odvodi iz kade, verovatno je začepljen sifon.',
+   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
+   'Vizantijski bulevar 12, Niš', '16', 'jovana.mitic@example.com', 'dragan.petrovic@example.com', interval '12 days', NULL, NULL),
+  ('Kaplje česma u kupatilu', 'Česma na lavabou kaplje i kad je skroz zatvorena.',
+   'vodovod', 'privatni_stan', 'nisko', 'zatvoren',
+   'Bulevar Nemanjića 45, Niš', '2', 'ana.jovanovic@example.com', 'petar@gmail.com', interval '15 days', NULL, NULL),
+  ('Treperi svetlo u hodniku', 'Svetlo u hodniku na trećem spratu treperi.',
+   'struja', 'zajednicki_prostor', 'nisko', 'zatvoren',
+   'Bulevar Nemanjića 45, Niš', NULL, 'marina.cvetkovic@example.com', 'zoran.djordjevic@example.com', interval '18 days', NULL, NULL),
+  ('Hladni radijatori na petom spratu', 'Radijatori u stanovima na petom spratu su jedva mlaki.',
+   'grejanje', 'zajednicki_prostor', 'srednje', 'zatvoren',
+   'Bulevar Nemanjića 45, Niš', NULL, 'goran.stamenkovic@example.com', 'dragan.petrovic@example.com', interval '30 days', NULL, NULL)
+) AS v(naslov, opis, kategorija, lokacija, prioritet, status, adresa, broj, email, serviser, pre, resen, dolazak)
 JOIN zgrada z ON z.adresa = v.adresa
-LEFT JOIN stan s ON s."zgradaId" = z.id AND s.broj = v.broj
+LEFT JOIN stan s ON s."zgradaId" = z.id AND s.broj = v.broj AND v.lokacija = 'privatni_stan'
 JOIN korisnik k ON k.email = v.email
-LEFT JOIN korisnik ser ON ser.email = v.serviser
-WHERE NOT EXISTS (SELECT 1 FROM kvar kv WHERE kv.naslov = v.naslov AND kv."zgradaId" = z.id);
+LEFT JOIN korisnik ser ON ser.email = v.serviser;
+
+UPDATE kvar kv
+SET opis = v.opis, kategorija = v.kategorija, "lokacijaTip" = v.lokacija, prioritet = v.prioritet,
+    status = v.status, "stanId" = v.stan_id, "korisnikId" = v.korisnik_id, "serviserId" = v.serviser_id,
+    "datumPrijave" = v.datum_prijave, "rokResavanja" = v.rok, "datumResenja" = v.datum_resenja,
+    "dolazakServisera" = v.dolazak
+FROM seed_kvar v
+WHERE kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id;
+
+INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status, "zgradaId", "stanId",
+                  "korisnikId", "serviserId", "datumPrijave", "rokResavanja", "datumResenja",
+                  "dolazakServisera")
+SELECT v.naslov, v.opis, v.kategorija, v.lokacija, v.prioritet, v.status, v.zgrada_id, v.stan_id,
+       v.korisnik_id, v.serviser_id, v.datum_prijave, v.rok, v.datum_resenja, v.dolazak
+FROM seed_kvar v
+WHERE NOT EXISTS (SELECT 1 FROM kvar kv WHERE kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id);
+
+-- Komentari, istorija i pratioci kvarova iz skripte se pisu iznova (istorija prva, jer pokazuje na komentar)
+CREATE TEMP TABLE seed_kvar_id ON COMMIT DROP AS
+SELECT kv.id FROM kvar kv JOIN seed_kvar v ON kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id;
+DELETE FROM promena_statusa_kvara WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);
+DELETE FROM komentar_kvar WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);
+DELETE FROM pratilac_kvara WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);
 
 -- Kvar u zajednickom prostoru nema stan (kao kad ga prijavi aplikacija); ispravlja i starije redove
 UPDATE kvar SET "stanId" = NULL
 WHERE "lokacijaTip" = 'zajednicki_prostor' AND "stanId" IS NOT NULL;
 
--- Kada je serviser oznacio kvar kao resen (stanar ima 7 dana da potvrdi, posle se sam zatvara)
-UPDATE kvar kv SET "datumResenja" = now() - v.pre
-FROM (VALUES
-  ('Iskače osigurač u kupatilu', interval '5 days'),
-  ('Lupaju cevi grejanja', interval '2 days'),
-  ('Ne radi svetlo u liftu', interval '3 days'),
-  ('Ne radi bojler', interval '1 hour'),
-  ('Ne radi zvono na vratima stana', interval '1 hour')
-) AS v(naslov, pre)
-WHERE kv.naslov = v.naslov AND kv.status = 'resen' AND kv."datumResenja" IS NULL;
-
 -- KOMENTARI NA KVAROVE ----------------------------------------------------------------------
 INSERT INTO komentar_kvar (tekst, "kvarId", "korisnikId", "datumKreiranja")
 SELECT v.tekst, kv.id, k.id, now() - v.pre
 FROM (VALUES
-  ('Pukla cev grejanja u dnevnoj sobi', 'danijel@gmail.com', 'Serviser Dragan dolazi sutra između 9 i 11h.', interval '20 hours'),
-  ('Pukla cev grejanja u dnevnoj sobi', 'stefan.popovic@example.com', 'Hvala, biću kod kuće.', interval '19 hours'),
+  ('Ne radi grejanje u celoj zgradi', 'danijel@gmail.com', 'Toplana javlja kvar na podstanici, serviser Petar je na licu mesta.', interval '2 hours'),
+  ('Ne radi grejanje u celoj zgradi', 'marija@gmail.com', 'I kod nas u stanu 14 je hladno.', interval '1 hour 50 minutes'),
+  ('Curi ispod veš mašine', 'petar@gmail.com', 'Dolazim sutra pre podne, do tada zatvorite ventil za mašinu.', interval '4 hours'),
+  ('Curi ispod veš mašine', 'natalija.stojadinovic@example.com', 'Može, biću kod kuće.', interval '3 hours'),
+  ('Ne radi zvono na vratima stana', 'petar@gmail.com', 'Zamenjeno dugme zvona, sada radi.', interval '1 hour'),
+  ('Ne radi svetlo na stepeništu', 'danijel@gmail.com', 'Prihvaćeno, dodeliću električara.', interval '1 day 18 hours'),
+  ('Slab mlaz vode u tušu', 'petar@gmail.com', 'Očišćen kamenac sa glave tuša i zamenjen ventil.', interval '1 day 8 hours'),
+  ('Slab mlaz vode u tušu', 'marija@gmail.com', 'Posle popravke je mlaz bio dobar jedan dan, sada je opet slab.', interval '3 hours'),
+  ('Napukla pločica u kupatilu', 'danijel@gmail.com', 'Pločice u stanu održava vlasnik stana, to nije posao upravnika zgrade.', interval '2 days 10 hours'),
+  ('Nema tople vode', 'jovana.mitic@example.com', 'Osigurač bojlera nije iskočio, a lampica na bojleru ne svetli.', interval '4 hours'),
+  ('Nema tople vode', 'petar@gmail.com', 'Dolazim danas oko 14h, ponesite ključ od podruma.', interval '3 hours'),
   ('Lift stoji između spratova', 'zoran.djordjevic@example.com', 'Na licu mesta sam, menjam relej upravljanja.', interval '1 hour'),
+  ('Pukla cev grejanja u dnevnoj sobi', 'danijel@gmail.com', 'Serviser Dragan dolazi sutra između 9 i 11h.', interval '3 days 20 hours'),
+  ('Pukla cev grejanja u dnevnoj sobi', 'stefan.popovic@example.com', 'Hvala, biću kod kuće.', interval '3 days 19 hours'),
   ('Iskače osigurač u kupatilu', 'zoran.djordjevic@example.com', 'Zamenjen neispravan grejač bojlera, sve radi.', interval '5 days'),
-  ('Ne radi svetlo na stepeništu', 'danijel@gmail.com', 'Prihvaćeno, dodeliću električara.', interval '1 day'),
-  ('Ne radi grejanje u celoj zgradi', 'danijel@gmail.com', 'Toplana javlja kvar na podstanici, serviser Petar je na licu mesta.', interval '1 hour'),
-  ('Ne radi grejanje u celoj zgradi', 'marija@gmail.com', 'I kod nas u stanu 14 je hladno.', interval '50 minutes'),
-  ('Nema tople vode', 'jovana.mitic@example.com', 'Osigurač bojlera nije iskočio, a lampica na bojleru ne svetli.', interval '3 hours'),
-  ('Nema tople vode', 'petar@gmail.com', 'Dolazim danas oko 14h, ponesite ključ od podruma.', interval '2 hours'),
-  ('Buka iz stana iznad', 'danijel@gmail.com', 'Ovo nije kvar u zgradi; razgovaraću sa komšijama na sledećem sastanku stanara.', interval '7 days'),
-  ('Curi ispod veš mašine', 'petar@gmail.com', 'Dolazim u četvrtak posle 16h, do tada zatvorite ventil za mašinu.', interval '1 day'),
-  ('Curi ispod veš mašine', 'natalija.stojadinovic@example.com', 'Može, biću kod kuće.', interval '23 hours'),
-  ('Slab mlaz vode u tušu', 'petar@gmail.com', 'Očišćen kamenac sa glave tuša i zamenjen ventil.', interval '2 days 20 hours'),
-  ('Slab mlaz vode u tušu', 'marija@gmail.com', 'Posle popravke je mlaz bio dobar jedan dan, sada je opet slab.', interval '1 day'),
-  ('Napukla pločica u kupatilu', 'danijel@gmail.com', 'Pločice u stanu održava vlasnik stana, to nije posao upravnika zgrade.', interval '5 days 11 hours'),
-  ('Ne radi zvono na vratima stana', 'petar@gmail.com', 'Zamenjeno dugme zvona, sada radi.', interval '1 hour')
+  ('Buka iz stana iznad', 'danijel@gmail.com', 'Ovo nije kvar u zgradi; razgovaraću sa komšijama na sledećem sastanku stanara.', interval '7 days')
 ) AS v(naslov, email, tekst, pre)
 JOIN kvar kv ON kv.naslov = v.naslov
 JOIN korisnik k ON k.email = v.email
-WHERE NOT EXISTS (
-  SELECT 1 FROM komentar_kvar kk WHERE kk."kvarId" = kv.id AND kk.tekst = v.tekst
-);
+WHERE kv.id IN (SELECT id FROM seed_kvar_id);
+
+-- PRATIOCI KVAROVA --------------------------------------------------------------------------
+-- Marijin lift prate tri stanara, Marija prati grejanje, svetlo na stepenistu ima jednog
+-- pratioca, ostali nijednog
+INSERT INTO pratilac_kvara ("kvarId", "korisnikId", datum)
+SELECT kv.id, k.id, now() - v.pre
+FROM (VALUES
+  ('Ne radi lift', 'natalija.stojadinovic@example.com', interval '1 hour 40 minutes'),
+  ('Ne radi lift', 'vesna.djokic@example.com', interval '1 hour 10 minutes'),
+  ('Ne radi lift', 'danijel@gmail.com', interval '50 minutes'),
+  ('Ne radi grejanje u celoj zgradi', 'marija@gmail.com', interval '1 hour 50 minutes'),
+  ('Ne radi grejanje u celoj zgradi', 'ana.jovanovic@example.com', interval '1 hour 30 minutes'),
+  ('Ne radi svetlo na stepeništu', 'ana.jovanovic@example.com', interval '1 day 12 hours')
+) AS v(naslov, email, pre)
+JOIN kvar kv ON kv.naslov = v.naslov
+JOIN korisnik k ON k.email = v.email
+WHERE kv.id IN (SELECT id FROM seed_kvar_id);
 
 -- ISTORIJA STATUSA KVAROVA ------------------------------------------------------------------
 -- Kvar vracen serviseru: posle resenja Marija je javila da nije reseno (razlog je njen komentar),
@@ -381,12 +430,12 @@ WHERE NOT EXISTS (
 INSERT INTO promena_statusa_kvara (status, "kvarId", "korisnikId", "komentarId", datum)
 SELECT v.status::promena_statusa_kvara_status_enum, kv.id, k.id, kk.id, now() - v.pre
 FROM (VALUES
-  ('prijavljen', 'marija@gmail.com', NULL, interval '4 days'),
-  ('prihvacen', 'danijel@gmail.com', NULL, interval '3 days 21 hours'),
-  ('dodeljen', 'danijel@gmail.com', NULL, interval '3 days 19 hours'),
-  ('u_toku', 'petar@gmail.com', NULL, interval '3 days'),
-  ('resen', 'petar@gmail.com', NULL, interval '2 days 20 hours'),
-  ('u_toku', 'marija@gmail.com', 'Posle popravke je mlaz bio dobar jedan dan, sada je opet slab.', interval '1 day')
+  ('prijavljen', 'marija@gmail.com', NULL, interval '2 days'),
+  ('prihvacen', 'danijel@gmail.com', NULL, interval '1 day 22 hours'),
+  ('dodeljen', 'danijel@gmail.com', NULL, interval '1 day 20 hours'),
+  ('u_toku', 'petar@gmail.com', NULL, interval '1 day 12 hours'),
+  ('resen', 'petar@gmail.com', NULL, interval '1 day 8 hours'),
+  ('u_toku', 'marija@gmail.com', 'Posle popravke je mlaz bio dobar jedan dan, sada je opet slab.', interval '3 hours')
 ) AS v(status, email, razlog, pre)
 JOIN kvar kv ON kv.naslov = 'Slab mlaz vode u tušu'
 JOIN korisnik k ON k.email = v.email
