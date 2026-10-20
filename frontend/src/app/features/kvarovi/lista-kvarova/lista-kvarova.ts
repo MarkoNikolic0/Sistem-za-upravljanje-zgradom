@@ -54,10 +54,13 @@ export class ListaKvarova {
   protected readonly prikaziPratioce = computed(
     () => this.uloga() === 'upravnik' || this.uloga() === 'admin',
   );
-  protected readonly zgrade = this.kvarService.zgradeSaKvarovima(this.prikaziZgradu);
+  private readonly zgrade = this.kvarService.zgradeSaKvarovima(this.prikaziZgradu);
+  protected readonly listaZgrada = computed(() =>
+    this.zgrade.hasValue() ? this.zgrade.value() : [],
+  );
   protected readonly opcijeZgrada = computed(() => [
     { id: null, naziv: 'Sve zgrade' },
-    ...this.zgrade.value(),
+    ...this.listaZgrada(),
   ]);
 
   private readonly profil = this.profileService.profile();

@@ -355,13 +355,20 @@ LEFT JOIN stan s ON s."zgradaId" = z.id AND s.broj = v.broj AND v.lokacija = 'pr
 JOIN korisnik k ON k.email = v.email
 LEFT JOIN korisnik ser ON ser.email = v.serviser;
 
+-- Kvar iz skripte je najstariji sa tim naslovom u zgradi; isti naslov prijavljen kasnije kroz
+-- aplikaciju se ne dira
+CREATE TEMP TABLE seed_kvar_id ON COMMIT DROP AS
+SELECT min(kv.id) AS id, v.naslov
+FROM kvar kv JOIN seed_kvar v ON kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id
+GROUP BY v.naslov;
+
 UPDATE kvar kv
 SET opis = v.opis, kategorija = v.kategorija, "lokacijaTip" = v.lokacija, prioritet = v.prioritet,
     status = v.status, "stanId" = v.stan_id, "korisnikId" = v.korisnik_id, "serviserId" = v.serviser_id,
     "datumPrijave" = v.datum_prijave, "rokResavanja" = v.rok, "datumResenja" = v.datum_resenja,
     "dolazakServisera" = v.dolazak
-FROM seed_kvar v
-WHERE kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id;
+FROM seed_kvar v JOIN seed_kvar_id si ON si.naslov = v.naslov
+WHERE kv.id = si.id;
 
 INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status, "zgradaId", "stanId",
                   "korisnikId", "serviserId", "datumPrijave", "rokResavanja", "datumResenja",
@@ -369,11 +376,13 @@ INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status, "z
 SELECT v.naslov, v.opis, v.kategorija, v.lokacija, v.prioritet, v.status, v.zgrada_id, v.stan_id,
        v.korisnik_id, v.serviser_id, v.datum_prijave, v.rok, v.datum_resenja, v.dolazak
 FROM seed_kvar v
-WHERE NOT EXISTS (SELECT 1 FROM kvar kv WHERE kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id);
+WHERE NOT EXISTS (SELECT 1 FROM seed_kvar_id si WHERE si.naslov = v.naslov);
+
+INSERT INTO seed_kvar_id (id, naslov)
+SELECT kv.id, kv.naslov FROM kvar kv JOIN seed_kvar v ON kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id
+WHERE NOT EXISTS (SELECT 1 FROM seed_kvar_id si WHERE si.naslov = kv.naslov);
 
 -- Komentari, istorija i pratioci kvarova iz skripte se pisu iznova (istorija prva, jer pokazuje na komentar)
-CREATE TEMP TABLE seed_kvar_id ON COMMIT DROP AS
-SELECT kv.id FROM kvar kv JOIN seed_kvar v ON kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id;
 DELETE FROM promena_statusa_kvara WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);
 DELETE FROM komentar_kvar WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);
 DELETE FROM pratilac_kvara WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);
@@ -437,7 +446,7 @@ FROM (VALUES
   ('resen', 'petar@gmail.com', NULL, interval '1 day 8 hours'),
   ('u_toku', 'marija@gmail.com', 'Posle popravke je mlaz bio dobar jedan dan, sada je opet slab.', interval '3 hours')
 ) AS v(status, email, razlog, pre)
-JOIN kvar kv ON kv.naslov = 'Slab mlaz vode u tušu'
+JOIN kvar kv ON kv.id = (SELECT id FROM seed_kvar_id WHERE naslov = 'Slab mlaz vode u tušu')
 JOIN korisnik k ON k.email = v.email
 LEFT JOIN komentar_kvar kk ON kk."kvarId" = kv.id AND kk.tekst = v.razlog
 WHERE NOT EXISTS (SELECT 1 FROM promena_statusa_kvara p WHERE p."kvarId" = kv.id)

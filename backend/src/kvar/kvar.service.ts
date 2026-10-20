@@ -161,24 +161,31 @@ export class KvarService {
 
   async findDetalj(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findDostupan(id, korisnikId, uloga);
-    return Object.assign(kvar, {
-      smeDaUpravlja: await this.prava.smeDaUpravlja(kvar, korisnikId, uloga),
-      smeDaPotvrdi: await this.prava.smeDaPotvrdi(kvar, korisnikId),
-      smeDaPrati:
+    const [smeDaUpravlja, smeDaPotvrdi, smeDaPrati, pratim, istorija] =
+      await Promise.all([
+        this.prava.smeDaUpravlja(kvar, korisnikId, uloga),
+        this.prava.smeDaPotvrdi(kvar, korisnikId),
         OTVORENI_STATUSI.includes(kvar.status) &&
-        (await this.prava.smeDaPrati(kvar, korisnikId)),
-      pratim: await this.pratilacRepository.exists({
-        where: { kvar: { id }, korisnik: { id: korisnikId } },
-      }),
+          this.prava.smeDaPrati(kvar, korisnikId),
+        this.pratilacRepository.exists({
+          where: { kvar: { id }, korisnik: { id: korisnikId } },
+        }),
+        this.promenaRepository.find({
+          where: { kvar: { id } },
+          relations: { korisnik: true, komentar: true },
+          order: { datum: 'ASC', id: 'ASC' },
+        }),
+      ]);
+    return Object.assign(kvar, {
+      smeDaUpravlja,
+      smeDaPotvrdi,
+      smeDaPrati,
+      pratim,
       rokPotvrde:
         kvar.status === StatusKvara.RESEN && kvar.datumResenja
           ? new Date(kvar.datumResenja.getTime() + DANA_ZA_POTVRDU * MS_PO_DANU)
           : null,
-      istorija: await this.promenaRepository.find({
-        where: { kvar: { id } },
-        relations: { korisnik: true, komentar: true },
-        order: { datum: 'ASC', id: 'ASC' },
-      }),
+      istorija,
     });
   }
 

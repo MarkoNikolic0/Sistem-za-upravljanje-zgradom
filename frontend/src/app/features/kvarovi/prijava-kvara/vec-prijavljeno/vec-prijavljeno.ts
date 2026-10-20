@@ -34,7 +34,8 @@ export class VecPrijavljeno {
     return stanId !== null && kategorija !== null ? { stanId, kategorija } : undefined;
   });
 
-  protected readonly slicni = this.kvarService.slicni(this.upit);
+  private readonly slicni = this.kvarService.slicni(this.upit);
+  protected readonly lista = computed(() => (this.slicni.hasValue() ? this.slicni.value() : []));
 
   protected readonly pracenjeUToku = signal(false);
   protected readonly greska = linkedSignal({ source: this.upit, computation: () => '' });
