@@ -24,6 +24,7 @@ import {
   NAZIVI_KATEGORIJA_KVARA,
 } from '../kvar-models';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
 
 type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
 
@@ -40,6 +41,7 @@ type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
     SkeletonModule,
     TextareaModule,
     SlikePrijave,
+    VecPrijavljeno,
   ],
   selector: 'app-prijava-kvara',
   styleUrl: './prijava-kvara.scss',

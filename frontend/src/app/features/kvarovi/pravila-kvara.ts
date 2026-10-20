@@ -15,6 +15,12 @@ export const PRAVILA_KOMENTARA_KVARA = [
   Validators.maxLength(MAKS_KOMENTAR_KVARA),
 ];
 
+const mnozina = new Intl.PluralRules('sr-Latn');
+
+export function brojStanara(broj: number): string {
+  return `${broj} ${mnozina.select(broj) === 'one' ? 'stanar' : 'stanara'}`;
+}
+
 export function pratiRok(status: StatusKvara): boolean {
   return ['prijavljen', 'prihvacen', 'dodeljen', 'u_toku'].includes(status);
 }

@@ -61,6 +61,7 @@ export interface Kvar {
   datumResenja: string | null;
   rokResavanja: string;
   dolazakServisera: string | null;
+  brojPratilaca: number;
   zgrada: ZgradaOsnovno;
   stan: StanOsnovno | null;
   korisnik: KorisnikOsnovno & Partial<Kontakt>;
@@ -78,8 +79,26 @@ export interface PromenaStatusaKvara {
 export interface KvarDetalj extends Kvar {
   smeDaUpravlja: boolean;
   smeDaPotvrdi: boolean;
+  smeDaPrati: boolean;
+  pratim: boolean;
   rokPotvrde: string | null;
   istorija: PromenaStatusaKvara[];
+}
+
+export interface StanjePracenja {
+  pratim: boolean;
+  brojPratilaca: number;
+}
+
+export type SlicanKvar = Pick<
+  Kvar,
+  'id' | 'naslov' | 'status' | 'datumPrijave' | 'brojPratilaca' | 'korisnik'
+> &
+  Pick<StanjePracenja, 'pratim'>;
+
+export interface UpitSlicnih {
+  stanId: number;
+  kategorija: KategorijaKvara;
 }
 
 export interface UpitKvarova extends UpitStrane {

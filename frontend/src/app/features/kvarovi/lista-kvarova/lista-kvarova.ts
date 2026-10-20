@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
 import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
+import { brojStanara } from '../pravila-kvara';
 
 @Component({
   imports: [
@@ -43,11 +44,16 @@ export class ListaKvarova {
   protected readonly poStrani = KVAROVA_PO_STRANI;
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
 
+  protected readonly brojStanara = brojStanara;
+
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);
   protected readonly prikaziZgradu = computed(
     () => this.uloga() === 'admin' || this.uloga() === 'serviser',
   );
   protected readonly serviser = computed(() => this.uloga() === 'serviser');
+  protected readonly prikaziPratioce = computed(
+    () => this.uloga() === 'upravnik' || this.uloga() === 'admin',
+  );
   protected readonly zgrade = this.kvarService.zgradeSaKvarovima(this.prikaziZgradu);
   protected readonly opcijeZgrada = computed(() => [
     { id: null, naziv: 'Sve zgrade' },

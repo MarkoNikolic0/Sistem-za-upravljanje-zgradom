@@ -80,6 +80,9 @@
             @if (prikaziZgradu()) {
               · {{ kvar.zgrada.naziv }}
             }
+            @if (prikaziPratioce() && kvar.brojPratilaca > 0) {
+              · isti problem ima još {{ brojStanara(kvar.brojPratilaca) }}
+            }
           </p>
           <app-oznake-kvara
             class="mt-3"

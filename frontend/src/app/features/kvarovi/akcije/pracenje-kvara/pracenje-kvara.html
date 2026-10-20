@@ -1,0 +1,37 @@
+<section class="odeljak" aria-labelledby="pracenje-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="pracenje-naslov" class="naslov-odeljka">Praćenje</h2>
+  </div>
+  @if (kvar().pratim) {
+    <p class="text-priguseno">Pratiš ovaj kvar. Upravnik vidi da je i kod tebe isti problem.</p>
+    <button
+      pButton
+      type="button"
+      size="small"
+      severity="secondary"
+      outlined
+      class="mt-4"
+      [disabled]="store.akcijaUToku()"
+      (click)="store.prestaniPracenje()"
+    >
+      Prestani da pratiš
+    </button>
+  } @else {
+    <p class="text-priguseno">
+      Isti problem je i kod tebe? Prati kvar umesto nove prijave.
+      @if (kvar().brojPratilaca > 0) {
+        Isti problem ima još {{ brojStanara(kvar().brojPratilaca) }}.
+      }
+    </p>
+    <button
+      pButton
+      type="button"
+      size="small"
+      class="mt-4"
+      [disabled]="store.akcijaUToku()"
+      (click)="store.prati()"
+    >
+      I kod mene je, prati
+    </button>
+  }
+</section>

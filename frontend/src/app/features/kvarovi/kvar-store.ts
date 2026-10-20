@@ -353,6 +353,17 @@ export const KvarStore = signalStore(
           patchState(store, { prijavaUToku: false });
         }
       },
+      async pratiUmestoPrijave(kvarId: number): Promise<void> {
+        await firstValueFrom(kvarService.prati(kvarId));
+        patchState(store, {
+          listaZatrazena: false,
+          porukaPosleUcitavanja: {
+            tip: 'uspeh',
+            tekst: 'Pratiš ovaj kvar. Ne moraš da ga prijavljuješ ponovo.',
+            fokus: true,
+          },
+        });
+      },
       async dodajKomentar(tekst: string): Promise<void> {
         const kvar = store.kvar();
         if (!kvar) {
@@ -419,6 +430,18 @@ export const KvarStore = signalStore(
         akcija(
           (id) => kvarService.vrati(id, tekst).pipe(tap(() => osveziKomentare(id))),
           () => 'Kvar je vraćen serviseru. Tvoj komentar je dodat.',
+        );
+      },
+      prati(): void {
+        akcija(
+          (id) => kvarService.prati(id).pipe(switchMap(() => kvarService.nadjiKvar(id))),
+          () => 'Pratiš ovaj kvar. Upravnik vidi da je i kod tebe isti problem.',
+        );
+      },
+      prestaniPracenje(): void {
+        akcija(
+          (id) => kvarService.prestaniPracenje(id).pipe(switchMap(() => kvarService.nadjiKvar(id))),
+          () => 'Više ne pratiš ovaj kvar.',
         );
       },
       zatvori(): void {

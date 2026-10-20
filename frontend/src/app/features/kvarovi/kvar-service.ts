@@ -13,6 +13,9 @@ import {
   SlikaKvara,
   StatusRadaServisera,
   UpitKvarova,
+  SlicanKvar,
+  StanjePracenja,
+  UpitSlicnih,
 } from './kvar-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { KorisnikOsnovno } from '../auth/auth-models';
@@ -23,6 +26,7 @@ export class KvarService {
   private apiUrl = `${environment.apiUrl}/kvar`;
   private komentariUrl = `${environment.apiUrl}/komentar-kvar`;
   private slikeUrl = `${environment.apiUrl}/slika-kvara`;
+  private pratiociUrl = `${environment.apiUrl}/pratilac-kvara`;
 
   lista(upit: UpitKvarova): Observable<Stranica<Kvar>> {
     let params = new HttpParams()
@@ -49,6 +53,24 @@ export class KvarService {
       },
       { defaultValue: [] },
     );
+  }
+
+  slicni(upit: Signal<UpitSlicnih | undefined>) {
+    return httpResource<SlicanKvar[]>(
+      () => {
+        const u = upit();
+        return u ? { url: `${this.apiUrl}/slicni`, params: { ...u } } : undefined;
+      },
+      { defaultValue: [] },
+    );
+  }
+
+  prati(kvarId: number): Observable<StanjePracenja> {
+    return this.http.put<StanjePracenja>(`${this.pratiociUrl}/kvar/${kvarId}`, null);
+  }
+
+  prestaniPracenje(kvarId: number): Observable<StanjePracenja> {
+    return this.http.delete<StanjePracenja>(`${this.pratiociUrl}/kvar/${kvarId}`);
   }
 
   prijavi(podaci: PrijavaKvaraRequest): Observable<Kvar> {

@@ -79,6 +79,13 @@
           }
         </div>
 
+        @if (forma.controls.lokacijaTip.value === 'zajednicki_prostor') {
+          <app-vec-prijavljeno
+            [stanId]="forma.controls.stanId.value"
+            [kategorija]="forma.controls.kategorija.value"
+          />
+        }
+
         <div class="flex flex-col gap-1.5">
           <label for="naslov" class="text-sm font-medium">Naslov</label>
           <input

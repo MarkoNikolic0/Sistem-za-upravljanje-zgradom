@@ -50,6 +50,9 @@
         @if (mojRad()) {
           <app-moj-rad [kvar]="kvar" />
         }
+        @if (kvar.smeDaPrati || kvar.pratim) {
+          <app-pracenje-kvara [kvar]="kvar" />
+        }
       </div>
 
       <div class="strana">
@@ -75,6 +78,12 @@
                 }
               </dd>
             </div>
+            @if (kvar.brojPratilaca > 0) {
+              <div class="red">
+                <dt>Isti problem</dt>
+                <dd>još {{ brojStanara(kvar.brojPratilaca) }}</dd>
+              </div>
+            }
             <div class="red">
               <dt>Zgrada</dt>
               <dd>

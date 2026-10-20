@@ -25,7 +25,8 @@ import { PotvrdaKvara } from '../akcije/potvrda-kvara/potvrda-kvara';
 import { TokKvara } from '../status/tok-kvara/tok-kvara';
 import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvarom';
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
-import { pratiRok } from '../pravila-kvara';
+import { brojStanara, pratiRok } from '../pravila-kvara';
+import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
 
 @Component({
   imports: [
@@ -42,6 +43,7 @@ import { pratiRok } from '../pravila-kvara';
     TokKvara,
     UpravljanjeKvarom,
     SlikeKvara,
+    PracenjeKvara,
   ],
   selector: 'app-detalj-kvara',
   styleUrl: './detalj-kvara.scss',
@@ -57,6 +59,8 @@ export class DetaljKvara {
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
   protected readonly formatirajTelefon = formatirajTelefon;
   protected readonly pratiRok = pratiRok;
+
+  protected readonly brojStanara = brojStanara;
 
   protected readonly upravlja = computed(() => {
     const kvar = this.store.kvar();
