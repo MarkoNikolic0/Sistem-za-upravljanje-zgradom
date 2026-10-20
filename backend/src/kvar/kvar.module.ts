@@ -11,6 +11,7 @@ import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
 import { KvarPravaService } from './kvar-prava.service.js';
 import { KvarAkcijeService } from './kvar-akcije.service.js';
+import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { KvarAkcijeService } from './kvar-akcije.service.js';
       StanarStana,
       Zgrada,
       PromenaStatusaKvara,
+      PratilacKvara,
     ]),
     AuthModule,
     KorisnikModule,

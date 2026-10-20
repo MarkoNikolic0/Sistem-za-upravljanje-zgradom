@@ -16,6 +16,7 @@ import { SlikaKvaraModule } from './slika-kvara/slika-kvara.module.js';
 import { KorisnikModule } from './korisnik/korisnik.module.js';
 import { minutes, ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PratilacKvaraModule } from './pratilac-kvara/pratilac-kvara.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -52,6 +53,7 @@ const __dirname = dirname(__filename);
     KomentarKvarModule,
     SlikaKvaraModule,
     KorisnikModule,
+    PratilacKvaraModule,
   ],
   controllers: [AppController],
   providers: [AppService],

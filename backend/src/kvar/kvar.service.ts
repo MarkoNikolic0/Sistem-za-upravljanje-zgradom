@@ -23,10 +23,14 @@ import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
 import { KvarPravaService } from './kvar-prava.service.js';
 import {
   DANA_ZA_POTVRDU,
+  MAKS_SLICNIH,
+  OTVORENI_STATUSI,
   rokResavanja,
   STATUSI_PO_STANJU,
 } from './kvar.constants.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
+import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
+import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 
 @Injectable()
 export class KvarService {
@@ -39,15 +43,14 @@ export class KvarService {
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     @InjectRepository(PromenaStatusaKvara)
     private promenaRepository: Repository<PromenaStatusaKvara>,
+    @InjectRepository(PratilacKvara)
+    private pratilacRepository: Repository<PratilacKvara>,
     private prava: KvarPravaService,
     private dataSource: DataSource,
   ) {}
 
   async create(korisnikId: number, dto: CreateKvarDto) {
-    const veza = await this.stanarStanaRepository.findOne({
-      where: { korisnik: { id: korisnikId }, stan: { id: dto.stanId } },
-      relations: { korisnik: true, stan: { zgrada: true } },
-    });
+    const veza = await this.vezaSaStanom(korisnikId, dto.stanId);
     if (!veza) {
       throw new ForbiddenException('Niste povezani sa ovim stanom!');
     }
@@ -77,6 +80,17 @@ export class KvarService {
     });
   }
 
+  private async vezaSaStanom(korisnikId: number, stanId: number) {
+    const veza = await this.stanarStanaRepository.findOne({
+      where: { korisnik: { id: korisnikId }, stan: { id: stanId } },
+      relations: { korisnik: true, stan: { zgrada: true } },
+    });
+    if (!veza) {
+      throw new ForbiddenException('Niste povezani sa ovim stanom!');
+    }
+    return veza;
+  }
+
   async findAllZaKorisnika(
     korisnikId: number,
     uloga: Uloga,
@@ -97,6 +111,33 @@ export class KvarService {
     });
 
     return { stavke, ukupno };
+  }
+
+  async findSlicne(korisnikId: number, upit: SlicniKvaroviUpitDto) {
+    const veza = await this.vezaSaStanom(korisnikId, upit.stanId);
+    const slicni = await this.kvarRepository.find({
+      where: {
+        zgrada: { id: veza.stan.zgrada.id },
+        lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
+        kategorija: upit.kategorija,
+        status: In(OTVORENI_STATUSI),
+      },
+      relations: { korisnik: true },
+      order: { datumPrijave: 'DESC', id: 'DESC' },
+      take: MAKS_SLICNIH,
+    });
+
+    const praceni = await this.pratilacRepository.find({
+      where: {
+        korisnik: { id: korisnikId },
+        kvar: { id: In(slicni.map((k) => k.id)) },
+      },
+      relations: { kvar: true },
+    });
+    const praceniIds = new Set(praceni.map((p) => p.kvar.id));
+    return slicni.map((kvar) =>
+      Object.assign(kvar, { pratim: praceniIds.has(kvar.id) }),
+    );
   }
 
   async findOne(id: number) {
@@ -123,6 +164,12 @@ export class KvarService {
     return Object.assign(kvar, {
       smeDaUpravlja: await this.prava.smeDaUpravlja(kvar, korisnikId, uloga),
       smeDaPotvrdi: await this.prava.smeDaPotvrdi(kvar, korisnikId),
+      smeDaPrati:
+        OTVORENI_STATUSI.includes(kvar.status) &&
+        (await this.prava.smeDaPrati(kvar, korisnikId)),
+      pratim: await this.pratilacRepository.exists({
+        where: { kvar: { id }, korisnik: { id: korisnikId } },
+      }),
       rokPotvrde:
         kvar.status === StatusKvara.RESEN && kvar.datumResenja
           ? new Date(kvar.datumResenja.getTime() + DANA_ZA_POTVRDU * MS_PO_DANU)

@@ -27,6 +27,7 @@ import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
+import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -55,6 +56,14 @@ export class KvarController {
       korisnik.uloga,
       upit,
     );
+  }
+
+  @Get('slicni')
+  findSlicne(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Query() upit: SlicniKvaroviUpitDto,
+  ) {
+    return this.kvarService.findSlicne(korisnik.id, upit);
   }
 
   @UseGuards(RolesGuard)

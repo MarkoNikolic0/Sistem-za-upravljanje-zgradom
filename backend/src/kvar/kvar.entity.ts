@@ -4,6 +4,7 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  VirtualColumn,
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Stan } from '../stan/stan.entity.js';
@@ -75,4 +76,11 @@ export class Kvar {
 
   @Column({ type: 'timestamptz', nullable: true })
   dolazakServisera: Date | null;
+
+  @VirtualColumn({
+    type: 'int',
+    query: (alias) =>
+      `SELECT COUNT(*)::int FROM pratilac_kvara p WHERE p."kvarId" = ${alias}.id`,
+  })
+  brojPratilaca: number;
 }

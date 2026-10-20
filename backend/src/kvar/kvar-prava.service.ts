@@ -104,12 +104,24 @@ export class KvarPravaService {
         where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },
       });
     }
+    return await this.stanujeUZgradi(kvar, korisnikId);
+  }
+
+  async stanujeUZgradi(kvar: Kvar, korisnikId: number): Promise<boolean> {
     return await this.stanarStanaRepository.exists({
       where: {
         korisnik: { id: korisnikId },
         stan: { zgrada: { id: kvar.zgrada.id } },
       },
     });
+  }
+
+  async smeDaPrati(kvar: Kvar, korisnikId: number): Promise<boolean> {
+    return (
+      kvar.lokacijaTip === LokacijaTip.ZAJEDNICKI_PROSTOR &&
+      kvar.korisnik.id !== korisnikId &&
+      (await this.stanujeUZgradi(kvar, korisnikId))
+    );
   }
 
   async smeDaUpravlja(
@@ -141,6 +153,14 @@ export class KvarPravaService {
     if (!(await this.smeDaUpravlja(kvar, korisnikId, uloga))) {
       throw new ForbiddenException(
         'Možete upravljati samo kvarovima svoje zgrade!',
+      );
+    }
+  }
+
+  async proveriPracenje(kvar: Kvar, korisnikId: number) {
+    if (!(await this.smeDaPrati(kvar, korisnikId))) {
+      throw new ForbiddenException(
+        'Kvar u zajedničkom prostoru prate stanari zgrade koji ga nisu prijavili!',
       );
     }
   }

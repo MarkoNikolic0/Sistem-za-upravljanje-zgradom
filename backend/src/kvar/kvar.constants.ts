@@ -16,6 +16,15 @@ export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
 };
 
+export const OTVORENI_STATUSI = [
+  StatusKvara.PRIJAVLJEN,
+  StatusKvara.PRIHVACEN,
+  StatusKvara.DODELJEN,
+  StatusKvara.U_TOKU,
+];
+
+export const MAKS_SLICNIH = 5;
+
 export const DANA_ZA_POTVRDU = 7;
 
 export const DANA_ZA_RESAVANJE: Record<Prioritet, number> = {
