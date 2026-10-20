@@ -1,8 +1,12 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Kvar } from './kvar.entity.js';
-import { LokacijaTip } from '../shared/enums/kvar.enums.js';
+import { LokacijaTip, StatusKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
@@ -149,6 +153,14 @@ export class KvarPravaService {
     return kvar.korisnik.id === korisnikId;
   }
 
+  smeDaPovuce(kvar: Kvar, korisnikId: number): boolean {
+    return (
+      kvar.korisnik.id === korisnikId &&
+      kvar.status === StatusKvara.PRIJAVLJEN &&
+      kvar.brojPratilaca === 0
+    );
+  }
+
   async proveriUpravljanje(kvar: Kvar, korisnikId: number, uloga: Uloga) {
     if (!(await this.smeDaUpravlja(kvar, korisnikId, uloga))) {
       throw new ForbiddenException(
@@ -169,6 +181,19 @@ export class KvarPravaService {
     if (kvar.serviser?.id !== korisnikId) {
       throw new ForbiddenException(
         'Samo dodeljeni serviser može da radi na ovom kvaru!',
+      );
+    }
+  }
+
+  proveriPovlacenje(kvar: Kvar, korisnikId: number) {
+    if (kvar.korisnik.id !== korisnikId) {
+      throw new ForbiddenException(
+        'Prijavu može da povuče samo onaj ko je prijavio kvar!',
+      );
+    }
+    if (kvar.brojPratilaca > 0) {
+      throw new ConflictException(
+        'Drugi stanari prate ovaj kvar, pa prijava ne može da se povuče. Javi se upravniku.',
       );
     }
   }

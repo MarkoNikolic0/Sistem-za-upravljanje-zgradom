@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -14,6 +15,7 @@ import { MAKS_PO_STRANI, Stranica } from '../shared/stranicenje.js';
 import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
 import { PromenaStatusaKvara } from '../kvar/promena-statusa-kvara.entity.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
+import { jeZavrsen } from '../kvar/kvar.constants.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -34,6 +36,12 @@ export class KomentarKvarService {
       korisnikId,
       uloga,
     );
+
+    if (jeZavrsen(kvar.status)) {
+      throw new ConflictException(
+        'Kvar je završen, pa više ne može da se komentariše.',
+      );
+    }
 
     const korisnik = await this.korisnikRepository.findOne({
       where: { id: korisnikId },

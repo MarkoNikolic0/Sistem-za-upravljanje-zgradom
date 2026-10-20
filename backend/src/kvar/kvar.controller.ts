@@ -25,9 +25,9 @@ import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
 import { DodeliServiseraDto } from './dto/dodeli-servisera.dto.js';
 import { UpdateStatusKvarDto } from './dto/update-status-kvar.dto.js';
 import { KvarUpitDto } from './dto/kvar-upit.dto.js';
-import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
+import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -107,8 +107,18 @@ export class KvarController {
   odbij(
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: RazlogDto,
   ) {
-    return this.kvarAkcijeService.odbij(id, korisnik.id, korisnik.uloga);
+    return this.kvarAkcijeService.odbij(id, korisnik.id, korisnik.uloga, dto);
+  }
+
+  @Patch(':id/povuci')
+  povuci(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: OpcioniRazlogDto,
+  ) {
+    return this.kvarAkcijeService.povuci(id, korisnik.id, korisnik.uloga, dto);
   }
 
   @UseGuards(RolesGuard)
@@ -187,7 +197,7 @@ export class KvarController {
   vrati(
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
-    @Body() dto: VratiKvarDto,
+    @Body() dto: RazlogDto,
   ) {
     return this.kvarAkcijeService.vrati(id, korisnik.id, korisnik.uloga, dto);
   }

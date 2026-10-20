@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -30,6 +31,7 @@ import {
   TRAJANJE_LINKA_S,
   VELIKA_SLIKA_PX,
 } from './slika-kvara.constants.js';
+import { jeZavrsen } from '../kvar/kvar.constants.js';
 
 @Injectable()
 export class SlikaKvaraService {
@@ -70,6 +72,12 @@ export class SlikaKvaraService {
       throw greskaPolja('slika', 'Izaberi sliku.');
     }
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
+
+    if (jeZavrsen(kvar.status)) {
+      throw new ConflictException(
+        'Kvar je završen, pa više ne mogu da se dodaju slike.',
+      );
+    }
 
     const [velika, slicica] = await this.obradi(fajl.buffer);
     const osnova = `kvarovi/${kvar.id}/${randomUUID()}`;

@@ -27,7 +27,6 @@ import {
   StatusRadaServisera,
   UpdateStatusKvarDto,
 } from './dto/update-status-kvar.dto.js';
-import { VratiKvarDto } from './dto/vrati-kvar.dto.js';
 import { KvarService } from './kvar.service.js';
 import { KvarPravaService } from './kvar-prava.service.js';
 import {
@@ -39,6 +38,7 @@ import {
 import { MS_PO_DANU } from '../shared/vreme.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
+import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
@@ -75,14 +75,33 @@ export class KvarAkcijeService {
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
 
-  async odbij(id: number, korisnikId: number, uloga: Uloga) {
+  async odbij(id: number, korisnikId: number, uloga: Uloga, dto: RazlogDto) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
       id,
-      [StatusKvara.PRIJAVLJEN],
+      [StatusKvara.PRIJAVLJEN, StatusKvara.PRIHVACEN],
       StatusKvara.ODBIJEN,
       korisnikId,
+      { komentar: dto.tekst },
+    );
+    return await this.kvarService.findDetalj(id, korisnikId, uloga);
+  }
+
+  async povuci(
+    id: number,
+    korisnikId: number,
+    uloga: Uloga,
+    dto: OpcioniRazlogDto,
+  ) {
+    const kvar = await this.kvarService.findOne(id);
+    this.prava.proveriPovlacenje(kvar, korisnikId);
+    await this.prelaz(
+      id,
+      [StatusKvara.PRIJAVLJEN],
+      StatusKvara.POVUCEN,
+      korisnikId,
+      { komentar: dto.tekst },
     );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -198,7 +217,7 @@ export class KvarAkcijeService {
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
 
-  async vrati(id: number, korisnikId: number, uloga: Uloga, dto: VratiKvarDto) {
+  async vrati(id: number, korisnikId: number, uloga: Uloga, dto: RazlogDto) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriPotvrdu(kvar, korisnikId);
     await this.prelaz(id, [StatusKvara.RESEN], StatusKvara.U_TOKU, korisnikId, {

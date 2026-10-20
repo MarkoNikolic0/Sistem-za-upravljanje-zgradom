@@ -28,6 +28,7 @@ export enum StatusKvara {
   RESEN = 'resen',
   ZATVOREN = 'zatvoren',
   ODBIJEN = 'odbijen',
+  POVUCEN = 'povucen',
 }
 
 export enum StanjeKvara {

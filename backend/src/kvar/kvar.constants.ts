@@ -14,8 +14,16 @@ export const OTVORENI_STATUSI = [
 
 export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
   [StanjeKvara.AKTIVNI]: [...OTVORENI_STATUSI, StatusKvara.RESEN],
-  [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
+  [StanjeKvara.ZAVRSENI]: [
+    StatusKvara.ZATVOREN,
+    StatusKvara.ODBIJEN,
+    StatusKvara.POVUCEN,
+  ],
 };
+
+export function jeZavrsen(status: StatusKvara): boolean {
+  return STATUSI_PO_STANJU[StanjeKvara.ZAVRSENI].includes(status);
+}
 
 export const MAKS_SLICNIH = 5;
 

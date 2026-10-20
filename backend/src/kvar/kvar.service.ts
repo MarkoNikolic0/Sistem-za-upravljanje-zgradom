@@ -181,6 +181,7 @@ export class KvarService {
       smeDaUpravlja,
       smeDaPotvrdi,
       smeDaPrati,
+      smeDaPovuce: this.prava.smeDaPovuce(kvar, korisnikId),
       pratim,
       rokPotvrde:
         kvar.status === StatusKvara.RESEN && kvar.datumResenja

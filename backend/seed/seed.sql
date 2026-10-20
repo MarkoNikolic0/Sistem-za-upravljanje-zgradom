@@ -197,6 +197,7 @@ WHERE NOT EXISTS (
 -- Glavni nalozi za proveru (Delta Residence):
 --   Marija (stan 14): sve faze kvara u stanu, rok prekoracen, potvrda resenja, vracen kvar,
 --     dolazak servisera; prati tudji zajednicki kvar, a njen lift prate drugi
+--   Marija: povucena prijava sa razlogom; ventilator moze da povuce, lift ne (prate ga drugi)
 --   Danijel (upravnik): prihvati/odbij, dodeli, rok danas/sutra/prekoracen; kao vlasnik stana 7
 --     potvrdjuje resen kvar; prati Marijin lift
 --   Petar (serviser): dodeljen bez dolaska i sa dolaskom, u toku, vracen, resen, u sve tri zgrade
@@ -265,6 +266,13 @@ FROM (VALUES
   ('Curi slavina', 'Slavina u kupatilu curi neprestano',
    'vodovod', 'privatni_stan', 'srednje', 'zatvoren',
    'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', 'petar@gmail.com', interval '3 days', interval '2 days', NULL),
+  ('Zaglavljuje se brava na vratima stana', 'Ključ teško ulazi u bravu ulaznih vrata i zaglavljuje se.',
+   'stolarija', 'privatni_stan', 'srednje', 'povucen',
+   'Bulevar Nemanjića 45, Niš', '14', 'marija@gmail.com', NULL, interval '1 day 6 hours', NULL, NULL),
+  -- odbijen posle prihvatanja (istorija je nize)
+  ('Nema signala sa zajedničke antene', 'Na televizorima nema signala sa antene na krovu, kablovska radi.',
+   'ostalo', 'zajednicki_prostor', 'nisko', 'odbijen',
+   'Bulevar Nemanjića 45, Niš', NULL, 'goran.stamenkovic@example.com', NULL, interval '3 days 4 hours', NULL, NULL),
   -- Petar u druge dve zgrade: filter po zgradi i svi statusi servisera
   ('Nema tople vode', 'Od jutros nema tople vode u stanu, bojler je uključen.',
    'vodovod', 'privatni_stan', 'hitno', 'u_toku',
@@ -399,14 +407,12 @@ FROM (VALUES
   ('Ne radi svetlo na stepeništu', 'danijel@gmail.com', 'Prihvaćeno, dodeliću električara.', interval '1 day 18 hours'),
   ('Slab mlaz vode u tušu', 'petar@gmail.com', 'Očišćen kamenac sa glave tuša i zamenjen ventil.', interval '1 day 8 hours'),
   ('Slab mlaz vode u tušu', 'marija@gmail.com', 'Posle popravke je mlaz bio dobar jedan dan, sada je opet slab.', interval '3 hours'),
-  ('Napukla pločica u kupatilu', 'danijel@gmail.com', 'Pločice u stanu održava vlasnik stana, to nije posao upravnika zgrade.', interval '2 days 10 hours'),
   ('Nema tople vode', 'jovana.mitic@example.com', 'Osigurač bojlera nije iskočio, a lampica na bojleru ne svetli.', interval '4 hours'),
   ('Nema tople vode', 'petar@gmail.com', 'Dolazim danas oko 14h, ponesite ključ od podruma.', interval '3 hours'),
   ('Lift stoji između spratova', 'zoran.djordjevic@example.com', 'Na licu mesta sam, menjam relej upravljanja.', interval '1 hour'),
   ('Pukla cev grejanja u dnevnoj sobi', 'danijel@gmail.com', 'Serviser Dragan dolazi sutra između 9 i 11h.', interval '3 days 20 hours'),
   ('Pukla cev grejanja u dnevnoj sobi', 'stefan.popovic@example.com', 'Hvala, biću kod kuće.', interval '3 days 19 hours'),
-  ('Iskače osigurač u kupatilu', 'zoran.djordjevic@example.com', 'Zamenjen neispravan grejač bojlera, sve radi.', interval '5 days'),
-  ('Buka iz stana iznad', 'danijel@gmail.com', 'Ovo nije kvar u zgradi; razgovaraću sa komšijama na sledećem sastanku stanara.', interval '7 days')
+  ('Iskače osigurač u kupatilu', 'zoran.djordjevic@example.com', 'Zamenjen neispravan grejač bojlera, sve radi.', interval '5 days')
 ) AS v(naslov, email, tekst, pre)
 JOIN kvar kv ON kv.naslov = v.naslov
 JOIN korisnik k ON k.email = v.email
@@ -448,6 +454,19 @@ LEFT JOIN komentar_kvar kk ON kk."kvarId" = kv.id AND kk.tekst = v.razlog
 WHERE NOT EXISTS (SELECT 1 FROM promena_statusa_kvara p WHERE p."kvarId" = kv.id)
 ORDER BY v.pre DESC;
 
+-- Kvar odbijen posle prihvatanja: upravnik je prvo prihvatio, pa video da za antenu nema servisera
+INSERT INTO promena_statusa_kvara (status, "kvarId", "korisnikId", datum)
+SELECT v.status::promena_statusa_kvara_status_enum, kv.id, k.id, now() - v.pre
+FROM (VALUES
+  ('prijavljen', 'goran.stamenkovic@example.com', interval '3 days 4 hours'),
+  ('prihvacen', 'danijel@gmail.com', interval '3 days'),
+  ('odbijen', 'danijel@gmail.com', interval '1 day 2 hours')
+) AS v(status, email, pre)
+JOIN kvar kv ON kv.id = (SELECT id FROM seed_kvar_id WHERE naslov = 'Nema signala sa zajedničke antene')
+JOIN korisnik k ON k.email = v.email
+WHERE NOT EXISTS (SELECT 1 FROM promena_statusa_kvara p WHERE p."kvarId" = kv.id)
+ORDER BY v.pre DESC;
+
 -- Kvarovi bez istorije (iz ove skripte ili napravljeni pre nego sto je istorija uvedena) dobijaju
 -- korake do trenutnog statusa. Datumi su izmisljeni, ali redom: od prijave do resenja (ako postoji),
 -- inace do malo pre sadasnjeg trenutka. Ko je promenio: prijavu i potvrdu stanar, rad serviser,
@@ -455,14 +474,14 @@ ORDER BY v.pre DESC;
 INSERT INTO promena_statusa_kvara (status, "kvarId", "korisnikId", datum)
 SELECT t.korak::promena_statusa_kvara_status_enum, kv.id,
        CASE
-         WHEN t.korak IN ('prijavljen', 'zatvoren') THEN kv."korisnikId"
+         WHEN t.korak IN ('prijavljen', 'zatvoren', 'povucen') THEN kv."korisnikId"
          WHEN t.korak IN ('u_toku', 'resen') THEN kv."serviserId"
          ELSE COALESCE(
            (SELECT u.id FROM korisnik u WHERE u."zgradaId" = kv."zgradaId" AND u.uloga = 'upravnik' LIMIT 1),
            kv."korisnikId")
        END,
        kv."datumPrijave" + CASE t.korak
-         WHEN 'prijavljen' THEN 0 WHEN 'prihvacen' THEN 0.1 WHEN 'odbijen' THEN 0.1
+         WHEN 'prijavljen' THEN 0 WHEN 'prihvacen' THEN 0.1 WHEN 'odbijen' THEN 0.1 WHEN 'povucen' THEN 0.1
          WHEN 'dodeljen' THEN 0.25 WHEN 'u_toku' THEN 0.5 WHEN 'resen' THEN 0.8 ELSE 1
        END * CASE
          WHEN kv."datumResenja" IS NOT NULL THEN (kv."datumResenja" - kv."datumPrijave") / 0.8
@@ -472,6 +491,7 @@ FROM kvar kv
 CROSS JOIN LATERAL unnest(
   CASE kv.status::text
     WHEN 'odbijen' THEN ARRAY['prijavljen', 'odbijen']
+    WHEN 'povucen' THEN ARRAY['prijavljen', 'povucen']
     ELSE (ARRAY['prijavljen', 'prihvacen', 'dodeljen', 'u_toku', 'resen', 'zatvoren'])
          [1:array_position(ARRAY['prijavljen', 'prihvacen', 'dodeljen', 'u_toku', 'resen', 'zatvoren'],
                            kv.status::text)]
@@ -479,5 +499,33 @@ CROSS JOIN LATERAL unnest(
 ) WITH ORDINALITY AS t(korak, redni)
 WHERE NOT EXISTS (SELECT 1 FROM promena_statusa_kvara p WHERE p."kvarId" = kv.id)
 ORDER BY kv.id, t.redni;
+
+-- RAZLOZI ODBIJANJA I POVLACENJA: komentar onoga ko je odbio ili povukao, upisan u istom trenutku
+-- i vezan za tu promenu statusa (kao kad akcija ide kroz aplikaciju)
+WITH razlog AS (
+  SELECT si.id AS kvar_id, v.tekst
+  FROM (VALUES
+    ('Napukla pločica u kupatilu', 'Pločice u stanu održava vlasnik stana, to nije posao upravnika zgrade.'),
+    ('Buka iz stana iznad', 'Ovo nije kvar u zgradi; razgovaraću sa komšijama na sledećem sastanku stanara.'),
+    ('Grafiti na fasadi', 'Krečenje fasade je u planu za proleće, tada će se i grafiti prekrečiti.'),
+    ('Ogrebotine na vratima lifta', 'Ogrebotine ne utiču na rad lifta, popraviće se pri redovnom servisu.'),
+    ('Nema signala sa zajedničke antene', 'Za antenu nemamo servisera. Dogovor o novoj anteni ide na sastanak stanara.'),
+    ('Zaglavljuje se brava na vratima stana', 'Podmazali smo bravu i sada radi.')
+  ) AS v(naslov, tekst)
+  JOIN seed_kvar_id si ON si.naslov = v.naslov
+), promena AS (
+  SELECT DISTINCT ON (p."kvarId") p.id, p."kvarId", p."korisnikId", p.datum
+  FROM promena_statusa_kvara p JOIN razlog r ON r.kvar_id = p."kvarId"
+  WHERE p.status IN ('odbijen', 'povucen')
+  ORDER BY p."kvarId", p.datum DESC
+), komentar AS (
+  INSERT INTO komentar_kvar (tekst, "kvarId", "korisnikId", "datumKreiranja")
+  SELECT r.tekst, r.kvar_id, p."korisnikId", p.datum
+  FROM razlog r JOIN promena p ON p."kvarId" = r.kvar_id
+  RETURNING id, "kvarId"
+)
+UPDATE promena_statusa_kvara p SET "komentarId" = k.id
+FROM komentar k JOIN promena pr ON pr."kvarId" = k."kvarId"
+WHERE p.id = pr.id;
 
 COMMIT;
