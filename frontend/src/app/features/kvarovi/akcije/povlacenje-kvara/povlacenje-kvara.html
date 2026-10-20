@@ -13,13 +13,13 @@
     severity="danger"
     outlined
     class="mt-4"
-    [attr.aria-expanded]="formaOtvorena()"
-    (click)="prebaciFormu()"
+    [attr.aria-expanded]="povlacenjeOtvoreno()"
+    (click)="prebaciPovlacenje()"
   >
     Povuci prijavu
   </button>
 
-  @if (formaOtvorena()) {
+  @if (povlacenjeOtvoreno()) {
     <app-forma-razloga
       class="mt-6"
       oznaka="Zašto povlačiš prijavu?"
@@ -29,7 +29,7 @@
       [opasno]="true"
       [slanje]="store.akcijaUToku()"
       (posalji)="store.povuci($event)"
-      (odustani)="odustani()"
+      (odustani)="odustaniPovlacenje()"
     />
   }
 </section>

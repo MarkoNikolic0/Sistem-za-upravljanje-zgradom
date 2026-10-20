@@ -18,14 +18,14 @@ export class PotvrdaKvara {
 
   readonly kvar = input.required<KvarDetalj>();
 
-  protected readonly nijeResenoFormaOtvoreno = signal(false);
+  protected readonly nijeResenoOtvoreno = signal(false);
 
   protected prebaciNijeReseno(): void {
-    this.nijeResenoFormaOtvoreno.update((otvoreno) => !otvoreno);
+    this.nijeResenoOtvoreno.update((otvoreno) => !otvoreno);
   }
 
   protected odustaniNijeReseno(): void {
-    this.nijeResenoFormaOtvoreno.set(false);
+    this.nijeResenoOtvoreno.set(false);
     this.fokusiraj('#nije-reseno');
   }
 }

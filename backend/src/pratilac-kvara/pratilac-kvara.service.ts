@@ -25,6 +25,7 @@ export class PratilacKvaraService {
     await this.dataSource.transaction(async (manager) => {
       const zakljucan = await manager.findOne(Kvar, {
         where: { id: kvarId },
+        select: { id: true, status: true },
         lock: { mode: 'pessimistic_read' },
       });
       if (!zakljucan || !OTVORENI_STATUSI.includes(zakljucan.status)) {

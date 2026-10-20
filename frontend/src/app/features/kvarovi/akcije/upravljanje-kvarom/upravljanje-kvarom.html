@@ -29,19 +29,6 @@
         Odbij
       </button>
     </div>
-    @if (odbijanjeOtvoreno()) {
-      <app-forma-razloga
-        class="mt-6"
-        oznaka="Zašto odbijaš prijavu?"
-        pomoc="Stanar vidi razlog u kvaru i u komentarima. Kvar prelazi u završene."
-        porukaGreske="Napiši zašto odbijaš prijavu."
-        natpis="Odbij prijavu"
-        [opasno]="true"
-        [slanje]="store.akcijaUToku()"
-        (posalji)="store.odbij($event)"
-        (odustani)="odustaniOdbijanje()"
-      />
-    }
   } @else if (kvar().status === 'prihvacen' || kvar().status === 'dodeljen') {
     <div class="flex flex-col gap-1.5 sm:max-w-xs">
       <span id="serviser-oznaka" class="text-sm font-medium">
@@ -82,19 +69,6 @@
         </button>
       }
     </div>
-    @if (odbijanjeOtvoreno()) {
-      <app-forma-razloga
-        class="mt-6"
-        oznaka="Zašto odbijaš prijavu?"
-        pomoc="Stanar vidi razlog u kvaru i u komentarima. Kvar prelazi u završene."
-        porukaGreske="Napiši zašto odbijaš prijavu."
-        natpis="Odbij prijavu"
-        [opasno]="true"
-        [slanje]="store.akcijaUToku()"
-        (posalji)="store.odbij($event)"
-        (odustani)="odustaniOdbijanje()"
-      />
-    }
   } @else if (kvar().status === 'u_toku') {
     <p class="text-priguseno">Serviser radi na kvaru.</p>
     @if (store.poslednjeVracanje(); as vracanje) {
@@ -117,6 +91,19 @@
     >
       Zatvori kvar
     </button>
+  }
+  @if (odbijanjeOtvoreno()) {
+    <app-forma-razloga
+      class="mt-6"
+      oznaka="Zašto odbijaš prijavu?"
+      pomoc="Stanar vidi razlog u kvaru i u komentarima. Kvar prelazi u završene."
+      porukaGreske="Napiši zašto odbijaš prijavu."
+      natpis="Odbij prijavu"
+      [opasno]="true"
+      [slanje]="store.akcijaUToku()"
+      (posalji)="store.odbij($event)"
+      (odustani)="odustaniOdbijanje()"
+    />
   }
 
   @if (store.vracanja().length > 0 && (kvar().status === 'u_toku' || kvar().status === 'resen')) {

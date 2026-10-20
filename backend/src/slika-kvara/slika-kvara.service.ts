@@ -92,6 +92,7 @@ export class SlikaKvaraService {
       const id = await this.dataSource.transaction(async (manager) => {
         await manager.findOne(Kvar, {
           where: { id: kvar.id },
+          select: { id: true },
           lock: { mode: 'pessimistic_write' },
         });
         const broj = await manager.count(SlikaKvara, {

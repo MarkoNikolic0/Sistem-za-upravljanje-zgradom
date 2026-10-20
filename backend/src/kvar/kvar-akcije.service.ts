@@ -108,6 +108,7 @@ export class KvarAkcijeService {
         provera: async (manager) => {
           await manager.findOne(Kvar, {
             where: { id },
+            select: { id: true },
             lock: { mode: 'pessimistic_write' },
           });
           if (

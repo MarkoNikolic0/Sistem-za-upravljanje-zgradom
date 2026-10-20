@@ -25,14 +25,14 @@
       size="small"
       severity="secondary"
       outlined
-      [attr.aria-expanded]="nijeResenoFormaOtvoreno()"
+      [attr.aria-expanded]="nijeResenoOtvoreno()"
       (click)="prebaciNijeReseno()"
     >
       Nije rešeno
     </button>
   </div>
 
-  @if (nijeResenoFormaOtvoreno()) {
+  @if (nijeResenoOtvoreno()) {
     <app-forma-razloga
       class="mt-6"
       oznaka="Šta i dalje ne radi?"

@@ -35,20 +35,20 @@
     } @else {
       <p class="text-priguseno">Još nema slika.</p>
     }
-    @if (zavrsen()) {
-      <!-- Završen kvar ne prima nove slike -->
-    } @else if (mozeJos()) {
-      <app-izbor-slika
-        class="mt-4"
-        [vecIma]="store.slike().length"
-        [otpremanje]="otpremanje()"
-        (izabrano)="otpremi($event)"
-        (greska)="poruka.set({ tip: 'greska', tekst: $event })"
-      />
-    } @else {
-      <p class="mt-4 text-sm text-priguseno">
-        Kvar već ima {{ maksSlika }} slika, koliko je najviše moguće.
-      </p>
+    @if (!zavrsen()) {
+      @if (mozeJos()) {
+        <app-izbor-slika
+          class="mt-4"
+          [vecIma]="store.slike().length"
+          [otpremanje]="otpremanje()"
+          (izabrano)="otpremi($event)"
+          (greska)="poruka.set({ tip: 'greska', tekst: $event })"
+        />
+      } @else {
+        <p class="mt-4 text-sm text-priguseno">
+          Kvar već ima {{ maksSlika }} slika, koliko je najviše moguće.
+        </p>
+      }
     }
   } @else if (store.error(); as greska) {
     <p-message severity="error">{{ greska }}</p-message>

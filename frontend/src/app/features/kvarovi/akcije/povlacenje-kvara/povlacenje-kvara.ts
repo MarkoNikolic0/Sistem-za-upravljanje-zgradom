@@ -14,14 +14,14 @@ export class PovlacenjeKvara {
   protected readonly store = inject(KvarStore);
   private readonly fokusiraj = fokusPosleCrtanja();
 
-  protected readonly formaOtvorena = signal(false);
+  protected readonly povlacenjeOtvoreno = signal(false);
 
-  protected prebaciFormu(): void {
-    this.formaOtvorena.update((otvorena) => !otvorena);
+  protected prebaciPovlacenje(): void {
+    this.povlacenjeOtvoreno.update((otvorena) => !otvorena);
   }
 
-  protected odustani(): void {
-    this.formaOtvorena.set(false);
+  protected odustaniPovlacenje(): void {
+    this.povlacenjeOtvoreno.set(false);
     this.fokusiraj('#povuci');
   }
 }
