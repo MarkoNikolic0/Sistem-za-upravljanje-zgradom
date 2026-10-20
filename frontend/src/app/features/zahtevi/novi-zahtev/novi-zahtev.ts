@@ -9,7 +9,7 @@ import { SelectModule } from 'primeng/select';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { ZahtevService } from '../zahtev-service';
 import { BOJE_STATUSA_ZAHTEVA, NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
-import { nazivSprata, SpratPipe } from '../../../shared/sprat-pipe';
+import { nazivSprata, SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TagModule } from 'primeng/tag';
 

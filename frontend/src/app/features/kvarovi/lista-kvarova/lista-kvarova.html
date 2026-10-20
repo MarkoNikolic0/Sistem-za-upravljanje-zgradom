@@ -81,7 +81,7 @@
               · {{ kvar.zgrada.naziv }}
             }
             @if (prikaziPratioce() && kvar.brojPratilaca > 0) {
-              · isti problem ima još {{ brojStanara(kvar.brojPratilaca) }}
+              · isti problem ima još {{ kvar.brojPratilaca | brojStanara }}
             }
           </p>
           <app-oznake-kvara

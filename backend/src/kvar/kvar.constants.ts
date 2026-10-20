@@ -5,23 +5,17 @@ import {
 } from '../shared/enums/kvar.enums.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 
-export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
-  [StanjeKvara.AKTIVNI]: [
-    StatusKvara.PRIJAVLJEN,
-    StatusKvara.PRIHVACEN,
-    StatusKvara.DODELJEN,
-    StatusKvara.U_TOKU,
-    StatusKvara.RESEN,
-  ],
-  [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
-};
-
 export const OTVORENI_STATUSI = [
   StatusKvara.PRIJAVLJEN,
   StatusKvara.PRIHVACEN,
   StatusKvara.DODELJEN,
   StatusKvara.U_TOKU,
 ];
+
+export const STATUSI_PO_STANJU: Record<StanjeKvara, StatusKvara[]> = {
+  [StanjeKvara.AKTIVNI]: [...OTVORENI_STATUSI, StatusKvara.RESEN],
+  [StanjeKvara.ZAVRSENI]: [StatusKvara.ZATVOREN, StatusKvara.ODBIJEN],
+};
 
 export const MAKS_SLICNIH = 5;
 

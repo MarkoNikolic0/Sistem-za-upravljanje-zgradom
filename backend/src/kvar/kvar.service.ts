@@ -133,6 +133,7 @@ export class KvarService {
         kvar: { id: In(slicni.map((k) => k.id)) },
       },
       relations: { kvar: true },
+      select: { id: true, kvar: { id: true } },
     });
     const praceniIds = new Set(praceni.map((p) => p.kvar.id));
     return slicni.map((kvar) =>

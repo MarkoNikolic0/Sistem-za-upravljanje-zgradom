@@ -7,10 +7,10 @@ import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KvarService } from '../../kvar-service';
 import { KvarStore } from '../../kvar-store';
 import { KategorijaKvara, NAZIVI_STATUSA_KVARA } from '../../kvar-models';
-import { brojStanara } from '../../pravila-kvara';
+import { BrojStanaraPipe } from '../../../../shared/pipes/broj-stanara-pipe';
 
 @Component({
-  imports: [DatePipe, RouterLink, ButtonModule, MessageModule],
+  imports: [DatePipe, RouterLink, ButtonModule, MessageModule, BrojStanaraPipe],
   selector: 'app-vec-prijavljeno',
   styleUrl: './vec-prijavljeno.scss',
   templateUrl: './vec-prijavljeno.html',
@@ -25,7 +25,7 @@ export class VecPrijavljeno {
   readonly kategorija = input.required<KategorijaKvara | null>();
 
   protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
-  protected readonly brojStanara = brojStanara;
+
   protected readonly ja = computed(() => this.authStore.korisnik()?.id);
 
   private readonly upit = computed(() => {

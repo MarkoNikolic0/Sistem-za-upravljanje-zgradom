@@ -9,7 +9,7 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { formatirajTelefon } from '../../../shared/telefon';
-import { SpratPipe } from '../../../shared/sprat-pipe';
+import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import {
   BOJE_STATUSA_ZAHTEVA,
   FilterZahteva,

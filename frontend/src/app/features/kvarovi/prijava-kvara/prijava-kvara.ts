@@ -11,7 +11,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja } from '../../../shared/greske-servera';
-import { nazivSprata } from '../../../shared/sprat-pipe';
+import { nazivSprata } from '../../../shared/pipes/sprat-pipe';
 import { ProfileService } from '../../profile/profile-service';
 import { KvarStore } from '../kvar-store';
 import { SlikePrijave } from '../slike/slike-prijave/slike-prijave';

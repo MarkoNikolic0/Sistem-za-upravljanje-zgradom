@@ -20,7 +20,7 @@
     <p class="text-priguseno">
       Isti problem je i kod tebe? Prati kvar umesto nove prijave.
       @if (kvar().brojPratilaca > 0) {
-        Isti problem ima još {{ brojStanara(kvar().brojPratilaca) }}.
+        Isti problem ima još {{ kvar().brojPratilaca | brojStanara }}.
       }
     </p>
     <button

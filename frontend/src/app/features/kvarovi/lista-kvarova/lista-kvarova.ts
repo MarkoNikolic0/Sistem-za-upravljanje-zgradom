@@ -6,7 +6,7 @@ import { MessageModule } from 'primeng/message';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { SpratPipe } from '../../../shared/sprat-pipe';
+import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { NAZIVI_KATEGORIJA_KVARA, StanjeKvara } from '../kvar-models';
 import { KVAROVA_PO_STRANI, KvarStore } from '../kvar-store';
@@ -15,7 +15,7 @@ import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
 import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
-import { brojStanara } from '../pravila-kvara';
+import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
 
 @Component({
   imports: [
@@ -30,6 +30,7 @@ import { brojStanara } from '../pravila-kvara';
     SpratPipe,
     OznakeKvara,
     RouterLink,
+    BrojStanaraPipe,
   ],
   selector: 'app-lista-kvarova',
   styleUrl: './lista-kvarova.scss',
@@ -43,8 +44,6 @@ export class ListaKvarova {
 
   protected readonly poStrani = KVAROVA_PO_STRANI;
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
-
-  protected readonly brojStanara = brojStanara;
 
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);
   protected readonly prikaziZgradu = computed(

@@ -355,6 +355,14 @@ LEFT JOIN stan s ON s."zgradaId" = z.id AND s.broj = v.broj AND v.lokacija = 'pr
 JOIN korisnik k ON k.email = v.email
 LEFT JOIN korisnik ser ON ser.email = v.serviser;
 
+INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status, "zgradaId", "stanId",
+                  "korisnikId", "serviserId", "datumPrijave", "rokResavanja", "datumResenja",
+                  "dolazakServisera")
+SELECT v.naslov, v.opis, v.kategorija, v.lokacija, v.prioritet, v.status, v.zgrada_id, v.stan_id,
+       v.korisnik_id, v.serviser_id, v.datum_prijave, v.rok, v.datum_resenja, v.dolazak
+FROM seed_kvar v
+WHERE NOT EXISTS (SELECT 1 FROM kvar kv WHERE kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id);
+
 -- Kvar iz skripte je najstariji sa tim naslovom u zgradi; isti naslov prijavljen kasnije kroz
 -- aplikaciju se ne dira
 CREATE TEMP TABLE seed_kvar_id ON COMMIT DROP AS
@@ -369,18 +377,6 @@ SET opis = v.opis, kategorija = v.kategorija, "lokacijaTip" = v.lokacija, priori
     "dolazakServisera" = v.dolazak
 FROM seed_kvar v JOIN seed_kvar_id si ON si.naslov = v.naslov
 WHERE kv.id = si.id;
-
-INSERT INTO kvar (naslov, opis, kategorija, "lokacijaTip", prioritet, status, "zgradaId", "stanId",
-                  "korisnikId", "serviserId", "datumPrijave", "rokResavanja", "datumResenja",
-                  "dolazakServisera")
-SELECT v.naslov, v.opis, v.kategorija, v.lokacija, v.prioritet, v.status, v.zgrada_id, v.stan_id,
-       v.korisnik_id, v.serviser_id, v.datum_prijave, v.rok, v.datum_resenja, v.dolazak
-FROM seed_kvar v
-WHERE NOT EXISTS (SELECT 1 FROM seed_kvar_id si WHERE si.naslov = v.naslov);
-
-INSERT INTO seed_kvar_id (id, naslov)
-SELECT kv.id, kv.naslov FROM kvar kv JOIN seed_kvar v ON kv.naslov = v.naslov AND kv."zgradaId" = v.zgrada_id
-WHERE NOT EXISTS (SELECT 1 FROM seed_kvar_id si WHERE si.naslov = kv.naslov);
 
 -- Komentari, istorija i pratioci kvarova iz skripte se pisu iznova (istorija prva, jer pokazuje na komentar)
 DELETE FROM promena_statusa_kvara WHERE "kvarId" IN (SELECT id FROM seed_kvar_id);

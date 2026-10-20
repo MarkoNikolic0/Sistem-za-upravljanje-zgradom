@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { SpratPipe } from '../../../shared/sprat-pipe';
+import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { KomentariKvara } from '../komentari-kvara/komentari-kvara';
@@ -25,8 +25,9 @@ import { PotvrdaKvara } from '../akcije/potvrda-kvara/potvrda-kvara';
 import { TokKvara } from '../status/tok-kvara/tok-kvara';
 import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvarom';
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
-import { brojStanara, pratiRok } from '../pravila-kvara';
 import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
+import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
+import { pratiRok } from '../pravila-kvara';
 
 @Component({
   imports: [
@@ -44,6 +45,7 @@ import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
     UpravljanjeKvarom,
     SlikeKvara,
     PracenjeKvara,
+    BrojStanaraPipe,
   ],
   selector: 'app-detalj-kvara',
   styleUrl: './detalj-kvara.scss',
@@ -59,8 +61,6 @@ export class DetaljKvara {
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
   protected readonly formatirajTelefon = formatirajTelefon;
   protected readonly pratiRok = pratiRok;
-
-  protected readonly brojStanara = brojStanara;
 
   protected readonly upravlja = computed(() => {
     const kvar = this.store.kvar();

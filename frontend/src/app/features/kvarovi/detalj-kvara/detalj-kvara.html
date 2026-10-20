@@ -81,7 +81,7 @@
             @if (kvar.brojPratilaca > 0) {
               <div class="red">
                 <dt>Isti problem</dt>
-                <dd>još {{ brojStanara(kvar.brojPratilaca) }}</dd>
+                <dd>još {{ kvar.brojPratilaca | brojStanara }}</dd>
               </div>
             }
             <div class="red">

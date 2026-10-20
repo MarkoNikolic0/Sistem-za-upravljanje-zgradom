@@ -12,7 +12,7 @@ import { ProfileService } from '../profile-service';
 import { ChangePassword } from '../change-password/change-password';
 import { RouterLink } from '@angular/router';
 import { formatirajTelefon } from '../../../shared/telefon';
-import { SpratPipe } from '../../../shared/sprat-pipe';
+import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { MAX_DUZINA_IMENA, PRAVILA_IMENA } from '../../auth/pravila-naloga';
 import { TagModule } from 'primeng/tag';
