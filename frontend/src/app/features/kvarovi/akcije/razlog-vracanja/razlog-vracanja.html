@@ -1,8 +1,0 @@
-<p class="text-sm font-medium text-naslov">Stanar javlja da kvar nije rešen</p>
-@if (vracanje().komentar; as komentar) {
-  <p class="mt-1 whitespace-pre-line wrap-anywhere">{{ komentar.tekst }}</p>
-}
-<p class="mt-1 text-sm text-priguseno">
-  {{ vracanje().korisnik?.ime }} {{ vracanje().korisnik?.prezime }} ·
-  <time [attr.datetime]="vracanje().datum">{{ vracanje().datum | date: 'd. MMM HH:mm' }}</time>
-</p>

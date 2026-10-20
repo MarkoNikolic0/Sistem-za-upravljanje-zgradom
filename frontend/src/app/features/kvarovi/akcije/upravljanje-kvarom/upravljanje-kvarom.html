@@ -17,16 +17,31 @@
       </button>
       <button
         pButton
+        id="odbij"
         type="button"
         size="small"
         severity="danger"
         text
+        [attr.aria-expanded]="odbijanjeOtvoreno()"
         [disabled]="store.akcijaUToku()"
-        (click)="odbij($event)"
+        (click)="prebaciOdbijanje()"
       >
         Odbij
       </button>
     </div>
+    @if (odbijanjeOtvoreno()) {
+      <app-forma-razloga
+        class="mt-6"
+        oznaka="Zašto odbijaš prijavu?"
+        pomoc="Stanar vidi razlog u kvaru i u komentarima. Kvar prelazi u završene."
+        porukaGreske="Napiši zašto odbijaš prijavu."
+        natpis="Odbij prijavu"
+        [opasno]="true"
+        [slanje]="store.akcijaUToku()"
+        (posalji)="store.odbij($event)"
+        (odustani)="odustaniOdbijanje()"
+      />
+    }
   } @else if (kvar().status === 'prihvacen' || kvar().status === 'dodeljen') {
     <div class="flex flex-col gap-1.5 sm:max-w-xs">
       <span id="serviser-oznaka" class="text-sm font-medium">
@@ -47,20 +62,43 @@
         <small class="text-sm text-greska">Serviseri trenutno ne mogu da se učitaju.</small>
       }
     </div>
-    <button
-      pButton
-      type="button"
-      size="small"
-      class="mt-3"
-      [disabled]="!mozeDaDodeli()"
-      (click)="dodeli()"
-    >
-      {{ kvar().serviser ? 'Promeni' : 'Dodeli' }}
-    </button>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <button pButton type="button" size="small" [disabled]="!mozeDaDodeli()" (click)="dodeli()">
+        {{ kvar().serviser ? 'Promeni' : 'Dodeli' }}
+      </button>
+      @if (kvar().status === 'prihvacen') {
+        <button
+          pButton
+          id="odbij"
+          type="button"
+          size="small"
+          severity="danger"
+          text
+          [attr.aria-expanded]="odbijanjeOtvoreno()"
+          [disabled]="store.akcijaUToku()"
+          (click)="prebaciOdbijanje()"
+        >
+          Odbij
+        </button>
+      }
+    </div>
+    @if (odbijanjeOtvoreno()) {
+      <app-forma-razloga
+        class="mt-6"
+        oznaka="Zašto odbijaš prijavu?"
+        pomoc="Stanar vidi razlog u kvaru i u komentarima. Kvar prelazi u završene."
+        porukaGreske="Napiši zašto odbijaš prijavu."
+        natpis="Odbij prijavu"
+        [opasno]="true"
+        [slanje]="store.akcijaUToku()"
+        (posalji)="store.odbij($event)"
+        (odustani)="odustaniOdbijanje()"
+      />
+    }
   } @else if (kvar().status === 'u_toku') {
     <p class="text-priguseno">Serviser radi na kvaru.</p>
     @if (store.poslednjeVracanje(); as vracanje) {
-      <app-razlog-vracanja class="mt-4" [vracanje]="vracanje" />
+      <app-razlog-promene class="mt-4" [promena]="vracanje" />
     }
   } @else if (kvar().status === 'resen') {
     <p class="text-priguseno">

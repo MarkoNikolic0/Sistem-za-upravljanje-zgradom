@@ -16,7 +16,7 @@
     </button>
   } @else {
     @if (store.poslednjeVracanje(); as vracanje) {
-      <app-razlog-vracanja class="mt-4" [vracanje]="vracanje" />
+      <app-razlog-promene class="mt-4" [promena]="vracanje" />
       <p class="mt-4 text-priguseno">Kad ga popraviš, ponovo ga označi kao rešen.</p>
     } @else {
       <p class="text-priguseno">Kad završiš popravku, označi kvar kao rešen.</p>

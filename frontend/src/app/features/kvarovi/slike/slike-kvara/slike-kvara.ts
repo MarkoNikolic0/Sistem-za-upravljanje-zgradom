@@ -17,6 +17,7 @@ import {
   SlikaKvara,
 } from '../../kvar-models';
 import { SlikeKvaraStore } from '../slike-kvara-store';
+import { jeZavrsen } from '../../pravila-kvara';
 
 interface Poruka {
   tip: 'uspeh' | 'greska';
@@ -50,6 +51,7 @@ export class SlikeKvara {
   protected readonly otpremanje = signal(false);
   protected readonly poruka = signal<Poruka | null>(null);
   protected readonly mozeJos = computed(() => this.store.slike().length < MAKS_SLIKA_KVARA);
+  protected readonly zavrsen = computed(() => jeZavrsen(this.kvar().status));
 
   constructor() {
     this.store.ucitaj(computed(() => this.kvar().id));

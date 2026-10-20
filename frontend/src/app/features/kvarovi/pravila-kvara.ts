@@ -15,6 +15,10 @@ export const PRAVILA_KOMENTARA_KVARA = [
   Validators.maxLength(MAKS_KOMENTAR_KVARA),
 ];
 
+export function jeZavrsen(status: StatusKvara): boolean {
+  return ['zatvoren', 'odbijen', 'povucen'].includes(status);
+}
+
 export function pratiRok(status: StatusKvara): boolean {
   return ['prijavljen', 'prihvacen', 'dodeljen', 'u_toku'].includes(status);
 }

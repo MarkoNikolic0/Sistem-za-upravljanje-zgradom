@@ -14,7 +14,9 @@ import {
 } from '../../kvar-models';
 import { KvarService } from '../../kvar-service';
 import { KvarStore } from '../../kvar-store';
-import { RazlogVracanja } from '../razlog-vracanja/razlog-vracanja';
+import { RazlogPromene } from '../razlog-promene/razlog-promene';
+import { fokusPosleCrtanja } from '../../../../shared/fokus';
+import { FormaRazloga } from '../forma-razloga/forma-razloga';
 
 @Component({
   imports: [
@@ -24,7 +26,8 @@ import { RazlogVracanja } from '../razlog-vracanja/razlog-vracanja';
     ConfirmDialogModule,
     SelectModule,
     SelectButtonModule,
-    RazlogVracanja,
+    RazlogPromene,
+    FormaRazloga,
   ],
   providers: [ConfirmationService],
   selector: 'app-upravljanje-kvarom',
@@ -36,6 +39,8 @@ export class UpravljanjeKvarom {
   private kvarService = inject(KvarService);
   private confirmationService = inject(ConfirmationService);
 
+  private readonly fokusiraj = fokusPosleCrtanja();
+
   readonly kvar = input.required<KvarDetalj>();
 
   protected readonly prioriteti: { label: string; value: PrioritetKvara }[] = [
@@ -43,6 +48,11 @@ export class UpravljanjeKvarom {
     { label: NAZIVI_PRIORITETA_KVARA.srednje, value: 'srednje' },
     { label: NAZIVI_PRIORITETA_KVARA.hitno, value: 'hitno' },
   ];
+
+  protected readonly odbijanjeOtvoreno = linkedSignal({
+    source: () => this.kvar().status,
+    computation: () => false,
+  });
 
   protected readonly dana = DANA_ZA_RESAVANJE;
 
@@ -74,17 +84,13 @@ export class UpravljanjeKvarom {
     this.store.postaviPrioritet(prioritet);
   }
 
-  protected odbij(event: Event): void {
-    const dugme = event.currentTarget as HTMLElement;
-    this.confirmationService.confirm({
-      header: 'Odbijanje prijave',
-      message: 'Odbiti ovu prijavu kvara? Kvar prelazi u završene i više ne može da se menja.',
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Odbij', severity: 'danger' },
-      accept: () => this.store.odbij(),
-      reject: () => dugme.focus(),
-    });
+  protected prebaciOdbijanje(): void {
+    this.odbijanjeOtvoreno.update((otvoreno) => !otvoreno);
+  }
+
+  protected odustaniOdbijanje(): void {
+    this.odbijanjeOtvoreno.set(false);
+    this.fokusiraj('#odbij');
   }
 
   protected zatvori(event: Event): void {

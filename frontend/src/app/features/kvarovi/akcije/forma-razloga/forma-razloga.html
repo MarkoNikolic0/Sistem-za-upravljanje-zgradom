@@ -1,0 +1,42 @@
+<form [formGroup]="forma" (ngSubmit)="posaljiRazlog()" class="flex flex-col gap-1.5">
+  <label [for]="idPolja" class="text-sm font-medium">
+    {{ oznaka() }}
+    @if (!obavezan()) {
+      <span class="font-normal text-priguseno">(nije obavezno)</span>
+    }
+  </label>
+  @if (pomoc(); as tekstPomoci) {
+    <p [id]="idPolja + '-pomoc'" class="text-sm text-priguseno">{{ tekstPomoci }}</p>
+  }
+  <textarea
+    pTextarea
+    [id]="idPolja"
+    formControlName="tekst"
+    rows="3"
+    [autoResize]="true"
+    [attr.maxlength]="maksKomentar"
+    [fluid]="true"
+    [invalid]="nevazeci()"
+    [attr.aria-invalid]="nevazeci()"
+    [attr.aria-describedby]="opis()"
+  ></textarea>
+  <div aria-live="polite" class="empty:hidden">
+    @if (nevazeci()) {
+      <small [id]="idPolja + '-greska'" class="text-sm text-greska">{{ porukaGreske() }}</small>
+    }
+  </div>
+  <div class="mt-2 flex flex-wrap gap-2">
+    <button
+      pButton
+      type="submit"
+      size="small"
+      [severity]="opasno() ? 'danger' : null"
+      [disabled]="slanje()"
+    >
+      {{ natpis() }}
+    </button>
+    <button pButton type="button" size="small" severity="secondary" text (click)="odustani.emit()">
+      Odustani
+    </button>
+  </div>
+</form>

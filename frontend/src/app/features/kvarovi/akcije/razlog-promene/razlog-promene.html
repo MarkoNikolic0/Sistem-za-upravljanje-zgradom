@@ -1,0 +1,8 @@
+<p class="text-sm font-medium text-naslov">{{ naslov() }}</p>
+@if (promena().komentar; as komentar) {
+  <p class="mt-1 whitespace-pre-line wrap-anywhere">{{ komentar.tekst }}</p>
+}
+<p class="mt-1 text-sm text-priguseno">
+  {{ promena().korisnik?.ime }} {{ promena().korisnik?.prezime }} ·
+  <time [attr.datetime]="promena().datum">{{ promena().datum | date: 'd. MMM HH:mm' }}</time>
+</p>

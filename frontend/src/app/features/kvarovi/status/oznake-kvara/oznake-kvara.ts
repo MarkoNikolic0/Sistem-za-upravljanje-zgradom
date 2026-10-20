@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { TagModule, TagSeverity } from 'primeng/tag';
 import { NAZIVI_STATUSA_KVARA, PrioritetKvara, StatusKvara } from '../../kvar-models';
-import { stanjeRoka, StanjeRoka } from '../../pravila-kvara';
+import { jeZavrsen, stanjeRoka, StanjeRoka } from '../../pravila-kvara';
 
 const BOJE_STATUSA: Record<StatusKvara, TagSeverity | undefined> = {
   prijavljen: 'secondary',
@@ -11,6 +11,7 @@ const BOJE_STATUSA: Record<StatusKvara, TagSeverity | undefined> = {
   resen: 'success',
   zatvoren: 'secondary',
   odbijen: 'danger',
+  povucen: 'secondary',
 };
 
 const OZNAKE_ROKA: Record<StanjeRoka, { tekst: string; boja: TagSeverity }> = {
@@ -33,8 +34,7 @@ export class OznakeKvara {
   protected readonly naziv = computed(() => NAZIVI_STATUSA_KVARA[this.status()]);
   protected readonly boja = computed(() => BOJE_STATUSA[this.status()]);
   protected readonly hitno = computed(
-    () =>
-      this.prioritet() === 'hitno' && this.status() !== 'zatvoren' && this.status() !== 'odbijen',
+    () => this.prioritet() === 'hitno' && !jeZavrsen(this.status()),
   );
   protected readonly oznakaRoka = computed(() => {
     const stanje = stanjeRoka(this.status(), this.rok());

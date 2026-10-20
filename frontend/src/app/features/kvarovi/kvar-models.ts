@@ -3,7 +3,7 @@ import { UpitStrane } from '../../shared/stranica';
 import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
 
 export type StatusKvara =
-  'prijavljen' | 'prihvacen' | 'dodeljen' | 'u_toku' | 'resen' | 'zatvoren' | 'odbijen';
+  'prijavljen' | 'prihvacen' | 'dodeljen' | 'u_toku' | 'resen' | 'zatvoren' | 'odbijen' | 'povucen';
 
 export type KategorijaKvara =
   'vodovod' | 'struja' | 'lift' | 'grejanje' | 'gradjevina' | 'stolarija' | 'ciscenje' | 'ostalo';
@@ -22,6 +22,7 @@ export const NAZIVI_STATUSA_KVARA: Record<StatusKvara, string> = {
   resen: 'Rešen',
   zatvoren: 'Zatvoren',
   odbijen: 'Odbijen',
+  povucen: 'Povučen',
 };
 
 export const NAZIVI_PRIORITETA_KVARA: Record<PrioritetKvara, string> = {
@@ -80,6 +81,7 @@ export interface KvarDetalj extends Kvar {
   smeDaUpravlja: boolean;
   smeDaPotvrdi: boolean;
   smeDaPrati: boolean;
+  smeDaPovuce: boolean;
   pratim: boolean;
   rokPotvrde: string | null;
   istorija: PromenaStatusaKvara[];

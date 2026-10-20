@@ -4,7 +4,7 @@
       <span class="marker" aria-hidden="true">
         @if (korak.stanje === 'zavrsen') {
           <i class="pi pi-check"></i>
-        } @else if (korak.stanje === 'odbijen') {
+        } @else if (korak.stanje === 'odbijen' || korak.stanje === 'povucen') {
           <i class="pi pi-times"></i>
         }
       </span>

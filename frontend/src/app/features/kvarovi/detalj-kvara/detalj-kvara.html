@@ -41,6 +41,17 @@
       <app-slike-kvara class="slike" [kvar]="kvar" />
 
       <div class="akcije">
+        @if (razlogZavrsetka(); as razlog) {
+          <section class="odeljak" aria-labelledby="zavrsetak-naslov">
+            <div class="zaglavlje-odeljka">
+              <h2 id="zavrsetak-naslov" class="naslov-odeljka">Završetak</h2>
+            </div>
+            <app-razlog-promene [promena]="razlog" />
+          </section>
+        }
+        @if (kvar.smeDaPovuce) {
+          <app-povlacenje-kvara />
+        }
         @if (potvrda()) {
           <app-potvrda-kvara [kvar]="kvar" />
         }

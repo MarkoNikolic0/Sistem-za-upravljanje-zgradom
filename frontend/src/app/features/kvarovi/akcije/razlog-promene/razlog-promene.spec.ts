@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RazlogVracanja } from './razlog-vracanja';
+import { RazlogPromene } from './razlog-promene';
 
-describe('RazlogVracanja', () => {
-  let component: RazlogVracanja;
-  let fixture: ComponentFixture<RazlogVracanja>;
+describe('RazlogPromene', () => {
+  let component: RazlogPromene;
+  let fixture: ComponentFixture<RazlogPromene>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RazlogVracanja],
+      imports: [RazlogPromene],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(RazlogVracanja);
+    fixture = TestBed.createComponent(RazlogPromene);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

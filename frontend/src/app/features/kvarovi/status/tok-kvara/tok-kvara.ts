@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { NAZIVI_STATUSA_KVARA, PromenaStatusaKvara, StatusKvara } from '../../kvar-models';
 import { DatePipe } from '@angular/common';
 
-type StanjeKoraka = 'zavrsen' | 'trenutni' | 'sledeci' | 'odbijen';
+type StanjeKoraka = 'zavrsen' | 'trenutni' | 'sledeci' | 'odbijen' | 'povucen';
 
 interface Korak {
   status: StatusKvara;
@@ -33,10 +33,11 @@ export class TokKvara {
 
   protected readonly koraci = computed((): Korak[] => {
     const status = this.status();
-    if (status === 'odbijen') {
+    if (status === 'odbijen' || status === 'povucen') {
+      const predjeni = REDOSLED.filter((s) => this.datum(s));
       return [
-        { status: 'prijavljen', stanje: 'zavrsen', datum: this.datum('prijavljen') },
-        { status: 'odbijen', stanje: 'odbijen', datum: this.datum('odbijen') },
+        ...predjeni.map((s): Korak => ({ status: s, stanje: 'zavrsen', datum: this.datum(s) })),
+        { status, stanje: status, datum: this.datum(status) },
       ];
     }
     const trenutni = REDOSLED.indexOf(status);

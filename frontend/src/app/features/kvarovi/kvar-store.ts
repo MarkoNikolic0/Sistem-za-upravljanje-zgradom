@@ -387,10 +387,16 @@ export const KvarStore = signalStore(
           () => 'Kvar je prihvaćen.',
         );
       },
-      odbij(): void {
+      odbij(tekst: string): void {
         akcija(
-          (id) => kvarService.odbij(id),
-          () => 'Kvar je odbijen.',
+          (id) => kvarService.odbij(id, tekst).pipe(tap(() => osveziKomentare(id))),
+          () => 'Prijava je odbijena. Razlog je upisan u komentare.',
+        );
+      },
+      povuci(tekst: string): void {
+        akcija(
+          (id) => kvarService.povuci(id, tekst).pipe(tap(() => osveziKomentare(id))),
+          () => 'Prijava je povučena. Kvar je prešao u završene.',
         );
       },
       dodeliServisera(serviserId: number): void {

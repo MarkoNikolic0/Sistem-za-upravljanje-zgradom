@@ -65,11 +65,19 @@
   }
 }
 
-.odbijen {
+.odbijen,
+.povucen {
   font-weight: 500;
-  color: var(--color-greska);
 
   .marker {
     border-color: currentColor;
   }
+}
+
+.odbijen {
+  color: var(--color-greska);
+}
+
+.povucen {
+  color: var(--color-naslov);
 }

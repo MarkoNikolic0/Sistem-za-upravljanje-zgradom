@@ -35,8 +35,9 @@
     } @else {
       <p class="text-priguseno">Još nema slika.</p>
     }
-
-    @if (mozeJos()) {
+    @if (zavrsen()) {
+      <!-- Završen kvar ne prima nove slike -->
+    } @else if (mozeJos()) {
       <app-izbor-slika
         class="mt-4"
         [vecIma]="store.slike().length"

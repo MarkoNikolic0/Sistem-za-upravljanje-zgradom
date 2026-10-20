@@ -85,8 +85,12 @@ export class KvarService {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/prihvati`, null);
   }
 
-  odbij(id: number): Observable<KvarDetalj> {
-    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/odbij`, null);
+  odbij(id: number, tekst: string): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/odbij`, { tekst });
+  }
+
+  povuci(id: number, tekst: string): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/povuci`, tekst ? { tekst } : {});
   }
 
   postaviPrioritet(id: number, prioritet: PrioritetKvara): Observable<KvarDetalj> {

@@ -5,15 +5,27 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TagModule } from 'primeng/tag';
+import { TagModule, TagSeverity } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { KomentarKvara, KvarDetalj, MAKS_KOMENTAR_KVARA } from '../kvar-models';
+import { KomentarKvara, KvarDetalj, MAKS_KOMENTAR_KVARA, StatusKvara } from '../kvar-models';
 import { KvarStore } from '../kvar-store';
-import { PRAVILA_KOMENTARA_KVARA } from '../pravila-kvara';
+import { jeZavrsen, PRAVILA_KOMENTARA_KVARA } from '../pravila-kvara';
+
+interface OznakaRazloga {
+  tekst: string;
+  boja: TagSeverity;
+  ikonica: string;
+}
+
+const OZNAKE_RAZLOGA: Partial<Record<StatusKvara, OznakaRazloga>> = {
+  u_toku: { tekst: 'Nije rešeno', boja: 'warn', ikonica: 'pi pi-replay' },
+  odbijen: { tekst: 'Razlog odbijanja', boja: 'danger', ikonica: 'pi pi-times' },
+  povucen: { tekst: 'Prijava povučena', boja: 'secondary', ikonica: 'pi pi-undo' },
+};
 
 @Component({
   imports: [
@@ -41,8 +53,15 @@ export class KomentariKvara {
   protected readonly naziviUloga = NAZIVI_ULOGA;
   protected readonly maksKomentar = MAKS_KOMENTAR_KVARA;
 
-  private readonly razloziVracanja = computed(
-    () => new Set(this.store.vracanja().map((p) => p.komentar?.id)),
+  protected readonly zavrsen = computed(() => jeZavrsen(this.kvar().status));
+
+  private readonly razlozi = computed(
+    () =>
+      new Map(
+        this.kvar().istorija.flatMap((p) =>
+          p.komentar ? [[p.komentar.id, OZNAKE_RAZLOGA[p.status]] as const] : [],
+        ),
+      ),
   );
 
   protected readonly forma = this.fb.nonNullable.group({
@@ -59,13 +78,13 @@ export class KomentariKvara {
     return !!this.greskaKomentara() || this.komentarNevazeci();
   }
 
-  protected jeRazlogVracanja(komentar: KomentarKvara): boolean {
-    return this.razloziVracanja().has(komentar.id);
+  protected oznakaRazloga(komentar: KomentarKvara): OznakaRazloga | undefined {
+    return this.razlozi().get(komentar.id);
   }
 
   protected smeDaBrise(komentar: KomentarKvara): boolean {
     const autor =
-      komentar.korisnik.id === this.authStore.korisnik()?.id && !this.jeRazlogVracanja(komentar);
+      komentar.korisnik.id === this.authStore.korisnik()?.id && !this.oznakaRazloga(komentar);
     return autor || this.kvar().smeDaUpravlja;
   }
 

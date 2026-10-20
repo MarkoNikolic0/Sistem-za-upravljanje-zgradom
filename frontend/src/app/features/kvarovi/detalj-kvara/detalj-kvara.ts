@@ -27,7 +27,9 @@ import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvar
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
 import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
 import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
-import { pratiRok } from '../pravila-kvara';
+import { jeZavrsen, pratiRok } from '../pravila-kvara';
+import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
+import { RazlogPromene } from '../akcije/razlog-promene/razlog-promene';
 
 @Component({
   imports: [
@@ -46,6 +48,8 @@ import { pratiRok } from '../pravila-kvara';
     SlikeKvara,
     PracenjeKvara,
     BrojStanaraPipe,
+    PovlacenjeKvara,
+    RazlogPromene,
   ],
   selector: 'app-detalj-kvara',
   styleUrl: './detalj-kvara.scss',
@@ -64,7 +68,17 @@ export class DetaljKvara {
 
   protected readonly upravlja = computed(() => {
     const kvar = this.store.kvar();
-    return !!kvar?.smeDaUpravlja && kvar.status !== 'zatvoren' && kvar.status !== 'odbijen';
+    return !!kvar?.smeDaUpravlja && !jeZavrsen(kvar.status);
+  });
+
+  protected readonly razlogZavrsetka = computed(() => {
+    const kvar = this.store.kvar();
+    const poslednja = kvar?.istorija.at(-1);
+    return (kvar?.status === 'odbijen' || kvar?.status === 'povucen') &&
+      poslednja?.status === kvar.status &&
+      poslednja.komentar
+      ? poslednja
+      : undefined;
   });
 
   protected readonly potvrda = computed(() => {

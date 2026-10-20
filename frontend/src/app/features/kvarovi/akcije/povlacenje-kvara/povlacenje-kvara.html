@@ -1,0 +1,35 @@
+<section class="odeljak" aria-labelledby="povlacenje-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="povlacenje-naslov" class="naslov-odeljka">Povlačenje</h2>
+  </div>
+  <p class="text-priguseno">
+    Ako se kvar rešio sam ili je prijavljen greškom, povuci prijavu dok je upravnik ne prihvati.
+  </p>
+  <button
+    pButton
+    id="povuci"
+    type="button"
+    size="small"
+    severity="danger"
+    outlined
+    class="mt-4"
+    [attr.aria-expanded]="formaOtvorena()"
+    (click)="prebaciFormu()"
+  >
+    Povuci prijavu
+  </button>
+
+  @if (formaOtvorena()) {
+    <app-forma-razloga
+      class="mt-6"
+      oznaka="Zašto povlačiš prijavu?"
+      pomoc="Kvar prelazi u završene i više ne može da se menja."
+      natpis="Potvrdi povlačenje"
+      [obavezan]="false"
+      [opasno]="true"
+      [slanje]="store.akcijaUToku()"
+      (posalji)="store.povuci($event)"
+      (odustani)="odustani()"
+    />
+  }
+</section>
