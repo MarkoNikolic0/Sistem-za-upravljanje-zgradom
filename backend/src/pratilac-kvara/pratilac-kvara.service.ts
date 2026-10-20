@@ -1,11 +1,12 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PratilacKvara } from './pratilac-kvara.entity.js';
 import { KvarService } from '../kvar/kvar.service.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OTVORENI_STATUSI } from '../kvar/kvar.constants.js';
+import { Kvar } from '../kvar/kvar.entity.js';
 
 @Injectable()
 export class PratilacKvaraService {
@@ -14,21 +15,29 @@ export class PratilacKvaraService {
     private pratilacRepository: Repository<PratilacKvara>,
     private kvarService: KvarService,
     private kvarPravaService: KvarPravaService,
+    private dataSource: DataSource,
   ) {}
 
   async prati(kvarId: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
     await this.kvarPravaService.proveriPracenje(kvar, korisnikId);
-    if (!OTVORENI_STATUSI.includes(kvar.status)) {
-      throw new ConflictException('Kvar je već rešen ili završen!');
-    }
 
-    await this.pratilacRepository
-      .createQueryBuilder()
-      .insert()
-      .values({ kvar: { id: kvarId }, korisnik: { id: korisnikId } })
-      .orIgnore()
-      .execute();
+    await this.dataSource.transaction(async (manager) => {
+      const zakljucan = await manager.findOne(Kvar, {
+        where: { id: kvarId },
+        lock: { mode: 'pessimistic_read' },
+      });
+      if (!zakljucan || !OTVORENI_STATUSI.includes(zakljucan.status)) {
+        throw new ConflictException('Kvar je već rešen ili završen!');
+      }
+      await manager
+        .createQueryBuilder()
+        .insert()
+        .into(PratilacKvara)
+        .values({ kvar: { id: kvarId }, korisnik: { id: korisnikId } })
+        .orIgnore()
+        .execute();
+    });
     return await this.stanje(kvarId, korisnikId);
   }
 

@@ -395,7 +395,14 @@ export const KvarStore = signalStore(
       },
       povuci(tekst: string): void {
         akcija(
-          (id) => kvarService.povuci(id, tekst).pipe(tap(() => osveziKomentare(id))),
+          (id) =>
+            kvarService.povuci(id, tekst).pipe(
+              tap(() => {
+                if (tekst) {
+                  osveziKomentare(id);
+                }
+              }),
+            ),
           () => 'Prijava je povučena. Kvar je prešao u završene.',
         );
       },

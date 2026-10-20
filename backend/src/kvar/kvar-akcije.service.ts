@@ -39,6 +39,7 @@ import { MS_PO_DANU } from '../shared/vreme.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
+import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
@@ -49,6 +50,7 @@ interface Prelaz {
   izmene?: QueryDeepPartialEntity<Kvar>;
   uslov?: FindOptionsWhere<Kvar>;
   komentar?: string;
+  provera?: (manager: EntityManager) => Promise<void>;
 }
 
 @Injectable()
@@ -101,7 +103,22 @@ export class KvarAkcijeService {
       [StatusKvara.PRIJAVLJEN],
       StatusKvara.POVUCEN,
       korisnikId,
-      { komentar: dto.tekst },
+      {
+        komentar: dto.tekst,
+        provera: async (manager) => {
+          await manager.findOne(Kvar, {
+            where: { id },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (
+            await manager.exists(PratilacKvara, { where: { kvar: { id } } })
+          ) {
+            throw new ConflictException(
+              'Drugi stanari prate ovaj kvar, pa prijava ne može da se povuče. Javi se upravniku.',
+            );
+          }
+        },
+      },
     );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -272,9 +289,10 @@ export class KvarAkcijeService {
     izStatusa: StatusKvara[],
     status: StatusKvara,
     korisnikId: number,
-    { izmene = {}, uslov = {}, komentar }: Prelaz = {},
+    { izmene = {}, uslov = {}, komentar, provera }: Prelaz = {},
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
+      await provera?.(manager);
       await this.izmeniAkoJeU(
         id,
         izStatusa,

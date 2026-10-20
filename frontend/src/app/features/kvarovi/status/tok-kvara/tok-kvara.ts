@@ -34,7 +34,7 @@ export class TokKvara {
   protected readonly koraci = computed((): Korak[] => {
     const status = this.status();
     if (status === 'odbijen' || status === 'povucen') {
-      const predjeni = REDOSLED.filter((s) => this.datum(s));
+      const predjeni = REDOSLED.filter((s) => s === 'prijavljen' || this.datum(s));
       return [
         ...predjeni.map((s): Korak => ({ status: s, stanje: 'zavrsen', datum: this.datum(s) })),
         { status, stanje: status, datum: this.datum(status) },
@@ -49,7 +49,6 @@ export class TokKvara {
     }));
   });
 
-  // Ako je kvar vraćen serviseru, korak je pređen više puta — prikazuje se poslednji put
   private datum(status: StatusKvara): string | undefined {
     return this.istorija()
       .filter((p) => p.status === status)

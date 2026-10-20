@@ -1,8 +1,18 @@
-import { PartialType, PickType } from '@nestjs/swagger';
-import { CreateKomentarDto } from '../../komentar-kvar/dto/create-komentar.dto.js';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 
-export class RazlogDto extends PickType(CreateKomentarDto, [
-  'tekst',
-] as const) {}
+export class RazlogDto {
+  @UkloniRazmake()
+  @IsString()
+  @MaxLength(1000, { message: 'Razlog može imati najviše 1000 znakova.' })
+  @IsNotEmpty({ message: 'Napiši razlog.' })
+  tekst: string;
+}
 
-export class OpcioniRazlogDto extends PartialType(RazlogDto) {}
+export class OpcioniRazlogDto {
+  @UkloniRazmake()
+  @IsString()
+  @MaxLength(1000, { message: 'Razlog može imati najviše 1000 znakova.' })
+  @IsOptional()
+  tekst?: string;
+}

@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Kvar } from './kvar.entity.js';
@@ -189,11 +185,6 @@ export class KvarPravaService {
     if (kvar.korisnik.id !== korisnikId) {
       throw new ForbiddenException(
         'Prijavu može da povuče samo onaj ko je prijavio kvar!',
-      );
-    }
-    if (kvar.brojPratilaca > 0) {
-      throw new ConflictException(
-        'Drugi stanari prate ovaj kvar, pa prijava ne može da se povuče. Javi se upravniku.',
       );
     }
   }
