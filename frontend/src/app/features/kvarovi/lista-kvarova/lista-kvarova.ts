@@ -9,13 +9,14 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { NAZIVI_KATEGORIJA_KVARA, StanjeKvara } from '../kvar-models';
-import { KVAROVA_PO_STRANI, KvarStore } from '../kvar-store';
 import { ProfileService } from '../../profile/profile-service';
 import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
 import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
 import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
+import { ListaKvarovaStore } from '../lista-kvarova-store';
+import { KVAROVA_PO_STRANI } from '../pravila-kvara';
 
 @Component({
   imports: [
@@ -37,7 +38,7 @@ import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
   templateUrl: './lista-kvarova.html',
 })
 export class ListaKvarova {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(ListaKvarovaStore);
   private authStore = inject(AuthStore);
   private profileService = inject(ProfileService);
   private kvarService = inject(KvarService);

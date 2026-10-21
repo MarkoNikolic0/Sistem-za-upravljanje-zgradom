@@ -13,8 +13,8 @@ import {
   PrioritetKvara,
 } from '../../kvar-models';
 import { KvarService } from '../../kvar-service';
-import { KvarStore } from '../../kvar-store';
-import { RazlogPromene } from '../razlog-promene/razlog-promene';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
+import { RazlogPromene } from '../../status/razlog-promene/razlog-promene';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { FormaRazloga } from '../forma-razloga/forma-razloga';
 
@@ -35,7 +35,7 @@ import { FormaRazloga } from '../forma-razloga/forma-razloga';
   templateUrl: './upravljanje-kvarom.html',
 })
 export class UpravljanjeKvarom {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(DetaljKvaraStore);
   private kvarService = inject(KvarService);
   private confirmationService = inject(ConfirmationService);
 

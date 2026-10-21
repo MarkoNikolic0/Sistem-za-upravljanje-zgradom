@@ -47,13 +47,13 @@
     </div>
   }
 
-  <section class="odeljak" aria-label="Lista kvarova" [attr.aria-busy]="store.ucitava()">
-    @if (store.greskaUcitavanja()) {
-      <p-message severity="error">Kvarovi trenutno ne mogu da se učitaju.</p-message>
+  <section class="odeljak" aria-label="Lista kvarova" [attr.aria-busy]="store.isPending()">
+    @if (store.error(); as greska) {
+      <p-message severity="error">{{ greska }}</p-message>
       <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
         Pokušaj ponovo
       </button>
-    } @else if (store.ucitava() && store.kvarovi().length === 0) {
+    } @else if (store.isPending() && store.kvarovi().length === 0) {
       <div class="ucitavanje" aria-hidden="true">
         <p-skeleton height="6rem" />
         <p-skeleton height="6rem" styleClass="mt-3" />

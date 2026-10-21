@@ -13,7 +13,11 @@ import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja } from '../../../shared/greske-servera';
 import { nazivSprata } from '../../../shared/pipes/sprat-pipe';
 import { ProfileService } from '../../profile/profile-service';
-import { KvarStore } from '../kvar-store';
+import { injectDispatch } from '@ngrx/signals/events';
+import { firstValueFrom } from 'rxjs';
+import { kvarEvents } from '../kvar-events';
+import { KvarService } from '../kvar-service';
+import { SlikaKvaraService } from '../slike/slike-kvara-service';
 import { SlikePrijave } from '../slike/slike-prijave/slike-prijave';
 import {
   DANA_ZA_RESAVANJE,
@@ -22,6 +26,8 @@ import {
   MAKS_NASLOV_KVARA,
   MAKS_OPIS_KVARA,
   NAZIVI_KATEGORIJA_KVARA,
+  PorukaAkcije,
+  StanjeNavigacijeKvara,
 } from '../kvar-models';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
@@ -48,7 +54,9 @@ type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
   templateUrl: './prijava-kvara.html',
 })
 export class PrijavaKvara {
-  protected readonly store = inject(KvarStore);
+  private kvarService = inject(KvarService);
+  private slikaKvaraService = inject(SlikaKvaraService);
+  private readonly dispatch = injectDispatch(kvarEvents);
   private profileService = inject(ProfileService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -60,6 +68,7 @@ export class PrijavaKvara {
 
   protected readonly profil = this.profileService.profile();
   protected readonly greska = signal('');
+  protected readonly slanje = signal(false);
 
   protected readonly slike = signal<File[]>([]);
 
@@ -124,22 +133,47 @@ export class PrijavaKvara {
     }
 
     this.greska.set('');
+    this.slanje.set(true);
     try {
-      const kvar = await this.store.prijavi(
-        {
+      const kvar = await firstValueFrom(
+        this.kvarService.prijavi({
           stanId,
           lokacijaTip,
           kategorija,
           naslov: naslov.trim(),
           opis: opis.trim(),
           prioritet: hitno ? 'hitno' : undefined,
-        },
-        this.slike(),
+        }),
       );
-      await this.router.navigate(['/kvarovi', kvar.id]);
+      this.dispatch.prijavljen(kvar);
+      const poruka = await this.dodajSlike(kvar.id);
+      await this.router.navigate(['/kvarovi', kvar.id], {
+        state: { poruka } satisfies StanjeNavigacijeKvara,
+      });
     } catch (err) {
       this.obradiGresku(err);
+    } finally {
+      this.slanje.set(false);
     }
+  }
+
+  private async dodajSlike(kvarId: number): Promise<PorukaAkcije | undefined> {
+    const slike = this.slike();
+    let nisuDodate = 0;
+    for (const slika of slike) {
+      try {
+        await firstValueFrom(this.slikaKvaraService.dodaj(kvarId, slika));
+      } catch {
+        nisuDodate++;
+      }
+    }
+    return nisuDodate > 0
+      ? {
+          tip: 'greska',
+          tekst: `Kvar je prijavljen, ali neke slike nisu dodate (${nisuDodate} od ${slike.length}). Dodaj ih ponovo u odeljku Slike.`,
+          fokus: true,
+        }
+      : undefined;
   }
 
   private obradiGresku(err: unknown): void {

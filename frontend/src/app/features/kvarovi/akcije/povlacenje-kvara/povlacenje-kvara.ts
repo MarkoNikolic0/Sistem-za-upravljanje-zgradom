@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
-import { KvarStore } from '../../kvar-store';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { FormaRazloga } from '../forma-razloga/forma-razloga';
 
 @Component({
@@ -11,7 +11,7 @@ import { FormaRazloga } from '../forma-razloga/forma-razloga';
   templateUrl: './povlacenje-kvara.html',
 })
 export class PovlacenjeKvara {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(DetaljKvaraStore);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly povlacenjeOtvoreno = signal(false);

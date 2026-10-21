@@ -1,0 +1,115 @@
+<section class="odeljak" aria-labelledby="komentari-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="komentari-naslov" class="naslov-odeljka" tabindex="-1">Komentari</h2>
+  </div>
+
+  @if (store.isFulfilled()) {
+    @if (store.preostaloStarijih() > 0) {
+      <button
+        pButton
+        type="button"
+        text
+        size="small"
+        class="mb-2"
+        [disabled]="store.ucitavaStarije()"
+        (click)="store.ucitajStarije()"
+      >
+        Prikaži starije komentare ({{ store.preostaloStarijih() }})
+      </button>
+    }
+
+    @for (komentar of store.komentari(); track komentar.id) {
+      <article
+        class="komentar"
+        [class.razlog]="oznakaRazloga(komentar)"
+        [attr.aria-label]="'Komentar: ' + komentar.korisnik.ime"
+      >
+        @if (oznakaRazloga(komentar); as oznaka) {
+          <p-tag
+            [value]="oznaka.tekst"
+            [severity]="oznaka.boja"
+            [icon]="oznaka.ikonica"
+            [rounded]="true"
+            class="mb-2"
+          />
+        }
+        <div class="flex items-baseline justify-between gap-4">
+          <p class="text-sm">
+            <span class="font-medium text-naslov">
+              {{ komentar.korisnik.ime }} {{ komentar.korisnik.prezime }}
+            </span>
+            @if (komentar.korisnik.uloga !== 'stanar') {
+              <span class="text-priguseno"> · {{ naziviUloga[komentar.korisnik.uloga] }}</span>
+            }
+          </p>
+          <time class="shrink-0 text-sm text-utisano" [attr.datetime]="komentar.datumKreiranja">
+            {{ komentar.datumKreiranja | date: 'd. MMM HH:mm' }}
+          </time>
+        </div>
+        <p class="mt-1 whitespace-pre-line wrap-anywhere">{{ komentar.tekst }}</p>
+        @if (smeDaBrise(komentar)) {
+          <button
+            pButton
+            type="button"
+            text
+            size="small"
+            severity="danger"
+            class="mt-1 -ml-2"
+            (click)="obrisi($event, komentar)"
+          >
+            Obriši
+          </button>
+        }
+      </article>
+    } @empty {
+      <p class="text-priguseno">Još nema komentara.</p>
+    }
+  } @else if (store.error(); as greska) {
+    <p-message severity="error">{{ greska }}</p-message>
+    <button pButton type="button" size="small" outlined class="mt-4" (click)="ucitajPonovo()">
+      Pokušaj ponovo
+    </button>
+  } @else {
+    <p-skeleton height="4rem" styleClass="ucitavanje" aria-hidden="true" />
+    <span class="sr-only">Učitavanje komentara…</span>
+  }
+  @if (zavrsen()) {
+    <p class="mt-6 text-sm text-priguseno">Kvar je završen, pa više ne može da se komentariše.</p>
+  } @else {
+    <form [formGroup]="forma" (ngSubmit)="posaljiKomentar()" class="mt-6 flex flex-col gap-1.5">
+      <label for="komentar" class="text-sm font-medium">Novi komentar</label>
+      <textarea
+        pTextarea
+        id="komentar"
+        formControlName="tekst"
+        rows="2"
+        [autoResize]="true"
+        [attr.maxlength]="maksKomentar"
+        [fluid]="true"
+        [invalid]="komentarNevazeci()"
+        [attr.aria-invalid]="komentarNevazeci()"
+        [attr.aria-describedby]="imaGreskuKomentara() ? 'komentar-greska' : null"
+      ></textarea>
+      <div aria-live="polite" class="empty:hidden">
+        @if (greskaKomentara()) {
+          <small id="komentar-greska" class="text-sm text-greska">{{ greskaKomentara() }}</small>
+        } @else if (komentarNevazeci()) {
+          <small id="komentar-greska" class="text-sm text-greska">Napiši komentar.</small>
+        }
+      </div>
+      <div class="mt-2">
+        <button pButton type="submit" size="small" [disabled]="store.slanje()">
+          @if (store.slanje()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Slanje…
+          } @else {
+            Pošalji
+          }
+        </button>
+      </div>
+    </form>
+  }
+</section>
+
+<!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

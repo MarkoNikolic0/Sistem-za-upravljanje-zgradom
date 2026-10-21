@@ -7,13 +7,15 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule, TagSeverity } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
-import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { greskaPolja } from '../../../shared/greske-servera';
-import { NAZIVI_ULOGA } from '../../auth/auth-models';
-import { AuthStore } from '../../auth/sesija/auth-store';
-import { KomentarKvara, KvarDetalj, MAKS_KOMENTAR_KVARA, StatusKvara } from '../kvar-models';
-import { KvarStore } from '../kvar-store';
-import { jeZavrsen, PRAVILA_KOMENTARA_KVARA } from '../pravila-kvara';
+import { fokusPosleCrtanja } from '../../../../shared/fokus';
+import { greskaPolja } from '../../../../shared/greske-servera';
+import { NAZIVI_ULOGA } from '../../../auth/auth-models';
+import { AuthStore } from '../../../auth/sesija/auth-store';
+import { KomentarKvara, KvarDetalj, MAKS_KOMENTAR_KVARA, StatusKvara } from '../../kvar-models';
+import { KomentariKvaraStore } from '../komentari-kvara-store';
+import { jeZavrsen, PRAVILA_KOMENTARA_KVARA } from '../../pravila-kvara';
+import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
 
 interface OznakaRazloga {
   tekst: string;
@@ -33,16 +35,18 @@ const OZNAKE_RAZLOGA: Partial<Record<StatusKvara, OznakaRazloga>> = {
     ReactiveFormsModule,
     ButtonModule,
     ConfirmDialogModule,
+    MessageModule,
+    SkeletonModule,
     TagModule,
     TextareaModule,
   ],
-  providers: [ConfirmationService],
+  providers: [KomentariKvaraStore, ConfirmationService],
   selector: 'app-komentari-kvara',
   styleUrl: './komentari-kvara.scss',
   templateUrl: './komentari-kvara.html',
 })
 export class KomentariKvara {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(KomentariKvaraStore);
   private authStore = inject(AuthStore);
   private confirmationService = inject(ConfirmationService);
   private fb = inject(FormBuilder);
@@ -68,6 +72,15 @@ export class KomentariKvara {
     tekst: ['', { validators: PRAVILA_KOMENTARA_KVARA, updateOn: 'submit' }],
   });
   protected readonly greskaKomentara = signal('');
+
+  constructor() {
+    this.store.ucitaj(computed(() => this.kvar().id));
+  }
+
+  protected ucitajPonovo(): void {
+    this.store.ucitaj(this.kvar().id);
+    this.fokusiraj('#komentari-naslov');
+  }
 
   protected komentarNevazeci(): boolean {
     const tekst = this.forma.controls.tekst;
@@ -97,7 +110,7 @@ export class KomentariKvara {
     }
     this.greskaKomentara.set('');
     try {
-      await this.store.dodajKomentar(tekst.value.trim());
+      await this.store.dodaj(tekst.value.trim());
       this.forma.reset();
       this.fokusiraj('#komentar');
     } catch (err) {
@@ -117,7 +130,7 @@ export class KomentariKvara {
       acceptButtonProps: { label: 'Obriši', severity: 'danger' },
       accept: async () => {
         try {
-          await this.store.obrisiKomentar(komentar.id);
+          await this.store.obrisi(komentar.id);
           this.fokusiraj('#komentari-naslov');
         } catch {
           this.greskaKomentara.set('Komentar nije obrisan. Pokušaj ponovo.');

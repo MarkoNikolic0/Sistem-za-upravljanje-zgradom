@@ -5,12 +5,10 @@ import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
 import {
   KategorijaKvara,
-  KomentarKvara,
   Kvar,
   KvarDetalj,
   PrijavaKvaraRequest,
   PrioritetKvara,
-  SlikaKvara,
   StatusRadaServisera,
   UpitKvarova,
   SlicanKvar,
@@ -24,8 +22,6 @@ import { KorisnikOsnovno } from '../auth/auth-models';
 export class KvarService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/kvar`;
-  private komentariUrl = `${environment.apiUrl}/komentar-kvar`;
-  private slikeUrl = `${environment.apiUrl}/slika-kvara`;
   private pratiociUrl = `${environment.apiUrl}/pratilac-kvara`;
 
   lista(upit: UpitKvarova): Observable<Stranica<Kvar>> {
@@ -117,39 +113,7 @@ export class KvarService {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/zatvori`, null);
   }
 
-  komentari(kvarId: number, poStrani: number, preId?: number): Observable<Stranica<KomentarKvara>> {
-    let params = new HttpParams().set('poStrani', poStrani);
-    if (preId) {
-      params = params.set('preId', preId);
-    }
-    return this.http.get<Stranica<KomentarKvara>>(`${this.komentariUrl}/kvar/${kvarId}`, {
-      params,
-    });
-  }
-
-  dodajKomentar(kvarId: number, tekst: string): Observable<KomentarKvara> {
-    return this.http.post<KomentarKvara>(this.komentariUrl, { kvarId, tekst });
-  }
-
-  obrisiKomentar(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.komentariUrl}/${id}`);
-  }
-
   vrati(id: number, tekst: string): Observable<KvarDetalj> {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/vrati`, { tekst });
-  }
-
-  slike(kvarId: number): Observable<SlikaKvara[]> {
-    return this.http.get<SlikaKvara[]>(`${this.slikeUrl}/kvar/${kvarId}`);
-  }
-
-  dodajSliku(kvarId: number, slika: File): Observable<SlikaKvara> {
-    const podaci = new FormData();
-    podaci.append('slika', slika);
-    return this.http.post<SlikaKvara>(`${this.slikeUrl}/kvar/${kvarId}`, podaci);
-  }
-
-  obrisiSliku(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.slikeUrl}/${id}`);
   }
 }

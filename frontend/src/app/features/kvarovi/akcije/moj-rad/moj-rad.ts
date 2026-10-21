@@ -1,8 +1,8 @@
 import { Component, inject, input } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { KvarDetalj } from '../../kvar-models';
-import { KvarStore } from '../../kvar-store';
-import { RazlogPromene } from '../razlog-promene/razlog-promene';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
+import { RazlogPromene } from '../../status/razlog-promene/razlog-promene';
 import { DolazakServisera } from '../dolazak-servisera/dolazak-servisera';
 
 @Component({
@@ -12,7 +12,7 @@ import { DolazakServisera } from '../dolazak-servisera/dolazak-servisera';
   templateUrl: './moj-rad.html',
 })
 export class MojRad {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(DetaljKvaraStore);
 
   readonly kvar = input.required<KvarDetalj>();
 }

@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { KvarDetalj } from '../../kvar-models';
-import { KvarStore } from '../../kvar-store';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { dolazakUBuducnosti, najkasnijiDolazak } from '../../pravila-kvara';
 import { DatePipe } from '@angular/common';
 
@@ -15,7 +15,7 @@ import { DatePipe } from '@angular/common';
   templateUrl: './dolazak-servisera.html',
 })
 export class DolazakServisera {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(DetaljKvaraStore);
   private fb = inject(FormBuilder);
   private readonly fokusiraj = fokusPosleCrtanja();
 

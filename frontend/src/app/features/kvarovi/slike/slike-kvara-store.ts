@@ -10,7 +10,7 @@ import {
   withRequestStatus,
 } from '../../../shared/with-request-status';
 import { SlikaKvara } from '../kvar-models';
-import { KvarService } from '../kvar-service';
+import { SlikaKvaraService } from './slike-kvara-service';
 
 interface SlikeKvaraState {
   slike: SlikaKvara[];
@@ -19,12 +19,12 @@ interface SlikeKvaraState {
 export const SlikeKvaraStore = signalStore(
   withState<SlikeKvaraState>({ slike: [] }),
   withRequestStatus(),
-  withMethods((store, kvarService = inject(KvarService)) => ({
+  withMethods((store, slikaKvaraService = inject(SlikaKvaraService)) => ({
     ucitaj: rxMethod<number>(
       pipe(
         tap(() => patchState(store, setPending())),
         switchMap((kvarId) =>
-          kvarService.slike(kvarId).pipe(
+          slikaKvaraService.slike(kvarId).pipe(
             tapResponse({
               next: (slike) => patchState(store, { slike }, setFulfilled()),
               error: () => patchState(store, setError('Slike trenutno ne mogu da se učitaju.')),
@@ -34,11 +34,11 @@ export const SlikeKvaraStore = signalStore(
       ),
     ),
     async dodaj(kvarId: number, fajl: File): Promise<void> {
-      const slika = await firstValueFrom(kvarService.dodajSliku(kvarId, fajl));
+      const slika = await firstValueFrom(slikaKvaraService.dodaj(kvarId, fajl));
       patchState(store, { slike: [...store.slike(), slika] });
     },
     async obrisi(id: number): Promise<void> {
-      await firstValueFrom(kvarService.obrisiSliku(id));
+      await firstValueFrom(slikaKvaraService.obrisi(id));
       patchState(store, { slike: store.slike().filter((s) => s.id !== id) });
     },
   })),

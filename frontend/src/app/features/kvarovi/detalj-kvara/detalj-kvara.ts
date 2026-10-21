@@ -9,16 +9,15 @@ import {
   viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { KomentariKvara } from '../komentari-kvara/komentari-kvara';
-import { NAZIVI_KATEGORIJA_KVARA } from '../kvar-models';
-import { KvarStore } from '../kvar-store';
+import { NAZIVI_KATEGORIJA_KVARA, StanjeNavigacijeKvara } from '../kvar-models';
+import { DetaljKvaraStore } from '../detalj-kvara-store';
 import { MojRad } from '../akcije/moj-rad/moj-rad';
 import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
 import { PotvrdaKvara } from '../akcije/potvrda-kvara/potvrda-kvara';
@@ -29,7 +28,8 @@ import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
 import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
 import { jeZavrsen, pratiRok } from '../pravila-kvara';
 import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
-import { RazlogPromene } from '../akcije/razlog-promene/razlog-promene';
+import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
+import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
 
 @Component({
   imports: [
@@ -51,13 +51,15 @@ import { RazlogPromene } from '../akcije/razlog-promene/razlog-promene';
     PovlacenjeKvara,
     RazlogPromene,
   ],
+  providers: [DetaljKvaraStore],
   selector: 'app-detalj-kvara',
   styleUrl: './detalj-kvara.scss',
   templateUrl: './detalj-kvara.html',
 })
 export class DetaljKvara {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(DetaljKvaraStore);
   private authStore = inject(AuthStore);
+  private router = inject(Router);
   private readonly porukaAkcije = viewChild.required<ElementRef<HTMLElement>>('porukaAkcije');
 
   readonly id = input.required({ transform: numberAttribute });
@@ -69,16 +71,6 @@ export class DetaljKvara {
   protected readonly upravlja = computed(() => {
     const kvar = this.store.kvar();
     return !!kvar?.smeDaUpravlja && !jeZavrsen(kvar.status);
-  });
-
-  protected readonly razlogZavrsetka = computed(() => {
-    const kvar = this.store.kvar();
-    const poslednja = kvar?.istorija.at(-1);
-    return (kvar?.status === 'odbijen' || kvar?.status === 'povucen') &&
-      poslednja?.status === kvar.status &&
-      poslednja.komentar
-      ? poslednja
-      : undefined;
   });
 
   protected readonly potvrda = computed(() => {
@@ -97,7 +89,12 @@ export class DetaljKvara {
   });
 
   constructor() {
-    this.store.ucitajDetalj(this.id);
+    const navigacija = this.router.currentNavigation();
+    if (navigacija?.trigger === 'imperative') {
+      const stanje = navigacija.extras.state as StanjeNavigacijeKvara | undefined;
+      this.store.prikaziPosleUcitavanja(stanje?.poruka);
+    }
+    this.store.ucitaj(this.id);
     afterRenderEffect(() => {
       if (this.store.porukaAkcije()?.fokus) {
         this.porukaAkcije().nativeElement.focus();

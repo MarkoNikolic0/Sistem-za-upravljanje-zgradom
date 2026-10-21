@@ -41,7 +41,7 @@
       <app-slike-kvara class="slike" [kvar]="kvar" />
 
       <div class="akcije">
-        @if (razlogZavrsetka(); as razlog) {
+        @if (store.razlogZavrsetka(); as razlog) {
           <section class="odeljak" aria-labelledby="zavrsetak-naslov">
             <div class="zaglavlje-odeljka">
               <h2 id="zavrsetak-naslov" class="naslov-odeljka">Završetak</h2>
@@ -164,14 +164,14 @@
 
       <app-komentari-kvara class="komentari" [kvar]="kvar" />
     </div>
-  } @else if (store.greskaDetalja() === 'nije-pronadjen') {
+  } @else if (store.nePostoji()) {
     <section class="odeljak">
       <p-message severity="warn">Kvar ne postoji ili nemaš pristup njemu.</p-message>
     </section>
-  } @else if (store.greskaDetalja() === 'greska') {
+  } @else if (store.error(); as greska) {
     <section class="odeljak">
-      <p-message severity="error">Kvar trenutno ne može da se učita.</p-message>
-      <button pButton type="button" outlined class="mt-4" (click)="store.ucitajDetalj(id())">
+      <p-message severity="error">{{ greska }}</p-message>
+      <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj(id())">
         Pokušaj ponovo
       </button>
     </section>

@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { KvarDetalj } from '../../kvar-models';
-import { KvarStore } from '../../kvar-store';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { FormaRazloga } from '../forma-razloga/forma-razloga';
 
 @Component({
@@ -13,7 +13,7 @@ import { FormaRazloga } from '../forma-razloga/forma-razloga';
   templateUrl: './potvrda-kvara.html',
 })
 export class PotvrdaKvara {
-  protected readonly store = inject(KvarStore);
+  protected readonly store = inject(DetaljKvaraStore);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly kvar = input.required<KvarDetalj>();

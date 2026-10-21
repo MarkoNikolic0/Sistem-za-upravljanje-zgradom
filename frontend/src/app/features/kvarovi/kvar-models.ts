@@ -140,3 +140,13 @@ export interface SlikaKvara {
   datumOtpremanja: string;
   korisnik: KorisnikOsnovno | null;
 }
+
+export interface PorukaAkcije {
+  tip: 'uspeh' | 'greska';
+  tekst: string;
+  fokus: boolean;
+}
+
+export interface StanjeNavigacijeKvara {
+  poruka?: PorukaAkcije;
+}

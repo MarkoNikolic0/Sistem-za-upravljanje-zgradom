@@ -9,6 +9,9 @@ import {
   TIPOVI_SLIKE,
 } from './kvar-models';
 
+export const KVAROVA_PO_STRANI = 10;
+export const KOMENTARA_PO_STRANI = 20;
+
 export const PRAVILA_KOMENTARA_KVARA = [
   Validators.required,
   Validators.pattern(NIJE_PRAZNO),

@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { KvarStore } from './kvar-store';
+import { ListaKvarovaStore } from './lista-kvarova-store';
 
 export default [
   {
     path: '',
-    providers: [KvarStore],
+    providers: [ListaKvarovaStore],
     children: [
       {
         path: '',

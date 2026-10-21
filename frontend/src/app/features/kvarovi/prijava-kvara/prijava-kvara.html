@@ -133,7 +133,7 @@
           }
         </div>
 
-        <app-slike-prijave [(slike)]="slike" [otpremanje]="store.prijavaUToku()" />
+        <app-slike-prijave [(slike)]="slike" [otpremanje]="slanje()" />
 
         <div class="flex items-start gap-3">
           <p-checkbox inputId="hitno" formControlName="hitno" [binary]="true" />
@@ -147,8 +147,8 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-4">
-          <button pButton type="submit" [disabled]="store.prijavaUToku()">
-            @if (store.prijavaUToku()) {
+          <button pButton type="submit" [disabled]="slanje()">
+            @if (slanje()) {
               <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
               Slanje…
             } @else {

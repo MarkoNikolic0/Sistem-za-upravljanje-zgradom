@@ -5,9 +5,9 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KvarService } from '../../kvar-service';
-import { KvarStore } from '../../kvar-store';
-import { KategorijaKvara, NAZIVI_STATUSA_KVARA } from '../../kvar-models';
+import { KategorijaKvara, NAZIVI_STATUSA_KVARA, StanjeNavigacijeKvara } from '../../kvar-models';
 import { BrojStanaraPipe } from '../../../../shared/pipes/broj-stanara-pipe';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   imports: [DatePipe, RouterLink, ButtonModule, MessageModule, BrojStanaraPipe],
@@ -17,7 +17,6 @@ import { BrojStanaraPipe } from '../../../../shared/pipes/broj-stanara-pipe';
 })
 export class VecPrijavljeno {
   private kvarService = inject(KvarService);
-  private store = inject(KvarStore);
   private router = inject(Router);
   private authStore = inject(AuthStore);
 
@@ -44,8 +43,16 @@ export class VecPrijavljeno {
     this.greska.set('');
     this.pracenjeUToku.set(true);
     try {
-      await this.store.pratiUmestoPrijave(kvarId);
-      await this.router.navigate(['/kvarovi', kvarId]);
+      await firstValueFrom(this.kvarService.prati(kvarId));
+      await this.router.navigate(['/kvarovi', kvarId], {
+        state: {
+          poruka: {
+            tip: 'uspeh',
+            tekst: 'Pratiš ovaj kvar. Ne moraš da ga prijavljuješ ponovo.',
+            fokus: true,
+          },
+        } satisfies StanjeNavigacijeKvara,
+      });
     } catch {
       this.greska.set('Praćenje nije uspelo. Prikazano je trenutno stanje, pokušaj ponovo.');
       this.slicni.reload();
