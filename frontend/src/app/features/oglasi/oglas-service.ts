@@ -43,4 +43,8 @@ export class OglasService {
   sakrij(id: number, razlog: string): Observable<Oglas> {
     return this.http.patch<Oglas>(`${this.apiUrl}/${id}/sakrij`, { razlog });
   }
+
+  obnovi(id: number): Observable<Oglas> {
+    return this.http.patch<Oglas>(`${this.apiUrl}/${id}/obnovi`, null);
+  }
 }

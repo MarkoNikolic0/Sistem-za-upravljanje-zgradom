@@ -31,16 +31,20 @@ import {
   VrstaOglasa,
 } from '../oglas-models';
 import { OglasService } from '../oglas-service';
-import { upravljaZgradom } from '../pravila-oglasa';
+import { krajDana, predlozenRok, rokNijeProsao, upravljaZgradom } from '../pravila-oglasa';
 import { injectZgradeOglasa } from '../zgrade-oglasa';
+import { CheckboxModule } from 'primeng/checkbox';
+import { DatePickerModule } from 'primeng/datepicker';
 
-type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst';
+type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst' | 'vaziDo';
 
 @Component({
   imports: [
     ReactiveFormsModule,
     RouterLink,
     ButtonModule,
+    CheckboxModule,
+    DatePickerModule,
     InputTextModule,
     MessageModule,
     SelectModule,
@@ -79,6 +83,7 @@ export class FormaOglasa {
   protected readonly maksNaslov = MAKS_NASLOV_OGLASA;
   protected readonly maksTekst = MAKS_TEKST_OGLASA;
 
+  protected readonly danas = new Date();
   protected readonly greska = signal('');
   protected readonly slanje = signal(false);
 
@@ -95,6 +100,8 @@ export class FormaOglasa {
       Validators.pattern(NIJE_PRAZNO),
       Validators.maxLength(MAKS_TEKST_OGLASA),
     ]),
+    vaziDo: this.fb.control<Date | null>(null, rokNijeProsao),
+    vazno: this.fb.nonNullable.control(false),
   });
 
   private readonly zgradaId = toSignal(this.forma.controls.zgradaId.valueChanges, {
@@ -134,8 +141,17 @@ export class FormaOglasa {
 
     effect(() => {
       if (this.oglas.hasValue()) {
-        const { zgrada, vrsta, naslov, tekst } = this.oglas.value();
-        untracked(() => this.forma.setValue({ zgradaId: zgrada.id, vrsta, naslov, tekst }));
+        const { zgrada, vrsta, naslov, tekst, vaziDo, vazno } = this.oglas.value();
+        untracked(() =>
+          this.forma.setValue({
+            zgradaId: zgrada.id,
+            vrsta,
+            naslov,
+            tekst,
+            vaziDo: vaziDo ? new Date(vaziDo) : null,
+            vazno,
+          }),
+        );
       }
     });
 
@@ -146,6 +162,15 @@ export class FormaOglasa {
         this.forma.controls.vrsta.setValue(null);
       }
     });
+
+    // Dok korisnik sam ne izabere rok, predlažemo ga prema vrsti
+    effect(() => {
+      const vrsta = this.vrsta();
+      const vaziDo = this.forma.controls.vaziDo;
+      if (!this.izmena() && vaziDo.pristine) {
+        vaziDo.setValue(predlozenRok(vrsta));
+      }
+    });
   }
 
   protected nevazece(polje: Polje): boolean {
@@ -154,14 +179,20 @@ export class FormaOglasa {
   }
 
   protected async posalji(): Promise<void> {
-    const { zgradaId, vrsta, naslov, tekst } = this.forma.getRawValue();
+    const { zgradaId, vrsta, naslov, tekst, vaziDo, vazno } = this.forma.getRawValue();
     if (this.forma.invalid || zgradaId === null || vrsta === null) {
       this.forma.markAllAsTouched();
       this.fokusirajPrvoNevazece();
       return;
     }
 
-    const podaci = { vrsta, naslov: naslov.trim(), tekst: tekst.trim() };
+    const podaci = {
+      vrsta,
+      naslov: naslov.trim(),
+      tekst: tekst.trim(),
+      vazno,
+      vaziDo: vaziDo && krajDana(vaziDo),
+    };
     const id = this.id();
     this.greska.set('');
     this.slanje.set(true);
@@ -194,7 +225,7 @@ export class FormaOglasa {
       this.greska.set(neuspeh);
       return;
     }
-    for (const polje of ['vrsta', 'naslov', 'tekst'] as const) {
+    for (const polje of ['vrsta', 'naslov', 'tekst', 'vaziDo'] as const) {
       const poruka = greskaPolja(err, polje);
       if (poruka) {
         this.forma.controls[polje].setErrors({ server: poruka });
@@ -208,7 +239,7 @@ export class FormaOglasa {
   }
 
   private fokusirajPrvoNevazece(): void {
-    const polja: Polje[] = ['zgradaId', 'vrsta', 'naslov', 'tekst'];
+    const polja: Polje[] = ['zgradaId', 'vrsta', 'naslov', 'tekst', 'vaziDo'];
     const prvo = polja.find((polje) => this.forma.controls[polje].invalid);
     if (prvo) {
       this.host.nativeElement.querySelector<HTMLElement>(`#${prvo}`)?.focus();

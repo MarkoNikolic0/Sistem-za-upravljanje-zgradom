@@ -59,7 +59,8 @@
     }
   }
 
-  &.sakriven {
+  &.sakriven,
+  &.istekao {
     background: transparent;
     border: 1px dashed var(--color-ivica);
     box-shadow: none;

@@ -57,12 +57,16 @@ export interface Oglas {
   naslov: string;
   tekst: string;
   vrsta: VrstaOglasa;
+  vazno: boolean;
+  vaziDo: string | null;
+  isteklo: boolean;
   zgrada: ZgradaOsnovno;
   autor: KorisnikOsnovno;
   datumKreiranja: string;
   datumIzmene: string | null;
   datumSakrivanja: string | null;
   razlogSakrivanja: string | null;
+  smeDaObnovi: boolean;
   smeDaMenja: boolean;
   smeDaObrise: boolean;
   smeDaSakrije: boolean;
@@ -72,6 +76,8 @@ export interface OglasRequest {
   naslov: string;
   tekst: string;
   vrsta: VrstaOglasa;
+  vazno: boolean;
+  vaziDo: Date | null;
 }
 
 export interface NoviOglasRequest extends OglasRequest {

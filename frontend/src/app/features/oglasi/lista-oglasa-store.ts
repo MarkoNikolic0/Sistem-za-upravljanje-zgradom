@@ -14,7 +14,7 @@ import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
 import { porukaServera, prvaGreskaPolja } from '../../shared/greske-servera';
 import { Oglas, PorukaOglasa, VrstaOglasa } from './oglas-models';
 import { OglasService } from './oglas-service';
-import { OGLASA_PO_STRANI } from './pravila-oglasa';
+import { DANA_VAZENJA, OGLASA_PO_STRANI } from './pravila-oglasa';
 
 interface ListaOglasaState {
   oglasi: Oglas[];
@@ -62,6 +62,10 @@ export const ListaOglasaStore = signalStore(
         ),
       ),
     );
+
+    function zameni(oglas: Oglas): void {
+      patchState(store, { oglasi: store.oglasi().map((o) => (o.id === oglas.id ? oglas : o)) });
+    }
 
     // Vraća da li je akcija uspela
     async function izvrsi(
@@ -121,12 +125,16 @@ export const ListaOglasaStore = signalStore(
       },
       sakrij(id: number, razlog: string): Promise<boolean> {
         return izvrsi(
-          async () => {
-            const oglas = await firstValueFrom(oglasService.sakrij(id, razlog));
-            patchState(store, { oglasi: store.oglasi().map((o) => (o.id === id ? oglas : o)) });
-          },
+          async () => zameni(await firstValueFrom(oglasService.sakrij(id, razlog))),
           'Oglas je sakriven. Autor vidi razlog, a ostali stanari ga više ne vide.',
           'Oglas nije sakriven. Pokušaj ponovo.',
+        );
+      },
+      obnovi(id: number): Promise<boolean> {
+        return izvrsi(
+          async () => zameni(await firstValueFrom(oglasService.obnovi(id))),
+          `Oglas je obnovljen i važi još ${DANA_VAZENJA} dana.`,
+          'Oglas nije obnovljen. Pokušaj ponovo.',
         );
       },
     };

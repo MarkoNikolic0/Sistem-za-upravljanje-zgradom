@@ -115,6 +115,11 @@ export class ListaOglasa {
     this.fokusiraj('#poruka-oglasa');
   }
 
+  protected async obnovi(oglas: Oglas): Promise<void> {
+    await this.store.obnovi(oglas.id);
+    this.fokusiraj('#poruka-oglasa');
+  }
+
   protected odustaniOdSakrivanja(oglas: Oglas): void {
     this.sakrivanjeId.set(null);
     this.fokusiraj(`#sakrij-${oglas.id}`);

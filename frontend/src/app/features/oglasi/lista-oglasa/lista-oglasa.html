@@ -76,26 +76,52 @@
               [class.obavestenje]="oglas.vrsta === 'obavestenje'"
               [class.upozorenje]="oglas.vrsta === 'upozorenje'"
               [class.sakriven]="oglas.datumSakrivanja"
+              [class.istekao]="oglas.isteklo"
               [attr.aria-labelledby]="'oglas-' + oglas.id"
             >
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-3">
                 <span class="ikonica-vrste" aria-hidden="true">
                   <i [class]="vrste[oglas.vrsta].ikonica"></i>
                 </span>
-                <div class="min-w-0 flex-1">
+                <div class="min-w-48 flex-1">
                   <p class="vrsta">{{ vrste[oglas.vrsta].naziv }}</p>
-                  <time class="text-sm text-utisano" [attr.datetime]="oglas.datumKreiranja">
-                    {{ oglas.datumKreiranja | date: 'd. MMM HH:mm' }}
-                  </time>
+                  <p class="text-sm text-utisano">
+                    <time [attr.datetime]="oglas.datumKreiranja">
+                      {{ oglas.datumKreiranja | date: 'd. MMM HH:mm' }}
+                    </time>
+                    @if (oglas.vaziDo && !oglas.isteklo) {
+                      · važi do
+                      <time [attr.datetime]="oglas.vaziDo">{{
+                        oglas.vaziDo | date: 'd. MMM'
+                      }}</time>
+                    }
+                  </p>
                 </div>
-                @if (oglas.datumSakrivanja) {
-                  <p-tag
-                    value="Sakriven"
-                    icon="pi pi-eye-slash"
-                    severity="danger"
-                    [rounded]="true"
-                  />
-                }
+                <div class="flex flex-wrap gap-1.5">
+                  @if (oglas.vazno) {
+                    <p-tag
+                      value="Važno"
+                      icon="pi pi-exclamation-circle"
+                      severity="warn"
+                      [rounded]="true"
+                    />
+                  }
+                  @if (oglas.datumSakrivanja) {
+                    <p-tag
+                      value="Sakriven"
+                      icon="pi pi-eye-slash"
+                      severity="danger"
+                      [rounded]="true"
+                    />
+                  } @else if (oglas.isteklo) {
+                    <p-tag
+                      value="Istekao"
+                      icon="pi pi-clock"
+                      severity="secondary"
+                      [rounded]="true"
+                    />
+                  }
+                </div>
               </div>
 
               <div class="telo">
@@ -109,6 +135,10 @@
                     </p>
                     <p class="mt-1 text-sm text-priguseno">Ostali stanari ga više ne vide.</p>
                   </div>
+                } @else if (oglas.isteklo && oglas.vaziDo) {
+                  <p class="mt-4 text-sm text-priguseno">
+                    Istekao {{ oglas.vaziDo | date: 'd. MMM' }}. Ostali stanari ga više ne vide.
+                  </p>
                 }
               </div>
 
@@ -126,6 +156,18 @@
                 </div>
                 @if (sakrivanjeId() !== oglas.id) {
                   <div class="-mr-3 flex flex-wrap">
+                    @if (oglas.smeDaObnovi) {
+                      <button
+                        pButton
+                        type="button"
+                        text
+                        size="small"
+                        [disabled]="store.akcijaUToku()"
+                        (click)="obnovi(oglas)"
+                      >
+                        Obnovi
+                      </button>
+                    }
                     @if (oglas.smeDaMenja) {
                       <a
                         pButton
