@@ -22,6 +22,10 @@ export function krajDana(datum: Date): Date {
   return new Date(datum.getFullYear(), datum.getMonth(), datum.getDate(), 23, 59, 59, 999);
 }
 
+export function formatRoka(rok: string): string {
+  return new Date(rok).getFullYear() === new Date().getFullYear() ? 'd. MMM' : 'd. MMM y.';
+}
+
 export function rokNijeProsao(polje: AbstractControl<Date | null>): ValidationErrors | null {
   const rok = polje.value;
   return rok && krajDana(rok).getTime() <= Date.now() ? { proslost: true } : null;

@@ -16,6 +16,7 @@ import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { ListaOglasaStore } from '../lista-oglasa-store';
 import { Oglas, StanjeNavigacijeOglasa, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
 import { injectZgradeOglasa } from '../zgrade-oglasa';
+import { formatRoka } from '../pravila-oglasa';
 
 @Component({
   imports: [
@@ -44,6 +45,7 @@ export class ListaOglasa {
 
   protected readonly vrste = VRSTE_OGLASA;
   protected readonly naziviUloga = NAZIVI_ULOGA;
+  protected readonly formatRoka = formatRoka;
   protected readonly opcijeVrsta = [
     { value: null, label: 'Sve vrste' },
     ...Object.entries(VRSTE_OGLASA).map(([value, opis]) => ({

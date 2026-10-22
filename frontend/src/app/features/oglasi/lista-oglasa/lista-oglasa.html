@@ -92,7 +92,7 @@
                     @if (oglas.vaziDo && !oglas.isteklo) {
                       · važi do
                       <time [attr.datetime]="oglas.vaziDo">{{
-                        oglas.vaziDo | date: 'd. MMM'
+                        oglas.vaziDo | date: formatRoka(oglas.vaziDo)
                       }}</time>
                     }
                   </p>
@@ -137,7 +137,8 @@
                   </div>
                 } @else if (oglas.isteklo && oglas.vaziDo) {
                   <p class="mt-4 text-sm text-priguseno">
-                    Istekao {{ oglas.vaziDo | date: 'd. MMM' }}. Ostali stanari ga više ne vide.
+                    Istekao {{ oglas.vaziDo | date: formatRoka(oglas.vaziDo) }}. Ostali stanari ga
+                    više ne vide.
                   </p>
                 }
               </div>

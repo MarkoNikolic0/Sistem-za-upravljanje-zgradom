@@ -136,10 +136,15 @@
         <app-slike-prijave [(slike)]="slike" [otpremanje]="slanje()" />
 
         <div class="flex items-start gap-3">
-          <p-checkbox inputId="hitno" formControlName="hitno" [binary]="true" />
+          <p-checkbox
+            inputId="hitno"
+            formControlName="hitno"
+            [binary]="true"
+            [pt]="{ input: { 'aria-describedby': 'hitno-pomoc' } }"
+          />
           <div>
             <label for="hitno" class="font-medium">Hitno</label>
-            <p class="mt-0.5 text-sm text-priguseno">
+            <p id="hitno-pomoc" class="mt-0.5 text-sm text-priguseno">
               Na primer: curi voda, nema struje ili grejanja. Rok za popravku je
               {{ danaZaHitno }} dana.
             </p>

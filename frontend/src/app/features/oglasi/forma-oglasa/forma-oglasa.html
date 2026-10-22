@@ -158,26 +158,39 @@
           [showButtonBar]="true"
           [fluid]="true"
           [invalid]="nevazece('vaziDo')"
+          [pt]="{
+            pcInputText: {
+              root: {
+                'aria-invalid': nevazece('vaziDo'),
+                'aria-describedby': nevazece('vaziDo') ? 'vaziDo-greska' : 'vaziDo-pomoc',
+              },
+            },
+          }"
         />
         @if (nevazece('vaziDo')) {
-          <small class="text-sm text-greska">
+          <small id="vaziDo-greska" class="text-sm text-greska">
             {{
               forma.controls.vaziDo.errors?.['server'] ??
                 'Rok je prošao. Izaberi novi datum ili ukloni rok.'
             }}
           </small>
         } @else {
-          <small class="text-sm text-priguseno">
+          <small id="vaziDo-pomoc" class="text-sm text-priguseno">
             Posle tog dana oglas vide samo autor i upravnik.
           </small>
         }
       </div>
 
       <div class="flex items-start gap-3">
-        <p-checkbox inputId="vazno" formControlName="vazno" [binary]="true" />
+        <p-checkbox
+          inputId="vazno"
+          formControlName="vazno"
+          [binary]="true"
+          [pt]="{ input: { 'aria-describedby': 'vazno-pomoc' } }"
+        />
         <div>
           <label for="vazno" class="font-medium">Važno</label>
-          <p class="mt-0.5 text-sm text-priguseno">
+          <p id="vazno-pomoc" class="mt-0.5 text-sm text-priguseno">
             Oglas dobija oznaku Važno. Na primer: isključenje vode, opasnost u zgradi.
           </p>
         </div>

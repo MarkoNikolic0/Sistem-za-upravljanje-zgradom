@@ -26,7 +26,10 @@ import { UpdateOglasDto } from './dto/update-oglas.dto.js';
 import { SakrijOglasDto } from './dto/sakrij-oglas.dto.js';
 import { OglasUpitDto } from './dto/oglas-upit.dto.js';
 import { DANA_VAZENJA } from './oglas.constants.js';
-import { MS_PO_DANU } from '../shared/vreme.js';
+import { VREMENSKA_ZONA } from '../shared/vreme.js';
+
+const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
+  + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
 
 // null = sve zgrade (admin)
 interface Pristup {
@@ -255,18 +258,21 @@ export class OglasService {
       throw new ConflictException('Oglas još važi.');
     }
 
-    const izmene = {
-      vaziDo: new Date(sada.getTime() + DANA_VAZENJA * MS_PO_DANU),
-    };
-    const rezultat = await this.oglasRepository.update(
-      { id, datumSakrivanja: IsNull(), vaziDo: LessThanOrEqual(sada) },
-      izmene,
-    );
+    const rezultat = await this.oglasRepository
+      .createQueryBuilder()
+      .update()
+      .set({ vaziDo: () => KRAJ_NOVOG_ROKA })
+      .where({ id, datumSakrivanja: IsNull(), vaziDo: LessThanOrEqual(sada) })
+      .returning('"vaziDo"')
+      .execute();
     if (rezultat.affected === 0) {
       throw new ConflictException(
         'Oglas je u međuvremenu obnovljen ili sakriven.',
       );
     }
+    const izmene = {
+      vaziDo: (rezultat.raw as Pick<Oglas, 'vaziDo'>[])[0].vaziDo,
+    };
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 

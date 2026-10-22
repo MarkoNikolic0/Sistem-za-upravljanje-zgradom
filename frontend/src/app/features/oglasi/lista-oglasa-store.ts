@@ -14,7 +14,7 @@ import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
 import { porukaServera, prvaGreskaPolja } from '../../shared/greske-servera';
 import { Oglas, PorukaOglasa, VrstaOglasa } from './oglas-models';
 import { OglasService } from './oglas-service';
-import { DANA_VAZENJA, OGLASA_PO_STRANI } from './pravila-oglasa';
+import { OGLASA_PO_STRANI } from './pravila-oglasa';
 
 interface ListaOglasaState {
   oglasi: Oglas[];
@@ -133,7 +133,7 @@ export const ListaOglasaStore = signalStore(
       obnovi(id: number): Promise<boolean> {
         return izvrsi(
           async () => zameni(await firstValueFrom(oglasService.obnovi(id))),
-          `Oglas je obnovljen i važi još ${DANA_VAZENJA} dana.`,
+          'Oglas je obnovljen i ponovo ga vide svi stanari.',
           'Oglas nije obnovljen. Pokušaj ponovo.',
         );
       },
