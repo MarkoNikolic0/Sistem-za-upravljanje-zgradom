@@ -166,7 +166,7 @@
                 }
               </div>
 
-              @if (sakrivanjeId() === oglas.id) {
+              @if (sakrivanjeId() === oglas.id && oglas.smeDaSakrije) {
                 <app-forma-razloga
                   class="mt-4"
                   oznaka="Razlog sakrivanja"

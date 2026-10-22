@@ -63,11 +63,17 @@ export const ListaOglasaStore = signalStore(
       ),
     );
 
-    async function izvrsi(akcija: () => Promise<void>, uspeh: string, neuspeh: string) {
+    // Vraća da li je akcija uspela
+    async function izvrsi(
+      akcija: () => Promise<void>,
+      uspeh: string,
+      neuspeh: string,
+    ): Promise<boolean> {
       patchState(store, { akcijaUToku: true, poruka: null });
       try {
         await akcija();
         patchState(store, { poruka: { tip: 'uspeh', tekst: uspeh } });
+        return true;
       } catch (err) {
         const greska = err instanceof HttpErrorResponse ? err : null;
         patchState(store, {
@@ -80,6 +86,7 @@ export const ListaOglasaStore = signalStore(
         if (greska?.status === 404 || greska?.status === 409) {
           ucitaj();
         }
+        return false;
       } finally {
         patchState(store, { akcijaUToku: false });
       }
@@ -102,7 +109,7 @@ export const ListaOglasaStore = signalStore(
         patchState(store, { strana });
         ucitaj();
       },
-      obrisi(id: number): Promise<void> {
+      obrisi(id: number): Promise<boolean> {
         return izvrsi(
           async () => {
             await firstValueFrom(oglasService.obrisi(id));
@@ -112,7 +119,7 @@ export const ListaOglasaStore = signalStore(
           'Oglas nije obrisan. Pokušaj ponovo.',
         );
       },
-      sakrij(id: number, razlog: string): Promise<void> {
+      sakrij(id: number, razlog: string): Promise<boolean> {
         return izvrsi(
           async () => {
             const oglas = await firstValueFrom(oglasService.sakrij(id, razlog));

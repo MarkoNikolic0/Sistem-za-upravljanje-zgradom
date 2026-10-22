@@ -12,8 +12,9 @@ import {
 } from '../../../shared/with-request-status';
 import { kvarEvents } from '../kvar-events';
 import { KomentarKvara } from '../kvar-models';
-import { jeIspravanId, KOMENTARA_PO_STRANI } from '../pravila-kvara';
+import { KOMENTARA_PO_STRANI } from '../pravila-kvara';
 import { KomentariKvaraService } from './komentari-kvara-service';
+import { jeIspravanId } from '../../../shared/ispravan-id';
 
 interface KomentariKvaraState {
   kvarId: number | null;

@@ -21,6 +21,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
+import { jeIspravanId } from '../../../shared/ispravan-id';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import {
   MAKS_NASLOV_OGLASA,
@@ -60,11 +61,20 @@ export class FormaOglasa {
     transform: (id: string | undefined) => (id === undefined ? undefined : numberAttribute(id)),
   });
   protected readonly izmena = computed(() => this.id() !== undefined);
-  protected readonly oglas = this.oglasService.oglas(this.id);
+  protected readonly neispravanId = computed(() => {
+    const id = this.id();
+    return id !== undefined && !jeIspravanId(id);
+  });
+  protected readonly oglas = this.oglasService.oglas(
+    computed(() => (this.neispravanId() ? undefined : this.id())),
+  );
 
   private readonly zgradeOglasa = injectZgradeOglasa();
   protected readonly profil = this.zgradeOglasa.profil;
   protected readonly zgrade = this.zgradeOglasa.zgrade;
+
+  protected readonly ucitano = this.zgradeOglasa.ucitano;
+  protected readonly greskaUcitavanja = this.zgradeOglasa.greska;
 
   protected readonly maksNaslov = MAKS_NASLOV_OGLASA;
   protected readonly maksTekst = MAKS_TEKST_OGLASA;

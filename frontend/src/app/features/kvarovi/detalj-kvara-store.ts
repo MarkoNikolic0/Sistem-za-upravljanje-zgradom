@@ -21,8 +21,8 @@ import {
   StatusRadaServisera,
 } from './kvar-models';
 import { KvarService } from './kvar-service';
-import { jeIspravanId } from './pravila-kvara';
 import { porukaServera, prvaGreskaPolja } from '../../shared/greske-servera';
+import { jeIspravanId } from '../../shared/ispravan-id';
 
 interface Akcija {
   zahtev: Observable<KvarDetalj>;

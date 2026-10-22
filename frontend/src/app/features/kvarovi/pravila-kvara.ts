@@ -18,10 +18,6 @@ export const PRAVILA_KOMENTARA_KVARA = [
   Validators.maxLength(MAKS_KOMENTAR_KVARA),
 ];
 
-export function jeIspravanId(id: number): boolean {
-  return Number.isInteger(id) && id > 0;
-}
-
 export function jeZavrsen(status: StatusKvara): boolean {
   return ['zatvoren', 'odbijen', 'povucen'].includes(status);
 }

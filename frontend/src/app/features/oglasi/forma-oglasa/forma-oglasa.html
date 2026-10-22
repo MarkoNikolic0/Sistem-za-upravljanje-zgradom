@@ -3,18 +3,18 @@
   <h1 class="naslov-stranice mt-3">{{ izmena() ? 'Izmena oglasa' : 'Novi oglas' }}</h1>
   <p class="mt-2 text-priguseno max-sm:hidden">Oglas vide svi stanari zgrade.</p>
 
-  @if (oglas.error() || profil.error()) {
+  @if (neispravanId() || oglas.error() || greskaUcitavanja()) {
     <section class="odeljak">
       <p-message severity="error">
         {{
-          oglas.error()
-            ? 'Oglas ne postoji ili nemaš pristup.'
-            : 'Podaci trenutno ne mogu da se učitaju.'
+          greskaUcitavanja()
+            ? 'Podaci trenutno ne mogu da se učitaju.'
+            : 'Oglas ne postoji ili nemaš pristup.'
         }}
       </p-message>
       <a pButton routerLink="/oglasi" outlined class="mt-4">Nazad na oglase</a>
     </section>
-  } @else if (!profil.hasValue() || (izmena() && !oglas.hasValue())) {
+  } @else if (!ucitano() || (izmena() && !oglas.hasValue())) {
     <div class="odeljak ucitavanje" aria-hidden="true">
       <p-skeleton height="2.5rem" />
       <p-skeleton height="2.5rem" styleClass="mt-5" />

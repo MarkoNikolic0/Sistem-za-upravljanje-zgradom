@@ -109,8 +109,9 @@ export class ListaOglasa {
   }
 
   protected async sakrij(oglas: Oglas, razlog: string): Promise<void> {
-    await this.store.sakrij(oglas.id, razlog);
-    this.sakrivanjeId.set(null);
+    if (await this.store.sakrij(oglas.id, razlog)) {
+      this.sakrivanjeId.set(null);
+    }
     this.fokusiraj('#poruka-oglasa');
   }
 

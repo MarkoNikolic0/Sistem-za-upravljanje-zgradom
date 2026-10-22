@@ -154,21 +154,29 @@ export class OglasService {
       this.proveriVrstu(dto.vrsta, p, oglas.zgrada.id);
     }
 
+    const izmene: Partial<Oglas> = {
+      naslov: dto.naslov ?? oglas.naslov,
+      tekst: dto.tekst ?? oglas.tekst,
+      vrsta: dto.vrsta ?? oglas.vrsta,
+    };
+    if (
+      izmene.naslov !== oglas.naslov ||
+      izmene.tekst !== oglas.tekst ||
+      izmene.vrsta !== oglas.vrsta
+    ) {
+      izmene.datumIzmene = new Date();
+    }
+
     const rezultat = await this.oglasRepository.update(
       { id, datumSakrivanja: IsNull() },
-      {
-        naslov: dto.naslov ?? oglas.naslov,
-        tekst: dto.tekst ?? oglas.tekst,
-        vrsta: dto.vrsta ?? oglas.vrsta,
-        datumIzmene: new Date(),
-      },
+      izmene,
     );
     if (rezultat.affected === 0) {
       throw new ConflictException(
         'Oglas je sakriven, pa više ne može da se menja.',
       );
     }
-    return await this.findDetalj(id, korisnikId, uloga);
+    return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
@@ -194,14 +202,18 @@ export class OglasService {
       );
     }
 
+    const izmene = {
+      datumSakrivanja: new Date(),
+      razlogSakrivanja: dto.razlog,
+    };
     const rezultat = await this.oglasRepository.update(
       { id, datumSakrivanja: IsNull() },
-      { datumSakrivanja: new Date(), razlogSakrivanja: dto.razlog },
+      izmene,
     );
     if (rezultat.affected === 0) {
       throw new ConflictException('Oglas je već sakriven.');
     }
-    return await this.findDetalj(id, korisnikId, uloga);
+    return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
   private async findDostupan(id: number, korisnikId: number, uloga: Uloga) {

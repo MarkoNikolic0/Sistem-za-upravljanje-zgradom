@@ -17,5 +17,10 @@ export function injectZgradeOglasa() {
     }
     return zgradeIzProfila(profil.value());
   });
-  return { profil, admin, zgrade };
+  // Adminu zgrade stižu posebnim zahtevom, pa je spremno tek kad stigne i on
+  const ucitano = computed(
+    () => profil.hasValue() && (!admin() || sveZgrade.status() === 'resolved'),
+  );
+  const greska = computed(() => profil.error() ?? sveZgrade.error());
+  return { profil, admin, zgrade, ucitano, greska };
 }
