@@ -120,10 +120,13 @@ export const DetaljKvaraStore = signalStore(
             return kvarService.nadjiKvar(id).pipe(
               tapResponse({
                 next: (kvar) => {
-                  prikazi(kvar);
                   patchState(
                     store,
-                    { porukaAkcije: store.porukaPosleUcitavanja(), porukaPosleUcitavanja: null },
+                    {
+                      kvar,
+                      porukaAkcije: store.porukaPosleUcitavanja(),
+                      porukaPosleUcitavanja: null,
+                    },
                     setFulfilled(),
                   );
                 },
