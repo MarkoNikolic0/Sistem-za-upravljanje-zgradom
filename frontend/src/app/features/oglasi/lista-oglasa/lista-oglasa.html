@@ -1,0 +1,201 @@
+<div class="stranica">
+  <p class="oznaka">Zgrada</p>
+  <h1 class="naslov-stranice mt-3">Oglasi</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">
+    Obaveštenja upravnika i poruke komšijama: radovi, prodaja, izgubljeno-nađeno.
+  </p>
+
+  @if (bezZgrade()) {
+    <p class="mt-6 text-sm text-priguseno">
+      Da bi video oglase svoje zgrade,
+      <a
+        routerLink="/povezivanje"
+        class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+        >poveži nalog sa stanom</a
+      >.
+    </p>
+  } @else {
+    @if (zgrade().length > 0) {
+      <a pButton routerLink="/oglasi/novi" class="mt-6">Objavi oglas</a>
+    }
+
+    <div class="mt-6 flex flex-col gap-4 sm:flex-row">
+      <div class="flex flex-col gap-1.5 sm:w-60">
+        <span id="oglasi-vrsta" class="text-sm font-medium">Vrsta</span>
+        <p-select
+          ariaLabelledBy="oglasi-vrsta"
+          [options]="opcijeVrsta"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="store.vrsta()"
+          (ngModelChange)="store.promeniVrstu($event)"
+          [fluid]="true"
+        />
+      </div>
+      @if (zgrade().length > 1) {
+        <div class="flex flex-col gap-1.5 sm:w-60">
+          <span id="oglasi-zgrada" class="text-sm font-medium">Zgrada</span>
+          <p-select
+            ariaLabelledBy="oglasi-zgrada"
+            [options]="opcijeZgrada()"
+            optionLabel="naziv"
+            optionValue="id"
+            [ngModel]="store.zgradaId()"
+            (ngModelChange)="store.promeniZgradu($event)"
+            [fluid]="true"
+          />
+        </div>
+      }
+    </div>
+
+    <div id="poruka-oglasa" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (store.poruka(); as poruka) {
+        <p-message [severity]="poruka.tip === 'uspeh' ? 'success' : 'error'">
+          {{ poruka.tekst }}
+        </p-message>
+      }
+    </div>
+
+    <section class="odeljak" aria-label="Lista oglasa" [attr.aria-busy]="store.isPending()">
+      @if (store.error(); as greska) {
+        <p-message severity="error">{{ greska }}</p-message>
+        <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
+          Pokušaj ponovo
+        </button>
+      } @else if (store.isPending() && store.oglasi().length === 0) {
+        <div class="oglasi ucitavanje" aria-hidden="true">
+          <p-skeleton height="12rem" />
+          <p-skeleton height="12rem" />
+        </div>
+        <span class="sr-only">Učitavanje oglasa…</span>
+      } @else {
+        <div class="oglasi">
+          @for (oglas of store.oglasi(); track oglas.id) {
+            <article
+              class="oglas"
+              [class.obavestenje]="oglas.vrsta === 'obavestenje'"
+              [class.upozorenje]="oglas.vrsta === 'upozorenje'"
+              [class.sakriven]="oglas.datumSakrivanja"
+              [attr.aria-labelledby]="'oglas-' + oglas.id"
+            >
+              <div class="flex items-center gap-3">
+                <span class="ikonica-vrste" aria-hidden="true">
+                  <i [class]="vrste[oglas.vrsta].ikonica"></i>
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="vrsta">{{ vrste[oglas.vrsta].naziv }}</p>
+                  <time class="text-sm text-utisano" [attr.datetime]="oglas.datumKreiranja">
+                    {{ oglas.datumKreiranja | date: 'd. MMM HH:mm' }}
+                  </time>
+                </div>
+                @if (oglas.datumSakrivanja) {
+                  <p-tag
+                    value="Sakriven"
+                    icon="pi pi-eye-slash"
+                    severity="danger"
+                    [rounded]="true"
+                  />
+                }
+              </div>
+
+              <div class="telo">
+                <h2 [id]="'oglas-' + oglas.id" class="naslov-oglasa">{{ oglas.naslov }}</h2>
+                <p class="mt-2 whitespace-pre-line wrap-anywhere">{{ oglas.tekst }}</p>
+                @if (oglas.datumSakrivanja) {
+                  <div class="razlog mt-4">
+                    <p class="text-sm font-medium text-naslov">Upravnik je sakrio oglas</p>
+                    <p class="mt-1 whitespace-pre-line wrap-anywhere">
+                      {{ oglas.razlogSakrivanja }}
+                    </p>
+                    <p class="mt-1 text-sm text-priguseno">Ostali stanari ga više ne vide.</p>
+                  </div>
+                }
+              </div>
+
+              <div class="podnozje">
+                <div class="flex min-w-0 items-center gap-2.5">
+                  <span class="inicijali" aria-hidden="true">
+                    {{ oglas.autor.ime[0] }}{{ oglas.autor.prezime[0] }}
+                  </span>
+                  <p class="min-w-0 text-sm">
+                    <span class="text-naslov">{{ oglas.autor.ime }} {{ oglas.autor.prezime }}</span>
+                    @if (detaljiAutora(oglas); as detalji) {
+                      <span class="block text-xs text-utisano">{{ detalji }}</span>
+                    }
+                  </p>
+                </div>
+                @if (sakrivanjeId() !== oglas.id) {
+                  <div class="-mr-3 flex flex-wrap">
+                    @if (oglas.smeDaMenja) {
+                      <a
+                        pButton
+                        [routerLink]="['/oglasi', oglas.id, 'izmena']"
+                        text
+                        size="small"
+                        severity="secondary"
+                        >Izmeni</a
+                      >
+                    }
+                    @if (oglas.smeDaObrise) {
+                      <button
+                        pButton
+                        type="button"
+                        text
+                        size="small"
+                        severity="danger"
+                        [disabled]="store.akcijaUToku()"
+                        (click)="obrisi($event, oglas)"
+                      >
+                        Obriši
+                      </button>
+                    }
+                    @if (oglas.smeDaSakrije) {
+                      <button
+                        pButton
+                        type="button"
+                        [id]="'sakrij-' + oglas.id"
+                        text
+                        size="small"
+                        severity="danger"
+                        (click)="sakrivanjeId.set(oglas.id)"
+                      >
+                        Sakrij
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (sakrivanjeId() === oglas.id) {
+                <app-forma-razloga
+                  class="mt-4"
+                  oznaka="Razlog sakrivanja"
+                  natpis="Sakrij oglas"
+                  pomoc="Autor će videti razlog, a ostali stanari oglas više neće videti."
+                  [opasno]="true"
+                  [slanje]="store.akcijaUToku()"
+                  (posalji)="sakrij(oglas, $event)"
+                  (odustani)="odustaniOdSakrivanja(oglas)"
+                />
+              }
+            </article>
+          } @empty {
+            <p class="text-priguseno">
+              {{ store.vrsta() === null ? 'Još nema oglasa.' : 'Nema oglasa ove vrste.' }}
+            </p>
+          }
+        </div>
+
+        <app-paginacija
+          [strana]="store.strana()"
+          [ukupno]="store.ukupno()"
+          [poStrani]="store.poStrani"
+          (promena)="store.promeniStranu($event)"
+        />
+      }
+    </section>
+  }
+</div>
+
+<!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

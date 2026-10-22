@@ -2,9 +2,10 @@ import { Component, inject, input, OnInit, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { fokusPosleCrtanja } from '../../../../shared/fokus';
-import { MAKS_KOMENTAR_KVARA } from '../../kvar-models';
-import { PRAVILA_KOMENTARA_KVARA } from '../../pravila-kvara';
+import { fokusPosleCrtanja } from '../fokus';
+import { NIJE_PRAZNO } from '../nije-prazno';
+
+export const MAKS_RAZLOGA = 1000;
 
 let sledeciId = 0;
 
@@ -29,11 +30,12 @@ export class FormaRazloga implements OnInit {
   readonly posalji = output<string>();
   readonly odustani = output<void>();
 
-  protected readonly maksKomentar = MAKS_KOMENTAR_KVARA;
+  protected readonly maksRazloga = MAKS_RAZLOGA;
+
   protected readonly idPolja = `razlog-${sledeciId++}`;
 
   protected readonly forma = this.fb.nonNullable.group({
-    tekst: ['', { validators: Validators.maxLength(MAKS_KOMENTAR_KVARA), updateOn: 'submit' }],
+    tekst: ['', { validators: Validators.maxLength(MAKS_RAZLOGA), updateOn: 'submit' }],
   });
 
   constructor() {
@@ -42,7 +44,10 @@ export class FormaRazloga implements OnInit {
 
   ngOnInit(): void {
     if (this.obavezan()) {
-      this.forma.controls.tekst.addValidators(PRAVILA_KOMENTARA_KVARA);
+      this.forma.controls.tekst.addValidators([
+        Validators.required,
+        Validators.pattern(NIJE_PRAZNO),
+      ]);
     }
   }
 

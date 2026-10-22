@@ -16,7 +16,7 @@ import { KvarService } from '../../kvar-service';
 import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { RazlogPromene } from '../../status/razlog-promene/razlog-promene';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
-import { FormaRazloga } from '../forma-razloga/forma-razloga';
+import { FormaRazloga } from '../../../../shared/forma-razloga/forma-razloga';
 
 @Component({
   imports: [

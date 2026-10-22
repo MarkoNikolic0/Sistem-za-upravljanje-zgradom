@@ -91,9 +91,6 @@ export class OglasService {
             { ...uZgradama(zgrade), autor: { id: korisnikId } },
             ...(upravlja.length > 0 ? [uZgradama(upravlja)] : []),
           ];
-    if (upravlja?.length !== 0) {
-      uslovi.push(uZgradama(upravlja));
-    }
 
     const [stavke, ukupno] = await this.oglasRepository.findAndCount({
       where: uslovi,

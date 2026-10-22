@@ -1,5 +1,5 @@
 -- Test podaci za razvoj i demonstraciju: tri zgrade u Nisu, stanovi, upravnici, serviseri,
--- stanari, zahtevi za povezivanje i kvarovi u razlicitim statusima.
+-- stanari, zahtevi za povezivanje, kvarovi u razlicitim statusima i oglasi.
 --
 -- Pokretanje (iz foldera backend, dok radi Docker kontejner):
 --   docker exec -i zgrada_container sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < seed/seed.sql
@@ -527,5 +527,90 @@ WITH razlog AS (
 UPDATE promena_statusa_kvara p SET "komentarId" = k.id
 FROM komentar k JOIN promena pr ON pr."kvarId" = k."kvarId"
 WHERE p.id = pr.id;
+
+-- OGLASI ------------------------------------------------------------------------------------
+-- Oglasi iz skripte se pri svakom pokretanju vracaju na pocetno stanje: datumi se racunaju od
+-- sadasnjeg trenutka, a izmena i sakrivanje se pisu iznova. Oglasi iz aplikacije se ne diraju.
+-- Glavni nalozi (Delta Residence, 11 oglasa: ko vidi i sakriven, ima dve strane po 10):
+--   Marija: radovi (izmenjen), nadjeni kljucevi i reklama koju je Danijel sakrio (vidi razlog)
+--   Danijel (upravnik): dva obavestenja; sakriva tudje oglase, vidi i sakriven Marijin
+--   Marko (admin): obavestenje u Delti; vidi oglase sve tri zgrade i filter po zgradi
+--   Petar (serviser) nema oglasnu tablu
+CREATE TEMP TABLE seed_oglas ON COMMIT DROP AS
+SELECT v.naslov, v.tekst, v.vrsta::oglas_vrsta_enum AS vrsta, z.id AS zgrada_id, k.id AS autor_id,
+       now() - v.pre AS datum_kreiranja, now() - v.izmenjen AS datum_izmene,
+       now() - v.sakriven AS datum_sakrivanja, v.razlog
+FROM (VALUES
+  ('Isključenje vode u četvrtak',
+   E'U četvrtak od 9 do 13 h neće biti vode zbog zamene glavnog ventila u podrumu.\nNapunite flaše na vreme.',
+   'obavestenje', 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com',
+   interval '2 hours', NULL::interval, NULL::interval, NULL),
+  ('Bušenje u stanu 14 u subotu',
+   'U subotu od 10 do 12 h bušim zid u kupatilu. Izvinjavam se zbog buke.',
+   'radovi', 'Bulevar Nemanjića 45, Niš', 'marija@gmail.com',
+   interval '5 hours', interval '3 hours', NULL, NULL),
+  ('Ulazna vrata ostavljena otvorena noću',
+   'Već dve noći su ulazna vrata ostala otvorena posle ponoći. Molim sve da ih zatvore za sobom.',
+   'upozorenje', 'Bulevar Nemanjića 45, Niš', 'stefan.popovic@example.com',
+   interval '1 day', NULL, NULL, NULL),
+  ('Poklanjam dečja kolica',
+   'Kolica su očuvana, sklapaju se. Javite se u stan 1 posle 17 h.',
+   'prodaja', 'Bulevar Nemanjića 45, Niš', 'vesna.djokic@example.com',
+   interval '2 days', NULL, NULL, NULL),
+  ('Obaveštenja zgrade su sada u aplikaciji',
+   E'Obaveštenja upravnika i poruke komšijama od sada su na oglasnoj tabli u aplikaciji.\nKvarove i dalje prijavljujte u Kvarovima.',
+   'obavestenje', 'Bulevar Nemanjića 45, Niš', 'marko@gmail.com',
+   interval '3 days', NULL, NULL, NULL),
+  ('Tražim čuvanje mačke za vikend',
+   'Od petka do nedelje nisam u gradu. Treba svratiti jednom dnevno, sipati hranu i vodu.',
+   'trazim', 'Bulevar Nemanjića 45, Niš', 'natalija.stojadinovic@example.com',
+   interval '4 days', NULL, NULL, NULL),
+  ('Nađeni ključevi u liftu',
+   'U liftu su nađeni ključevi sa plavim privezkom. Kod mene su, stan 14.',
+   'izgubljeno', 'Bulevar Nemanjića 45, Niš', 'marija@gmail.com',
+   interval '5 days', NULL, NULL, NULL),
+  ('Sastanak stanara sledeće srede u 19 h',
+   'Teme: krečenje stepeništa i nova antena. Sastanak je u prostoriji pored podruma.',
+   'obavestenje', 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com',
+   interval '6 days', NULL, NULL, NULL),
+  ('Selidba u petak, lift zauzet',
+   'U petak od 8 do 11 h selidba iz stana 18. Lift će povremeno biti zauzet.',
+   'radovi', 'Bulevar Nemanjića 45, Niš', 'goran.stamenkovic@example.com',
+   interval '8 days', NULL, NULL, NULL),
+  ('Kozmetički salon - popust 20% za komšije',
+   'Otvorila sam salon u centru. Uz ovaj oglas komšije imaju popust 20% na sve usluge.',
+   'ostalo', 'Bulevar Nemanjića 45, Niš', 'marija@gmail.com',
+   interval '9 days', NULL, interval '8 days',
+   'Oglasna tabla je za komšije i zgradu, ne za reklamu firmi.'),
+  ('Prodajem bicikl',
+   'Muški bicikl, 26 inča, sa korpom. Cena po dogovoru, stan 5.',
+   'prodaja', 'Bulevar Nemanjića 45, Niš', 'ivana.nikolic@example.com',
+   interval '12 days', NULL, NULL, NULL),
+  -- Ostale zgrade: Marko ih vidi uz filter po zgradi
+  ('Čišćenje podruma u subotu',
+   'U subotu od 9 h čistimo podrum. Stvari koje nisu označene imenom biće bačene.',
+   'obavestenje', 'Obrenovićeva 30, Niš', 'jelena.markovic@example.com',
+   interval '1 day', NULL, NULL, NULL),
+  ('Servis lifta u ponedeljak',
+   'U ponedeljak od 8 do 12 h lift ne radi zbog redovnog servisa.',
+   'obavestenje', 'Vizantijski bulevar 12, Niš', 'nikola.ilic@example.com',
+   interval '2 days', NULL, NULL, NULL)
+) AS v(naslov, tekst, vrsta, adresa, email, pre, izmenjen, sakriven, razlog)
+JOIN zgrada z ON z.adresa = v.adresa
+JOIN korisnik k ON k.email = v.email;
+
+INSERT INTO oglas (naslov, tekst, vrsta, "zgradaId", "autorId")
+SELECT v.naslov, v.tekst, v.vrsta, v.zgrada_id, v.autor_id
+FROM seed_oglas v
+WHERE NOT EXISTS (SELECT 1 FROM oglas o WHERE o.naslov = v.naslov AND o."zgradaId" = v.zgrada_id);
+
+-- Oglas iz skripte je najstariji sa tim naslovom u zgradi; isti naslov objavljen kasnije se ne dira
+UPDATE oglas o
+SET tekst = v.tekst, vrsta = v.vrsta, "autorId" = v.autor_id, "datumKreiranja" = v.datum_kreiranja,
+    "datumIzmene" = v.datum_izmene, "datumSakrivanja" = v.datum_sakrivanja,
+    "razlogSakrivanja" = v.razlog
+FROM seed_oglas v
+WHERE o.id = (SELECT min(o2.id) FROM oglas o2
+              WHERE o2.naslov = v.naslov AND o2."zgradaId" = v.zgrada_id);
 
 COMMIT;

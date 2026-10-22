@@ -1,0 +1,160 @@
+<div class="stranica">
+  <p class="oznaka">Oglasi</p>
+  <h1 class="naslov-stranice mt-3">{{ izmena() ? 'Izmena oglasa' : 'Novi oglas' }}</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">Oglas vide svi stanari zgrade.</p>
+
+  @if (oglas.error() || profil.error()) {
+    <section class="odeljak">
+      <p-message severity="error">
+        {{
+          oglas.error()
+            ? 'Oglas ne postoji ili nemaš pristup.'
+            : 'Podaci trenutno ne mogu da se učitaju.'
+        }}
+      </p-message>
+      <a pButton routerLink="/oglasi" outlined class="mt-4">Nazad na oglase</a>
+    </section>
+  } @else if (!profil.hasValue() || (izmena() && !oglas.hasValue())) {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="2.5rem" styleClass="mt-5" />
+      <p-skeleton height="7rem" styleClass="mt-5" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (oglas.hasValue() && !oglas.value().smeDaMenja) {
+    <section class="odeljak">
+      <p class="text-tekst">Ovaj oglas ne možeš da menjaš.</p>
+      <a pButton routerLink="/oglasi" outlined class="mt-5">Nazad na oglase</a>
+    </section>
+  } @else if (zgrade().length === 0) {
+    <section class="odeljak">
+      <p class="text-tekst">Da bi objavio oglas, poveži nalog sa stanom u kojem živiš.</p>
+      <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
+    </section>
+  } @else {
+    <div aria-live="polite" class="mt-6 empty:hidden">
+      @if (greska()) {
+        <p-message severity="error">{{ greska() }}</p-message>
+      }
+    </div>
+
+    <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-5">
+      @if (oglas.hasValue()) {
+        <div class="flex flex-col gap-1.5">
+          <p class="text-sm font-medium">Zgrada</p>
+          <p class="text-naslov">{{ oglas.value().zgrada.naziv }}</p>
+        </div>
+      } @else if (zgrade().length > 1) {
+        <div class="flex flex-col gap-1.5">
+          <span id="zgrada-oznaka" class="text-sm font-medium">Zgrada</span>
+          <p-select
+            inputId="zgradaId"
+            ariaLabelledBy="zgrada-oznaka"
+            formControlName="zgradaId"
+            [options]="zgrade()"
+            optionLabel="naziv"
+            optionValue="id"
+            placeholder="Izaberi zgradu"
+            [fluid]="true"
+            [invalid]="nevazece('zgradaId')"
+          />
+          @if (nevazece('zgradaId')) {
+            <small class="text-sm text-greska">Izaberi zgradu.</small>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col gap-1.5">
+          <p class="text-sm font-medium">Zgrada</p>
+          <p class="text-naslov">{{ zgrade()[0].naziv }}</p>
+        </div>
+      }
+
+      <div class="flex flex-col gap-1.5">
+        <span id="vrsta-oznaka" class="text-sm font-medium">Vrsta oglasa</span>
+        <p-select
+          inputId="vrsta"
+          ariaLabelledBy="vrsta-oznaka"
+          formControlName="vrsta"
+          [options]="vrste()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Izaberi vrstu"
+          [fluid]="true"
+          [invalid]="nevazece('vrsta')"
+        />
+        @if (nevazece('vrsta')) {
+          <small class="text-sm text-greska">
+            {{ forma.controls.vrsta.errors?.['server'] ?? 'Izaberi vrstu oglasa.' }}
+          </small>
+        }
+        @if (imaStan()) {
+          <small class="text-sm text-priguseno">
+            Kvar (lift, voda, struja) prijavi u
+            <a
+              routerLink="/kvarovi/novi"
+              class="text-naslov underline decoration-ivica underline-offset-4 hover:decoration-svetlo"
+              >Kvarovima</a
+            >, da bi ga upravnik video i rešio.
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="naslov" class="text-sm font-medium">Naslov</label>
+        <input
+          pInputText
+          id="naslov"
+          formControlName="naslov"
+          placeholder="npr. Bušenje u stanu 14 u subotu"
+          autocomplete="off"
+          enterkeyhint="next"
+          [attr.maxlength]="maksNaslov"
+          [fluid]="true"
+          [invalid]="nevazece('naslov')"
+          [attr.aria-invalid]="nevazece('naslov')"
+          [attr.aria-describedby]="nevazece('naslov') ? 'naslov-greska' : null"
+        />
+        @if (nevazece('naslov')) {
+          <small id="naslov-greska" class="text-sm text-greska">
+            {{ forma.controls.naslov.errors?.['server'] ?? 'Unesi kratak naslov.' }}
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="tekst" class="text-sm font-medium">Tekst</label>
+        <textarea
+          pTextarea
+          id="tekst"
+          formControlName="tekst"
+          rows="5"
+          [autoResize]="true"
+          [attr.maxlength]="maksTekst"
+          [fluid]="true"
+          [invalid]="nevazece('tekst')"
+          [attr.aria-invalid]="nevazece('tekst')"
+          [attr.aria-describedby]="nevazece('tekst') ? 'tekst-greska' : 'tekst-pomoc'"
+        ></textarea>
+        @if (nevazece('tekst')) {
+          <small id="tekst-greska" class="text-sm text-greska">
+            {{ forma.controls.tekst.errors?.['server'] ?? 'Napiši tekst oglasa.' }}
+          </small>
+        } @else {
+          <small id="tekst-pomoc" class="text-sm text-priguseno">{{ pomocTeksta() }}</small>
+        }
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <button pButton type="submit" [disabled]="slanje()">
+          @if (slanje()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Slanje…
+          } @else {
+            {{ izmena() ? 'Sačuvaj izmene' : 'Objavi oglas' }}
+          }
+        </button>
+        <a pButton routerLink="/oglasi" text>Odustani</a>
+      </div>
+    </form>
+  }
+</div>

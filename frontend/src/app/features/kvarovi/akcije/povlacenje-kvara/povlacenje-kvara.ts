@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { DetaljKvaraStore } from '../../detalj-kvara-store';
-import { FormaRazloga } from '../forma-razloga/forma-razloga';
+import { FormaRazloga } from '../../../../shared/forma-razloga/forma-razloga';
 
 @Component({
   imports: [ButtonModule, FormaRazloga],

@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { KvarDetalj } from '../../kvar-models';
 import { DetaljKvaraStore } from '../../detalj-kvara-store';
-import { FormaRazloga } from '../forma-razloga/forma-razloga';
+import { FormaRazloga } from '../../../../shared/forma-razloga/forma-razloga';
 
 @Component({
   imports: [DatePipe, ButtonModule, FormaRazloga],
