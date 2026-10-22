@@ -21,6 +21,7 @@ import {
   StatusRadaServisera,
 } from './kvar-models';
 import { KvarService } from './kvar-service';
+import { jeIspravanId } from './pravila-kvara';
 
 interface Akcija {
   zahtev: Observable<KvarDetalj>;
@@ -113,7 +114,7 @@ export const DetaljKvaraStore = signalStore(
         pipe(
           tap(() => patchState(store, { kvar: null, porukaAkcije: null }, setPending())),
           switchMap((id) => {
-            if (!Number.isInteger(id) || id < 1) {
+            if (!jeIspravanId(id)) {
               patchState(store, { porukaPosleUcitavanja: null }, setFulfilled());
               return EMPTY;
             }

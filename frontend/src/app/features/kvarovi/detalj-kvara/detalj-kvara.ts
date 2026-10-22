@@ -30,6 +30,7 @@ import { jeZavrsen, pratiRok } from '../pravila-kvara';
 import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
 import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
 import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
+import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
 
 @Component({
   imports: [
@@ -51,13 +52,14 @@ import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
     PovlacenjeKvara,
     RazlogPromene,
   ],
-  providers: [DetaljKvaraStore],
+  providers: [DetaljKvaraStore, KomentariKvaraStore],
   selector: 'app-detalj-kvara',
   styleUrl: './detalj-kvara.scss',
   templateUrl: './detalj-kvara.html',
 })
 export class DetaljKvara {
   protected readonly store = inject(DetaljKvaraStore);
+  private komentariStore = inject(KomentariKvaraStore);
   private authStore = inject(AuthStore);
   private router = inject(Router);
   private readonly porukaAkcije = viewChild.required<ElementRef<HTMLElement>>('porukaAkcije');
@@ -95,6 +97,7 @@ export class DetaljKvara {
       this.store.prikaziPosleUcitavanja(stanje?.poruka);
     }
     this.store.ucitaj(this.id);
+    this.komentariStore.ucitaj(this.id);
     afterRenderEffect(() => {
       if (this.store.porukaAkcije()?.fokus) {
         this.porukaAkcije().nativeElement.focus();

@@ -40,7 +40,7 @@ const OZNAKE_RAZLOGA: Partial<Record<StatusKvara, OznakaRazloga>> = {
     TagModule,
     TextareaModule,
   ],
-  providers: [KomentariKvaraStore, ConfirmationService],
+  providers: [ConfirmationService],
   selector: 'app-komentari-kvara',
   styleUrl: './komentari-kvara.scss',
   templateUrl: './komentari-kvara.html',
@@ -72,10 +72,6 @@ export class KomentariKvara {
     tekst: ['', { validators: PRAVILA_KOMENTARA_KVARA, updateOn: 'submit' }],
   });
   protected readonly greskaKomentara = signal('');
-
-  constructor() {
-    this.store.ucitaj(computed(() => this.kvar().id));
-  }
 
   protected ucitajPonovo(): void {
     this.store.ucitaj(this.kvar().id);

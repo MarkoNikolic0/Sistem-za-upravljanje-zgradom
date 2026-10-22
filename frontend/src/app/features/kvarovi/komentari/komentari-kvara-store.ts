@@ -3,7 +3,7 @@ import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { on, withReducer } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { EMPTY, exhaustMap, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, exhaustMap, filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import {
   setError,
   setFulfilled,
@@ -12,7 +12,7 @@ import {
 } from '../../../shared/with-request-status';
 import { kvarEvents } from '../kvar-events';
 import { KomentarKvara } from '../kvar-models';
-import { KOMENTARA_PO_STRANI } from '../pravila-kvara';
+import { jeIspravanId, KOMENTARA_PO_STRANI } from '../pravila-kvara';
 import { KomentariKvaraService } from './komentari-kvara-service';
 
 interface KomentariKvaraState {
@@ -35,6 +35,7 @@ export const KomentariKvaraStore = signalStore(
   withMethods((store, komentariKvaraService = inject(KomentariKvaraService)) => ({
     ucitaj: rxMethod<number>(
       pipe(
+        filter(jeIspravanId),
         tap((kvarId) => patchState(store, { kvarId, komentari: [] }, setPending())),
         switchMap((kvarId) =>
           komentariKvaraService.komentari(kvarId, KOMENTARA_PO_STRANI).pipe(
