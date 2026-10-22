@@ -81,11 +81,16 @@ export class OglasService {
       ...(ids === null ? {} : { zgrada: { id: In(ids) } }),
       ...(upit.vrsta ? { vrsta: upit.vrsta } : {}),
     });
-    // Sakriven oglas vide samo autor i upravnik zgrade
-    const uslovi: FindOptionsWhere<Oglas>[] = [
-      { ...uZgradama(zgrade), datumSakrivanja: IsNull() },
-      { ...uZgradama(zgrade), autor: { id: korisnikId } },
-    ];
+    // Admin vidi sve; sakriven oglas od ostalih vide samo autor i upravnik zgrade.
+    // Admin ima poseban uslov jer TypeORM prazan uslov {} izbaci iz OR niza.
+    const uslovi: FindOptionsWhere<Oglas>[] =
+      upravlja === null
+        ? [uZgradama(zgrade)]
+        : [
+            { ...uZgradama(zgrade), datumSakrivanja: IsNull() },
+            { ...uZgradama(zgrade), autor: { id: korisnikId } },
+            ...(upravlja.length > 0 ? [uZgradama(upravlja)] : []),
+          ];
     if (upravlja?.length !== 0) {
       uslovi.push(uZgradama(upravlja));
     }
