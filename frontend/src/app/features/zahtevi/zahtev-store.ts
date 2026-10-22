@@ -1,20 +1,20 @@
-import { computed, inject } from '@angular/core';
+import { inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  patchState,
-  signalStore,
-  withComputed,
-  withHooks,
-  withMethods,
-  withState,
-} from '@ngrx/signals';
+import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import { concatMap, pipe, switchMap, tap } from 'rxjs';
 import { ZahtevService } from './zahtev-service';
 import { FilterZahteva, ZahtevUpravnika } from './zahtev-models';
+import {
+  setError,
+  setFulfilled,
+  setPending,
+  withRequestStatus,
+} from '../../shared/with-request-status';
+import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
 
-export const ZAHTEVA_PO_STRANI = 10;
+const ZAHTEVA_PO_STRANI = 10;
 
 interface Poruka {
   tip: 'uspeh' | 'greska';
@@ -29,22 +29,14 @@ interface Obrada {
 
 interface ZahteviState {
   zahtevi: ZahtevUpravnika[];
-  ukupno: number;
   filter: FilterZahteva;
-  strana: number;
-  ucitava: boolean;
-  greskaUcitavanja: boolean;
   zahtevUObradiId: number | null;
   poruka: Poruka | null;
 }
 
 const pocetnoStanje: ZahteviState = {
   zahtevi: [],
-  ukupno: 0,
   filter: 'na_cekanju',
-  strana: 1,
-  ucitava: false,
-  greskaUcitavanja: false,
   zahtevUObradiId: null,
   poruka: null,
 };
@@ -59,31 +51,30 @@ function porukaUspeha({ zahtev, status, vlasnik }: Obrada): string {
 
 export const ZahteviStore = signalStore(
   withState(pocetnoStanje),
-  withComputed(({ ukupno }) => ({
-    imaViseStrana: computed(() => ukupno() > ZAHTEVA_PO_STRANI),
-  })),
+  withPaginacija(ZAHTEVA_PO_STRANI),
+  withRequestStatus(),
   withMethods((store, zahtevService = inject(ZahtevService)) => {
     const ucitaj = rxMethod<void>(
       pipe(
-        tap(() => patchState(store, { ucitava: true, greskaUcitavanja: false })),
+        tap(() => patchState(store, setPending())),
         switchMap(() =>
           zahtevService
             .zahteviZaObradu({
               status: store.filter() === 'na_cekanju' ? 'na_cekanju' : undefined,
               strana: store.strana(),
-              poStrani: ZAHTEVA_PO_STRANI,
+              poStrani: store.poStrani,
             })
             .pipe(
               tapResponse({
                 next: ({ stavke, ukupno }) => {
-                  if (stavke.length === 0 && store.strana() > 1) {
+                  if (jePraznaStrana(stavke, store.strana())) {
                     patchState(store, { strana: store.strana() - 1 });
                     ucitaj();
                     return;
                   }
-                  patchState(store, { zahtevi: stavke, ukupno, ucitava: false });
+                  patchState(store, { zahtevi: stavke, ukupno }, setFulfilled());
                 },
-                error: () => patchState(store, { ucitava: false, greskaUcitavanja: true }),
+                error: () => patchState(store, setError('Zahtevi trenutno ne mogu da se učitaju.')),
               }),
             ),
         ),

@@ -22,6 +22,7 @@ import {
 } from './kvar-models';
 import { KvarService } from './kvar-service';
 import { jeIspravanId } from './pravila-kvara';
+import { porukaServera, prvaGreskaPolja } from '../../shared/greske-servera';
 
 interface Akcija {
   zahtev: Observable<KvarDetalj>;
@@ -35,17 +36,8 @@ function porukaGreske(err: HttpErrorResponse): string {
       return 'Kvar je u međuvremenu promenjen. Prikazano je trenutno stanje.';
     case 403:
       return 'Nemaš pravo na ovu akciju.';
-    case 400: {
-      const telo = err.error as { message?: unknown; greske?: Record<string, string> } | null;
-      const greskaPolja = Object.values(telo?.greske ?? {}).at(0);
-      if (greskaPolja) {
-        return greskaPolja;
-      }
-      if (typeof telo?.message === 'string') {
-        return telo.message;
-      }
-      return 'Akcija nije izvršena. Pokušaj ponovo.';
-    }
+    case 400:
+      return prvaGreskaPolja(err) ?? porukaServera(err) ?? 'Akcija nije izvršena. Pokušaj ponovo.';
     default:
       return 'Akcija nije izvršena. Pokušaj ponovo.';
   }

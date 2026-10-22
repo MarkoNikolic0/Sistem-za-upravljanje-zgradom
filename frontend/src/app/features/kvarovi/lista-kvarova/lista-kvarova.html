@@ -97,15 +97,12 @@
         </p>
       }
 
-      @if (store.imaViseStrana()) {
-        <p-paginator
-          class="mt-6"
-          [rows]="poStrani"
-          [totalRecords]="store.ukupno()"
-          [first]="(store.strana() - 1) * poStrani"
-          (onPageChange)="promeniStranu($event)"
-        />
-      }
+      <app-paginacija
+        [strana]="store.strana()"
+        [ukupno]="store.ukupno()"
+        [poStrani]="store.poStrani"
+        (promena)="store.promeniStranu($event)"
+      />
     }
   </section>
 </div>

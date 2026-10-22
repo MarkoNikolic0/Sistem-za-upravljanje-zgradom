@@ -3,7 +3,6 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
@@ -16,7 +15,7 @@ import { KvarService } from '../kvar-service';
 import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
 import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
 import { ListaKvarovaStore } from '../lista-kvarova-store';
-import { KVAROVA_PO_STRANI } from '../pravila-kvara';
+import { Paginacija } from '../../../shared/paginacija/paginacija';
 
 @Component({
   imports: [
@@ -24,7 +23,6 @@ import { KVAROVA_PO_STRANI } from '../pravila-kvara';
     FormsModule,
     ButtonModule,
     MessageModule,
-    PaginatorModule,
     SelectModule,
     SelectButtonModule,
     SkeletonModule,
@@ -32,6 +30,7 @@ import { KVAROVA_PO_STRANI } from '../pravila-kvara';
     OznakeKvara,
     RouterLink,
     BrojStanaraPipe,
+    Paginacija,
   ],
   selector: 'app-lista-kvarova',
   styleUrl: './lista-kvarova.scss',
@@ -43,7 +42,6 @@ export class ListaKvarova {
   private profileService = inject(ProfileService);
   private kvarService = inject(KvarService);
 
-  protected readonly poStrani = KVAROVA_PO_STRANI;
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
 
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);
@@ -81,9 +79,5 @@ export class ListaKvarova {
 
   constructor() {
     this.store.prikaziListu();
-  }
-
-  protected promeniStranu(event: PaginatorState): void {
-    this.store.promeniStranu((event.page ?? 0) + 1);
   }
 }

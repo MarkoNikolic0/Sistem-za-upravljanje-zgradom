@@ -5,7 +5,6 @@ import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { formatirajTelefon } from '../../../shared/telefon';
@@ -16,8 +15,9 @@ import {
   NAZIVI_STATUSA_ZAHTEVA,
   ZahtevUpravnika,
 } from '../zahtev-models';
-import { ZAHTEVA_PO_STRANI, ZahteviStore } from '../zahtev-store';
+import { ZahteviStore } from '../zahtev-store';
 import { TagModule } from 'primeng/tag';
+import { Paginacija } from '../../../shared/paginacija/paginacija';
 
 @Component({
   imports: [
@@ -26,11 +26,11 @@ import { TagModule } from 'primeng/tag';
     ButtonModule,
     ConfirmDialogModule,
     MessageModule,
-    PaginatorModule,
     SelectButtonModule,
     SkeletonModule,
     TagModule,
     SpratPipe,
+    Paginacija,
   ],
   providers: [ZahteviStore, ConfirmationService],
   selector: 'app-zahtevi-upravnika',
@@ -42,7 +42,6 @@ export class ZahteviUpravnika {
   private confirmationService = inject(ConfirmationService);
   private readonly porukaObrade = viewChild.required<ElementRef<HTMLElement>>('porukaObrade');
 
-  protected readonly poStrani = ZAHTEVA_PO_STRANI;
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
   protected readonly bojeStatusa = BOJE_STATUSA_ZAHTEVA;
   protected readonly formatirajTelefon = formatirajTelefon;
@@ -58,10 +57,6 @@ export class ZahteviUpravnika {
         this.porukaObrade().nativeElement.focus();
       }
     });
-  }
-
-  protected promeniStranu(event: PaginatorState): void {
-    this.store.promeniStranu((event.page ?? 0) + 1);
   }
 
   protected prihvatiKaoVlasnika(event: Event, zahtev: ZahtevUpravnika): void {

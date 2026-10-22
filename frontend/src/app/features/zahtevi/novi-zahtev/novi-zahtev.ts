@@ -12,6 +12,7 @@ import { BOJE_STATUSA_ZAHTEVA, NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
 import { nazivSprata, SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TagModule } from 'primeng/tag';
+import { porukaServera } from '../../../shared/greske-servera';
 
 @Component({
   imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, TagModule, SpratPipe],
@@ -91,11 +92,8 @@ export class NoviZahtev {
           this.fokusiraj('#poruka-zahteva');
         },
         error: (err: HttpErrorResponse) => {
-          this.greska.set(
-            err.status === 409
-              ? err.error?.message
-              : 'Zahtev nije poslat. Pokušaj ponovo za nekoliko trenutaka.',
-          );
+          const poruka = err.status === 409 ? porukaServera(err) : undefined;
+          this.greska.set(poruka ?? 'Zahtev nije poslat. Pokušaj ponovo za nekoliko trenutaka.');
           this.fokusiraj('#poruka-zahteva');
         },
       });

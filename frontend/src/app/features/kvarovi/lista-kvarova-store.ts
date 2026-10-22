@@ -1,5 +1,5 @@
-import { computed, inject } from '@angular/core';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { inject } from '@angular/core';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { Events, on, withEventHandlers, withReducer } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
@@ -14,27 +14,22 @@ import { kvarEvents } from './kvar-events';
 import { Kvar, StanjeKvara } from './kvar-models';
 import { KvarService } from './kvar-service';
 import { jeZavrsen, KVAROVA_PO_STRANI } from './pravila-kvara';
+import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
 
 interface ListaKvarovaState {
   kvarovi: Kvar[];
-  ukupno: number;
   stanje: StanjeKvara;
   zgradaId: number | null;
-  strana: number;
 }
 
 export const ListaKvarovaStore = signalStore(
   withState<ListaKvarovaState>({
     kvarovi: [],
-    ukupno: 0,
     stanje: 'aktivni',
     zgradaId: null,
-    strana: 1,
   }),
   withRequestStatus(),
-  withComputed(({ ukupno }) => ({
-    imaViseStrana: computed(() => ukupno() > KVAROVA_PO_STRANI),
-  })),
+  withPaginacija(KVAROVA_PO_STRANI),
   withMethods((store, kvarService = inject(KvarService)) => {
     const ucitaj = rxMethod<void>(
       pipe(
@@ -45,12 +40,12 @@ export const ListaKvarovaStore = signalStore(
               stanje: store.stanje(),
               zgradaId: store.zgradaId(),
               strana: store.strana(),
-              poStrani: KVAROVA_PO_STRANI,
+              poStrani: store.poStrani,
             })
             .pipe(
               tapResponse({
                 next: ({ stavke, ukupno }) => {
-                  if (stavke.length === 0 && store.strana() > 1) {
+                  if (jePraznaStrana(stavke, store.strana())) {
                     patchState(store, { strana: store.strana() - 1 });
                     ucitaj();
                     return;

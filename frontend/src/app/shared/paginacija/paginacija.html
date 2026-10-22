@@ -1,0 +1,9 @@
+@if (ukupno() > poStrani()) {
+  <p-paginator
+    class="mt-6"
+    [rows]="poStrani()"
+    [totalRecords]="ukupno()"
+    [first]="prvi()"
+    (onPageChange)="promeni($event)"
+  />
+}
