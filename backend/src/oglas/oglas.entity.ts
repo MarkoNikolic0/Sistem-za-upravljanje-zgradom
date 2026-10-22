@@ -8,6 +8,7 @@ import {
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Oglas {
@@ -22,6 +23,20 @@ export class Oglas {
 
   @Column({ type: 'enum', enum: VrstaOglasa })
   vrsta: VrstaOglasa;
+
+  @Exclude()
+  @Column({
+    type: 'boolean',
+    generatedType: 'STORED',
+    asExpression: `vrsta = '${VrstaOglasa.OBAVESTENJE}'`,
+  })
+  zakaceno: boolean;
+
+  @Column({ default: false })
+  vazno: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  vaziDo: Date | null;
 
   @ManyToOne(() => Zgrada, { nullable: false, onDelete: 'CASCADE' })
   zgrada: Zgrada;

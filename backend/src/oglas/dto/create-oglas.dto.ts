@@ -1,13 +1,19 @@
 import {
+  IsBoolean,
+  IsDate,
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsPositive,
   IsString,
   MaxLength,
+  MinDate,
 } from 'class-validator';
 import { VrstaOglasa } from '../../shared/enums/vrsta-oglasa.enum.js';
 import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateOglasDto {
   @UkloniRazmake()
@@ -24,6 +30,19 @@ export class CreateOglasDto {
 
   @IsEnum(VrstaOglasa, { message: 'Izaberi vrstu oglasa.' })
   vrsta: VrstaOglasa;
+
+  @IsOptional()
+  @IsBoolean()
+  vazno?: boolean;
+
+  @ApiProperty({ type: Date, nullable: true, required: false })
+  @IsOptional()
+  @MinDate(() => new Date(), {
+    message: 'Datum ne može biti u prošlosti.',
+  })
+  @IsDate({ message: 'Unesi datum do kog oglas važi.' })
+  @Type(() => Date)
+  vaziDo?: Date | null;
 
   @IsInt()
   @IsPositive()

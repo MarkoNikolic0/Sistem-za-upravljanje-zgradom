@@ -74,6 +74,14 @@ export class OglasController {
     return this.oglasService.sakrij(id, korisnik.id, korisnik.uloga, dto);
   }
 
+  @Patch(':id/obnovi')
+  obnovi(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.oglasService.obnovi(id, korisnik.id, korisnik.uloga);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

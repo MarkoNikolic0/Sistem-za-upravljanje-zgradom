@@ -5,7 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
+import {
+  FindOptionsWhere,
+  In,
+  IsNull,
+  LessThanOrEqual,
+  MoreThan,
+  Or,
+  Repository,
+} from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
@@ -17,6 +25,8 @@ import { CreateOglasDto } from './dto/create-oglas.dto.js';
 import { UpdateOglasDto } from './dto/update-oglas.dto.js';
 import { SakrijOglasDto } from './dto/sakrij-oglas.dto.js';
 import { OglasUpitDto } from './dto/oglas-upit.dto.js';
+import { DANA_VAZENJA } from './oglas.constants.js';
+import { MS_PO_DANU } from '../shared/vreme.js';
 
 // null = sve zgrade (admin)
 interface Pristup {
@@ -26,6 +36,10 @@ interface Pristup {
 
 function sadrzi(zgrade: number[] | null, zgradaId: number) {
   return zgrade === null || zgrade.includes(zgradaId);
+}
+
+function istekao(oglas: Oglas, sada = new Date()) {
+  return oglas.vaziDo !== null && oglas.vaziDo <= sada;
 }
 
 function samoZgrada(zgrade: number[] | null, zgradaId?: number) {
@@ -81,13 +95,17 @@ export class OglasService {
       ...(ids === null ? {} : { zgrada: { id: In(ids) } }),
       ...(upit.vrsta ? { vrsta: upit.vrsta } : {}),
     });
-    // Admin vidi sve; sakriven oglas od ostalih vide samo autor i upravnik zgrade.
+    // Admin vidi sve; sakriven i istekao oglas od ostalih vide samo autor i upravnik zgrade.
     // Admin ima poseban uslov jer TypeORM prazan uslov {} izbaci iz OR niza.
     const uslovi: FindOptionsWhere<Oglas>[] =
       upravlja === null
         ? [uZgradama(zgrade)]
         : [
-            { ...uZgradama(zgrade), datumSakrivanja: IsNull() },
+            {
+              ...uZgradama(zgrade),
+              datumSakrivanja: IsNull(),
+              vaziDo: Or(IsNull(), MoreThan(new Date())),
+            },
             { ...uZgradama(zgrade), autor: { id: korisnikId } },
             ...(upravlja.length > 0 ? [uZgradama(upravlja)] : []),
           ];
@@ -95,7 +113,7 @@ export class OglasService {
     const [stavke, ukupno] = await this.oglasRepository.findAndCount({
       where: uslovi,
       relations: { zgrada: true, autor: true },
-      order: { datumKreiranja: 'DESC', id: 'DESC' },
+      order: { zakaceno: 'DESC', datumKreiranja: 'DESC', id: 'DESC' },
       ...stranicenje(upit),
     });
 
@@ -132,6 +150,8 @@ export class OglasService {
         naslov: dto.naslov,
         tekst: dto.tekst,
         vrsta: dto.vrsta,
+        vazno: dto.vazno,
+        vaziDo: dto.vaziDo,
         zgrada: { id: dto.zgradaId },
         autor: { id: korisnikId },
       }),
@@ -158,6 +178,8 @@ export class OglasService {
       naslov: dto.naslov ?? oglas.naslov,
       tekst: dto.tekst ?? oglas.tekst,
       vrsta: dto.vrsta ?? oglas.vrsta,
+      vazno: dto.vazno ?? oglas.vazno,
+      vaziDo: dto.vaziDo === undefined ? oglas.vaziDo : dto.vaziDo,
     };
     if (
       izmene.naslov !== oglas.naslov ||
@@ -216,6 +238,38 @@ export class OglasService {
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
+  async obnovi(id: number, korisnikId: number, uloga: Uloga) {
+    const { oglas, p } = await this.findDostupan(id, korisnikId, uloga);
+    if (oglas.autor.id !== korisnikId) {
+      throw new ForbiddenException(
+        'Oglas može da obnovi samo onaj ko ga je objavio.',
+      );
+    }
+    if (oglas.datumSakrivanja !== null) {
+      throw new ConflictException(
+        'Oglas je sakriven, pa ne može da se obnovi.',
+      );
+    }
+    const sada = new Date();
+    if (!istekao(oglas, sada)) {
+      throw new ConflictException('Oglas još važi.');
+    }
+
+    const izmene = {
+      vaziDo: new Date(sada.getTime() + DANA_VAZENJA * MS_PO_DANU),
+    };
+    const rezultat = await this.oglasRepository.update(
+      { id, datumSakrivanja: IsNull(), vaziDo: LessThanOrEqual(sada) },
+      izmene,
+    );
+    if (rezultat.affected === 0) {
+      throw new ConflictException(
+        'Oglas je u međuvremenu obnovljen ili sakriven.',
+      );
+    }
+    return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
+  }
+
   private async findDostupan(id: number, korisnikId: number, uloga: Uloga) {
     const oglas = await this.oglasRepository.findOne({
       where: { id },
@@ -228,7 +282,8 @@ export class OglasService {
     const vidi =
       sadrzi(p.upravlja, oglas.zgrada.id) ||
       (sadrzi(p.zgrade, oglas.zgrada.id) &&
-        (oglas.datumSakrivanja === null || oglas.autor.id === korisnikId));
+        ((oglas.datumSakrivanja === null && !istekao(oglas)) ||
+          oglas.autor.id === korisnikId));
     if (!vidi) {
       throw new ForbiddenException('Nemate pristup ovom oglasu!');
     }
@@ -242,10 +297,13 @@ export class OglasService {
   private saPravima(oglas: Oglas, korisnikId: number, p: Pristup) {
     const autor = oglas.autor.id === korisnikId;
     const aktivan = oglas.datumSakrivanja === null;
+    const isteklo = istekao(oglas);
     return Object.assign(oglas, {
       smeDaMenja: autor && aktivan,
       smeDaObrise: autor,
       smeDaSakrije: aktivan && this.smeDaSakrije(oglas, korisnikId, p),
+      isteklo,
+      smeDaObnovi: autor && aktivan && isteklo,
     });
   }
 
