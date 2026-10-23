@@ -1,5 +1,8 @@
 <div class="stranica">
-  <p class="oznaka">Kvarovi</p>
+  <a routerLink="/kvarovi" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>Svi kvarovi</a
+  >
+  <p class="oznaka mt-6">Kvarovi</p>
   <h1 class="naslov-stranice mt-3">Prijava kvara</h1>
   <p class="mt-2 text-priguseno max-sm:hidden">
     Opiši šta ne radi. Upravnik zgrade će pregledati prijavu.
@@ -7,7 +10,7 @@
 
   @if (profil.hasValue()) {
     @if (stanovi().length === 0) {
-      <section class="odeljak">
+      <section class="panel mt-8">
         <p class="text-tekst">Da bi prijavio kvar, poveži nalog sa stanom u kojem živiš.</p>
         <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
       </section>
@@ -18,146 +21,174 @@
         }
       </div>
 
-      <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-5">
-        @if (stanovi().length > 1) {
-          <div class="flex flex-col gap-1.5">
-            <span id="stan-oznaka" class="text-sm font-medium">Stan</span>
-            <p-select
-              inputId="stanId"
-              ariaLabelledBy="stan-oznaka"
-              formControlName="stanId"
-              [options]="stanoviZaIzbor()"
-              optionLabel="naziv"
-              optionValue="id"
-              placeholder="Izaberi stan"
-              [fluid]="true"
-              [invalid]="nevazece('stanId')"
+      <form [formGroup]="forma" (ngSubmit)="posalji()" class="mt-8 flex flex-col gap-4">
+        <section class="panel" aria-labelledby="korak-gde">
+          <h2 id="korak-gde" class="naslov-koraka"><span class="broj">1</span>Gde je kvar</h2>
+
+          @if (stanovi().length > 1) {
+            <div class="mt-5 flex flex-col gap-1.5">
+              <span id="stan-oznaka" class="text-sm font-medium">Stan</span>
+              <p-select
+                inputId="stanId"
+                ariaLabelledBy="stan-oznaka"
+                formControlName="stanId"
+                [options]="stanoviZaIzbor()"
+                optionLabel="naziv"
+                optionValue="id"
+                placeholder="Izaberi stan"
+                [fluid]="true"
+                [invalid]="nevazece('stanId')"
+              />
+              @if (nevazece('stanId')) {
+                <small class="text-sm text-greska">Izaberi stan.</small>
+              }
+            </div>
+          } @else {
+            <p class="stan mt-4">
+              <i class="pi pi-home" aria-hidden="true"></i>{{ stanoviZaIzbor()[0].naziv }}
+            </p>
+          }
+
+          <fieldset class="mt-5">
+            <legend class="sr-only">Mesto kvara</legend>
+            <div class="grid gap-3 sm:grid-cols-2">
+              @for (lokacija of lokacije; track lokacija.value) {
+                <label class="plocica">
+                  <input
+                    type="radio"
+                    class="sr-only"
+                    formControlName="lokacijaTip"
+                    [value]="lokacija.value"
+                  />
+                  <span class="ikonica" aria-hidden="true"><i [class]="lokacija.ikonica"></i></span>
+                  <span class="min-w-0">
+                    <span class="block font-medium text-naslov">{{ lokacija.label }}</span>
+                    <span class="mt-0.5 block text-sm text-priguseno">{{ lokacija.opis }}</span>
+                  </span>
+                </label>
+              }
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="panel" aria-labelledby="korak-sta">
+          <h2 id="korak-sta" class="naslov-koraka"><span class="broj">2</span>Šta ne radi</h2>
+
+          <fieldset
+            class="mt-5"
+            [attr.aria-describedby]="nevazece('kategorija') ? 'kategorija-greska' : null"
+          >
+            <legend class="text-sm font-medium">Vrsta kvara</legend>
+            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              @for (kategorija of kategorije; track kategorija.value; let prva = $first) {
+                <label class="plocica vrsta" [class.nevazeca]="nevazece('kategorija')">
+                  <input
+                    type="radio"
+                    class="sr-only"
+                    formControlName="kategorija"
+                    [id]="prva ? 'kategorija' : null"
+                    [value]="kategorija.value"
+                  />
+                  <i [class]="kategorija.ikonica" aria-hidden="true"></i>
+                  <span>{{ kategorija.label }}</span>
+                </label>
+              }
+            </div>
+            @if (nevazece('kategorija')) {
+              <small id="kategorija-greska" class="mt-1.5 block text-sm text-greska"
+                >Izaberi vrstu kvara.</small
+              >
+            }
+          </fieldset>
+
+          @if (forma.controls.lokacijaTip.value === 'zajednicki_prostor') {
+            <app-vec-prijavljeno
+              class="mt-5"
+              [stanId]="forma.controls.stanId.value"
+              [kategorija]="forma.controls.kategorija.value"
             />
-            @if (nevazece('stanId')) {
-              <small class="text-sm text-greska">Izaberi stan.</small>
+          }
+
+          <div class="mt-5 flex flex-col gap-1.5">
+            <label for="naslov" class="text-sm font-medium">Naslov</label>
+            <input
+              pInputText
+              id="naslov"
+              formControlName="naslov"
+              placeholder="npr. Curi slavina u kupatilu"
+              autocomplete="off"
+              enterkeyhint="next"
+              [attr.maxlength]="maksNaslov"
+              [fluid]="true"
+              [invalid]="nevazece('naslov')"
+              [attr.aria-invalid]="nevazece('naslov')"
+              [attr.aria-describedby]="nevazece('naslov') ? 'naslov-greska' : null"
+            />
+            @if (nevazece('naslov')) {
+              <small id="naslov-greska" class="text-sm text-greska">
+                {{ forma.controls.naslov.errors?.['server'] ?? 'Unesi kratak naslov.' }}
+              </small>
             }
           </div>
-        } @else {
-          <div class="flex flex-col gap-1.5">
-            <p class="text-sm font-medium">Stan</p>
-            <p class="text-naslov">{{ stanoviZaIzbor()[0].naziv }}</p>
+
+          <div class="mt-5 flex flex-col gap-1.5">
+            <label for="opis" class="text-sm font-medium">Opis</label>
+            <textarea
+              pTextarea
+              id="opis"
+              formControlName="opis"
+              rows="4"
+              [autoResize]="true"
+              [attr.maxlength]="maksOpis"
+              [fluid]="true"
+              [invalid]="nevazece('opis')"
+              [attr.aria-invalid]="nevazece('opis')"
+              [attr.aria-describedby]="nevazece('opis') ? 'opis-greska' : 'opis-pomoc'"
+            ></textarea>
+            @if (nevazece('opis')) {
+              <small id="opis-greska" class="text-sm text-greska">
+                {{ forma.controls.opis.errors?.['server'] ?? 'Opiši kvar.' }}
+              </small>
+            } @else {
+              <small id="opis-pomoc" class="text-sm text-priguseno">
+                Šta se desilo, od kada i gde tačno.
+              </small>
+            }
           </div>
-        }
+        </section>
 
-        <div class="flex flex-col gap-1.5">
-          <span id="lokacija-oznaka" class="text-sm font-medium">Gde je kvar</span>
-          <p-selectbutton
-            formControlName="lokacijaTip"
-            [options]="lokacije"
-            optionLabel="label"
-            optionValue="value"
-            [allowEmpty]="false"
-            ariaLabelledBy="lokacija-oznaka"
+        <section class="panel" aria-labelledby="korak-slike">
+          <h2 id="korak-slike" class="naslov-koraka"><span class="broj">3</span>Slike i hitnost</h2>
+
+          <app-izabrani-fajlovi
+            class="mt-5"
+            [(fajlovi)]="slike"
+            [pravila]="pravilaSlika"
+            oznaka="Slike"
+            oznakaDugmeta="Dodaj slike"
+            [otpremanje]="slanje()"
           />
-          @if (forma.controls.lokacijaTip.value === 'zajednicki_prostor') {
-            <small class="text-sm text-priguseno">
-              Lift, stepenište, ulaz, podrum i ostali prostori koje koriste svi stanari.
-            </small>
-          }
-        </div>
 
-        <div class="flex flex-col gap-1.5">
-          <span id="kategorija-oznaka" class="text-sm font-medium">Vrsta kvara</span>
-          <p-select
-            inputId="kategorija"
-            ariaLabelledBy="kategorija-oznaka"
-            formControlName="kategorija"
-            [options]="kategorije"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Izaberi vrstu"
-            [fluid]="true"
-            [invalid]="nevazece('kategorija')"
-          />
-          @if (nevazece('kategorija')) {
-            <small class="text-sm text-greska">Izaberi vrstu kvara.</small>
-          }
-        </div>
+          <label for="hitno" class="hitno mt-5">
+            <p-checkbox
+              inputId="hitno"
+              formControlName="hitno"
+              [binary]="true"
+              [pt]="{ input: { 'aria-describedby': 'hitno-pomoc' } }"
+            />
+            <span>
+              <span class="flex items-center gap-2 font-medium text-naslov"
+                ><i class="pi pi-exclamation-triangle" aria-hidden="true"></i>Hitno</span
+              >
+              <span id="hitno-pomoc" class="mt-0.5 block text-sm text-priguseno">
+                Na primer: curi voda, nema struje ili grejanja. Rok za popravku je
+                {{ danaZaHitno }} dana.
+              </span>
+            </span>
+          </label>
+        </section>
 
-        @if (forma.controls.lokacijaTip.value === 'zajednicki_prostor') {
-          <app-vec-prijavljeno
-            [stanId]="forma.controls.stanId.value"
-            [kategorija]="forma.controls.kategorija.value"
-          />
-        }
-
-        <div class="flex flex-col gap-1.5">
-          <label for="naslov" class="text-sm font-medium">Naslov</label>
-          <input
-            pInputText
-            id="naslov"
-            formControlName="naslov"
-            placeholder="npr. Curi slavina u kupatilu"
-            autocomplete="off"
-            enterkeyhint="next"
-            [attr.maxlength]="maksNaslov"
-            [fluid]="true"
-            [invalid]="nevazece('naslov')"
-            [attr.aria-invalid]="nevazece('naslov')"
-            [attr.aria-describedby]="nevazece('naslov') ? 'naslov-greska' : null"
-          />
-          @if (nevazece('naslov')) {
-            <small id="naslov-greska" class="text-sm text-greska">
-              {{ forma.controls.naslov.errors?.['server'] ?? 'Unesi kratak naslov.' }}
-            </small>
-          }
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label for="opis" class="text-sm font-medium">Opis</label>
-          <textarea
-            pTextarea
-            id="opis"
-            formControlName="opis"
-            rows="4"
-            [autoResize]="true"
-            [attr.maxlength]="maksOpis"
-            [fluid]="true"
-            [invalid]="nevazece('opis')"
-            [attr.aria-invalid]="nevazece('opis')"
-            [attr.aria-describedby]="nevazece('opis') ? 'opis-greska' : 'opis-pomoc'"
-          ></textarea>
-          @if (nevazece('opis')) {
-            <small id="opis-greska" class="text-sm text-greska">
-              {{ forma.controls.opis.errors?.['server'] ?? 'Opiši kvar.' }}
-            </small>
-          } @else {
-            <small id="opis-pomoc" class="text-sm text-priguseno">
-              Šta se desilo, od kada i gde tačno.
-            </small>
-          }
-        </div>
-
-        <app-izabrani-fajlovi
-          [(fajlovi)]="slike"
-          [pravila]="pravilaSlika"
-          oznaka="Slike"
-          oznakaDugmeta="Dodaj slike"
-          [otpremanje]="slanje()"
-        />
-
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            inputId="hitno"
-            formControlName="hitno"
-            [binary]="true"
-            [pt]="{ input: { 'aria-describedby': 'hitno-pomoc' } }"
-          />
-          <div>
-            <label for="hitno" class="font-medium">Hitno</label>
-            <p id="hitno-pomoc" class="mt-0.5 text-sm text-priguseno">
-              Na primer: curi voda, nema struje ili grejanja. Rok za popravku je
-              {{ danaZaHitno }} dana.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-4">
+        <div class="mt-2 flex flex-wrap items-center gap-4">
           <button pButton type="submit" [disabled]="slanje()">
             @if (slanje()) {
               <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
@@ -178,10 +209,9 @@
       </button>
     </section>
   } @else {
-    <div class="odeljak ucitavanje" aria-hidden="true">
-      <p-skeleton height="2.5rem" />
-      <p-skeleton height="2.5rem" styleClass="mt-5" />
-      <p-skeleton height="7rem" styleClass="mt-5" />
+    <div class="mt-8 ucitavanje" aria-hidden="true">
+      <p-skeleton height="12rem" borderRadius="12px" />
+      <p-skeleton height="20rem" styleClass="mt-4" borderRadius="12px" />
     </div>
     <span class="sr-only">Učitavanje…</span>
   }

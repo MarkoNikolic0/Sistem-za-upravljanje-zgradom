@@ -28,6 +28,12 @@ export class KvarService {
       .set('stanje', upit.stanje)
       .set('strana', upit.strana)
       .set('poStrani', upit.poStrani);
+    if (upit.kategorija !== null) {
+      params = params.set('kategorija', upit.kategorija);
+    }
+    if (upit.prioritet !== null) {
+      params = params.set('prioritet', upit.prioritet);
+    }
     if (upit.zgradaId !== null) {
       params = params.set('zgradaId', upit.zgradaId);
     }

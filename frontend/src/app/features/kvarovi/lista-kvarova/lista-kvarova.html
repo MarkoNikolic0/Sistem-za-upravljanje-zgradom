@@ -1,15 +1,22 @@
 <div class="stranica">
-  <p class="oznaka">Zgrada</p>
-  <h1 class="naslov-stranice mt-3">Kvarovi</h1>
-  <p class="mt-2 text-priguseno max-sm:hidden">
-    {{
-      serviser() ? 'Kvarovi koji su ti dodeljeni.' : 'Prijavljeni kvarovi i tok njihove popravke.'
-    }}
-  </p>
+  <header class="zaglavlje">
+    <div>
+      <p class="oznaka">Zgrada</p>
+      <h1 class="naslov-stranice mt-3">Kvarovi</h1>
+      <p class="mt-2 text-priguseno max-sm:hidden">
+        {{
+          serviser()
+            ? 'Kvarovi koji su ti dodeljeni.'
+            : 'Prijavljeni kvarovi i tok njihove popravke.'
+        }}
+      </p>
+    </div>
+    @if (imaStan()) {
+      <a pButton routerLink="/kvarovi/novi" icon="pi pi-plus" class="shrink-0">Prijavi kvar</a>
+    }
+  </header>
 
-  @if (imaStan()) {
-    <a pButton routerLink="/kvarovi/novi" class="mt-6">Prijavi kvar</a>
-  } @else if (stanarBezStana()) {
+  @if (stanarBezStana()) {
     <p class="mt-6 text-sm text-priguseno">
       Da bi prijavio kvar,
       <a
@@ -20,34 +27,51 @@
     </p>
   }
 
-  <p-selectbutton
-    class="mt-6"
-    [options]="filteri"
-    optionLabel="label"
-    optionValue="value"
-    [allowEmpty]="false"
-    [ngModel]="store.stanje()"
-    (ngModelChange)="store.promeniStanje($event)"
-    ariaLabelledBy="kvarovi-filter"
-  />
-  <span id="kvarovi-filter" class="sr-only">Prikaz kvarova</span>
-
-  @if (listaZgrada().length > 1) {
-    <div class="mt-4 flex flex-col gap-1.5 sm:max-w-xs">
-      <span id="kvarovi-zgrada" class="text-sm font-medium">Zgrada</span>
+  <div class="alatke">
+    <p-selectbutton
+      [options]="filteri"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="store.stanje()"
+      (ngModelChange)="store.promeniStanje($event)"
+      ariaLabelledBy="kvarovi-filter"
+    />
+    <span id="kvarovi-filter" class="sr-only">Prikaz kvarova</span>
+    <div class="filteri">
       <p-select
-        ariaLabelledBy="kvarovi-zgrada"
-        [options]="opcijeZgrada()"
-        optionLabel="naziv"
-        optionValue="id"
-        [ngModel]="store.zgradaId()"
-        (ngModelChange)="store.promeniZgradu($event)"
+        ariaLabel="Vrsta"
+        [options]="opcijeVrsta"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="store.kategorija()"
+        (ngModelChange)="store.promeniKategoriju($event)"
         [fluid]="true"
       />
+      <p-select
+        ariaLabel="Prioritet"
+        [options]="opcijePrioriteta"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="store.prioritet()"
+        (ngModelChange)="store.promeniPrioritet($event)"
+        [fluid]="true"
+      />
+      @if (listaZgrada().length > 1) {
+        <p-select
+          ariaLabel="Zgrada"
+          [options]="opcijeZgrada()"
+          optionLabel="naziv"
+          optionValue="id"
+          [ngModel]="store.zgradaId()"
+          (ngModelChange)="store.promeniZgradu($event)"
+          [fluid]="true"
+        />
+      }
     </div>
-  }
+  </div>
 
-  <section class="odeljak" aria-label="Lista kvarova" [attr.aria-busy]="store.isPending()">
+  <section class="mt-6" aria-label="Lista kvarova" [attr.aria-busy]="store.isPending()">
     @if (store.error(); as greska) {
       <p-message severity="error">{{ greska }}</p-message>
       <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
@@ -55,48 +79,106 @@
       </button>
     } @else if (store.isPending() && store.kvarovi().length === 0) {
       <div class="ucitavanje" aria-hidden="true">
-        <p-skeleton height="6rem" />
-        <p-skeleton height="6rem" styleClass="mt-3" />
+        <p-skeleton height="5rem" />
+        <p-skeleton height="5rem" styleClass="mt-3" />
       </div>
       <span class="sr-only">Učitavanje kvarova…</span>
-    } @else {
-      @for (kvar of store.kvarovi(); track kvar.id) {
-        <article class="kvar" [attr.aria-labelledby]="'kvar-' + kvar.id">
-          <div class="flex items-baseline justify-between gap-4">
-            <h2 [id]="'kvar-' + kvar.id" class="text-naslov">
-              <a [routerLink]="['/kvarovi', kvar.id]" class="kartica-link">{{ kvar.naslov }}</a>
-            </h2>
-            <time class="shrink-0 text-sm text-utisano" [attr.datetime]="kvar.datumPrijave">
-              {{ kvar.datumPrijave | date: 'd. MMM y. HH:mm' }}
-            </time>
-          </div>
-          <p class="mt-1 text-sm text-priguseno">
-            @if (kvar.stan; as stan) {
-              Stan {{ stan.broj }} · {{ stan.sprat | sprat }}
-            } @else {
-              Zajednički prostor
-            }
-            · {{ naziviKategorija[kvar.kategorija] }}
-            @if (prikaziZgradu()) {
-              · {{ kvar.zgrada.naziv }}
-            }
-            @if (prikaziPratioce() && kvar.brojPratilaca > 0) {
-              · isti problem ima još {{ kvar.brojPratilaca | brojStanara }}
-            }
+    } @else if (store.kvarovi().length === 0) {
+      <div class="prazno">
+        @if (store.kategorija() || store.prioritet()) {
+          <span class="prazno-ikonica neutralno" aria-hidden="true"
+            ><i class="pi pi-filter-slash"></i
+          ></span>
+          <p class="text-naslov">Nema kvarova za izabrane filtere</p>
+          <button
+            pButton
+            type="button"
+            outlined
+            size="small"
+            class="mt-4"
+            (click)="store.ponistiFiltere()"
+          >
+            Poništi filtere
+          </button>
+        } @else {
+          <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-check-circle"></i></span>
+          <p class="text-naslov">
+            {{ store.stanje() === 'aktivni' ? 'Nema aktivnih kvarova' : 'Nema završenih kvarova' }}
           </p>
-          <app-oznake-kvara
-            class="mt-3"
-            [status]="kvar.status"
-            [prioritet]="kvar.prioritet"
-            [rok]="kvar.rokResavanja"
-          />
-        </article>
-      } @empty {
-        <p class="text-priguseno">
-          {{ store.stanje() === 'aktivni' ? 'Nema aktivnih kvarova.' : 'Nema završenih kvarova.' }}
-        </p>
-      }
+          <p class="mt-1 text-sm text-priguseno">
+            {{
+              store.stanje() === 'aktivni'
+                ? 'Sve radi kako treba. Kad nešto prijaviš, pojaviće se ovde.'
+                : 'Ovde će biti kvarovi koji su zatvoreni, odbijeni ili povučeni.'
+            }}
+          </p>
+        }
+      </div>
+    } @else {
+      <div class="panel-liste">
+        @for (kvar of store.kvarovi(); track kvar.id) {
+          <article
+            class="stavka"
+            [class.hitna]="kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status)"
+            [class.zavrsena]="jeZavrsen(kvar.status)"
+            [style.--boja]="boje[kvar.status]"
+            [attr.aria-labelledby]="'kvar-' + kvar.id"
+          >
+            <span class="ikonica" aria-hidden="true"
+              ><i [class]="ikonice[kvar.kategorija]"></i
+            ></span>
+            <div class="min-w-0 flex-1">
+              <h2 [id]="'kvar-' + kvar.id" class="naslov-kvara">
+                <a [routerLink]="['/kvarovi', kvar.id]" class="kartica-link">{{ kvar.naslov }}</a>
+              </h2>
+              <p class="meta">
+                <span>
+                  @if (kvar.stan; as stan) {
+                    Stan {{ stan.broj }} · {{ stan.sprat | sprat }}
+                  } @else {
+                    Zajednički prostor
+                  }
+                </span>
+                <span>{{ naziviKategorija[kvar.kategorija] }}</span>
+                @if (prikaziZgradu()) {
+                  <span>{{ kvar.zgrada.naziv }}</span>
+                }
+                <time [attr.datetime]="kvar.datumPrijave">{{
+                  kvar.datumPrijave | date: 'd. MMM y.'
+                }}</time>
+              </p>
+            </div>
+            <div class="desno">
+              <span class="stanje">
+                <span class="status"
+                  ><span class="tacka" aria-hidden="true"></span
+                  >{{ naziviStatusa[kvar.status] }}</span
+                >
+                <span class="napredak" aria-hidden="true">
+                  @for (korak of koraci; track korak; let i = $index) {
+                    <span class="segment" [class.pun]="i < predjeno(kvar.status)"></span>
+                  }
+                </span>
+              </span>
+              <span class="flex flex-wrap gap-1.5 empty:hidden">
+                @if (kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status)) {
+                  <span class="znak hitno"><i class="pi pi-exclamation-triangle"></i>Hitno</span>
+                }
+                @if (rok(kvar); as rok) {
+                  <span class="znak rok"><i class="pi pi-clock"></i>{{ rok }}</span>
+                }
+                @if (prikaziPratioce() && kvar.brojPratilaca > 0) {
+                  <span class="znak"><i class="pi pi-users"></i>+{{ kvar.brojPratilaca }}</span>
+                }
+              </span>
+            </div>
+            <i class="pi pi-chevron-right strelica" aria-hidden="true"></i>
+          </article>
+        }
+      </div>
+    }
 
+    @if (!store.error()) {
       <app-paginacija
         [strana]="store.strana()"
         [ukupno]="store.ukupno()"

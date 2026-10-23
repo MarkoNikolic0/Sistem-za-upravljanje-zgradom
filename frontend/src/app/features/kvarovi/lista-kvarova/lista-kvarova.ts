@@ -7,15 +7,23 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { NAZIVI_KATEGORIJA_KVARA, StanjeKvara } from '../kvar-models';
+import {
+  Kvar,
+  NAZIVI_KATEGORIJA_KVARA,
+  NAZIVI_PRIORITETA_KVARA,
+  NAZIVI_STATUSA_KVARA,
+  StanjeKvara,
+} from '../kvar-models';
+import { BOJE_STATUSA, IKONICE_KATEGORIJA, KORACI_KVARA, predjenoKoraka } from '../izgled-kvara';
+import { jeZavrsen, stanjeRoka } from '../pravila-kvara';
 import { ProfileService } from '../../profile/profile-service';
 import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
-import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
-import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
 import { ListaKvarovaStore } from '../lista-kvarova-store';
 import { Paginacija } from '../../../shared/paginacija/paginacija';
+
+const OZNAKE_ROKA = { prekoracen: 'Rok prekoračen', danas: 'Rok danas', sutra: 'Rok sutra' };
 
 @Component({
   imports: [
@@ -27,9 +35,7 @@ import { Paginacija } from '../../../shared/paginacija/paginacija';
     SelectButtonModule,
     SkeletonModule,
     SpratPipe,
-    OznakeKvara,
     RouterLink,
-    BrojStanaraPipe,
     Paginacija,
   ],
   selector: 'app-lista-kvarova',
@@ -43,6 +49,12 @@ export class ListaKvarova {
   private kvarService = inject(KvarService);
 
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
+  protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
+  protected readonly ikonice = IKONICE_KATEGORIJA;
+  protected readonly boje = BOJE_STATUSA;
+  protected readonly koraci = KORACI_KVARA;
+  protected readonly predjeno = predjenoKoraka;
+  protected readonly jeZavrsen = jeZavrsen;
 
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);
   protected readonly prikaziZgradu = computed(
@@ -76,6 +88,21 @@ export class ListaKvarova {
     { label: 'Aktivni', value: 'aktivni' },
     { label: 'Završeni', value: 'zavrseni' },
   ];
+
+  protected readonly opcijeVrsta = [
+    { label: 'Sve vrste', value: null },
+    ...Object.entries(NAZIVI_KATEGORIJA_KVARA).map(([value, label]) => ({ label, value })),
+  ];
+
+  protected readonly opcijePrioriteta = [
+    { label: 'Svi prioriteti', value: null },
+    ...Object.entries(NAZIVI_PRIORITETA_KVARA).map(([value, label]) => ({ label, value })),
+  ];
+
+  protected rok(kvar: Kvar): string | null {
+    const stanje = stanjeRoka(kvar.status, kvar.rokResavanja);
+    return stanje ? OZNAKE_ROKA[stanje] : null;
+  }
 
   constructor() {
     this.store.prikaziListu();

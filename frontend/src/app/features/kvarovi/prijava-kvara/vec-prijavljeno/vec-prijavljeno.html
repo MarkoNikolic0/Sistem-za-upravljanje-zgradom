@@ -1,6 +1,8 @@
 @if (lista().length > 0 || greska()) {
-  <section class="rounded-md border border-ivica p-4" aria-labelledby="vec-prijavljeno-naslov">
-    <h2 id="vec-prijavljeno-naslov" class="font-medium">Možda je već prijavljeno</h2>
+  <section class="slicni" aria-labelledby="vec-prijavljeno-naslov">
+    <h2 id="vec-prijavljeno-naslov" class="flex items-center gap-2 font-medium text-naslov">
+      <i class="pi pi-info-circle text-sm" aria-hidden="true"></i>Možda je već prijavljeno
+    </h2>
     <p class="mt-1 text-sm text-priguseno">
       Ako je isti kvar, prati ga umesto nove prijave. Upravnik vidi koliko je stanara pogođeno.
     </p>

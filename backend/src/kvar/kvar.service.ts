@@ -6,7 +6,7 @@ import {
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
 import {
   KategorijaKvara,
   LokacijaTip,
@@ -98,9 +98,14 @@ export class KvarService {
       upit.zgradaId,
     );
 
-    const status = In(STATUSI_PO_STANJU[upit.stanje]);
+    // TypeORM baca grešku na undefined u where, pa se filter dodaje samo kad je zadat
+    const filter: FindOptionsWhere<Kvar> = {
+      status: In(STATUSI_PO_STANJU[upit.stanje]),
+      ...(upit.kategorija && { kategorija: upit.kategorija }),
+      ...(upit.prioritet && { prioritet: upit.prioritet }),
+    };
     const [stavke, ukupno] = await this.kvarRepository.findAndCount({
-      where: vidljivi.map((uslov) => ({ ...uslov, status })),
+      where: vidljivi.map((uslov) => ({ ...uslov, ...filter })),
       relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
       order: { datumPrijave: 'DESC', id: 'DESC' },
       ...stranicenje(upit),

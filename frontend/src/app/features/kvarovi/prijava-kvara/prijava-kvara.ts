@@ -7,7 +7,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja } from '../../../shared/greske-servera';
@@ -30,6 +29,7 @@ import {
   StanjeNavigacijeKvara,
 } from '../kvar-models';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { IKONICE_KATEGORIJA } from '../izgled-kvara';
 import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
 import { IzabraniFajlovi } from '../../../shared/izabrani-fajlovi/izabrani-fajlovi';
 
@@ -44,7 +44,6 @@ type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
     InputTextModule,
     MessageModule,
     SelectModule,
-    SelectButtonModule,
     SkeletonModule,
     TextareaModule,
     VecPrijavljeno,
@@ -85,14 +84,30 @@ export class PrijavaKvara {
     })),
   );
 
-  protected readonly lokacije: { label: string; value: LokacijaKvara }[] = [
-    { label: 'U stanu', value: 'privatni_stan' },
-    { label: 'Zajednički prostor', value: 'zajednicki_prostor' },
+  protected readonly lokacije: {
+    label: string;
+    value: LokacijaKvara;
+    ikonica: string;
+    opis: string;
+  }[] = [
+    {
+      label: 'U stanu',
+      value: 'privatni_stan',
+      ikonica: 'pi pi-home',
+      opis: 'Vide ga samo ukućani, upravnik i serviser.',
+    },
+    {
+      label: 'Zajednički prostor',
+      value: 'zajednicki_prostor',
+      ikonica: 'pi pi-building',
+      opis: 'Lift, stepenište, ulaz, podrum. Vide ga svi stanari.',
+    },
   ];
 
   protected readonly kategorije = Object.entries(NAZIVI_KATEGORIJA_KVARA).map(([value, label]) => ({
     value: value as KategorijaKvara,
     label,
+    ikonica: IKONICE_KATEGORIJA[value as KategorijaKvara],
   }));
 
   protected readonly forma = this.fb.group({

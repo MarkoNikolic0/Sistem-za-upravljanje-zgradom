@@ -1,11 +1,11 @@
 :host {
   display: block;
   padding-left: 1rem;
-  border-left: 3px solid var(--p-tag-warn-color);
+  border-left: 3px solid var(--color-upozorenje);
 }
 
 :host(.odbijen) {
-  border-left-color: var(--p-tag-danger-color);
+  border-left-color: var(--color-greska);
 }
 
 :host(.povucen) {

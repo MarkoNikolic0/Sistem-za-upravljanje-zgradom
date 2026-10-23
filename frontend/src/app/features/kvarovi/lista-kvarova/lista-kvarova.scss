@@ -3,25 +3,92 @@
 }
 
 .stranica {
-  max-width: 40rem;
+  max-width: 52rem;
 }
 
-.kvar {
-  position: relative;
-  padding: 1.25rem 0;
-  border-top: 1px solid var(--color-linija);
+.zaglavlje {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
 
-  &:last-of-type {
-    border-bottom: 1px solid var(--color-linija);
+.alatke {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-top: 2rem;
+}
+
+.filteri {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  min-width: min(100%, 20rem);
+}
+
+.ikonica {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  color: var(--boja);
+  background: color-mix(in srgb, var(--boja) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--boja) 18%, transparent);
+}
+
+.naslov-kvara {
+  font-weight: 500;
+  color: var(--color-naslov);
+  overflow-wrap: anywhere;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--boja);
+}
+
+.tacka {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.znak {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--color-priguseno);
+  background: rgb(255 255 255 / 0.05);
+
+  .pi {
+    font-size: 0.6875rem;
   }
 
-  h2 {
-    font-weight: 500;
+  &.hitno {
+    color: var(--color-greska);
+    background: color-mix(in srgb, var(--color-greska) 14%, transparent);
   }
 
-  &:hover h2 {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+  &.rok {
+    color: var(--color-upozorenje);
+    background: color-mix(in srgb, var(--color-upozorenje) 14%, transparent);
   }
 }
 
@@ -30,6 +97,7 @@
     content: '';
     position: absolute;
     inset: 0;
+    border-radius: inherit;
   }
 
   &:focus-visible {
@@ -39,5 +107,166 @@
       outline: 2px solid var(--color-svetlo);
       outline-offset: 2px;
     }
+  }
+}
+
+.prazno {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border: 1px dashed var(--color-ivica);
+  border-radius: 12px;
+}
+
+.prazno-ikonica {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  border-radius: 9999px;
+  font-size: 1.25rem;
+  color: var(--color-uspeh);
+  background: color-mix(in srgb, var(--color-uspeh) 12%, transparent);
+
+  &.neutralno {
+    color: var(--color-priguseno);
+    background: rgb(255 255 255 / 0.05);
+  }
+}
+
+// Jedan panel, kvarovi su redovi u njemu
+.panel-liste {
+  overflow: hidden;
+  background: var(--color-povrsina);
+  border: 1px solid var(--color-linija);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 16px 32px -24px rgb(0 0 0 / 0.9);
+}
+
+// Telefon: status ispod naslova; šire: status desno, pa strelica
+.stavka {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.625rem 1rem;
+
+  @media (min-width: 40rem) {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+  padding: 1rem 1.25rem;
+  transition: background-color 150ms;
+
+  & + & {
+    border-top: 1px solid var(--color-linija);
+  }
+
+  // Hitan kvar: crvena traka uz levu ivicu
+  &.hitna::before {
+    content: '';
+    position: absolute;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-greska);
+  }
+
+  &:hover {
+    background: rgb(255 255 255 / 0.025);
+
+    .strelica {
+      color: var(--color-naslov);
+      transform: translateX(2px);
+    }
+  }
+
+  &.zavrsena .ikonica {
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+
+  > :not(:last-child)::after {
+    content: '·';
+    margin: 0 0.4375rem;
+    color: var(--color-utisano);
+  }
+}
+
+.desno {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  grid-column: 2;
+
+  @media (min-width: 40rem) {
+    width: 12rem;
+    grid-column: auto;
+  }
+}
+
+// Status i traka napretka: ista širina u svakom redu, pa se trake poravnaju
+.stanje {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  @media (min-width: 40rem) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .napredak {
+    width: 6rem;
+    margin-left: auto;
+
+    @media (min-width: 40rem) {
+      width: auto;
+      margin-left: 0;
+    }
+  }
+}
+
+.strelica {
+  font-size: 0.75rem;
+
+  @media (width < 40rem) {
+    display: none;
+  }
+
+  color: var(--color-utisano);
+  transition:
+    color 150ms,
+    transform 150ms;
+}
+
+.napredak {
+  display: flex;
+  gap: 3px;
+}
+
+.segment {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.08);
+
+  &.pun {
+    background: var(--boja);
   }
 }

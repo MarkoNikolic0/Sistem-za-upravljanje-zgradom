@@ -11,7 +11,7 @@ import {
   withRequestStatus,
 } from '../../shared/with-request-status';
 import { kvarEvents } from './kvar-events';
-import { Kvar, StanjeKvara } from './kvar-models';
+import { KategorijaKvara, Kvar, PrioritetKvara, StanjeKvara } from './kvar-models';
 import { KvarService } from './kvar-service';
 import { jeZavrsen, KVAROVA_PO_STRANI } from './pravila-kvara';
 import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
@@ -19,6 +19,8 @@ import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
 interface ListaKvarovaState {
   kvarovi: Kvar[];
   stanje: StanjeKvara;
+  kategorija: KategorijaKvara | null;
+  prioritet: PrioritetKvara | null;
   zgradaId: number | null;
 }
 
@@ -26,6 +28,8 @@ export const ListaKvarovaStore = signalStore(
   withState<ListaKvarovaState>({
     kvarovi: [],
     stanje: 'aktivni',
+    kategorija: null,
+    prioritet: null,
     zgradaId: null,
   }),
   withRequestStatus(),
@@ -38,6 +42,8 @@ export const ListaKvarovaStore = signalStore(
           kvarService
             .lista({
               stanje: store.stanje(),
+              kategorija: store.kategorija(),
+              prioritet: store.prioritet(),
               zgradaId: store.zgradaId(),
               strana: store.strana(),
               poStrani: store.poStrani,
@@ -70,6 +76,18 @@ export const ListaKvarovaStore = signalStore(
         patchState(store, { stanje, strana: 1 });
         ucitaj();
       },
+      promeniKategoriju(kategorija: KategorijaKvara | null): void {
+        patchState(store, { kategorija, strana: 1 });
+        ucitaj();
+      },
+      promeniPrioritet(prioritet: PrioritetKvara | null): void {
+        patchState(store, { prioritet, strana: 1 });
+        ucitaj();
+      },
+      ponistiFiltere(): void {
+        patchState(store, { kategorija: null, prioritet: null, strana: 1 });
+        ucitaj();
+      },
       promeniZgradu(zgradaId: number | null): void {
         patchState(store, { zgradaId, strana: 1 });
         ucitaj();
@@ -81,7 +99,13 @@ export const ListaKvarovaStore = signalStore(
     };
   }),
   withReducer(
-    on(kvarEvents.prijavljen, () => ({ stanje: 'aktivni' as const, strana: 1 })),
+    // Novi kvar mora da se vidi, pa se filteri vraćaju na početne
+    on(kvarEvents.prijavljen, () => ({
+      stanje: 'aktivni' as const,
+      kategorija: null,
+      prioritet: null,
+      strana: 1,
+    })),
     on(kvarEvents.azuriran, ({ payload: kvar }, { kvarovi }) => ({
       kvarovi: kvarovi.map((k) => (k.id === kvar.id ? kvar : k)),
     })),
@@ -94,7 +118,10 @@ export const ListaKvarovaStore = signalStore(
     posleIzmeneKvara$: events.on(kvarEvents.azuriran).pipe(
       filter(({ payload: kvar }) => {
         const naStrani = store.kvarovi().some((k) => k.id === kvar.id);
-        const uFilteru = jeZavrsen(kvar.status) === (store.stanje() === 'zavrseni');
+        const uFilteru =
+          jeZavrsen(kvar.status) === (store.stanje() === 'zavrseni') &&
+          (store.kategorija() ?? kvar.kategorija) === kvar.kategorija &&
+          (store.prioritet() ?? kvar.prioritet) === kvar.prioritet;
         return store.requestStatus() !== 'idle' && !(naStrani && uFilteru);
       }),
       tap(() => store.ucitaj()),

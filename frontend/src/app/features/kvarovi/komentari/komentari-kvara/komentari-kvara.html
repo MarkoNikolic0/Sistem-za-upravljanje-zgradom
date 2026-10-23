@@ -33,20 +33,30 @@
             class="mb-2"
           />
         }
-        <div class="flex items-baseline justify-between gap-4">
-          <p class="text-sm">
-            <span class="font-medium text-naslov">
-              {{ komentar.korisnik.ime }} {{ komentar.korisnik.prezime }}
-            </span>
-            @if (komentar.korisnik.uloga !== 'stanar') {
-              <span class="text-priguseno"> · {{ naziviUloga[komentar.korisnik.uloga] }}</span>
-            }
-          </p>
-          <time class="shrink-0 text-sm text-utisano" [attr.datetime]="komentar.datumKreiranja">
-            {{ komentar.datumKreiranja | date: 'd. MMM HH:mm' }}
-          </time>
+        <div class="flex gap-3">
+          <span
+            class="inicijali"
+            [class.osoblje]="komentar.korisnik.uloga !== 'stanar'"
+            aria-hidden="true"
+            >{{ komentar.korisnik.ime[0] }}{{ komentar.korisnik.prezime[0] }}</span
+          >
+          <div class="min-w-0 flex-1">
+            <div class="flex items-baseline justify-between gap-4">
+              <p class="text-sm">
+                <span class="font-medium text-naslov">
+                  {{ komentar.korisnik.ime }} {{ komentar.korisnik.prezime }}
+                </span>
+                @if (komentar.korisnik.uloga !== 'stanar') {
+                  <span class="text-priguseno"> · {{ naziviUloga[komentar.korisnik.uloga] }}</span>
+                }
+              </p>
+              <time class="shrink-0 text-sm text-utisano" [attr.datetime]="komentar.datumKreiranja">
+                {{ komentar.datumKreiranja | date: 'd. MMM HH:mm' }}
+              </time>
+            </div>
+            <p class="mt-1 whitespace-pre-line wrap-anywhere">{{ komentar.tekst }}</p>
+          </div>
         </div>
-        <p class="mt-1 whitespace-pre-line wrap-anywhere">{{ komentar.tekst }}</p>
         @if (smeDaBrise(komentar)) {
           <button
             pButton
@@ -54,7 +64,7 @@
             text
             size="small"
             severity="danger"
-            class="mt-1 -ml-2"
+            class="mt-1 ml-10"
             (click)="obrisi($event, komentar)"
           >
             Obriši

@@ -8,7 +8,7 @@ import {
   numberAttribute,
   viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -16,17 +16,21 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { NAZIVI_KATEGORIJA_KVARA, StanjeNavigacijeKvara } from '../kvar-models';
+import {
+  NAZIVI_KATEGORIJA_KVARA,
+  NAZIVI_STATUSA_KVARA,
+  StanjeNavigacijeKvara,
+} from '../kvar-models';
+import { BOJE_STATUSA, IKONICE_KATEGORIJA } from '../izgled-kvara';
 import { DetaljKvaraStore } from '../detalj-kvara-store';
 import { MojRad } from '../akcije/moj-rad/moj-rad';
-import { OznakeKvara } from '../status/oznake-kvara/oznake-kvara';
 import { PotvrdaKvara } from '../akcije/potvrda-kvara/potvrda-kvara';
 import { TokKvara } from '../status/tok-kvara/tok-kvara';
 import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvarom';
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
 import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
 import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
-import { jeZavrsen, pratiRok } from '../pravila-kvara';
+import { jeZavrsen, pratiRok, stanjeRoka } from '../pravila-kvara';
 import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
 import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
 import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
@@ -35,6 +39,7 @@ import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
 @Component({
   imports: [
     DatePipe,
+    NgTemplateOutlet,
     RouterLink,
     ButtonModule,
     MessageModule,
@@ -42,7 +47,6 @@ import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
     SpratPipe,
     KomentariKvara,
     MojRad,
-    OznakeKvara,
     PotvrdaKvara,
     TokKvara,
     UpravljanjeKvarom,
@@ -67,6 +71,21 @@ export class DetaljKvara {
   readonly id = input.required({ transform: numberAttribute });
 
   protected readonly naziviKategorija = NAZIVI_KATEGORIJA_KVARA;
+  protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
+  protected readonly ikonice = IKONICE_KATEGORIJA;
+  protected readonly boje = BOJE_STATUSA;
+  protected readonly jeZavrsen = jeZavrsen;
+
+  protected readonly rok = computed(() => {
+    const kvar = this.store.kvar();
+    const stanje = kvar && stanjeRoka(kvar.status, kvar.rokResavanja);
+    return stanje
+      ? { prekoracen: 'Rok prekoračen', danas: 'Rok ističe danas', sutra: 'Rok ističe sutra' }[
+          stanje
+        ]
+      : null;
+  });
+
   protected readonly formatirajTelefon = formatirajTelefon;
   protected readonly pratiRok = pratiRok;
 

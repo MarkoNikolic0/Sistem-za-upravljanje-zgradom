@@ -12,6 +12,24 @@
 
   &.razlog {
     padding-left: 1rem;
-    border-left: 3px solid var(--p-tag-warn-color);
+    border-left: 3px solid var(--color-upozorenje);
   }
+}
+
+.inicijali {
+  font-size: 0.6875rem;
+
+  &.osoblje {
+    color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 14%, transparent);
+  }
+}
+
+:host(.panel) .komentar:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+:host(.panel) .komentar:last-of-type {
+  border-bottom: 0;
 }

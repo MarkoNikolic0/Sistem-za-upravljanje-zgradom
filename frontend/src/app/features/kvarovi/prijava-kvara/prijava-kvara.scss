@@ -3,5 +3,126 @@
 }
 
 .stranica {
-  max-width: 40rem;
+  max-width: 44rem;
+}
+
+.naslov-koraka {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  color: var(--color-naslov);
+}
+
+.broj {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--color-svetlo);
+  background: color-mix(in srgb, var(--color-svetlo) 14%, transparent);
+}
+
+.stan {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: var(--color-naslov);
+  background: rgb(255 255 255 / 0.05);
+
+  .pi {
+    font-size: 0.8125rem;
+    color: var(--color-priguseno);
+  }
+}
+
+// Izbor kao pločica: pravi radio je skriven, a pločica pokazuje izbor i fokus
+.plocica {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  &:hover {
+    border-color: var(--color-priguseno);
+  }
+
+  &:has(:checked) {
+    border-color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 8%, transparent);
+
+    .ikonica,
+    .pi {
+      color: var(--color-svetlo);
+    }
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+
+  &.nevazeca {
+    border-color: color-mix(in srgb, var(--color-greska) 60%, transparent);
+  }
+}
+
+.ikonica {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  color: var(--color-priguseno);
+  background: rgb(255 255 255 / 0.05);
+}
+
+.vrsta {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 0.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+  color: var(--color-naslov);
+
+  .pi {
+    font-size: 1.125rem;
+    color: var(--color-priguseno);
+  }
+}
+
+.hitno {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  .pi {
+    font-size: 0.8125rem;
+    color: var(--color-greska);
+  }
+
+  &:has(:checked) {
+    border-color: color-mix(in srgb, var(--color-greska) 60%, transparent);
+    background: color-mix(in srgb, var(--color-greska) 8%, transparent);
+  }
 }

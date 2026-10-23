@@ -1,5 +1,7 @@
 <div class="stranica">
-  <a routerLink="/kvarovi" class="nazad">← Svi kvarovi</a>
+  <a routerLink="/kvarovi" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>Svi kvarovi</a
+  >
 
   <div #porukaAkcije tabindex="-1" aria-live="polite" class="mt-6 empty:hidden">
     @if (store.porukaAkcije(); as poruka) {
@@ -10,159 +12,188 @@
   </div>
 
   @if (store.kvar(); as kvar) {
-    <p class="oznaka mt-6">Kvar</p>
-    <h1 class="naslov-stranice mt-3">{{ kvar.naslov }}</h1>
-    <app-oznake-kvara
-      class="mt-3"
-      [status]="kvar.status"
-      [prioritet]="kvar.prioritet"
-      [rok]="kvar.rokResavanja"
-    />
-    @if (kvar.dolazakServisera; as dolazak) {
-      <p class="dolazak mt-4">
-        <i class="pi pi-calendar" aria-hidden="true"></i>
-        <span>
-          Dolazak servisera:
-          <time class="whitespace-nowrap" [attr.datetime]="dolazak">{{
-            dolazak | date: "EEEE, d. MMMM 'u' HH:mm"
-          }}</time>
-        </span>
-      </p>
-    }
+    <ng-template #akcije>
+      @if (store.razlogZavrsetka(); as razlog) {
+        <section class="panel" aria-labelledby="zavrsetak-naslov">
+          <div class="zaglavlje-odeljka">
+            <h2 id="zavrsetak-naslov" class="naslov-odeljka">Završetak</h2>
+          </div>
+          <app-razlog-promene [promena]="razlog" />
+        </section>
+      }
+      @if (kvar.smeDaPovuce) {
+        <app-povlacenje-kvara class="panel" />
+      }
+      @if (potvrda()) {
+        <app-potvrda-kvara class="panel istaknut" [kvar]="kvar" />
+      }
+      @if (upravlja()) {
+        <app-upravljanje-kvarom class="panel istaknut" [kvar]="kvar" />
+      }
+      @if (mojRad()) {
+        <app-moj-rad class="panel istaknut" [kvar]="kvar" />
+      }
+      @if (kvar.smeDaPrati || kvar.pratim) {
+        <app-pracenje-kvara class="panel" [kvar]="kvar" />
+      }
+    </ng-template>
 
-    <div class="raspored">
-      <section class="odeljak opis-kvara" aria-labelledby="opis-naslov">
-        <div class="zaglavlje-odeljka">
-          <h2 id="opis-naslov" class="naslov-odeljka">Opis</h2>
+    <ng-template #osobe>
+      <div class="osoba">
+        <span class="inicijali" aria-hidden="true"
+          >{{ kvar.korisnik.ime[0] }}{{ kvar.korisnik.prezime[0] }}</span
+        >
+        <div class="min-w-0">
+          <p class="text-xs text-utisano">Prijavio</p>
+          <p class="text-naslov">{{ kvar.korisnik.ime }} {{ kvar.korisnik.prezime }}</p>
+          @if (kvar.korisnik.telefon; as telefon) {
+            <a class="kontakt" [href]="'tel:' + telefon"
+              ><i class="pi pi-phone" aria-hidden="true"></i>{{ formatirajTelefon(telefon) }}</a
+            >
+          }
         </div>
-        <p class="whitespace-pre-line wrap-anywhere">{{ kvar.opis }}</p>
-      </section>
+      </div>
+      <div class="osoba">
+        @if (kvar.serviser; as serviser) {
+          <span class="inicijali serviser" aria-hidden="true"
+            >{{ serviser.ime[0] }}{{ serviser.prezime[0] }}</span
+          >
+          <div class="min-w-0">
+            <p class="text-xs text-utisano">Serviser</p>
+            <p class="text-naslov">{{ serviser.ime }} {{ serviser.prezime }}</p>
+            @if (serviser.telefon; as telefon) {
+              <a class="kontakt" [href]="'tel:' + telefon"
+                ><i class="pi pi-phone" aria-hidden="true"></i>{{ formatirajTelefon(telefon) }}</a
+              >
+            }
+          </div>
+        } @else {
+          <span class="inicijali prazan" aria-hidden="true"><i class="pi pi-user"></i></span>
+          <div>
+            <p class="text-xs text-utisano">Serviser</p>
+            <p class="text-priguseno">Još nije dodeljen</p>
+          </div>
+        }
+      </div>
+    </ng-template>
 
-      <app-slike-kvara class="slike" [kvar]="kvar" />
-
-      <div class="akcije">
-        @if (store.razlogZavrsetka(); as razlog) {
-          <section class="odeljak" aria-labelledby="zavrsetak-naslov">
-            <div class="zaglavlje-odeljka">
-              <h2 id="zavrsetak-naslov" class="naslov-odeljka">Završetak</h2>
-            </div>
-            <app-razlog-promene [promena]="razlog" />
-          </section>
+    <header class="hero mt-6" [style.--boja]="boje[kvar.status]">
+      <div class="flex items-center gap-3">
+        <span class="ikonica-velika" aria-hidden="true"
+          ><i [class]="ikonice[kvar.kategorija]"></i
+        ></span>
+        <div>
+          <p class="vrsta">{{ naziviKategorija[kvar.kategorija] }}</p>
+          <p class="text-xs text-utisano">Kvar #{{ kvar.id }} · {{ kvar.zgrada.naziv }}</p>
+        </div>
+      </div>
+      <h1 class="naslov-kvara mt-5">{{ kvar.naslov }}</h1>
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <span class="cip status"
+          ><span class="tacka" aria-hidden="true"></span>{{ naziviStatusa[kvar.status] }}</span
+        >
+        @if (kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status)) {
+          <span class="cip hitno"
+            ><i class="pi pi-exclamation-triangle" aria-hidden="true"></i>Hitno</span
+          >
         }
-        @if (kvar.smeDaPovuce) {
-          <app-povlacenje-kvara />
+        @if (rok(); as rok) {
+          <span class="cip rok"><i class="pi pi-clock" aria-hidden="true"></i>{{ rok }}</span>
         }
-        @if (potvrda()) {
-          <app-potvrda-kvara [kvar]="kvar" />
-        }
-        @if (upravlja()) {
-          <app-upravljanje-kvarom [kvar]="kvar" />
-        }
-        @if (mojRad()) {
-          <app-moj-rad [kvar]="kvar" />
-        }
-        @if (kvar.smeDaPrati || kvar.pratim) {
-          <app-pracenje-kvara [kvar]="kvar" />
+        @if (kvar.brojPratilaca > 0) {
+          <span class="cip"
+            ><i class="pi pi-users" aria-hidden="true"></i>Isti problem još
+            {{ kvar.brojPratilaca | brojStanara }}</span
+          >
         }
       </div>
 
-      <div class="strana">
-        <section class="odeljak" aria-labelledby="tok-naslov">
+      <dl class="cinjenice">
+        <div>
+          <dt><i class="pi pi-map-marker" aria-hidden="true"></i>Gde</dt>
+          <dd>
+            @if (kvar.stan; as stan) {
+              Stan {{ stan.broj }} · {{ stan.sprat | sprat }}
+            } @else {
+              Zajednički prostor
+            }
+          </dd>
+        </div>
+        <div>
+          <dt><i class="pi pi-calendar" aria-hidden="true"></i>Prijavljen</dt>
+          <dd>
+            <time [attr.datetime]="kvar.datumPrijave">{{
+              kvar.datumPrijave | date: 'd. MMM y.'
+            }}</time>
+          </dd>
+        </div>
+        @if (pratiRok(kvar.status)) {
+          <div>
+            <dt><i class="pi pi-flag" aria-hidden="true"></i>Rok</dt>
+            <dd>
+              <time [attr.datetime]="kvar.rokResavanja">{{
+                kvar.rokResavanja | date: 'd. MMM HH:mm'
+              }}</time>
+            </dd>
+          </div>
+        } @else if (kvar.datumResenja; as datumResenja) {
+          <div>
+            <dt><i class="pi pi-check-circle" aria-hidden="true"></i>Rešen</dt>
+            <dd>
+              <time [attr.datetime]="datumResenja">{{ datumResenja | date: 'd. MMM y.' }}</time>
+            </dd>
+          </div>
+        }
+        <div>
+          <dt><i class="pi pi-user" aria-hidden="true"></i>Serviser</dt>
+          <dd>
+            @if (kvar.serviser; as serviser) {
+              {{ serviser.ime }} {{ serviser.prezime }}
+            } @else {
+              <span class="text-priguseno">Nije dodeljen</span>
+            }
+          </dd>
+        </div>
+      </dl>
+
+      @if (kvar.dolazakServisera; as dolazak) {
+        <p class="dolazak">
+          <span class="dolazak-ikonica" aria-hidden="true"
+            ><i class="pi pi-calendar-clock"></i
+          ></span>
+          <span>
+            <span class="block text-xs text-utisano">Dolazak servisera</span>
+            <time class="text-naslov" [attr.datetime]="dolazak">{{
+              dolazak | date: "EEEE, d. MMMM 'u' HH:mm"
+            }}</time>
+          </span>
+        </p>
+      }
+    </header>
+
+    <div class="raspored">
+      <div class="glavno">
+        <section class="panel" aria-labelledby="opis-naslov">
+          <div class="zaglavlje-odeljka">
+            <h2 id="opis-naslov" class="naslov-odeljka">Opis</h2>
+          </div>
+          <p class="whitespace-pre-line wrap-anywhere">{{ kvar.opis }}</p>
+        </section>
+        <ng-container *ngTemplateOutlet="akcije" />
+        <app-slike-kvara class="panel" [kvar]="kvar" />
+        <app-komentari-kvara class="panel" [kvar]="kvar" />
+      </div>
+      <aside class="strana">
+        <section class="panel" aria-labelledby="tok-naslov">
           <div class="zaglavlje-odeljka">
             <h2 id="tok-naslov" class="naslov-odeljka">Tok popravke</h2>
           </div>
           <app-tok-kvara [status]="kvar.status" [istorija]="kvar.istorija" />
         </section>
-
-        <section class="odeljak" aria-labelledby="podaci-naslov">
-          <div class="zaglavlje-odeljka">
-            <h2 id="podaci-naslov" class="naslov-odeljka">Podaci</h2>
-          </div>
-          <dl>
-            <div class="red">
-              <dt>Gde</dt>
-              <dd>
-                @if (kvar.stan; as stan) {
-                  Stan {{ stan.broj }} · {{ stan.sprat | sprat }}
-                } @else {
-                  Zajednički prostor
-                }
-              </dd>
-            </div>
-            @if (kvar.brojPratilaca > 0) {
-              <div class="red">
-                <dt>Isti problem</dt>
-                <dd>još {{ kvar.brojPratilaca | brojStanara }}</dd>
-              </div>
-            }
-            <div class="red">
-              <dt>Zgrada</dt>
-              <dd>
-                {{ kvar.zgrada.naziv }}
-                <span class="block text-sm text-priguseno">{{ kvar.zgrada.adresa }}</span>
-              </dd>
-            </div>
-            <div class="red">
-              <dt>Vrsta</dt>
-              <dd>{{ naziviKategorija[kvar.kategorija] }}</dd>
-            </div>
-            <div class="red">
-              <dt>Prijavljen</dt>
-              <dd>
-                <time [attr.datetime]="kvar.datumPrijave">
-                  {{ kvar.datumPrijave | date: 'd. MMM y. HH:mm' }}
-                </time>
-              </dd>
-            </div>
-            @if (pratiRok(kvar.status)) {
-              <div class="red">
-                <dt>Rok</dt>
-                <dd>
-                  <time [attr.datetime]="kvar.rokResavanja">
-                    {{ kvar.rokResavanja | date: 'd. MMM y. HH:mm' }}
-                  </time>
-                </dd>
-              </div>
-            }
-            @if (kvar.datumResenja; as datumResenja) {
-              <div class="red">
-                <dt>Rešen</dt>
-                <dd>
-                  <time [attr.datetime]="datumResenja">
-                    {{ datumResenja | date: 'd. MMM y. HH:mm' }}
-                  </time>
-                </dd>
-              </div>
-            }
-            <div class="red">
-              <dt>Prijavio</dt>
-              <dd>
-                {{ kvar.korisnik.ime }} {{ kvar.korisnik.prezime }}
-                @if (kvar.korisnik.telefon; as telefon) {
-                  <a class="kontakt" [href]="'tel:' + telefon">{{ formatirajTelefon(telefon) }}</a>
-                }
-              </dd>
-            </div>
-            <div class="red">
-              <dt>Serviser</dt>
-              <dd>
-                @if (kvar.serviser; as serviser) {
-                  {{ serviser.ime }} {{ serviser.prezime }}
-                  @if (serviser.telefon; as telefon) {
-                    <a class="kontakt" [href]="'tel:' + telefon">{{
-                      formatirajTelefon(telefon)
-                    }}</a>
-                  }
-                } @else {
-                  <span class="text-priguseno">Još nije dodeljen</span>
-                }
-              </dd>
-            </div>
-          </dl>
-        </section>
-      </div>
-
-      <app-komentari-kvara class="komentari" [kvar]="kvar" />
+        <div class="panel osobe">
+          <ng-container *ngTemplateOutlet="osobe" />
+        </div>
+      </aside>
     </div>
   } @else if (store.nePostoji()) {
     <section class="odeljak">
@@ -177,8 +208,8 @@
     </section>
   } @else {
     <div class="odeljak ucitavanje" aria-hidden="true">
-      <p-skeleton width="60%" height="2.25rem" />
-      <p-skeleton height="12rem" styleClass="mt-8" />
+      <p-skeleton height="16rem" borderRadius="12px" />
+      <p-skeleton height="10rem" styleClass="mt-4" borderRadius="12px" />
     </div>
     <span class="sr-only">Učitavanje kvara…</span>
   }

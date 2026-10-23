@@ -22,6 +22,10 @@
   // Akcenat i stanja
   --color-svetlo: #f5b83d;
   --color-greska: #f97066;
+  // Boje stanja (iste nijanse kao PrimeNG oznake u tamnoj temi)
+  --color-uspeh: var(--p-green-300);
+  --color-info: var(--p-sky-300);
+  --color-upozorenje: var(--p-orange-300);
 
   // Zgrada (fasada, krov i ugaseni prozor)
   --color-fasada: #121214;
@@ -81,6 +85,42 @@ body {
     height: 1px;
     background: currentColor;
   }
+}
+
+// Povratak na listu (detalj i forma)
+.nazad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+
+  .pi {
+    font-size: 0.75rem;
+    transition: transform 150ms;
+  }
+
+  &:hover {
+    color: var(--color-naslov);
+
+    .pi {
+      transform: translateX(-2px);
+    }
+  }
+}
+
+// Krug sa inicijalima autora (oglasi, komentari, osobe na kvaru)
+.inicijali {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-naslov);
+  background: rgb(255 255 255 / 0.06);
 }
 
 @layer components {
@@ -163,4 +203,33 @@ a.plocica-fajla:hover {
 
 [tabindex='-1']:focus:not(:focus-visible) {
   outline: none;
+}
+
+// Površina odeljka (predlog redizajna kvarova)
+.panel {
+  display: block;
+  padding: 1.25rem;
+  background: var(--color-povrsina);
+  border: 1px solid var(--color-linija);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+
+  > .odeljak {
+    margin-top: 0;
+  }
+
+  .zaglavlje-odeljka {
+    min-height: 0;
+  }
+
+  &.istaknut {
+    background:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-svetlo) 7%, transparent),
+        transparent 60%
+      ),
+      var(--color-povrsina);
+    border-color: color-mix(in srgb, var(--color-svetlo) 25%, transparent);
+  }
 }

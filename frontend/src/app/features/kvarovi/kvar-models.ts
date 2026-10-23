@@ -105,6 +105,8 @@ export interface UpitSlicnih {
 
 export interface UpitKvarova extends UpitStrane {
   stanje: StanjeKvara;
+  kategorija: KategorijaKvara | null;
+  prioritet: PrioritetKvara | null;
   zgradaId: number | null;
 }
 
