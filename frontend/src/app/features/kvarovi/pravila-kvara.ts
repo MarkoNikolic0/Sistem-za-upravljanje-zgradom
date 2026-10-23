@@ -1,13 +1,7 @@
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { NIJE_PRAZNO } from '../../shared/nije-prazno';
-import {
-  DANA_ZA_RESAVANJE,
-  MAKS_KOMENTAR_KVARA,
-  MAKS_SLIKA_KVARA,
-  MAKS_VELICINA_SLIKE_MB,
-  StatusKvara,
-  TIPOVI_SLIKE,
-} from './kvar-models';
+import { DANA_ZA_RESAVANJE, MAKS_KOMENTAR_KVARA, StatusKvara } from './kvar-models';
+import { PravilaFajlova } from '../../shared/fajlovi';
 
 export const KVAROVA_PO_STRANI = 10;
 export const KOMENTARA_PO_STRANI = 20;
@@ -56,19 +50,11 @@ export function dolazakUBuducnosti(polje: AbstractControl<Date | null>): Validat
   return dolazak && dolazak.getTime() <= Date.now() ? { proslost: true } : null;
 }
 
-export const POMOC_ZA_SLIKE = `JPG, PNG ili WEBP, do ${MAKS_VELICINA_SLIKE_MB} MB. Najviše ${MAKS_SLIKA_KVARA} slika.`;
-
-export function greskaIzboraSlika(fajlovi: File[], vecIma: number): string | null {
-  if (vecIma + fajlovi.length > MAKS_SLIKA_KVARA) {
-    return `Kvar može imati najviše ${MAKS_SLIKA_KVARA} slika. Možeš da dodaš još ${MAKS_SLIKA_KVARA - vecIma}.`;
-  }
-  for (const fajl of fajlovi) {
-    if (!TIPOVI_SLIKE.includes(fajl.type)) {
-      return `Slika „${fajl.name}“ mora biti JPG, PNG ili WEBP.`;
-    }
-    if (fajl.size > MAKS_VELICINA_SLIKE_MB * 1024 * 1024) {
-      return `Slika „${fajl.name}“ mora biti manja od ${MAKS_VELICINA_SLIKE_MB} MB.`;
-    }
-  }
-  return null;
-}
+export const PRAVILA_SLIKA_KVARA: PravilaFajlova = {
+  tipovi: ['image/jpeg', 'image/png', 'image/webp'],
+  opisTipova: 'JPG, PNG ili WEBP',
+  maksMb: 10,
+  maksBroj: 5,
+  vlasnik: 'Kvar',
+  mnozina: 'slika',
+};

@@ -133,7 +133,13 @@
           }
         </div>
 
-        <app-slike-prijave [(slike)]="slike" [otpremanje]="slanje()" />
+        <app-izabrani-fajlovi
+          [(fajlovi)]="slike"
+          [pravila]="pravilaSlika"
+          oznaka="Slike"
+          oznakaDugmeta="Dodaj slike"
+          [otpremanje]="slanje()"
+        />
 
         <div class="flex items-start gap-3">
           <p-checkbox

@@ -1,0 +1,19 @@
+<input #polje type="file" hidden multiple [accept]="tipovi()" (change)="izaberi(polje)" />
+<button
+  pButton
+  id="dodaj-fajlove"
+  type="button"
+  size="small"
+  outlined
+  [disabled]="otpremanje()"
+  [attr.aria-describedby]="greskaId() ? 'fajlovi-pomoc ' + greskaId() : 'fajlovi-pomoc'"
+  (click)="polje.click()"
+>
+  @if (otpremanje()) {
+    <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+    Otpremanje…
+  } @else {
+    {{ oznaka() }}
+  }
+</button>
+<p id="fajlovi-pomoc" class="mt-2 text-sm text-priguseno">{{ pomoc() }}</p>

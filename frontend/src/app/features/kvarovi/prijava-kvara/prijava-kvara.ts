@@ -18,7 +18,7 @@ import { firstValueFrom } from 'rxjs';
 import { kvarEvents } from '../kvar-events';
 import { KvarService } from '../kvar-service';
 import { SlikaKvaraService } from '../slike/slike-kvara-service';
-import { SlikePrijave } from '../slike/slike-prijave/slike-prijave';
+import { PRAVILA_SLIKA_KVARA } from '../pravila-kvara';
 import {
   DANA_ZA_RESAVANJE,
   KategorijaKvara,
@@ -31,6 +31,7 @@ import {
 } from '../kvar-models';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
+import { IzabraniFajlovi } from '../../../shared/izabrani-fajlovi/izabrani-fajlovi';
 
 type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
 
@@ -46,8 +47,8 @@ type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
     SelectButtonModule,
     SkeletonModule,
     TextareaModule,
-    SlikePrijave,
     VecPrijavljeno,
+    IzabraniFajlovi,
   ],
   selector: 'app-prijava-kvara',
   styleUrl: './prijava-kvara.scss',
@@ -65,6 +66,7 @@ export class PrijavaKvara {
   protected readonly maksNaslov = MAKS_NASLOV_KVARA;
   protected readonly maksOpis = MAKS_OPIS_KVARA;
   protected readonly danaZaHitno = DANA_ZA_RESAVANJE.hitno;
+  protected readonly pravilaSlika = PRAVILA_SLIKA_KVARA;
 
   protected readonly profil = this.profileService.profile();
   protected readonly greska = signal('');

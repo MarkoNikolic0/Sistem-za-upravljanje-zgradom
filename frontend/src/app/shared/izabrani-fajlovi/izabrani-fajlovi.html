@@ -1,0 +1,55 @@
+<span id="fajlovi-oznaka" class="text-sm font-medium">
+  {{ oznaka() }} <span class="font-normal text-priguseno">(nije obavezno)</span>
+</span>
+<ng-content />
+@if (pregled().length > 0) {
+  <ul
+    aria-labelledby="fajlovi-oznaka"
+    class="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-3"
+  >
+    @for (izabran of pregled(); track izabran.fajl) {
+      <li>
+        @if (izabran.url) {
+          <img
+            [src]="izabran.url"
+            [alt]="izabran.fajl.name"
+            class="block aspect-square w-full rounded-md object-cover"
+          />
+        } @else {
+          <div class="plocica-fajla">
+            <i class="pi pi-file-pdf" aria-hidden="true"></i>
+            <span class="line-clamp-2 text-xs wrap-anywhere">{{ izabran.fajl.name }}</span>
+          </div>
+        }
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          severity="danger"
+          class="-ml-2"
+          [attr.aria-label]="'Ukloni ' + izabran.fajl.name"
+          (click)="ukloni(izabran.fajl)"
+        >
+          Ukloni
+        </button>
+      </li>
+    }
+  </ul>
+}
+@if (ukupno() < pravila().maksBroj) {
+  <app-izbor-fajlova
+    [pravila]="pravila()"
+    [oznaka]="oznakaDugmeta()"
+    [vecIma]="ukupno()"
+    [otpremanje]="otpremanje()"
+    [greskaId]="greska() ? 'fajlovi-greska' : undefined"
+    (izabrano)="dodaj($event)"
+    (greska)="greska.set($event)"
+  />
+}
+<div aria-live="polite" class="empty:hidden">
+  @if (greska()) {
+    <small id="fajlovi-greska" class="text-sm text-greska">{{ greska() }}</small>
+  }
+</div>

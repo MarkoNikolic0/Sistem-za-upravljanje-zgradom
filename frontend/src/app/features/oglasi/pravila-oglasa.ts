@@ -2,10 +2,20 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { ProfileResponse } from '../profile/profile-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { VrstaOglasa } from './oglas-models';
+import { PravilaFajlova } from '../../shared/fajlovi';
 
 export const OGLASA_PO_STRANI = 10;
 
 export const DANA_VAZENJA = 30;
+
+export const PRAVILA_PRILOGA: PravilaFajlova = {
+  tipovi: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+  opisTipova: 'PDF, JPG, PNG ili WEBP',
+  maksMb: 10,
+  maksBroj: 5,
+  vlasnik: 'Oglas',
+  mnozina: 'priloga',
+};
 
 // Prodaja, traženje i izgubljeno brzo zastarevaju, pa forma za njih predlaže rok
 const VRSTE_SA_ROKOM: VrstaOglasa[] = ['prodaja', 'trazim', 'izgubljeno'];

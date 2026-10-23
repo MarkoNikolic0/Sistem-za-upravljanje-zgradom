@@ -13,7 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -31,10 +31,19 @@ import {
   VrstaOglasa,
 } from '../oglas-models';
 import { OglasService } from '../oglas-service';
-import { krajDana, predlozenRok, rokNijeProsao, upravljaZgradom } from '../pravila-oglasa';
+import {
+  krajDana,
+  PRAVILA_PRILOGA,
+  predlozenRok,
+  rokNijeProsao,
+  upravljaZgradom,
+} from '../pravila-oglasa';
 import { injectZgradeOglasa } from '../zgrade-oglasa';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
+import { IzabraniFajlovi } from '../../../shared/izabrani-fajlovi/izabrani-fajlovi';
+import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 
 type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst' | 'vaziDo';
 
@@ -50,6 +59,8 @@ type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst' | 'vaziDo';
     SelectModule,
     SkeletonModule,
     TextareaModule,
+    IzabraniFajlovi,
+    PriloziOglasa,
   ],
   selector: 'app-forma-oglasa',
   styleUrl: './forma-oglasa.scss',
@@ -60,6 +71,7 @@ export class FormaOglasa {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly id = input(undefined, {
     transform: (id: string | undefined) => (id === undefined ? undefined : numberAttribute(id)),
@@ -86,6 +98,17 @@ export class FormaOglasa {
   protected readonly danas = new Date();
   protected readonly greska = signal('');
   protected readonly slanje = signal(false);
+
+  // Prilozi se dodaju i uklanjaju tek kad se oglas sačuva
+  protected readonly pravilaPriloga = PRAVILA_PRILOGA;
+  protected readonly noviPrilozi = signal<File[]>([]);
+  private readonly uklonjeniPrilozi = signal<number[]>([]);
+  protected readonly postojeciPrilozi = computed(() => {
+    const uklonjeni = this.uklonjeniPrilozi();
+    return this.oglas.hasValue()
+      ? this.oglas.value().prilozi.filter((prilog) => !uklonjeni.includes(prilog.id))
+      : [];
+  });
 
   protected readonly forma = this.fb.group({
     zgradaId: this.fb.control<number | null>(null, Validators.required),
@@ -173,6 +196,11 @@ export class FormaOglasa {
     });
   }
 
+  protected ukloniPostojeci(prilogId: number): void {
+    this.uklonjeniPrilozi.update((uklonjeni) => [...uklonjeni, prilogId]);
+    this.fokusiraj('#dodaj-fajlove');
+  }
+
   protected nevazece(polje: Polje): boolean {
     const kontrola = this.forma.controls[polje];
     return kontrola.invalid && kontrola.touched;
@@ -197,17 +225,21 @@ export class FormaOglasa {
     this.greska.set('');
     this.slanje.set(true);
     try {
-      if (id === undefined) {
-        await firstValueFrom(this.oglasService.objavi({ ...podaci, zgradaId }));
-      } else {
-        await firstValueFrom(this.oglasService.izmeni(id, podaci));
-      }
+      const oglasId =
+        id === undefined
+          ? (await firstValueFrom(this.oglasService.objavi({ ...podaci, zgradaId }))).id
+          : (await firstValueFrom(this.oglasService.izmeni(id, podaci))).id;
+      const { nisuSacuvani, ukupno } = await this.sacuvajPriloge(oglasId);
+      const uradjeno = id === undefined ? 'Oglas je objavljen' : 'Oglas je izmenjen';
       await this.router.navigate(['/oglasi'], {
         state: {
-          poruka: {
-            tip: 'uspeh',
-            tekst: id === undefined ? 'Oglas je objavljen.' : 'Oglas je izmenjen.',
-          },
+          poruka:
+            nisuSacuvani > 0
+              ? {
+                  tip: 'greska',
+                  tekst: `${uradjeno}, ali neki prilozi nisu sačuvani (${nisuSacuvani} od ${ukupno}). Pokušaj ponovo u izmeni oglasa.`,
+                }
+              : { tip: 'uspeh', tekst: `${uradjeno}.` },
         } satisfies StanjeNavigacijeOglasa,
       });
     } catch (err) {
@@ -215,6 +247,25 @@ export class FormaOglasa {
     } finally {
       this.slanje.set(false);
     }
+  }
+
+  // Prvo uklanjanje, da bi se oslobodilo mesto za nove priloge
+  private async sacuvajPriloge(oglasId: number) {
+    const promene: (() => Observable<unknown>)[] = [
+      ...this.uklonjeniPrilozi().map(
+        (prilogId) => () => this.oglasService.obrisiPrilog(oglasId, prilogId),
+      ),
+      ...this.noviPrilozi().map((fajl) => () => this.oglasService.dodajPrilog(oglasId, fajl)),
+    ];
+    let nisuSacuvani = 0;
+    for (const promena of promene) {
+      try {
+        await firstValueFrom(promena());
+      } catch {
+        nisuSacuvani++;
+      }
+    }
+    return { nisuSacuvani, ukupno: promene.length };
   }
 
   private obradiGresku(err: unknown): void {

@@ -37,8 +37,10 @@
     }
     @if (!zavrsen()) {
       @if (mozeJos()) {
-        <app-izbor-slika
+        <app-izbor-fajlova
           class="mt-4"
+          [pravila]="pravila"
+          oznaka="Dodaj slike"
           [vecIma]="store.slike().length"
           [otpremanje]="otpremanje()"
           (izabrano)="otpremi($event)"
@@ -46,7 +48,7 @@
         />
       } @else {
         <p class="mt-4 text-sm text-priguseno">
-          Kvar već ima {{ maksSlika }} slika, koliko je najviše moguće.
+          Kvar već ima {{ pravila.maksBroj }} slika, koliko je najviše moguće.
         </p>
       }
     }

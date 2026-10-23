@@ -17,6 +17,7 @@ import { ListaOglasaStore } from '../lista-oglasa-store';
 import { Oglas, StanjeNavigacijeOglasa, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
 import { injectZgradeOglasa } from '../zgrade-oglasa';
 import { formatRoka } from '../pravila-oglasa';
+import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
 
 @Component({
   imports: [
@@ -31,6 +32,7 @@ import { formatRoka } from '../pravila-oglasa';
     TagModule,
     FormaRazloga,
     Paginacija,
+    PriloziOglasa,
   ],
   providers: [ListaOglasaStore, ConfirmationService],
   selector: 'app-lista-oglasa',

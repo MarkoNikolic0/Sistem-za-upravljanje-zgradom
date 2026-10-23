@@ -144,6 +144,23 @@
         }
       </div>
 
+      <app-izabrani-fajlovi
+        [(fajlovi)]="noviPrilozi"
+        [pravila]="pravilaPriloga"
+        oznaka="Prilozi"
+        oznakaDugmeta="Dodaj priloge"
+        [vecIma]="postojeciPrilozi().length"
+        [otpremanje]="slanje()"
+      >
+        @if (postojeciPrilozi().length > 0) {
+          <app-prilozi-oglasa
+            [prilozi]="postojeciPrilozi()"
+            [uklanjanje]="true"
+            (ukloni)="ukloniPostojeci($event.id)"
+          />
+        }
+      </app-izabrani-fajlovi>
+
       <div class="flex flex-col gap-1.5">
         <label for="vaziDo" class="text-sm font-medium">
           Važi do <span class="font-normal text-priguseno">(nije obavezno)</span>

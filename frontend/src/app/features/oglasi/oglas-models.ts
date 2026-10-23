@@ -52,6 +52,16 @@ export const VRSTE_OGLASA: Record<VrstaOglasa, OpisVrste> = {
 export const MAKS_NASLOV_OGLASA = 100;
 export const MAKS_TEKST_OGLASA = 2000;
 
+export interface PrilogOglasa {
+  id: number;
+  naziv: string;
+  tip: string;
+  velicina: number;
+  url: string;
+  urlSlicice: string | null;
+  datumOtpremanja: string;
+}
+
 export interface Oglas {
   id: number;
   naslov: string;
@@ -66,6 +76,7 @@ export interface Oglas {
   datumIzmene: string | null;
   datumSakrivanja: string | null;
   razlogSakrivanja: string | null;
+  prilozi: PrilogOglasa[];
   smeDaObnovi: boolean;
   smeDaMenja: boolean;
   smeDaObrise: boolean;

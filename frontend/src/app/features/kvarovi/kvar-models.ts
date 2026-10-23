@@ -129,10 +129,6 @@ export interface KomentarKvara {
   korisnik: KorisnikOsnovno;
 }
 
-export const MAKS_SLIKA_KVARA = 5;
-export const MAKS_VELICINA_SLIKE_MB = 10;
-export const TIPOVI_SLIKE = ['image/jpeg', 'image/png', 'image/webp'];
-
 export interface SlikaKvara {
   id: number;
   url: string;

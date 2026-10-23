@@ -1,0 +1,36 @@
+<ul aria-label="Prilozi" class="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-3">
+  @for (prilog of prilozi(); track prilog.id) {
+    <li>
+      @if (prilog.urlSlicice) {
+        <p-image
+          class="block"
+          imageClass="block aspect-square w-full rounded-md object-cover"
+          [src]="prilog.urlSlicice"
+          [previewImageSrc]="prilog.url"
+          [alt]="prilog.naziv"
+          [preview]="true"
+        />
+      } @else {
+        <a class="plocica-fajla" [href]="prilog.url" target="_blank" rel="noopener">
+          <i class="pi pi-file-pdf" aria-hidden="true"></i>
+          <span class="line-clamp-2 text-xs wrap-anywhere">{{ prilog.naziv }}</span>
+          <span class="sr-only">(PDF, otvara se u novoj kartici)</span>
+        </a>
+      }
+      @if (uklanjanje()) {
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          severity="danger"
+          class="-ml-2"
+          [attr.aria-label]="'Ukloni ' + prilog.naziv"
+          (click)="ukloni.emit(prilog)"
+        >
+          Ukloni
+        </button>
+      }
+    </li>
+  }
+</ul>

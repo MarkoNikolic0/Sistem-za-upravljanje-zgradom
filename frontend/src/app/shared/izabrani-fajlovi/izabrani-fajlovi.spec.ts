@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IzborSlika } from './izbor-slika';
+import { IzabraniFajlovi } from './izabrani-fajlovi';
 
-describe('IzborSlika', () => {
-  let component: IzborSlika;
-  let fixture: ComponentFixture<IzborSlika>;
+describe('IzabraniFajlovi', () => {
+  let component: IzabraniFajlovi;
+  let fixture: ComponentFixture<IzabraniFajlovi>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IzborSlika],
+      imports: [IzabraniFajlovi],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(IzborSlika);
+    fixture = TestBed.createComponent(IzabraniFajlovi);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

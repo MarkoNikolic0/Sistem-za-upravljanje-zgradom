@@ -127,6 +127,9 @@
               <div class="telo">
                 <h2 [id]="'oglas-' + oglas.id" class="naslov-oglasa">{{ oglas.naslov }}</h2>
                 <p class="mt-2 whitespace-pre-line wrap-anywhere">{{ oglas.tekst }}</p>
+                @if (oglas.prilozi.length > 0) {
+                  <app-prilozi-oglasa class="mt-4" [prilozi]="oglas.prilozi" />
+                }
                 @if (oglas.datumSakrivanja) {
                   <div class="razlog mt-4">
                     <p class="text-sm font-medium text-naslov">Upravnik je sakrio oglas</p>

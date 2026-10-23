@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
-import { NoviOglasRequest, Oglas, OglasRequest, UpitOglasa } from './oglas-models';
+import { NoviOglasRequest, Oglas, OglasRequest, PrilogOglasa, UpitOglasa } from './oglas-models';
 
 @Service()
 export class OglasService {
@@ -46,5 +46,15 @@ export class OglasService {
 
   obnovi(id: number): Observable<Oglas> {
     return this.http.patch<Oglas>(`${this.apiUrl}/${id}/obnovi`, null);
+  }
+
+  dodajPrilog(id: number, prilog: File): Observable<PrilogOglasa> {
+    const podaci = new FormData();
+    podaci.append('prilog', prilog);
+    return this.http.post<PrilogOglasa>(`${this.apiUrl}/${id}/prilog`, podaci);
+  }
+
+  obrisiPrilog(id: number, prilogId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/prilog/${prilogId}`);
   }
 }

@@ -9,15 +9,10 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { greskaPolja } from '../../../../shared/greske-servera';
 import { AuthStore } from '../../../auth/sesija/auth-store';
-import { IzborSlika } from '../izbor-slika/izbor-slika';
-import {
-  KvarDetalj,
-  MAKS_SLIKA_KVARA,
-  MAKS_VELICINA_SLIKE_MB,
-  SlikaKvara,
-} from '../../kvar-models';
+import { KvarDetalj, SlikaKvara } from '../../kvar-models';
 import { SlikeKvaraStore } from '../slike-kvara-store';
-import { jeZavrsen } from '../../pravila-kvara';
+import { jeZavrsen, PRAVILA_SLIKA_KVARA } from '../../pravila-kvara';
+import { IzborFajlova } from '../../../../shared/izbor-fajlova/izbor-fajlova';
 
 interface Poruka {
   tip: 'uspeh' | 'greska';
@@ -31,7 +26,7 @@ interface Poruka {
     ImageModule,
     MessageModule,
     SkeletonModule,
-    IzborSlika,
+    IzborFajlova,
   ],
   providers: [SlikeKvaraStore, ConfirmationService],
   selector: 'app-slike-kvara',
@@ -46,11 +41,13 @@ export class SlikeKvara {
 
   readonly kvar = input.required<KvarDetalj>();
 
-  protected readonly maksSlika = MAKS_SLIKA_KVARA;
+  protected readonly pravila = PRAVILA_SLIKA_KVARA;
 
   protected readonly otpremanje = signal(false);
   protected readonly poruka = signal<Poruka | null>(null);
-  protected readonly mozeJos = computed(() => this.store.slike().length < MAKS_SLIKA_KVARA);
+  protected readonly mozeJos = computed(
+    () => this.store.slike().length < PRAVILA_SLIKA_KVARA.maksBroj,
+  );
   protected readonly zavrsen = computed(() => jeZavrsen(this.kvar().status));
 
   constructor() {
@@ -95,7 +92,7 @@ export class SlikeKvara {
         tekst: fajlovi.length === 1 ? 'Slika je dodata.' : 'Slike su dodate.',
       });
     }
-    this.fokusiraj(this.mozeJos() ? '#dodaj-slike' : '#slike-naslov');
+    this.fokusiraj(this.mozeJos() ? '#dodaj-fajlove' : '#slike-naslov');
   }
 
   protected obrisi(event: Event, slika: SlikaKvara): void {
@@ -123,7 +120,7 @@ export class SlikeKvara {
   private razlog(err: unknown): string {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 413) {
-        return `Slika mora biti manja od ${MAKS_VELICINA_SLIKE_MB} MB.`;
+        return `Slika mora biti manja od ${PRAVILA_SLIKA_KVARA.maksMb} MB.`;
       }
       const poruka = greskaPolja(err, 'slika');
       if (poruka) {
