@@ -11,6 +11,7 @@ import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { CreateZgradaDto } from './dto/create-zgrada.dto.js';
 import { UpdateZgradaDto } from './dto/update-zgrada.dto.js';
+import { Oglas } from '../oglas/oglas.entity.js';
 
 @Injectable()
 export class ZgradaService {
@@ -20,6 +21,7 @@ export class ZgradaService {
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
+    @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
   ) {}
 
   async create(dto: CreateZgradaDto) {
@@ -48,14 +50,16 @@ export class ZgradaService {
   async remove(id: number) {
     const zgrada = await this.findOne(id);
 
-    const [stanovi, kvarovi, upravnici] = await Promise.all([
+    // Oglasi se ne brišu zajedno sa zgradom, jer bi fajlovi njihovih priloga ostali u skladištu
+    const [stanovi, kvarovi, upravnici, oglasi] = await Promise.all([
       this.stanRepository.count({ where: { zgrada: { id } } }),
       this.kvarRepository.count({ where: { zgrada: { id } } }),
       this.korisnikRepository.count({ where: { zgrada: { id } } }),
+      this.oglasRepository.count({ where: { zgrada: { id } } }),
     ]);
-    if (stanovi + kvarovi + upravnici > 0) {
+    if (stanovi + kvarovi + upravnici + oglasi > 0) {
       throw new ConflictException(
-        `Zgrada se ne može obrisati jer ima: stanova ${stanovi}, kvarova ${kvarovi}, upravnika ${upravnici}.`,
+        `Zgrada se ne može obrisati jer ima: stanova ${stanovi}, kvarova ${kvarovi}, upravnika ${upravnici}, oglasa ${oglasi}.`,
       );
     }
 

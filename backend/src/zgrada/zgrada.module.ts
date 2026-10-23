@@ -7,10 +7,11 @@ import { AuthModule } from '../auth/auth.module.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { Oglas } from '../oglas/oglas.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Zgrada, Stan, Kvar, Korisnik]),
+    TypeOrmModule.forFeature([Zgrada, Stan, Kvar, Korisnik, Oglas]),
     AuthModule,
   ],
   controllers: [ZgradaController],
