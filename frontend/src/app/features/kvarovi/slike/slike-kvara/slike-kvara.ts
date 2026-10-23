@@ -92,7 +92,7 @@ export class SlikeKvara {
         tekst: fajlovi.length === 1 ? 'Slika je dodata.' : 'Slike su dodate.',
       });
     }
-    this.fokusiraj(this.mozeJos() ? '#dodaj-fajlove' : '#slike-naslov');
+    this.fokusiraj(this.mozeJos() ? 'app-izbor-fajlova button' : '#slike-naslov');
   }
 
   protected obrisi(event: Event, slika: SlikaKvara): void {

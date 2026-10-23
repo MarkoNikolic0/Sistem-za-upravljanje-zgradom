@@ -156,6 +156,7 @@
           <app-prilozi-oglasa
             [prilozi]="postojeciPrilozi()"
             [uklanjanje]="true"
+            [otpremanje]="slanje()"
             (ukloni)="ukloniPostojeci($event.id)"
           />
         }
@@ -222,7 +223,10 @@
             {{ izmena() ? 'Sačuvaj izmene' : 'Objavi oglas' }}
           }
         </button>
-        <a pButton routerLink="/oglasi" text>Odustani</a>
+        <!-- Dok se šalje, Odustani bi prekinuo otpremanje priloga na pola -->
+        @if (!slanje()) {
+          <a pButton routerLink="/oglasi" text>Odustani</a>
+        }
       </div>
     </form>
   }

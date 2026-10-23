@@ -4,6 +4,8 @@ import { fokusPosleCrtanja } from '../fokus';
 import { jeSlika, PravilaFajlova } from '../fajlovi';
 import { IzborFajlova } from '../izbor-fajlova/izbor-fajlova';
 
+let sledeciId = 0;
+
 // Fajlovi izabrani u formi, pre slanja; sadržaj između oznake i liste su već sačuvani fajlovi
 @Component({
   imports: [ButtonModule, IzborFajlova],
@@ -21,6 +23,8 @@ export class IzabraniFajlovi {
   readonly oznakaDugmeta = input.required<string>();
   readonly vecIma = input(0);
   readonly otpremanje = input(false);
+
+  protected readonly id = `izabrani-fajlovi-${sledeciId++}`;
 
   protected readonly greska = signal('');
   protected readonly ukupno = computed(() => this.vecIma() + this.fajlovi().length);
@@ -52,6 +56,6 @@ export class IzabraniFajlovi {
     }
     this.greska.set('');
     this.fajlovi.update((postojeci) => postojeci.filter((f) => f !== fajl));
-    this.fokusiraj('#dodaj-fajlove');
+    this.fokusiraj('app-izbor-fajlova button');
   }
 }

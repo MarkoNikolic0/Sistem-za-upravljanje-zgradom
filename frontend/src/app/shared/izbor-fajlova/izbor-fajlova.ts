@@ -2,6 +2,8 @@ import { Component, computed, input, output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { greskaIzbora, pomocZaFajlove, PravilaFajlova } from '../fajlovi';
 
+let sledeciId = 0;
+
 @Component({
   imports: [ButtonModule],
   selector: 'app-izbor-fajlova',
@@ -17,6 +19,7 @@ export class IzborFajlova {
   readonly izabrano = output<File[]>();
   readonly greska = output<string>();
 
+  protected readonly pomocId = `izbor-fajlova-${sledeciId++}-pomoc`;
   protected readonly tipovi = computed(() => this.pravila().tipovi.join(','));
   protected readonly pomoc = computed(() => pomocZaFajlove(this.pravila()));
 

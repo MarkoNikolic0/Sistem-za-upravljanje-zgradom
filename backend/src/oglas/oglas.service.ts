@@ -13,6 +13,7 @@ import {
   MoreThan,
   Or,
   Repository,
+  DataSource,
 } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
@@ -28,6 +29,7 @@ import { OglasUpitDto } from './dto/oglas-upit.dto.js';
 import { DANA_VAZENJA, PORUKA_SAKRIVEN } from './oglas.constants.js';
 import { VREMENSKA_ZONA } from '../shared/vreme.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
+import { PrilogOglasa } from './prilog-oglasa.entity.js';
 
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
@@ -62,6 +64,7 @@ export class OglasService {
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
     private prilogService: PrilogOglasaService,
+    private dataSource: DataSource,
   ) {}
 
   private async pristup(korisnikId: number, uloga: Uloga): Promise<Pristup> {
@@ -213,8 +216,20 @@ export class OglasService {
         'Oglas može da obriše samo onaj ko ga je objavio.',
       );
     }
-    await this.oglasRepository.delete(id);
-    await this.prilogService.obrisiFajlove(oglas.prilozi);
+    const prilozi = await this.dataSource.transaction(async (manager) => {
+      await manager.findOne(Oglas, {
+        where: { id },
+        select: { id: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      const prilozi = await manager.find(PrilogOglasa, {
+        where: { oglas: { id } },
+        select: { id: true, kljuc: true, kljucSlicice: true },
+      });
+      await manager.delete(Oglas, id);
+      return prilozi;
+    });
+    await this.prilogService.obrisiFajlove(prilozi);
   }
 
   async dodajPrilog(

@@ -11,10 +11,18 @@
           [preview]="true"
         />
       } @else {
-        <a class="plocica-fajla" [href]="prilog.url" target="_blank" rel="noopener">
+        <a
+          class="plocica-fajla"
+          [href]="prilog.url"
+          [title]="prilog.naziv + ' · ' + velicina(prilog.velicina)"
+          target="_blank"
+          rel="noopener"
+        >
           <i class="pi pi-file-pdf" aria-hidden="true"></i>
           <span class="line-clamp-2 text-xs wrap-anywhere">{{ prilog.naziv }}</span>
-          <span class="sr-only">(PDF, otvara se u novoj kartici)</span>
+          <span class="sr-only"
+            >(PDF, {{ velicina(prilog.velicina) }}, otvara se u novoj kartici)</span
+          >
         </a>
       }
       @if (uklanjanje()) {
@@ -25,6 +33,7 @@
           size="small"
           severity="danger"
           class="-ml-2"
+          [disabled]="otpremanje()"
           [attr.aria-label]="'Ukloni ' + prilog.naziv"
           (click)="ukloni.emit(prilog)"
         >

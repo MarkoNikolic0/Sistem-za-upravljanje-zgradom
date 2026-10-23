@@ -198,7 +198,7 @@ export class FormaOglasa {
 
   protected ukloniPostojeci(prilogId: number): void {
     this.uklonjeniPrilozi.update((uklonjeni) => [...uklonjeni, prilogId]);
-    this.fokusiraj('#dodaj-fajlove');
+    this.fokusiraj('app-izbor-fajlova button');
   }
 
   protected nevazece(polje: Polje): boolean {

@@ -34,3 +34,16 @@ export function greskaIzbora(
 export function jeSlika(tip: string): boolean {
   return tip.startsWith('image/');
 }
+
+const KB = new Intl.NumberFormat('sr-Latn', { style: 'unit', unit: 'kilobyte' });
+const MB = new Intl.NumberFormat('sr-Latn', {
+  style: 'unit',
+  unit: 'megabyte',
+  maximumFractionDigits: 1,
+});
+
+export function velicinaFajla(bajtova: number): string {
+  return bajtova < 1024 * 1024
+    ? KB.format(Math.max(1, Math.round(bajtova / 1024)))
+    : MB.format(bajtova / 1024 / 1024);
+}

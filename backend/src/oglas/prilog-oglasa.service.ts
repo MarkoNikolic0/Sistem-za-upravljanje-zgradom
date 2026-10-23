@@ -74,7 +74,7 @@ export class PrilogOglasaService {
     }
 
     try {
-      const sacuvan = await this.dataSource.transaction(async (manager) => {
+      const id = await this.dataSource.transaction(async (manager) => {
         const oglas = await manager.findOne(Oglas, {
           where: { id: oglasId },
           select: { id: true, datumSakrivanja: true },
@@ -95,10 +95,14 @@ export class PrilogOglasaService {
             `Oglas može imati najviše ${MAKS_PRILOGA_PO_OGLASU} priloga.`,
           );
         }
-        return await manager.save(
-          manager.create(PrilogOglasa, { ...prilog, oglas: { id: oglasId } }),
-        );
+        const { identifiers } = await manager.insert(PrilogOglasa, {
+          ...prilog,
+          oglas: { id: oglasId },
+        });
+        return identifiers[0].id as number;
       });
+      const sacuvan = await this.prilogRepository.findOneByOrFail({ id });
+
       return (await this.saLinkovima([sacuvan]))[0];
     } catch (greska) {
       await this.obrisiFajlove([prilog]);
