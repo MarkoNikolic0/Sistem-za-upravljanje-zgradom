@@ -14,11 +14,11 @@ import { PratilacKvaraService } from './pratilac-kvara.service.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('pratilac-kvara')
+@Controller('kvar/:kvarId/pracenje')
 export class PratilacKvaraController {
   constructor(private readonly pratilacKvaraService: PratilacKvaraService) {}
 
-  @Put('kvar/:kvarId')
+  @Put()
   prati(
     @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
@@ -26,7 +26,7 @@ export class PratilacKvaraController {
     return this.pratilacKvaraService.prati(kvarId, korisnik.id, korisnik.uloga);
   }
 
-  @Delete('kvar/:kvarId')
+  @Delete()
   prestani(
     @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,

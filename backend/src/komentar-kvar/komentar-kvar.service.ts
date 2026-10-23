@@ -30,12 +30,13 @@ export class KomentarKvarService {
     private promenaRepository: Repository<PromenaStatusaKvara>,
   ) {}
 
-  async create(korisnikId: number, uloga: Uloga, dto: CreateKomentarDto) {
-    const kvar = await this.kvarService.findDostupan(
-      dto.kvarId,
-      korisnikId,
-      uloga,
-    );
+  async create(
+    kvarId: number,
+    korisnikId: number,
+    uloga: Uloga,
+    dto: CreateKomentarDto,
+  ) {
+    const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
     if (jeZavrsen(kvar.status)) {
       throw new ConflictException(
@@ -83,12 +84,13 @@ export class KomentarKvarService {
   }
 
   async remove(
+    kvarId: number,
     komentarId: number,
     korisnikId: number,
     uloga: Uloga,
   ): Promise<void> {
     const komentar = await this.komentarKvarRepository.findOne({
-      where: { id: komentarId },
+      where: { id: komentarId, kvar: { id: kvarId } },
       relations: { korisnik: true, kvar: { zgrada: true } },
     });
     if (!komentar) {

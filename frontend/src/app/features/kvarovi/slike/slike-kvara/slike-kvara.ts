@@ -105,7 +105,7 @@ export class SlikeKvara {
       acceptButtonProps: { label: 'Obriši', severity: 'danger' },
       accept: async () => {
         try {
-          await this.store.obrisi(slika.id);
+          await this.store.obrisi(this.kvar().id, slika.id);
           this.poruka.set(null);
           this.fokusiraj('#slike-naslov');
         } catch {

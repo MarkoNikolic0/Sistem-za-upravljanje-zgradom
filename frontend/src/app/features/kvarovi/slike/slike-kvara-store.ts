@@ -37,8 +37,8 @@ export const SlikeKvaraStore = signalStore(
       const slika = await firstValueFrom(slikaKvaraService.dodaj(kvarId, fajl));
       patchState(store, { slike: [...store.slike(), slika] });
     },
-    async obrisi(id: number): Promise<void> {
-      await firstValueFrom(slikaKvaraService.obrisi(id));
+    async obrisi(kvarId: number, id: number): Promise<void> {
+      await firstValueFrom(slikaKvaraService.obrisi(kvarId, id));
       patchState(store, { slike: store.slike().filter((s) => s.id !== id) });
     },
   })),

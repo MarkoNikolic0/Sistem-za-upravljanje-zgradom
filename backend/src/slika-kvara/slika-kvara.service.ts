@@ -102,9 +102,14 @@ export class SlikaKvaraService {
     }
   }
 
-  async remove(id: number, korisnikId: number, uloga: Uloga): Promise<void> {
+  async remove(
+    kvarId: number,
+    id: number,
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<void> {
     const slika = await this.slikaRepository.findOne({
-      where: { id },
+      where: { id, kvar: { id: kvarId } },
       relations: { korisnik: true, kvar: { zgrada: true } },
     });
     if (!slika) {

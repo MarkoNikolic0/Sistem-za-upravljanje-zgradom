@@ -93,7 +93,11 @@ export const KomentariKvaraStore = signalStore(
       }
     },
     async obrisi(id: number): Promise<void> {
-      await firstValueFrom(komentariKvaraService.obrisi(id));
+      const kvarId = store.kvarId();
+      if (kvarId === null) {
+        return;
+      }
+      await firstValueFrom(komentariKvaraService.obrisi(kvarId, id));
       patchState(store, { komentari: store.komentari().filter((k) => k.id !== id) });
     },
   })),

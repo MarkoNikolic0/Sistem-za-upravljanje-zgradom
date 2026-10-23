@@ -22,7 +22,6 @@ import { KorisnikOsnovno } from '../auth/auth-models';
 export class KvarService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/kvar`;
-  private pratiociUrl = `${environment.apiUrl}/pratilac-kvara`;
 
   lista(upit: UpitKvarova): Observable<Stranica<Kvar>> {
     let params = new HttpParams()
@@ -62,11 +61,11 @@ export class KvarService {
   }
 
   prati(kvarId: number): Observable<StanjePracenja> {
-    return this.http.put<StanjePracenja>(`${this.pratiociUrl}/kvar/${kvarId}`, null);
+    return this.http.put<StanjePracenja>(`${this.apiUrl}/${kvarId}/pracenje`, null);
   }
 
   prestaniPracenje(kvarId: number): Observable<StanjePracenja> {
-    return this.http.delete<StanjePracenja>(`${this.pratiociUrl}/kvar/${kvarId}`);
+    return this.http.delete<StanjePracenja>(`${this.apiUrl}/${kvarId}/pracenje`);
   }
 
   prijavi(podaci: PrijavaKvaraRequest): Observable<Kvar> {

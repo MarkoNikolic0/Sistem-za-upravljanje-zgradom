@@ -21,19 +21,25 @@ import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('komentar-kvar')
+@Controller('kvar/:kvarId/komentar')
 export class KomentarKvarController {
   constructor(private readonly komentarKvarService: KomentarKvarService) {}
 
   @Post()
   create(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: CreateKomentarDto,
   ) {
-    return this.komentarKvarService.create(korisnik.id, korisnik.uloga, dto);
+    return this.komentarKvarService.create(
+      kvarId,
+      korisnik.id,
+      korisnik.uloga,
+      dto,
+    );
   }
 
-  @Get('kvar/:kvarId')
+  @Get()
   findZaKvar(
     @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
@@ -50,9 +56,15 @@ export class KomentarKvarController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.komentarKvarService.remove(id, korisnik.id, korisnik.uloga);
+    return this.komentarKvarService.remove(
+      kvarId,
+      id,
+      korisnik.id,
+      korisnik.uloga,
+    );
   }
 }

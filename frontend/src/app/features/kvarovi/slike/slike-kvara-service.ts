@@ -7,19 +7,19 @@ import { SlikaKvara } from '../kvar-models';
 @Service()
 export class SlikaKvaraService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/slika-kvara`;
+  private apiUrl = `${environment.apiUrl}/kvar`;
 
   slike(kvarId: number): Observable<SlikaKvara[]> {
-    return this.http.get<SlikaKvara[]>(`${this.apiUrl}/kvar/${kvarId}`);
+    return this.http.get<SlikaKvara[]>(`${this.apiUrl}/${kvarId}/slika`);
   }
 
   dodaj(kvarId: number, slika: File): Observable<SlikaKvara> {
     const podaci = new FormData();
     podaci.append('slika', slika);
-    return this.http.post<SlikaKvara>(`${this.apiUrl}/kvar/${kvarId}`, podaci);
+    return this.http.post<SlikaKvara>(`${this.apiUrl}/${kvarId}/slika`, podaci);
   }
 
-  obrisi(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  obrisi(kvarId: number, id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${kvarId}/slika/${id}`);
   }
 }

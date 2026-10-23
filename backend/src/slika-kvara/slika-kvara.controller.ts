@@ -34,11 +34,11 @@ const PROVERA_TIPA = new ParseFilePipeBuilder()
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('slika-kvara')
+@Controller('kvar/:kvarId/slika')
 export class SlikaKvaraController {
   constructor(private readonly slikaService: SlikaKvaraService) {}
 
-  @Get('kvar/:kvarId')
+  @Get()
   findZaKvar(
     @Param('kvarId', ParseIntPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
@@ -46,7 +46,7 @@ export class SlikaKvaraController {
     return this.slikaService.findZaKvar(kvarId, korisnik.id, korisnik.uloga);
   }
 
-  @Post('kvar/:kvarId')
+  @Post()
   @UseInterceptors(
     FileInterceptor('slika', { limits: { fileSize: MAKS_VELICINA_SLIKE } }),
   )
@@ -63,9 +63,10 @@ export class SlikaKvaraController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
+    @Param('kvarId', ParseIntPipe) kvarId: number,
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.slikaService.remove(id, korisnik.id, korisnik.uloga);
+    return this.slikaService.remove(kvarId, id, korisnik.id, korisnik.uloga);
   }
 }
