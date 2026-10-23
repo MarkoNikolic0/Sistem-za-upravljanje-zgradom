@@ -1,55 +1,33 @@
 import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
 import { DataSource, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
-import sharp from 'sharp';
 import { SlikaKvara } from './slika-kvara.entity.js';
-import { createS3Client } from './s3.config.js';
 import { KvarService } from '../kvar/kvar.service.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
-import {
-  MAKS_PIKSELA_SLIKE,
-  MAKS_SLIKA_PO_KVARU,
-  SLICICA_PX,
-  TRAJANJE_LINKA_S,
-  VELIKA_SLIKA_PX,
-} from './slika-kvara.constants.js';
+import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
+import { obradiSliku } from '../shared/skladiste/obrada-slike.js';
+import { MAKS_SLIKA_PO_KVARU } from './slika-kvara.constants.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
 
 @Injectable()
 export class SlikaKvaraService {
-  private readonly logger = new Logger(SlikaKvaraService.name);
-  private s3: S3Client;
-  private bucket: string;
-
   constructor(
     @InjectRepository(SlikaKvara)
     private slikaRepository: Repository<SlikaKvara>,
     private kvarService: KvarService,
     private kvarPravaService: KvarPravaService,
+    private skladiste: SkladisteService,
     private dataSource: DataSource,
-    config: ConfigService,
-  ) {
-    this.s3 = createS3Client(config);
-    this.bucket = config.get<string>('GARAGE_BUCKET')!;
-  }
+  ) {}
 
   async findZaKvar(kvarId: number, korisnikId: number, uloga: Uloga) {
     await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
@@ -79,13 +57,13 @@ export class SlikaKvaraService {
       );
     }
 
-    const [velika, slicica] = await this.obradi(fajl.buffer);
+    const [velika, slicica] = await obradiSliku(fajl.buffer, 'slika');
     const osnova = `kvarovi/${kvar.id}/${randomUUID()}`;
     const kljuc = `${osnova}.webp`;
     const kljucSlicice = `${osnova}-slicica.webp`;
     await Promise.all([
-      this.sacuvajFajl(kljuc, velika),
-      this.sacuvajFajl(kljucSlicice, slicica),
+      this.skladiste.sacuvaj(kljuc, velika, 'image/webp'),
+      this.skladiste.sacuvaj(kljucSlicice, slicica, 'image/webp'),
     ]);
 
     try {
@@ -119,7 +97,7 @@ export class SlikaKvaraService {
       });
       return await this.saLinkovima(slika);
     } catch (greska) {
-      await this.obrisiFajlove(kljuc, kljucSlicice);
+      await this.skladiste.obrisi(kljuc, kljucSlicice);
       throw greska;
     }
   }
@@ -146,73 +124,14 @@ export class SlikaKvaraService {
     }
 
     await this.slikaRepository.remove(slika);
-    await this.obrisiFajlove(slika.kljuc, slika.kljucSlicice);
-  }
-
-  private async obradi(sadrzaj: Buffer): Promise<[Buffer, Buffer]> {
-    const ulaz = { limitInputPixels: MAKS_PIKSELA_SLIKE };
-    try {
-      return await Promise.all([
-        sharp(sadrzaj, ulaz)
-          .autoOrient()
-          .resize(VELIKA_SLIKA_PX, VELIKA_SLIKA_PX, {
-            fit: 'inside',
-            withoutEnlargement: true,
-          })
-          .webp()
-          .toBuffer(),
-        sharp(sadrzaj, ulaz)
-          .autoOrient()
-          .resize(SLICICA_PX, SLICICA_PX)
-          .webp()
-          .toBuffer(),
-      ]);
-    } catch {
-      throw greskaPolja(
-        'slika',
-        'Izabrana slika ne može da se obradi. Probaj neku drugu.',
-      );
-    }
-  }
-
-  private async sacuvajFajl(kljuc: string, sadrzaj: Buffer) {
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: kljuc,
-        Body: sadrzaj,
-        ContentType: 'image/webp',
-      }),
-    );
-  }
-
-  private async obrisiFajlove(...kljucevi: string[]) {
-    try {
-      await Promise.all(
-        kljucevi.map((kljuc) =>
-          this.s3.send(
-            new DeleteObjectCommand({ Bucket: this.bucket, Key: kljuc }),
-          ),
-        ),
-      );
-    } catch (greska) {
-      this.logger.warn(`Fajlovi nisu obrisani: ${kljucevi.join(', ')}`, greska);
-    }
+    await this.skladiste.obrisi(slika.kljuc, slika.kljucSlicice);
   }
 
   private async saLinkovima(slika: SlikaKvara) {
     const [url, urlSlicice] = await Promise.all([
-      this.link(slika.kljuc),
-      this.link(slika.kljucSlicice),
+      this.skladiste.link(slika.kljuc),
+      this.skladiste.link(slika.kljucSlicice),
     ]);
     return Object.assign(slika, { url, urlSlicice });
-  }
-
-  private link(kljuc: string) {
-    return getSignedUrl(
-      this.s3,
-      new GetObjectCommand({ Bucket: this.bucket, Key: kljuc }),
-      { expiresIn: TRAJANJE_LINKA_S },
-    );
   }
 }

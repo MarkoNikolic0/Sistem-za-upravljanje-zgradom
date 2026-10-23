@@ -3,12 +3,14 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
 import { Exclude } from 'class-transformer';
+import type { PrilogOglasa } from './prilog-oglasa.entity.js';
 
 @Entity()
 export class Oglas {
@@ -55,4 +57,7 @@ export class Oglas {
 
   @Column({ type: 'text', nullable: true })
   razlogSakrivanja: string | null;
+
+  @OneToMany('PrilogOglasa', 'oglas')
+  prilozi: PrilogOglasa[];
 }
