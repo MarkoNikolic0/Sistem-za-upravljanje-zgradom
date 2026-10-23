@@ -15,7 +15,7 @@ export class PromenaStatusaKvara {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Kvar, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Kvar, { nullable: false, onDelete: 'CASCADE' })
   kvar: Kvar;
 
   @Column({ type: 'enum', enum: StatusKvara })

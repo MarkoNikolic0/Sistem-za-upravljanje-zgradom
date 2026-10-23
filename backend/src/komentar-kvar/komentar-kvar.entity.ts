@@ -16,10 +16,10 @@ export class KomentarKvar {
   @Column({ type: 'text' })
   tekst: string;
 
-  @ManyToOne(() => Kvar, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Kvar, { nullable: false, onDelete: 'CASCADE' })
   kvar: Kvar;
 
-  @ManyToOne(() => Korisnik)
+  @ManyToOne(() => Korisnik, { nullable: false })
   korisnik: Korisnik;
 
   @CreateDateColumn({ type: 'timestamptz' })

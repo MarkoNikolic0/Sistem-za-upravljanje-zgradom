@@ -18,7 +18,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Kvar } from './kvar.entity.js';
 import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
 import { KomentarKvar } from '../komentar-kvar/komentar-kvar.entity.js';
-import { StanjeKvara, StatusKvara } from '../shared/enums/kvar.enums.js';
+import { StatusKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { PostaviPrioritetDto } from './dto/postavi-prioritet.dto.js';
@@ -32,8 +32,8 @@ import { KvarPravaService } from './kvar-prava.service.js';
 import {
   DANA_ZA_POTVRDU,
   najkasnijiDolazak,
+  OTVORENI_STATUSI,
   rokResavanja,
-  STATUSI_PO_STANJU,
 } from './kvar.constants.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
@@ -132,7 +132,7 @@ export class KvarAkcijeService {
   ) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
-    await this.izmeniAkoJeU(id, STATUSI_PO_STANJU[StanjeKvara.AKTIVNI], {
+    await this.izmeniAkoJeU(id, OTVORENI_STATUSI, {
       prioritet: dto.prioritet,
       rokResavanja: rokResavanja(kvar.datumPrijave, dto.prioritet),
     });

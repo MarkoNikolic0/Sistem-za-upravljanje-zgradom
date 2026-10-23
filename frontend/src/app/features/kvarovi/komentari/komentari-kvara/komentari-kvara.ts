@@ -93,7 +93,9 @@ export class KomentariKvara {
 
   protected smeDaBrise(komentar: KomentarKvara): boolean {
     const autor =
-      komentar.korisnik.id === this.authStore.korisnik()?.id && !this.oznakaRazloga(komentar);
+      komentar.korisnik.id === this.authStore.korisnik()?.id &&
+      !this.zavrsen() &&
+      !this.oznakaRazloga(komentar);
     return autor || this.kvar().smeDaUpravlja;
   }
 

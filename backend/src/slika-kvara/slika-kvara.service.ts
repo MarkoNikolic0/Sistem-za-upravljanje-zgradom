@@ -12,6 +12,7 @@ import { KvarService } from '../kvar/kvar.service.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { StatusKvara } from '../shared/enums/kvar.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
 import { obradiSliku } from '../shared/skladiste/obrada-slike.js';
@@ -50,12 +51,7 @@ export class SlikaKvaraService {
       throw greskaPolja('slika', 'Izaberi sliku.');
     }
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
-
-    if (jeZavrsen(kvar.status)) {
-      throw new ConflictException(
-        'Kvar je završen, pa više ne mogu da se dodaju slike.',
-      );
-    }
+    this.proveriDaNijeZavrsen(kvar.status);
 
     const [velika, slicica] = await obradiSliku(fajl.buffer, 'slika');
     const osnova = `kvarovi/${kvar.id}/${randomUUID()}`;
@@ -66,13 +62,15 @@ export class SlikaKvaraService {
       this.skladiste.sacuvaj(kljucSlicice, slicica, 'image/webp'),
     ]);
 
+    let id: number;
     try {
-      const id = await this.dataSource.transaction(async (manager) => {
-        await manager.findOne(Kvar, {
+      id = await this.dataSource.transaction(async (manager) => {
+        const zakljucan = await manager.findOneOrFail(Kvar, {
           where: { id: kvar.id },
-          select: { id: true },
+          select: { id: true, status: true },
           lock: { mode: 'pessimistic_write' },
         });
+        this.proveriDaNijeZavrsen(zakljucan.status);
         const broj = await manager.count(SlikaKvara, {
           where: { kvar: { id: kvar.id } },
         });
@@ -90,15 +88,23 @@ export class SlikaKvaraService {
         });
         return identifiers[0].id as number;
       });
-
-      const slika = await this.slikaRepository.findOneOrFail({
-        where: { id },
-        relations: { korisnik: true },
-      });
-      return await this.saLinkovima(slika);
     } catch (greska) {
       await this.skladiste.obrisi(kljuc, kljucSlicice);
       throw greska;
+    }
+
+    const slika = await this.slikaRepository.findOneOrFail({
+      where: { id },
+      relations: { korisnik: true },
+    });
+    return await this.saLinkovima(slika);
+  }
+
+  private proveriDaNijeZavrsen(status: StatusKvara) {
+    if (jeZavrsen(status)) {
+      throw new ConflictException(
+        'Kvar je završen, pa više ne mogu da se dodaju slike.',
+      );
     }
   }
 
@@ -116,18 +122,22 @@ export class SlikaKvaraService {
       throw new NotFoundException(`Slika sa id-jem ${id} ne postoji!`);
     }
 
-    const autor = slika.korisnik?.id === korisnikId;
     if (
-      !autor &&
       !(await this.kvarPravaService.smeDaUpravlja(
         slika.kvar,
         korisnikId,
         uloga,
       ))
     ) {
-      throw new ForbiddenException('Možete brisati samo svoje slike!');
+      if (slika.korisnik?.id !== korisnikId) {
+        throw new ForbiddenException('Možete brisati samo svoje slike!');
+      }
+      if (jeZavrsen(slika.kvar.status)) {
+        throw new ConflictException(
+          'Kvar je završen, pa slike više ne mogu da se brišu.',
+        );
+      }
     }
-
     await this.slikaRepository.remove(slika);
     await this.skladiste.obrisi(slika.kljuc, slika.kljucSlicice);
   }

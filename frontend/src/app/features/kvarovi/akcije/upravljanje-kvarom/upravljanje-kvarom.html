@@ -111,23 +111,24 @@
       Broj vraćanja serviseru: {{ store.vracanja().length }}
     </p>
   }
-
-  <div class="mt-6 flex flex-col gap-1.5">
-    <span id="prioritet-oznaka" class="text-sm font-medium">Prioritet</span>
-    <p class="text-sm text-priguseno">
-      Rok od prijave, u danima: Hitno {{ dana.hitno }}, Srednje {{ dana.srednje }}, Nisko
-      {{ dana.nisko }}.
-    </p>
-    <p-selectbutton
-      ariaLabelledBy="prioritet-oznaka"
-      [options]="prioriteti"
-      optionLabel="label"
-      optionValue="value"
-      [allowEmpty]="false"
-      [ngModel]="prioritet()"
-      (ngModelChange)="promeniPrioritet($event)"
-    />
-  </div>
+  @if (kvar().status !== 'resen') {
+    <div class="mt-6 flex flex-col gap-1.5">
+      <span id="prioritet-oznaka" class="text-sm font-medium">Prioritet</span>
+      <p class="text-sm text-priguseno">
+        Rok od prijave, u danima: Hitno {{ dana.hitno }}, Srednje {{ dana.srednje }}, Nisko
+        {{ dana.nisko }}.
+      </p>
+      <p-selectbutton
+        ariaLabelledBy="prioritet-oznaka"
+        [options]="prioriteti"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="prioritet()"
+        (ngModelChange)="promeniPrioritet($event)"
+      />
+    </div>
+  }
 </section>
 
 <!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->

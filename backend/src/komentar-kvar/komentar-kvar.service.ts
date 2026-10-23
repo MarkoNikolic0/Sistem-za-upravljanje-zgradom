@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { KomentarKvar } from './komentar-kvar.entity.js';
-import { LessThan, Repository } from 'typeorm';
-import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { DataSource, LessThan, Repository } from 'typeorm';
 import { CreateKomentarDto } from './dto/create-komentar.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KvarService } from '../kvar/kvar.service.js';
@@ -16,6 +15,7 @@ import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
 import { PromenaStatusaKvara } from '../kvar/promena-statusa-kvara.entity.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
+import { Kvar } from '../kvar/kvar.entity.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -24,10 +24,9 @@ export class KomentarKvarService {
     private komentarKvarRepository: Repository<KomentarKvar>,
     private kvarService: KvarService,
     private kvarPravaService: KvarPravaService,
-    @InjectRepository(Korisnik)
-    private korisnikRepository: Repository<Korisnik>,
     @InjectRepository(PromenaStatusaKvara)
     private promenaRepository: Repository<PromenaStatusaKvara>,
+    private dataSource: DataSource,
   ) {}
 
   async create(
@@ -38,28 +37,29 @@ export class KomentarKvarService {
   ) {
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
-    if (jeZavrsen(kvar.status)) {
-      throw new ConflictException(
-        'Kvar je završen, pa više ne može da se komentariše.',
-      );
-    }
-
-    const korisnik = await this.korisnikRepository.findOne({
-      where: { id: korisnikId },
-    });
-    if (!korisnik) {
-      throw new NotFoundException(
-        `Korisnik sa id-jem ${korisnikId} ne postoji!`,
-      );
-    }
-
-    const komentar = this.komentarKvarRepository.create({
-      tekst: dto.tekst,
-      kvar: { id: kvar.id },
-      korisnik,
+    const id = await this.dataSource.transaction(async (manager) => {
+      const zakljucan = await manager.findOneOrFail(Kvar, {
+        where: { id: kvar.id },
+        select: { id: true, status: true },
+        lock: { mode: 'pessimistic_read' },
+      });
+      if (jeZavrsen(zakljucan.status)) {
+        throw new ConflictException(
+          'Kvar je završen, pa više ne može da se komentariše.',
+        );
+      }
+      const { identifiers } = await manager.insert(KomentarKvar, {
+        tekst: dto.tekst,
+        kvar: { id: kvar.id },
+        korisnik: { id: korisnikId },
+      });
+      return identifiers[0].id as number;
     });
 
-    return await this.komentarKvarRepository.save(komentar);
+    return await this.komentarKvarRepository.findOneOrFail({
+      where: { id },
+      relations: { korisnik: true },
+    });
   }
 
   async findZaKvar(
@@ -109,12 +109,17 @@ export class KomentarKvarService {
       if (komentar.korisnik.id !== korisnikId) {
         throw new ForbiddenException(`Možete brisati samo svoje komentare!`);
       }
-      const razlogVracanja = await this.promenaRepository.exists({
+      if (jeZavrsen(komentar.kvar.status)) {
+        throw new ConflictException(
+          'Kvar je završen, pa komentari više ne mogu da se brišu.',
+        );
+      }
+      const razlogPromene = await this.promenaRepository.exists({
         where: { komentar: { id: komentarId } },
       });
-      if (razlogVracanja) {
+      if (razlogPromene) {
         throw new ForbiddenException(
-          'Komentar sa razlogom zašto kvar nije rešen ne može da se obriše.',
+          'Komentar koji je razlog promene statusa ne može da se obriše.',
         );
       }
     }

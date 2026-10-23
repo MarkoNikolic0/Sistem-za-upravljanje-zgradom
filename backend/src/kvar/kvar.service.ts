@@ -51,10 +51,6 @@ export class KvarService {
 
   async create(korisnikId: number, dto: CreateKvarDto) {
     const veza = await this.vezaSaStanom(korisnikId, dto.stanId);
-    if (!veza) {
-      throw new ForbiddenException('Niste povezani sa ovim stanom!');
-    }
-
     const prioritet = dto.prioritet ?? Prioritet.SREDNJE;
     const kvar = this.kvarRepository.create({
       naslov: dto.naslov,
@@ -126,6 +122,9 @@ export class KvarService {
       order: { datumPrijave: 'DESC', id: 'DESC' },
       take: MAKS_SLICNIH,
     });
+    if (slicni.length === 0) {
+      return [];
+    }
 
     const praceni = await this.pratilacRepository.find({
       where: {
@@ -192,14 +191,22 @@ export class KvarService {
   }
 
   async findZgradeSaKvarovima(korisnikId: number, uloga: Uloga) {
-    const upit = this.zgradaRepository
+    return await this.zgradaRepository
       .createQueryBuilder('zgrada')
-      .innerJoin(Kvar, 'kvar', 'kvar.zgrada = zgrada.id')
-      .orderBy('zgrada.naziv', 'ASC');
-    if (uloga === Uloga.SERVISER) {
-      upit.where('kvar.serviser = :korisnikId', { korisnikId });
-    }
-    return await upit.getMany();
+      .where((qb) => {
+        const kvarovi = qb
+          .subQuery()
+          .select('1')
+          .from(Kvar, 'kvar')
+          .where('kvar.zgrada = zgrada.id');
+        if (uloga === Uloga.SERVISER) {
+          kvarovi.andWhere('kvar.serviser = :korisnikId');
+        }
+        return `EXISTS ${kvarovi.getQuery()}`;
+      })
+      .setParameter('korisnikId', korisnikId)
+      .orderBy('zgrada.naziv', 'ASC')
+      .getMany();
   }
 
   async findDostupneServisere(kategorija: KategorijaKvara) {

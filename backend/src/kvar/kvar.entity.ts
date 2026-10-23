@@ -53,13 +53,13 @@ export class Kvar {
   })
   status: StatusKvara;
 
-  @ManyToOne(() => Zgrada)
+  @ManyToOne(() => Zgrada, { nullable: false })
   zgrada: Zgrada;
 
   @ManyToOne(() => Stan, { nullable: true })
   stan: Stan;
 
-  @ManyToOne(() => Korisnik)
+  @ManyToOne(() => Korisnik, { nullable: false })
   korisnik: Korisnik;
 
   @ManyToOne(() => Korisnik, { nullable: true })

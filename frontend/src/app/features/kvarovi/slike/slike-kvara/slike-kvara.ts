@@ -65,7 +65,8 @@ export class SlikeKvara {
   }
 
   protected smeDaBrise(slika: SlikaKvara): boolean {
-    return slika.korisnik?.id === this.authStore.korisnik()?.id || this.kvar().smeDaUpravlja;
+    const autor = slika.korisnik?.id === this.authStore.korisnik()?.id && !this.zavrsen();
+    return autor || this.kvar().smeDaUpravlja;
   }
 
   protected async otpremi(fajlovi: File[]): Promise<void> {
