@@ -65,7 +65,12 @@ export class UpravljanjeKvarom {
     this.serviseri.value().map((s) => ({ id: s.id, naziv: `${s.ime} ${s.prezime}` })),
   );
   protected readonly izabraniServiser = linkedSignal(() => this.kvar().serviser?.id ?? null);
-  protected readonly prioritet = linkedSignal(() => this.kvar().prioritet);
+  // Dok zahtev traje ostaje izabrano, a posle važi prioritet kvara (i kad zahtev ne uspe)
+  protected readonly prioritet = linkedSignal({
+    source: () => ({ prioritet: this.kvar().prioritet, uToku: this.store.akcijaUToku() }),
+    computation: (izvor, prethodni) =>
+      izvor.uToku && prethodni ? prethodni.value : izvor.prioritet,
+  });
 
   protected mozeDaDodeli(): boolean {
     const izabran = this.izabraniServiser();

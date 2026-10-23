@@ -81,14 +81,15 @@
     font-size: 0.6875rem;
   }
 
-  &.hitno {
-    color: var(--color-greska);
-    background: color-mix(in srgb, var(--color-greska) 14%, transparent);
-  }
-
   &.rok {
     color: var(--color-upozorenje);
     background: color-mix(in srgb, var(--color-upozorenje) 14%, transparent);
+  }
+
+  &.hitno,
+  &.prekoracen {
+    color: var(--color-greska);
+    background: color-mix(in srgb, var(--color-greska) 14%, transparent);
   }
 }
 

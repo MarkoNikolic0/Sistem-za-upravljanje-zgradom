@@ -1,4 +1,5 @@
 import { KategorijaKvara, StatusKvara } from './kvar-models';
+import { StanjeRoka } from './pravila-kvara';
 
 export const IKONICE_KATEGORIJA: Record<KategorijaKvara, string> = {
   vodovod: 'pi pi-wrench',
@@ -32,7 +33,14 @@ export const KORACI_KVARA: StatusKvara[] = [
   'zatvoren',
 ];
 
-export function predjenoKoraka(status: StatusKvara): number {
+// Odbijen i povučen kvar nisu korak popravke, pa nemaju traku napretka
+export function predjenoKoraka(status: StatusKvara): number | null {
   const i = KORACI_KVARA.indexOf(status);
-  return i === -1 ? 1 : i + 1;
+  return i === -1 ? null : i + 1;
 }
+
+export const OZNAKE_ROKA: Record<StanjeRoka, string> = {
+  prekoracen: 'Rok prekoračen',
+  danas: 'Rok ističe danas',
+  sutra: 'Rok ističe sutra',
+};

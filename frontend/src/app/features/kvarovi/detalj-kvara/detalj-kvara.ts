@@ -8,7 +8,7 @@ import {
   numberAttribute,
   viewChild,
 } from '@angular/core';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -21,7 +21,7 @@ import {
   NAZIVI_STATUSA_KVARA,
   StanjeNavigacijeKvara,
 } from '../kvar-models';
-import { BOJE_STATUSA, IKONICE_KATEGORIJA } from '../izgled-kvara';
+import { BOJE_STATUSA, IKONICE_KATEGORIJA, OZNAKE_ROKA } from '../izgled-kvara';
 import { DetaljKvaraStore } from '../detalj-kvara-store';
 import { MojRad } from '../akcije/moj-rad/moj-rad';
 import { PotvrdaKvara } from '../akcije/potvrda-kvara/potvrda-kvara';
@@ -30,7 +30,7 @@ import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvar
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
 import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
 import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
-import { jeZavrsen, pratiRok, stanjeRoka } from '../pravila-kvara';
+import { jeHitan, jeZavrsen, pratiRok, stanjeRoka } from '../pravila-kvara';
 import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
 import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
 import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
@@ -39,7 +39,6 @@ import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
 @Component({
   imports: [
     DatePipe,
-    NgTemplateOutlet,
     RouterLink,
     ButtonModule,
     MessageModule,
@@ -74,16 +73,12 @@ export class DetaljKvara {
   protected readonly naziviStatusa = NAZIVI_STATUSA_KVARA;
   protected readonly ikonice = IKONICE_KATEGORIJA;
   protected readonly boje = BOJE_STATUSA;
-  protected readonly jeZavrsen = jeZavrsen;
+  protected readonly oznakeRoka = OZNAKE_ROKA;
+  protected readonly jeHitan = jeHitan;
 
   protected readonly rok = computed(() => {
     const kvar = this.store.kvar();
-    const stanje = kvar && stanjeRoka(kvar.status, kvar.rokResavanja);
-    return stanje
-      ? { prekoracen: 'Rok prekoračen', danas: 'Rok ističe danas', sutra: 'Rok ističe sutra' }[
-          stanje
-        ]
-      : null;
+    return kvar ? stanjeRoka(kvar.status, kvar.rokResavanja) : null;
   });
 
   protected readonly formatirajTelefon = formatirajTelefon;

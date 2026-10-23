@@ -8,22 +8,26 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import {
-  Kvar,
   NAZIVI_KATEGORIJA_KVARA,
   NAZIVI_PRIORITETA_KVARA,
   NAZIVI_STATUSA_KVARA,
   StanjeKvara,
 } from '../kvar-models';
-import { BOJE_STATUSA, IKONICE_KATEGORIJA, KORACI_KVARA, predjenoKoraka } from '../izgled-kvara';
-import { jeZavrsen, stanjeRoka } from '../pravila-kvara';
+import {
+  BOJE_STATUSA,
+  IKONICE_KATEGORIJA,
+  KORACI_KVARA,
+  OZNAKE_ROKA,
+  predjenoKoraka,
+} from '../izgled-kvara';
+import { jeHitan, jeZavrsen, stanjeRoka } from '../pravila-kvara';
 import { ProfileService } from '../../profile/profile-service';
 import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
 import { ListaKvarovaStore } from '../lista-kvarova-store';
 import { Paginacija } from '../../../shared/paginacija/paginacija';
-
-const OZNAKE_ROKA = { prekoracen: 'Rok prekoračen', danas: 'Rok danas', sutra: 'Rok sutra' };
+import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
 
 @Component({
   imports: [
@@ -37,6 +41,7 @@ const OZNAKE_ROKA = { prekoracen: 'Rok prekoračen', danas: 'Rok danas', sutra: 
     SpratPipe,
     RouterLink,
     Paginacija,
+    BrojStanaraPipe,
   ],
   selector: 'app-lista-kvarova',
   styleUrl: './lista-kvarova.scss',
@@ -54,7 +59,10 @@ export class ListaKvarova {
   protected readonly boje = BOJE_STATUSA;
   protected readonly koraci = KORACI_KVARA;
   protected readonly predjeno = predjenoKoraka;
+  protected readonly oznakeRoka = OZNAKE_ROKA;
+  protected readonly stanjeRoka = stanjeRoka;
   protected readonly jeZavrsen = jeZavrsen;
+  protected readonly jeHitan = jeHitan;
 
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);
   protected readonly prikaziZgradu = computed(
@@ -99,10 +107,17 @@ export class ListaKvarova {
     ...Object.entries(NAZIVI_PRIORITETA_KVARA).map(([value, label]) => ({ label, value })),
   ];
 
-  protected rok(kvar: Kvar): string | null {
-    const stanje = stanjeRoka(kvar.status, kvar.rokResavanja);
-    return stanje ? OZNAKE_ROKA[stanje] : null;
-  }
+  protected readonly opisPrazneListe = computed(() => {
+    if (this.store.stanje() === 'zavrseni') {
+      return 'Ovde će biti kvarovi koji su zatvoreni, odbijeni ili povučeni.';
+    }
+    if (this.serviser()) {
+      return 'Kad ti upravnik dodeli kvar, pojaviće se ovde.';
+    }
+    return this.imaStan()
+      ? 'Sve radi kako treba. Kad nešto prijaviš, pojaviće se ovde.'
+      : 'Sve radi kako treba. Prijave stanara pojaviće se ovde.';
+  });
 
   constructor() {
     this.store.prikaziListu();

@@ -12,71 +12,6 @@
   </div>
 
   @if (store.kvar(); as kvar) {
-    <ng-template #akcije>
-      @if (store.razlogZavrsetka(); as razlog) {
-        <section class="panel" aria-labelledby="zavrsetak-naslov">
-          <div class="zaglavlje-odeljka">
-            <h2 id="zavrsetak-naslov" class="naslov-odeljka">Završetak</h2>
-          </div>
-          <app-razlog-promene [promena]="razlog" />
-        </section>
-      }
-      @if (kvar.smeDaPovuce) {
-        <app-povlacenje-kvara class="panel" />
-      }
-      @if (potvrda()) {
-        <app-potvrda-kvara class="panel istaknut" [kvar]="kvar" />
-      }
-      @if (upravlja()) {
-        <app-upravljanje-kvarom class="panel istaknut" [kvar]="kvar" />
-      }
-      @if (mojRad()) {
-        <app-moj-rad class="panel istaknut" [kvar]="kvar" />
-      }
-      @if (kvar.smeDaPrati || kvar.pratim) {
-        <app-pracenje-kvara class="panel" [kvar]="kvar" />
-      }
-    </ng-template>
-
-    <ng-template #osobe>
-      <div class="osoba">
-        <span class="inicijali" aria-hidden="true"
-          >{{ kvar.korisnik.ime[0] }}{{ kvar.korisnik.prezime[0] }}</span
-        >
-        <div class="min-w-0">
-          <p class="text-xs text-utisano">Prijavio</p>
-          <p class="text-naslov">{{ kvar.korisnik.ime }} {{ kvar.korisnik.prezime }}</p>
-          @if (kvar.korisnik.telefon; as telefon) {
-            <a class="kontakt" [href]="'tel:' + telefon"
-              ><i class="pi pi-phone" aria-hidden="true"></i>{{ formatirajTelefon(telefon) }}</a
-            >
-          }
-        </div>
-      </div>
-      <div class="osoba">
-        @if (kvar.serviser; as serviser) {
-          <span class="inicijali serviser" aria-hidden="true"
-            >{{ serviser.ime[0] }}{{ serviser.prezime[0] }}</span
-          >
-          <div class="min-w-0">
-            <p class="text-xs text-utisano">Serviser</p>
-            <p class="text-naslov">{{ serviser.ime }} {{ serviser.prezime }}</p>
-            @if (serviser.telefon; as telefon) {
-              <a class="kontakt" [href]="'tel:' + telefon"
-                ><i class="pi pi-phone" aria-hidden="true"></i>{{ formatirajTelefon(telefon) }}</a
-              >
-            }
-          </div>
-        } @else {
-          <span class="inicijali prazan" aria-hidden="true"><i class="pi pi-user"></i></span>
-          <div>
-            <p class="text-xs text-utisano">Serviser</p>
-            <p class="text-priguseno">Još nije dodeljen</p>
-          </div>
-        }
-      </div>
-    </ng-template>
-
     <header class="hero mt-6" [style.--boja]="boje[kvar.status]">
       <div class="flex items-center gap-3">
         <span class="ikonica-velika" aria-hidden="true"
@@ -92,13 +27,15 @@
         <span class="cip status"
           ><span class="tacka" aria-hidden="true"></span>{{ naziviStatusa[kvar.status] }}</span
         >
-        @if (kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status)) {
+        @if (jeHitan(kvar)) {
           <span class="cip hitno"
             ><i class="pi pi-exclamation-triangle" aria-hidden="true"></i>Hitno</span
           >
         }
         @if (rok(); as rok) {
-          <span class="cip rok"><i class="pi pi-clock" aria-hidden="true"></i>{{ rok }}</span>
+          <span class="cip rok" [class.prekoracen]="rok === 'prekoracen'"
+            ><i class="pi pi-clock" aria-hidden="true"></i>{{ oznakeRoka[rok] }}</span
+          >
         }
         @if (kvar.brojPratilaca > 0) {
           <span class="cip"
@@ -179,7 +116,29 @@
           </div>
           <p class="whitespace-pre-line wrap-anywhere">{{ kvar.opis }}</p>
         </section>
-        <ng-container *ngTemplateOutlet="akcije" />
+        @if (store.razlogZavrsetka(); as razlog) {
+          <section class="panel" aria-labelledby="zavrsetak-naslov">
+            <div class="zaglavlje-odeljka">
+              <h2 id="zavrsetak-naslov" class="naslov-odeljka">Završetak</h2>
+            </div>
+            <app-razlog-promene [promena]="razlog" />
+          </section>
+        }
+        @if (kvar.smeDaPovuce) {
+          <app-povlacenje-kvara class="panel" />
+        }
+        @if (potvrda()) {
+          <app-potvrda-kvara class="panel istaknut" [kvar]="kvar" />
+        }
+        @if (upravlja()) {
+          <app-upravljanje-kvarom class="panel istaknut" [kvar]="kvar" />
+        }
+        @if (mojRad()) {
+          <app-moj-rad class="panel istaknut" [kvar]="kvar" />
+        }
+        @if (kvar.smeDaPrati || kvar.pratim) {
+          <app-pracenje-kvara class="panel" [kvar]="kvar" />
+        }
         <app-slike-kvara class="panel" [kvar]="kvar" />
         <app-komentari-kvara class="panel" [kvar]="kvar" />
       </div>
@@ -191,7 +150,43 @@
           <app-tok-kvara [status]="kvar.status" [istorija]="kvar.istorija" />
         </section>
         <div class="panel osobe">
-          <ng-container *ngTemplateOutlet="osobe" />
+          <div class="osoba">
+            <span class="inicijali" aria-hidden="true"
+              >{{ kvar.korisnik.ime[0] }}{{ kvar.korisnik.prezime[0] }}</span
+            >
+            <div class="min-w-0">
+              <p class="text-xs text-utisano">Prijavio</p>
+              <p class="text-naslov">{{ kvar.korisnik.ime }} {{ kvar.korisnik.prezime }}</p>
+              @if (kvar.korisnik.telefon; as telefon) {
+                <a class="kontakt" [href]="'tel:' + telefon"
+                  ><i class="pi pi-phone" aria-hidden="true"></i>{{ formatirajTelefon(telefon) }}</a
+                >
+              }
+            </div>
+          </div>
+          <div class="osoba">
+            @if (kvar.serviser; as serviser) {
+              <span class="inicijali serviser" aria-hidden="true"
+                >{{ serviser.ime[0] }}{{ serviser.prezime[0] }}</span
+              >
+              <div class="min-w-0">
+                <p class="text-xs text-utisano">Serviser</p>
+                <p class="text-naslov">{{ serviser.ime }} {{ serviser.prezime }}</p>
+                @if (serviser.telefon; as telefon) {
+                  <a class="kontakt" [href]="'tel:' + telefon"
+                    ><i class="pi pi-phone" aria-hidden="true"></i
+                    >{{ formatirajTelefon(telefon) }}</a
+                  >
+                }
+              </div>
+            } @else {
+              <span class="inicijali prazan" aria-hidden="true"><i class="pi pi-user"></i></span>
+              <div>
+                <p class="text-xs text-utisano">Serviser</p>
+                <p class="text-priguseno">Još nije dodeljen</p>
+              </div>
+            }
+          </div>
         </div>
       </aside>
     </div>

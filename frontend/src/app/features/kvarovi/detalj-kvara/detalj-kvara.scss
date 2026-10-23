@@ -32,15 +32,6 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--boja) 25%, transparent);
   }
 
-  &.hitno,
-  &.hitno .pi {
-    color: var(--color-greska);
-  }
-
-  &.hitno {
-    background: color-mix(in srgb, var(--color-greska) 12%, transparent);
-  }
-
   &.rok,
   &.rok .pi {
     color: var(--color-upozorenje);
@@ -48,6 +39,18 @@
 
   &.rok {
     background: color-mix(in srgb, var(--color-upozorenje) 12%, transparent);
+  }
+
+  &.hitno,
+  &.hitno .pi,
+  &.prekoracen,
+  &.prekoracen .pi {
+    color: var(--color-greska);
+  }
+
+  &.hitno,
+  &.prekoracen {
+    background: color-mix(in srgb, var(--color-greska) 12%, transparent);
   }
 }
 

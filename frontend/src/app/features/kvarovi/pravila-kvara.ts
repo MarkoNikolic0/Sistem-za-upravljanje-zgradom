@@ -1,6 +1,6 @@
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { NIJE_PRAZNO } from '../../shared/nije-prazno';
-import { DANA_ZA_RESAVANJE, MAKS_KOMENTAR_KVARA, StatusKvara } from './kvar-models';
+import { DANA_ZA_RESAVANJE, Kvar, MAKS_KOMENTAR_KVARA, StatusKvara } from './kvar-models';
 import { PravilaFajlova } from '../../shared/fajlovi';
 
 export const KVAROVA_PO_STRANI = 10;
@@ -14,6 +14,10 @@ export const PRAVILA_KOMENTARA_KVARA = [
 
 export function jeZavrsen(status: StatusKvara): boolean {
   return ['zatvoren', 'odbijen', 'povucen'].includes(status);
+}
+
+export function jeHitan(kvar: Pick<Kvar, 'prioritet' | 'status'>): boolean {
+  return kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status);
 }
 
 export function pratiRok(status: StatusKvara): boolean {

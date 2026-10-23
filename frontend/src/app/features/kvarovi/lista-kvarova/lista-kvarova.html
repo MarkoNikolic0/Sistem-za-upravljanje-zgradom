@@ -106,11 +106,7 @@
             {{ store.stanje() === 'aktivni' ? 'Nema aktivnih kvarova' : 'Nema završenih kvarova' }}
           </p>
           <p class="mt-1 text-sm text-priguseno">
-            {{
-              store.stanje() === 'aktivni'
-                ? 'Sve radi kako treba. Kad nešto prijaviš, pojaviće se ovde.'
-                : 'Ovde će biti kvarovi koji su zatvoreni, odbijeni ili povučeni.'
-            }}
+            {{ opisPrazneListe() }}
           </p>
         }
       </div>
@@ -119,7 +115,7 @@
         @for (kvar of store.kvarovi(); track kvar.id) {
           <article
             class="stavka"
-            [class.hitna]="kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status)"
+            [class.hitna]="jeHitan(kvar)"
             [class.zavrsena]="jeZavrsen(kvar.status)"
             [style.--boja]="boje[kvar.status]"
             [attr.aria-labelledby]="'kvar-' + kvar.id"
@@ -154,21 +150,33 @@
                   ><span class="tacka" aria-hidden="true"></span
                   >{{ naziviStatusa[kvar.status] }}</span
                 >
-                <span class="napredak" aria-hidden="true">
-                  @for (korak of koraci; track korak; let i = $index) {
-                    <span class="segment" [class.pun]="i < predjeno(kvar.status)"></span>
-                  }
-                </span>
+                @if (predjeno(kvar.status); as predjeno) {
+                  <span class="napredak" aria-hidden="true">
+                    @for (korak of koraci; track korak; let i = $index) {
+                      <span class="segment" [class.pun]="i < predjeno"></span>
+                    }
+                  </span>
+                }
               </span>
               <span class="flex flex-wrap gap-1.5 empty:hidden">
-                @if (kvar.prioritet === 'hitno' && !jeZavrsen(kvar.status)) {
-                  <span class="znak hitno"><i class="pi pi-exclamation-triangle"></i>Hitno</span>
+                @if (jeHitan(kvar)) {
+                  <span class="znak hitno"
+                    ><i class="pi pi-exclamation-triangle" aria-hidden="true"></i>Hitno</span
+                  >
                 }
-                @if (rok(kvar); as rok) {
-                  <span class="znak rok"><i class="pi pi-clock"></i>{{ rok }}</span>
+                @if (stanjeRoka(kvar.status, kvar.rokResavanja); as rok) {
+                  <span class="znak rok" [class.prekoracen]="rok === 'prekoracen'"
+                    ><i class="pi pi-clock" aria-hidden="true"></i>{{ oznakeRoka[rok] }}</span
+                  >
                 }
                 @if (prikaziPratioce() && kvar.brojPratilaca > 0) {
-                  <span class="znak"><i class="pi pi-users"></i>+{{ kvar.brojPratilaca }}</span>
+                  <span class="znak"
+                    ><i class="pi pi-users" aria-hidden="true"></i
+                    ><span aria-hidden="true">+{{ kvar.brojPratilaca }}</span
+                    ><span class="sr-only"
+                      >Isti problem još {{ kvar.brojPratilaca | brojStanara }}</span
+                    ></span
+                  >
                 }
               </span>
             </div>
