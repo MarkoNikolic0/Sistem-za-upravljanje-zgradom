@@ -99,12 +99,3 @@ export interface UpitOglasa extends UpitStrane {
   vrsta: VrstaOglasa | null;
   zgradaId: number | null;
 }
-
-export interface PorukaOglasa {
-  tip: 'uspeh' | 'greska';
-  tekst: string;
-}
-
-export interface StanjeNavigacijeOglasa {
-  poruka?: PorukaOglasa;
-}

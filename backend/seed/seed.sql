@@ -1,5 +1,5 @@
 -- Test podaci za razvoj i demonstraciju: tri zgrade u Nisu, stanovi, upravnici, serviseri,
--- stanari, zahtevi za povezivanje, kvarovi u razlicitim statusima i oglasi.
+-- stanari, zahtevi za povezivanje, kvarovi u razlicitim statusima, oglasi i ankete.
 --
 -- Pokretanje (iz foldera backend, dok radi Docker kontejner):
 --   docker exec -i zgrada_container sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < seed/seed.sql
@@ -9,7 +9,7 @@
 -- lozinku koju vec imaju u bazi; Zgrada123! dobijaju samo ako ih skripta pravi u praznoj bazi.
 -- Email adrese novih naloga su na domenu example.com (rezervisan za primere, RFC 2606).
 -- Skripta se moze pokrenuti vise puta: postojeci podaci (isti email, zgrada, stan) se preskacu,
--- a kvarovi iz skripte se vracaju na pocetno stanje sa svezim datumima (vidi KVAROVI).
+-- a kvarovi, oglasi i ankete iz skripte se vracaju na pocetno stanje sa svezim datumima.
 
 BEGIN;
 
@@ -616,5 +616,104 @@ SET tekst = v.tekst, vrsta = v.vrsta, "autorId" = v.autor_id, "datumKreiranja" =
 FROM seed_oglas v
 WHERE o.id = (SELECT min(o2.id) FROM oglas o2
               WHERE o2.naslov = v.naslov AND o2."zgradaId" = v.zgrada_id);
+
+-- GLASANJE (ANKETE) -------------------------------------------------------------------------
+-- Ankete iz skripte se pri svakom pokretanju brisu i prave iznova, zajedno sa opcijama i
+-- glasovima, pa rokovi uvek vaze od danas. Ankete iz aplikacije (drugo pitanje) se ne diraju.
+-- Glavni nalozi (Delta Residence, 13 stanara sa pravom glasa):
+--   Marija: boja ulaza (nije glasala, ne vidi rezultate), ciscenje podruma (glasala, istice
+--     sutra: menja ili povlaci glas), kamera na ulazu (istice danas); u Zavrsenim klupa
+--     (njen glas Da je vodeci) i kabasti otpad (Danijel zatvorio ranije)
+--   Danijel (upravnik i stanar): vidi rezultate odmah, glasa, zatvara i brise ankete
+--   Marko (admin): ankete sve tri zgrade i filter po zgradi; ne glasa jer nema stan
+--   Nikola (upravnik Lamele bez stana): vidi rezultate, ne glasa
+--   Petar (serviser) nema glasanje
+-- dana = rok je kraj dana toliko dana od danas (negativno = zavrsena);
+-- ranije = upravnik je zatvorio anketu pre toliko vremena (rok se tada pomera na taj trenutak)
+CREATE TEMP TABLE seed_anketa ON COMMIT DROP AS
+SELECT v.rb, v.pitanje, v.opis, z.id AS zgrada_id, k.id AS kreirao_id,
+       now() - v.pre AS datum_kreiranja,
+       CASE WHEN v.ranije IS NOT NULL THEN now() - v.ranije
+            ELSE (date_trunc('day', now() AT TIME ZONE 'Europe/Belgrade')
+                  + (v.dana + 1) * interval '1 day' - interval '1 millisecond')
+                 AT TIME ZONE 'Europe/Belgrade'
+       END AS rok,
+       v.ranije IS NOT NULL AS zatvoreno_ranije
+FROM (VALUES
+  (1, 'Koju boju da izaberemo za zidove ulaza?',
+   'Krečenje ulaza je planirano za jun. Izvođač nudi tri boje po istoj ceni.',
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '2 days', 5, NULL::interval),
+  (2, 'Kada da organizujemo generalno čišćenje podruma?', NULL,
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '4 days', 1, NULL),
+  (3, 'Da li ste za postavljanje kamere na ulazu?',
+   E'Kamera bi snimala samo ulazna vrata i poštanske sandučiće.\nSnimci se čuvaju 7 dana.',
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '6 days', 0, NULL),
+  (4, 'Da li da postavimo klupu ispred ulaza?', NULL,
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '12 days', -3, NULL),
+  (5, 'Novi termin odnošenja kabastog otpada', 'Komunalno preduzeće nudi dva termina mesečno.',
+   'Bulevar Nemanjića 45, Niš', 'marko@gmail.com', interval '9 days', NULL, interval '1 day'),
+  -- Ostale zgrade: Marko ih vidi uz filter po zgradi
+  (6, 'Da li da zamenimo sijalice na stepeništu LED sijalicama?', NULL,
+   'Obrenovićeva 30, Niš', 'jelena.markovic@example.com', interval '1 day', 6, NULL),
+  (7, 'Treba li nam dodatni stalak za bicikle?', NULL,
+   'Vizantijski bulevar 12, Niš', 'nikola.ilic@example.com', interval '3 days', 4, NULL)
+) AS v(rb, pitanje, opis, adresa, email, pre, dana, ranije)
+JOIN zgrada z ON z.adresa = v.adresa
+JOIN korisnik k ON k.email = v.email;
+
+CREATE TEMP TABLE seed_opcija (anketa int, rb int, tekst text) ON COMMIT DROP;
+INSERT INTO seed_opcija VALUES
+  (1, 1, 'Bela'), (1, 2, 'Svetlo siva'), (1, 3, 'Bež'),
+  (2, 1, 'Subota prepodne'), (2, 2, 'Subota popodne'), (2, 3, 'Nedelja prepodne'),
+  (3, 1, 'Da'), (3, 2, 'Ne'),
+  (4, 1, 'Da'), (4, 2, 'Ne'), (4, 3, 'Svejedno mi je'),
+  (5, 1, 'Prva subota u mesecu'), (5, 2, 'Poslednja subota u mesecu'),
+  (6, 1, 'Da'), (6, 2, 'Ne'),
+  (7, 1, 'Da, pored ulaza'), (7, 2, 'Da, u podrumu'), (7, 3, 'Ne treba');
+
+CREATE TEMP TABLE seed_glas (anketa int, email text, opcija text) ON COMMIT DROP;
+INSERT INTO seed_glas VALUES
+  (1, 'vesna.djokic@example.com', 'Svetlo siva'), (1, 'ana.jovanovic@example.com', 'Bela'),
+  (1, 'milan.stojkovic@example.com', 'Svetlo siva'), (1, 'ivana.nikolic@example.com', 'Svetlo siva'),
+  (1, 'dejan.milosavljevic@example.com', 'Bež'), (1, 'sanja.milosavljevic@example.com', 'Svetlo siva'),
+  (1, 'bojan.tasic@example.com', 'Bela'), (1, 'stefan.popovic@example.com', 'Svetlo siva'),
+  (2, 'marija@gmail.com', 'Subota popodne'), (2, 'vesna.djokic@example.com', 'Subota prepodne'),
+  (2, 'marina.cvetkovic@example.com', 'Subota popodne'), (2, 'goran.stamenkovic@example.com', 'Nedelja prepodne'),
+  (3, 'danijel@gmail.com', 'Da'), (3, 'stefan.popovic@example.com', 'Da'),
+  (4, 'marija@gmail.com', 'Da'), (4, 'natalija.stojadinovic@example.com', 'Da'),
+  (4, 'vesna.djokic@example.com', 'Da'), (4, 'ana.jovanovic@example.com', 'Ne'),
+  (4, 'milan.stojkovic@example.com', 'Da'), (4, 'bojan.tasic@example.com', 'Svejedno mi je'),
+  (4, 'marina.cvetkovic@example.com', 'Da'), (4, 'goran.stamenkovic@example.com', 'Ne'),
+  (5, 'marija@gmail.com', 'Poslednja subota u mesecu'), (5, 'danijel@gmail.com', 'Prva subota u mesecu'),
+  (5, 'ivana.nikolic@example.com', 'Poslednja subota u mesecu'),
+  (6, 'milica.djordjevic@example.com', 'Da'), (6, 'nemanja.kostic@example.com', 'Da'),
+  (6, 'tijana.pavlovic@example.com', 'Ne'),
+  (7, 'jovana.mitic@example.com', 'Da, u podrumu');
+
+DELETE FROM glasanje g
+USING seed_anketa s
+WHERE g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id;
+
+INSERT INTO glasanje (vrsta, pitanje, opis, rok, "zatvorenoRanije", "zgradaId", "kreiraoId", "datumKreiranja")
+SELECT 'anketa', s.pitanje, s.opis, s.rok, s.zatvoreno_ranije, s.zgrada_id, s.kreirao_id, s.datum_kreiranja
+FROM seed_anketa s
+ORDER BY s.rb;
+
+-- Redosled opcija u aplikaciji je redosled id-jeva
+INSERT INTO opcija_glasanja (tekst, "glasanjeId")
+SELECT o.tekst, g.id
+FROM seed_opcija o
+JOIN seed_anketa s ON s.rb = o.anketa
+JOIN glasanje g ON g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id
+ORDER BY o.anketa, o.rb;
+
+-- Glas je dat pre roka (za zavrsene ankete) i posle pravljenja ankete
+INSERT INTO glas ("glasanjeId", "opcijaId", "korisnikId", "datumGlasanja")
+SELECT g.id, o.id, k.id, s.datum_kreiranja + (least(now(), s.rok) - s.datum_kreiranja) / 2
+FROM seed_glas sg
+JOIN seed_anketa s ON s.rb = sg.anketa
+JOIN glasanje g ON g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id
+JOIN opcija_glasanja o ON o."glasanjeId" = g.id AND o.tekst = sg.opcija
+JOIN korisnik k ON k.email = sg.email;
 
 COMMIT;

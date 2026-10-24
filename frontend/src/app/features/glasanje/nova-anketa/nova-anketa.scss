@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.stranica {
+  max-width: 40rem;
+}
+
+.opcija {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.redni-broj {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--color-priguseno);
+  background: rgb(255 255 255 / 0.06);
+}

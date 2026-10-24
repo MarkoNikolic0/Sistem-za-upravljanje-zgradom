@@ -30,7 +30,7 @@ export const STAVKE_NAVIGACIJE: StavkaNavigacije[] = [
     naziv: 'Glasanje',
     ikonica: 'pi pi-check-square',
     putanja: '/glasanje',
-    uloge: ['stanar', 'upravnik'],
+    uloge: ['stanar', 'upravnik', 'admin'],
   },
   {
     naziv: 'Oglasi',

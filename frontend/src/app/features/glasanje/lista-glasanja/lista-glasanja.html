@@ -1,0 +1,117 @@
+<div class="stranica">
+  <p class="oznaka">Zgrada</p>
+  <h1 class="naslov-stranice mt-3">Glasanje</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">
+    Ankete upravnika: šta komšije misle o zajedničkim stvarima.
+  </p>
+
+  @if (bezZgrade()) {
+    <p class="mt-6 text-sm text-priguseno">
+      Da bi glasao u anketama svoje zgrade,
+      <a
+        routerLink="/povezivanje"
+        class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+        >poveži nalog sa stanom</a
+      >.
+    </p>
+  } @else {
+    @if (praviAnkete()) {
+      <a pButton routerLink="/glasanje/nova" class="mt-6">Nova anketa</a>
+    }
+
+    <div class="alatke">
+      <p-selectbutton
+        [options]="filteri"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="store.stanje()"
+        (ngModelChange)="store.promeniStanje($event)"
+        ariaLabelledBy="glasanje-filter"
+      />
+      <span id="glasanje-filter" class="sr-only">Prikaz anketa</span>
+      @if (zgrade().length > 1) {
+        <p-select
+          class="sm:w-60"
+          ariaLabel="Zgrada"
+          [options]="opcijeZgrada()"
+          optionLabel="naziv"
+          optionValue="id"
+          [ngModel]="store.zgradaId()"
+          (ngModelChange)="store.promeniZgradu($event)"
+          [fluid]="true"
+        />
+      }
+    </div>
+
+    <div id="poruka-glasanja" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (store.poruka(); as poruka) {
+        <p-message [severity]="poruka.tip === 'uspeh' ? 'success' : 'error'">
+          {{ poruka.tekst }}
+        </p-message>
+      }
+    </div>
+    <p class="sr-only" aria-live="polite">{{ store.najava() }}</p>
+
+    <section class="odeljak" aria-label="Ankete" [attr.aria-busy]="store.isPending()">
+      @if (store.error(); as greska) {
+        <p-message severity="error">{{ greska }}</p-message>
+        <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
+          Pokušaj ponovo
+        </button>
+      } @else if (store.isPending() && store.glasanja().length === 0) {
+        <div class="ankete ucitavanje" aria-hidden="true">
+          <p-skeleton height="18rem" />
+          <p-skeleton height="18rem" />
+        </div>
+        <span class="sr-only">Učitavanje anketa…</span>
+      } @else {
+        <div class="ankete">
+          @for (glasanje of store.glasanja(); track glasanje.id) {
+            <app-kartica-ankete
+              [glasanje]="glasanje"
+              [uToku]="store.glasanjeUToku() === glasanje.id"
+              [greska]="store.greskaGlasa()?.id === glasanje.id ? store.greskaGlasa()!.tekst : null"
+              [prikaziZgradu]="zgrade().length > 1"
+              [akcijaUToku]="store.akcijaUToku()"
+              (glasaj)="glasaj(glasanje, $event)"
+              (povuci)="povuci(glasanje)"
+              (zatvori)="zatvori($event, glasanje)"
+              (obrisi)="obrisi($event, glasanje)"
+            />
+          } @empty {
+            <div class="prazno">
+              <span class="prazno-ikonica neutralno" aria-hidden="true"
+                ><i class="pi pi-chart-bar"></i
+              ></span>
+              <p class="text-naslov">
+                {{
+                  store.stanje() === 'aktivna' ? 'Nema aktivnih anketa' : 'Nema završenih anketa'
+                }}
+              </p>
+              @if (store.stanje() === 'aktivna') {
+                <p class="mt-1 text-sm text-priguseno">
+                  {{
+                    praviAnkete()
+                      ? 'Pitaj komšije za mišljenje: boja ulaza, termin čišćenja, nova klupa.'
+                      : 'Kad upravnik pokrene anketu, pojaviće se ovde.'
+                  }}
+                </p>
+              }
+            </div>
+          }
+        </div>
+
+        <app-paginacija
+          [strana]="store.strana()"
+          [ukupno]="store.ukupno()"
+          [poStrani]="store.poStrani"
+          (promena)="store.promeniStranu($event)"
+        />
+      }
+    </section>
+  }
+</div>
+
+<!-- Na telefonu maxWidth ostavlja razmak od ivica (breakpoints u PrimeNG 22.1 ne radi) -->
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

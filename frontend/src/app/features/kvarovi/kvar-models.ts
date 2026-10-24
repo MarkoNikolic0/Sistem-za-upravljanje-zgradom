@@ -1,6 +1,7 @@
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { UpitStrane } from '../../shared/stranica';
 import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
+import { Poruka } from '../../shared/poruka';
 
 export type StatusKvara =
   'prijavljen' | 'prihvacen' | 'dodeljen' | 'u_toku' | 'resen' | 'zatvoren' | 'odbijen' | 'povucen';
@@ -139,9 +140,7 @@ export interface SlikaKvara {
   korisnik: KorisnikOsnovno | null;
 }
 
-export interface PorukaAkcije {
-  tip: 'uspeh' | 'greska';
-  tekst: string;
+export interface PorukaAkcije extends Poruka {
   fokus: boolean;
 }
 

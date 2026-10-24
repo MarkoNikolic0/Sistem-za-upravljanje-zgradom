@@ -1,0 +1,214 @@
+<div class="stranica">
+  <a routerLink="/glasanje" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>Glasanje</a
+  >
+  <h1 class="naslov-stranice mt-4">Nova anketa</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">
+    Glasaju svi stanari zgrade, jednom po osobi. Glas je tajan i može se promeniti do roka.
+  </p>
+
+  @if (greskaUcitavanja()) {
+    <section class="odeljak">
+      <p-message severity="error">Podaci trenutno ne mogu da se učitaju.</p-message>
+      <a pButton routerLink="/glasanje" outlined class="mt-4">Nazad na glasanje</a>
+    </section>
+  } @else if (!ucitano()) {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="7rem" styleClass="mt-5" />
+      <p-skeleton height="2.5rem" styleClass="mt-5" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (zgrade().length === 0) {
+    <section class="odeljak">
+      <p class="text-tekst">Anketu pokreće upravnik zgrade kad mu je zgrada dodeljena.</p>
+      <a pButton routerLink="/glasanje" outlined class="mt-5">Nazad na glasanje</a>
+    </section>
+  } @else {
+    <div aria-live="polite" class="mt-6 empty:hidden">
+      @if (greska()) {
+        <p-message severity="error">{{ greska() }}</p-message>
+      }
+    </div>
+
+    <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-6">
+      @if (zgrade().length > 1) {
+        <div class="flex flex-col gap-1.5">
+          <span id="zgrada-oznaka" class="text-sm font-medium">Zgrada</span>
+          <p-select
+            inputId="zgradaId"
+            ariaLabelledBy="zgrada-oznaka"
+            formControlName="zgradaId"
+            [options]="zgrade()"
+            optionLabel="naziv"
+            optionValue="id"
+            placeholder="Izaberi zgradu"
+            [fluid]="true"
+            [invalid]="nevazece('zgradaId')"
+          />
+          @if (nevazece('zgradaId')) {
+            <small class="text-sm text-greska">Izaberi zgradu.</small>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col gap-1.5">
+          <p class="text-sm font-medium">Zgrada</p>
+          <p class="text-naslov">{{ zgrade()[0].naziv }}</p>
+        </div>
+      }
+
+      <div class="flex flex-col gap-1.5">
+        <label for="pitanje" class="text-sm font-medium">Pitanje</label>
+        <input
+          pInputText
+          id="pitanje"
+          formControlName="pitanje"
+          placeholder="npr. Koju boju da izaberemo za ulaz?"
+          autocomplete="off"
+          enterkeyhint="next"
+          [attr.maxlength]="maksPitanje"
+          [fluid]="true"
+          [invalid]="nevazece('pitanje')"
+          [attr.aria-invalid]="nevazece('pitanje')"
+          [attr.aria-describedby]="nevazece('pitanje') ? 'pitanje-greska' : null"
+        />
+        @if (nevazece('pitanje')) {
+          <small id="pitanje-greska" class="text-sm text-greska">
+            {{ forma.controls.pitanje.errors?.['server'] ?? 'Unesi pitanje.' }}
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="opis" class="text-sm font-medium">
+          Opis <span class="font-normal text-priguseno">(nije obavezno)</span>
+        </label>
+        <textarea
+          pTextarea
+          id="opis"
+          formControlName="opis"
+          rows="3"
+          [autoResize]="true"
+          [attr.maxlength]="maksOpis"
+          [fluid]="true"
+          [invalid]="nevazece('opis')"
+          [attr.aria-invalid]="nevazece('opis')"
+          [attr.aria-describedby]="nevazece('opis') ? 'opis-greska' : 'opis-pomoc'"
+        ></textarea>
+        @if (nevazece('opis')) {
+          <small id="opis-greska" class="text-sm text-greska">
+            {{ forma.controls.opis.errors?.['server'] ?? 'Opis je predugačak.' }}
+          </small>
+        } @else {
+          <small id="opis-pomoc" class="text-sm text-priguseno">
+            Zašto pitaš i šta će se uraditi sa rezultatom.
+          </small>
+        }
+      </div>
+
+      <fieldset class="flex flex-col gap-2" aria-describedby="opcije-pomoc">
+        <legend class="text-sm font-medium">Opcije</legend>
+        <small id="opcije-pomoc" class="text-sm text-priguseno">
+          Najmanje {{ najmanjeOpcija }}, najviše {{ najviseOpcija }}. Stanar bira jednu.
+        </small>
+        <ol class="mt-1 flex flex-col gap-2" formArrayName="opcije">
+          @for (opcija of opcije.controls; track opcija; let i = $index) {
+            <li class="flex flex-col gap-1.5">
+              <div class="opcija">
+                <span class="redni-broj" aria-hidden="true">{{ i + 1 }}</span>
+                <input
+                  pInputText
+                  [id]="'opcija-' + i"
+                  [formControlName]="i"
+                  autocomplete="off"
+                  enterkeyhint="next"
+                  [attr.aria-label]="'Opcija ' + (i + 1)"
+                  [attr.maxlength]="maksOpcija"
+                  [fluid]="true"
+                  [invalid]="nevazecaOpcija(i)"
+                  [attr.aria-invalid]="nevazecaOpcija(i)"
+                  [attr.aria-describedby]="nevazecaOpcija(i) ? 'opcija-greska-' + i : null"
+                />
+                @if (opcije.length > najmanjeOpcija) {
+                  <button
+                    pButton
+                    type="button"
+                    text
+                    severity="secondary"
+                    icon="pi pi-times"
+                    [attr.aria-label]="'Ukloni opciju ' + (i + 1)"
+                    (click)="ukloniOpciju(i)"
+                  ></button>
+                }
+              </div>
+              @if (nevazecaOpcija(i)) {
+                <small [id]="'opcija-greska-' + i" class="pl-9 text-sm text-greska">
+                  Popuni opciju ili je ukloni.
+                </small>
+              }
+            </li>
+          }
+        </ol>
+        @if (greskaListeOpcija(); as poruka) {
+          <small class="text-sm text-greska" role="alert">{{ poruka }}</small>
+        }
+        @if (opcije.length < najviseOpcija) {
+          <button
+            pButton
+            type="button"
+            text
+            icon="pi pi-plus"
+            class="self-start"
+            (click)="dodajOpciju()"
+          >
+            Dodaj opciju
+          </button>
+        }
+      </fieldset>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="rok" class="text-sm font-medium">Glasanje traje do</label>
+        <p-datepicker
+          inputId="rok"
+          formControlName="rok"
+          [minDate]="danas"
+          [readonlyInput]="true"
+          [showIcon]="true"
+          [fluid]="true"
+          [invalid]="nevazece('rok')"
+          [pt]="{
+            pcInputText: {
+              root: {
+                'aria-invalid': nevazece('rok'),
+                'aria-describedby': nevazece('rok') ? 'rok-greska' : 'rok-pomoc',
+              },
+            },
+          }"
+        />
+        @if (nevazece('rok')) {
+          <small id="rok-greska" class="text-sm text-greska">
+            {{ forma.controls.rok.errors?.['server'] ?? 'Izaberi dan od danas nadalje.' }}
+          </small>
+        } @else {
+          <small id="rok-pomoc" class="text-sm text-priguseno">
+            Do kraja izabranog dana. Možeš je zatvoriti i ranije.
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <button pButton type="submit" [disabled]="slanje()">
+          @if (slanje()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Slanje…
+          } @else {
+            Pokreni anketu
+          }
+        </button>
+        @if (!slanje()) {
+          <a pButton routerLink="/glasanje" text>Odustani</a>
+        }
+      </div>
+    </form>
+  }
+</div>

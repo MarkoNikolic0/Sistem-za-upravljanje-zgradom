@@ -1,0 +1,151 @@
+@let g = glasanje();
+<article
+  class="anketa"
+  [id]="'anketa-' + g.id"
+  [class.zavrsena]="g.zavrseno"
+  [class.rezultati]="vidiRezultate()"
+  [attr.aria-labelledby]="'pitanje-' + g.id"
+>
+  <div class="zaglavlje">
+    @if (g.zavrseno) {
+      <span class="stanje">
+        <i class="pi pi-lock" aria-hidden="true"></i>
+        {{ g.zatvorenoRanije ? 'Zatvorena' : 'Završena' }}
+        <time [attr.datetime]="g.rok">{{ g.rok | date: formatRoka(g.rok) }}</time>
+      </span>
+    } @else {
+      <span class="stanje aktivna" [class.uskoro]="uskoro()">
+        <span class="tacka" aria-hidden="true"></span>
+        {{ istice() }}
+      </span>
+    }
+    @if (prikaziZgradu()) {
+      <span class="zgrada">{{ g.zgrada.naziv }}</span>
+    }
+  </div>
+
+  <h2 class="pitanje" [id]="'pitanje-' + g.id">{{ g.pitanje }}</h2>
+  @if (g.opis) {
+    <p class="mt-2 text-priguseno whitespace-pre-line wrap-anywhere">{{ g.opis }}</p>
+  }
+
+  <div class="opcije" role="group" [attr.aria-labelledby]="'pitanje-' + g.id">
+    @for (opcija of g.opcije; track opcija.id) {
+      @if (g.smeDaGlasa) {
+        <button
+          type="button"
+          class="opcija"
+          [class.moja]="opcija.id === g.mojGlas"
+          [attr.aria-pressed]="opcija.id === g.mojGlas"
+          [attr.aria-disabled]="uToku() || null"
+          [style.--udeo]="udeoOpcije(opcija)"
+          (click)="izaberi(opcija)"
+        >
+          <ng-container *ngTemplateOutlet="sadrzaj; context: { $implicit: opcija }" />
+        </button>
+      } @else {
+        <div
+          class="opcija"
+          [class.moja]="opcija.id === g.mojGlas"
+          [class.vodeca]="vodece().includes(opcija.id)"
+          [style.--udeo]="udeoOpcije(opcija)"
+        >
+          <ng-container *ngTemplateOutlet="sadrzaj; context: { $implicit: opcija }" />
+        </div>
+      }
+    }
+  </div>
+
+  @if (greska(); as tekst) {
+    <p-message severity="error" size="small" styleClass="mt-3">{{ tekst }}</p-message>
+  } @else if (g.smeDaGlasa && !vidiRezultate()) {
+    <p class="mt-3 text-sm text-utisano">Rezultate vidiš kad glasaš.</p>
+  }
+
+  <div class="ucesce">
+    <div class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-priguseno">Glasalo</span>
+      <span class="text-naslov tabular-nums">
+        {{ g.brojGlasaca }} od {{ g.brojStanara }}
+        <span class="text-utisano">· {{ uProcentima(ucesce()) }}</span>
+      </span>
+    </div>
+    <div class="traka-ucesca" aria-hidden="true">
+      <span [style.--udeo]="ucesce()"></span>
+    </div>
+  </div>
+
+  <div class="podnozje">
+    <p class="min-w-0 text-xs text-utisano">
+      @if (g.kreirao; as autor) {
+        {{ autor.ime }} {{ autor.prezime }} · {{ naziviUloga[autor.uloga] }} ·
+      }
+      <time [attr.datetime]="g.datumKreiranja">{{ g.datumKreiranja | date: 'd. MMM' }}</time>
+    </p>
+    <div class="-mr-3 flex flex-wrap">
+      @if (g.smeDaGlasa && g.mojGlas !== null) {
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          severity="secondary"
+          [disabled]="uToku()"
+          (click)="povuci.emit()"
+        >
+          Povuci glas
+        </button>
+      }
+      @if (g.smeDaZatvori) {
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          [disabled]="akcijaUToku()"
+          (click)="zatvori.emit($event)"
+        >
+          Zatvori
+        </button>
+      }
+      @if (g.smeDaObrise) {
+        <button
+          pButton
+          type="button"
+          text
+          size="small"
+          severity="danger"
+          [disabled]="akcijaUToku()"
+          (click)="obrisi.emit($event)"
+        >
+          Obriši
+        </button>
+      }
+    </div>
+  </div>
+</article>
+
+<ng-template #sadrzaj let-opcija>
+  <span class="traka" aria-hidden="true"></span>
+  <span class="oznaka-izbora" aria-hidden="true">
+    @if (opcija.id === glasanje().mojGlas) {
+      <i class="pi pi-check"></i>
+    }
+  </span>
+  <span class="tekst">
+    <!-- Na dugmetu to kaže aria-pressed -->
+    @if (opcija.id === glasanje().mojGlas && !glasanje().smeDaGlasa) {
+      <span class="sr-only">Tvoj glas: </span>
+    }
+    {{ opcija.tekst }}
+  </span>
+  @if (opcija.brojGlasova !== null) {
+    <!-- Zarezi razdvajaju tekst, procenat i broj kad čitač ekrana pročita dugme -->
+    <span class="rezultat">
+      <span class="sr-only">, </span>
+      <span class="procenat">{{ uProcentima(udeoOpcije(opcija)) }}</span>
+      <span class="sr-only">, </span>
+      <span class="broj">{{ glasova(opcija.brojGlasova) }}</span>
+    </span>
+  }
+</ng-template>

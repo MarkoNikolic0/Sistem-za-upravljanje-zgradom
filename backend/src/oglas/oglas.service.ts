@@ -90,7 +90,6 @@ export class OglasService {
         zakaceno: 'DESC',
         datumKreiranja: 'DESC',
         id: 'DESC',
-        prilozi: { id: 'ASC' },
       },
       ...stranicenje(upit),
     });
@@ -289,7 +288,6 @@ export class OglasService {
     const oglas = await this.oglasRepository.findOne({
       where: { id },
       relations: { zgrada: true, autor: true, prilozi: true },
-      order: { prilozi: { id: 'ASC' } },
     });
     if (!oglas) {
       throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
@@ -335,7 +333,9 @@ export class OglasService {
     const aktivan = oglas.datumSakrivanja === null;
     const isteklo = istekao(oglas);
     return Object.assign(oglas, {
-      prilozi: await this.prilogService.saLinkovima(oglas.prilozi),
+      prilozi: await this.prilogService.saLinkovima(
+        oglas.prilozi.toSorted((a, b) => a.id - b.id),
+      ),
       smeDaMenja: autor && aktivan,
       smeDaObrise: autor,
       smeDaSakrije: aktivan && this.smeDaSakrije(oglas, korisnikId, p),

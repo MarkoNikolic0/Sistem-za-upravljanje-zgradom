@@ -111,33 +111,6 @@
   }
 }
 
-.prazno {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 3rem 1.5rem;
-  text-align: center;
-  border: 1px dashed var(--color-ivica);
-  border-radius: 12px;
-}
-
-.prazno-ikonica {
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  margin-bottom: 1rem;
-  border-radius: 9999px;
-  font-size: 1.25rem;
-  color: var(--color-uspeh);
-  background: color-mix(in srgb, var(--color-uspeh) 12%, transparent);
-
-  &.neutralno {
-    color: var(--color-priguseno);
-    background: rgb(255 255 255 / 0.05);
-  }
-}
-
 // Jedan panel, kvarovi su redovi u njemu
 .panel-liste {
   overflow: hidden;

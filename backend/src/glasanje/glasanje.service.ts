@@ -68,11 +68,8 @@ export class GlasanjeService {
         rok: aktivna ? MoreThan(sada) : LessThanOrEqual(sada),
       },
       relations: { zgrada: true, kreirao: true, opcije: true },
-      order: {
-        rok: aktivna ? 'ASC' : 'DESC',
-        id: 'DESC',
-        opcije: { id: 'ASC' },
-      },
+      // Bez reda po opcijama: uz LIMIT bi TypeORM brojao redove anketa×opcija, a ne ankete
+      order: { rok: aktivna ? 'ASC' : 'DESC', id: 'DESC' },
       ...stranicenje(upit),
     });
 
@@ -171,7 +168,6 @@ export class GlasanjeService {
     const glasanje = await this.glasanjeRepository.findOne({
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
-      order: { opcije: { id: 'ASC' } },
     });
     if (!glasanje) {
       throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
@@ -218,7 +214,6 @@ export class GlasanjeService {
     const glasanje = await this.glasanjeRepository.findOneOrFail({
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
-      order: { opcije: { id: 'ASC' } },
     });
     const [rezultat] = await this.saRezultatima([glasanje], korisnikId, p);
     return rezultat;
@@ -277,10 +272,11 @@ export class GlasanjeService {
       const upravlja = sadrzi(p.upravlja, zgradaId);
       // Stanar vidi rezultate tek kad glasa, da ga tuđi glasovi ne bi usmerili
       const vidiRezultate = upravlja || zavrseno || mojGlas !== null;
-      const brojevi = glasanje.opcije.map((o) => brojPoOpciji.get(o.id) ?? 0);
+      const opcije = glasanje.opcije.toSorted((a, b) => a.id - b.id);
+      const brojevi = opcije.map((o) => brojPoOpciji.get(o.id) ?? 0);
 
       return Object.assign(glasanje, {
-        opcije: glasanje.opcije.map((opcija, i) => ({
+        opcije: opcije.map((opcija, i) => ({
           id: opcija.id,
           tekst: opcija.tekst,
           brojGlasova: vidiRezultate ? brojevi[i] : null,

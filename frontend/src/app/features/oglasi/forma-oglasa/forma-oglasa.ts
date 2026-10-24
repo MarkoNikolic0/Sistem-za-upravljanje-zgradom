@@ -23,22 +23,12 @@ import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
 import { jeIspravanId } from '../../../shared/ispravan-id';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
-import {
-  MAKS_NASLOV_OGLASA,
-  MAKS_TEKST_OGLASA,
-  StanjeNavigacijeOglasa,
-  VRSTE_OGLASA,
-  VrstaOglasa,
-} from '../oglas-models';
 import { OglasService } from '../oglas-service';
-import {
-  krajDana,
-  PRAVILA_PRILOGA,
-  predlozenRok,
-  rokNijeProsao,
-  upravljaZgradom,
-} from '../pravila-oglasa';
-import { injectZgradeOglasa } from '../zgrade-oglasa';
+import { MAKS_NASLOV_OGLASA, MAKS_TEKST_OGLASA, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
+import { PRAVILA_PRILOGA, predlozenRok } from '../pravila-oglasa';
+import { injectZgradeKorisnika, upravljaZgradom } from '../../zgrade/zgrade-korisnika';
+import { krajDana, rokNijeProsao } from '../../../shared/datum';
+import { StanjeNavigacije } from '../../../shared/poruka';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { IzabraniFajlovi } from '../../../shared/izabrani-fajlovi/izabrani-fajlovi';
@@ -85,7 +75,7 @@ export class FormaOglasa {
     computed(() => (this.neispravanId() ? undefined : this.id())),
   );
 
-  private readonly zgradeOglasa = injectZgradeOglasa();
+  private readonly zgradeOglasa = injectZgradeKorisnika();
   protected readonly profil = this.zgradeOglasa.profil;
   protected readonly zgrade = this.zgradeOglasa.zgrade;
 
@@ -240,7 +230,7 @@ export class FormaOglasa {
                   tekst: `${uradjeno}, ali neki prilozi nisu sačuvani (${nisuSacuvani} od ${ukupno}). Pokušaj ponovo u izmeni oglasa.`,
                 }
               : { tip: 'uspeh', tekst: `${uradjeno}.` },
-        } satisfies StanjeNavigacijeOglasa,
+        } satisfies StanjeNavigacije,
       });
     } catch (err) {
       this.obradiGresku(err);

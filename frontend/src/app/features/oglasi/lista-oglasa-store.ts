@@ -1,5 +1,4 @@
 import { inject } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
@@ -11,17 +10,15 @@ import {
   withRequestStatus,
 } from '../../shared/with-request-status';
 import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
-import { porukaServera, prvaGreskaPolja } from '../../shared/greske-servera';
-import { Oglas, PorukaOglasa, VrstaOglasa } from './oglas-models';
+import { Oglas, VrstaOglasa } from './oglas-models';
 import { OglasService } from './oglas-service';
 import { OGLASA_PO_STRANI } from './pravila-oglasa';
+import { withAkcije } from '../../shared/with-akcije';
 
 interface ListaOglasaState {
   oglasi: Oglas[];
   vrsta: VrstaOglasa | null;
   zgradaId: number | null;
-  poruka: PorukaOglasa | null;
-  akcijaUToku: boolean;
 }
 
 export const ListaOglasaStore = signalStore(
@@ -29,10 +26,9 @@ export const ListaOglasaStore = signalStore(
     oglasi: [],
     vrsta: null,
     zgradaId: null,
-    poruka: null,
-    akcijaUToku: false,
   }),
   withRequestStatus(),
+  withAkcije(),
   withPaginacija(OGLASA_PO_STRANI),
   withMethods((store, oglasService = inject(OglasService)) => {
     const ucitaj = rxMethod<void>(
@@ -67,40 +63,8 @@ export const ListaOglasaStore = signalStore(
       patchState(store, { oglasi: store.oglasi().map((o) => (o.id === oglas.id ? oglas : o)) });
     }
 
-    // Vraća da li je akcija uspela
-    async function izvrsi(
-      akcija: () => Promise<void>,
-      uspeh: string,
-      neuspeh: string,
-    ): Promise<boolean> {
-      patchState(store, { akcijaUToku: true, poruka: null });
-      try {
-        await akcija();
-        patchState(store, { poruka: { tip: 'uspeh', tekst: uspeh } });
-        return true;
-      } catch (err) {
-        const greska = err instanceof HttpErrorResponse ? err : null;
-        patchState(store, {
-          poruka: {
-            tip: 'greska',
-            tekst: (greska && (prvaGreskaPolja(greska) ?? porukaServera(greska))) ?? neuspeh,
-          },
-        });
-        // Oglas je u međuvremenu obrisan ili sakriven → prikazati kako je sada
-        if (greska?.status === 404 || greska?.status === 409) {
-          ucitaj();
-        }
-        return false;
-      } finally {
-        patchState(store, { akcijaUToku: false });
-      }
-    }
-
     return {
       ucitaj,
-      prikaziPoruku(poruka: PorukaOglasa): void {
-        patchState(store, { poruka });
-      },
       promeniVrstu(vrsta: VrstaOglasa | null): void {
         patchState(store, { vrsta, strana: 1 });
         ucitaj();
@@ -114,27 +78,30 @@ export const ListaOglasaStore = signalStore(
         ucitaj();
       },
       obrisi(id: number): Promise<boolean> {
-        return izvrsi(
+        return store.izvrsi(
           async () => {
             await firstValueFrom(oglasService.obrisi(id));
             ucitaj();
           },
           'Oglas je obrisan.',
           'Oglas nije obrisan. Pokušaj ponovo.',
+          ucitaj,
         );
       },
       sakrij(id: number, razlog: string): Promise<boolean> {
-        return izvrsi(
+        return store.izvrsi(
           async () => zameni(await firstValueFrom(oglasService.sakrij(id, razlog))),
           'Oglas je sakriven. Autor vidi razlog, a ostali stanari ga više ne vide.',
           'Oglas nije sakriven. Pokušaj ponovo.',
+          ucitaj,
         );
       },
       obnovi(id: number): Promise<boolean> {
-        return izvrsi(
+        return store.izvrsi(
           async () => zameni(await firstValueFrom(oglasService.obnovi(id))),
           'Oglas je obnovljen i ponovo ga vide svi stanari.',
           'Oglas nije obnovljen. Pokušaj ponovo.',
+          ucitaj,
         );
       },
     };

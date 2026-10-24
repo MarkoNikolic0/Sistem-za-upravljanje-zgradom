@@ -14,10 +14,11 @@ import { FormaRazloga } from '../../../shared/forma-razloga/forma-razloga';
 import { Paginacija } from '../../../shared/paginacija/paginacija';
 import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { ListaOglasaStore } from '../lista-oglasa-store';
-import { Oglas, StanjeNavigacijeOglasa, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
-import { injectZgradeOglasa } from '../zgrade-oglasa';
-import { formatRoka } from '../pravila-oglasa';
+import { Oglas, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
+import { formatRoka } from '../../../shared/datum';
 import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
+import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
+import { StanjeNavigacije } from '../../../shared/poruka';
 
 @Component({
   imports: [
@@ -56,7 +57,7 @@ export class ListaOglasa {
     })),
   ];
 
-  private readonly zgradeOglasa = injectZgradeOglasa();
+  private readonly zgradeOglasa = injectZgradeKorisnika();
   protected readonly zgrade = this.zgradeOglasa.zgrade;
   protected readonly opcijeZgrada = computed(() => [
     { id: null, naziv: 'Sve zgrade' },
@@ -73,7 +74,7 @@ export class ListaOglasa {
 
   constructor() {
     const navigacija = this.router.currentNavigation();
-    const stanje = navigacija?.extras.state as StanjeNavigacijeOglasa | undefined;
+    const stanje = navigacija?.extras.state as StanjeNavigacije | undefined;
     if (navigacija?.trigger === 'imperative' && stanje?.poruka) {
       this.store.prikaziPoruku(stanje.poruka);
       // Raspored posle navigacije fokusira sadržaj, pa poruku fokusiramo tek kad se lista učita
