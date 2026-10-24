@@ -18,6 +18,7 @@ import { minutes, ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PratilacKvaraModule } from './pratilac-kvara/pratilac-kvara.module.js';
 import { OglasModule } from './oglas/oglas.module.js';
+import { GlasanjeModule } from './glasanje/glasanje.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -56,6 +57,7 @@ const __dirname = dirname(__filename);
     KorisnikModule,
     PratilacKvaraModule,
     OglasModule,
+    GlasanjeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

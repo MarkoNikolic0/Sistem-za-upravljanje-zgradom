@@ -6,6 +6,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { UpdateProfilDto } from './dto/update-profil.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import type { PristupZgradama } from './pristup-zgradama.js';
 
 @Injectable()
 export class KorisnikService {
@@ -23,6 +24,26 @@ export class KorisnikService {
     });
 
     return korisnik?.zgrada?.id ?? null;
+  }
+
+  async pristupZgradama(
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<PristupZgradama> {
+    const veze = await this.stanarStanaRepository.find({
+      where: { korisnik: { id: korisnikId } },
+      relations: { stan: { zgrada: true } },
+      select: { id: true, stan: { id: true, zgrada: { id: true } } },
+    });
+    const stanuje = [...new Set(veze.map((v) => v.stan.zgrada.id))];
+    if (uloga === Uloga.ADMIN) {
+      return { stanuje, zgrade: null, upravlja: null };
+    }
+    const zgradaUpravnika =
+      uloga === Uloga.UPRAVNIK ? await this.zgradaUpravnika(korisnikId) : null;
+    const upravlja = zgradaUpravnika === null ? [] : [zgradaUpravnika];
+    const zgrade = [...new Set([...stanuje, ...upravlja])];
+    return { stanuje, zgrade, upravlja };
   }
 
   async mojProfil(korisnikId: number) {

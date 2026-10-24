@@ -1,0 +1,28 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Glasanje } from './glasanje.entity.js';
+import { OpcijaGlasanja } from './opcija-glasanja.entity.js';
+import { Glas } from './glas.entity.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { AuthModule } from '../auth/auth.module.js';
+import { KorisnikModule } from '../korisnik/korisnik.module.js';
+import { GlasanjeController } from './glasanje.controller.js';
+import { GlasanjeService } from './glasanje.service.js';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Glasanje,
+      OpcijaGlasanja,
+      Glas,
+      StanarStana,
+      Zgrada,
+    ]),
+    AuthModule,
+    KorisnikModule,
+  ],
+  controllers: [GlasanjeController],
+  providers: [GlasanjeService],
+})
+export class GlasanjeModule {}

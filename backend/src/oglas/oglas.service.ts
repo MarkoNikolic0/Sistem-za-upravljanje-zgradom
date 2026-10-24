@@ -16,7 +16,6 @@ import {
   DataSource,
 } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
-import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -30,69 +29,35 @@ import { DANA_VAZENJA, PORUKA_SAKRIVEN } from './oglas.constants.js';
 import { VREMENSKA_ZONA } from '../shared/vreme.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
 import { PrilogOglasa } from './prilog-oglasa.entity.js';
+import {
+  type PristupZgradama,
+  sadrzi,
+  samoZgrada,
+} from '../korisnik/pristup-zgradama.js';
 
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
 
-// null = sve zgrade (admin)
-interface Pristup {
-  zgrade: number[] | null;
-  upravlja: number[] | null;
-}
-
-function sadrzi(zgrade: number[] | null, zgradaId: number) {
-  return zgrade === null || zgrade.includes(zgradaId);
-}
-
 function istekao(oglas: Oglas, sada = new Date()) {
   return oglas.vaziDo !== null && oglas.vaziDo <= sada;
-}
-
-function samoZgrada(zgrade: number[] | null, zgradaId?: number) {
-  if (zgradaId === undefined) {
-    return zgrade;
-  }
-  return sadrzi(zgrade, zgradaId) ? [zgradaId] : [];
 }
 
 @Injectable()
 export class OglasService {
   constructor(
     @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
-    @InjectRepository(StanarStana)
-    private stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
     private prilogService: PrilogOglasaService,
     private dataSource: DataSource,
   ) {}
 
-  private async pristup(korisnikId: number, uloga: Uloga): Promise<Pristup> {
-    if (uloga === Uloga.ADMIN) {
-      return { zgrade: null, upravlja: null };
-    }
-    const veze = await this.stanarStanaRepository.find({
-      where: { korisnik: { id: korisnikId } },
-      relations: { stan: { zgrada: true } },
-      select: { id: true, stan: { id: true, zgrada: { id: true } } },
-    });
-    const zgradaUpravnika =
-      uloga === Uloga.UPRAVNIK
-        ? await this.korisnikService.zgradaUpravnika(korisnikId)
-        : null;
-    const upravlja = zgradaUpravnika === null ? [] : [zgradaUpravnika];
-    const zgrade = [
-      ...new Set([...veze.map((v) => v.stan.zgrada.id), ...upravlja]),
-    ];
-    return { zgrade, upravlja };
-  }
-
   async findAll(
     korisnikId: number,
     uloga: Uloga,
     upit: OglasUpitDto,
   ): Promise<Stranica<Oglas>> {
-    const p = await this.pristup(korisnikId, uloga);
+    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     const zgrade = samoZgrada(p.zgrade, upit.zgradaId);
     const upravlja = samoZgrada(p.upravlja, upit.zgradaId);
     if (zgrade?.length === 0) {
@@ -144,7 +109,7 @@ export class OglasService {
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateOglasDto) {
-    const p = await this.pristup(korisnikId, uloga);
+    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.zgrade, dto.zgradaId)) {
       throw new ForbiddenException(
         'Oglas možeš da objaviš samo u zgradi u kojoj stanuješ.',
@@ -329,7 +294,7 @@ export class OglasService {
     if (!oglas) {
       throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
     }
-    const p = await this.pristup(korisnikId, uloga);
+    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     const vidi =
       sadrzi(p.upravlja, oglas.zgrada.id) ||
       (sadrzi(p.zgrade, oglas.zgrada.id) &&
@@ -357,11 +322,15 @@ export class OglasService {
     }
   }
 
-  private smeDaSakrije(oglas: Oglas, korisnikId: number, p: Pristup) {
+  private smeDaSakrije(oglas: Oglas, korisnikId: number, p: PristupZgradama) {
     return oglas.autor.id !== korisnikId && sadrzi(p.upravlja, oglas.zgrada.id);
   }
 
-  private async saPravima(oglas: Oglas, korisnikId: number, p: Pristup) {
+  private async saPravima(
+    oglas: Oglas,
+    korisnikId: number,
+    p: PristupZgradama,
+  ) {
     const autor = oglas.autor.id === korisnikId;
     const aktivan = oglas.datumSakrivanja === null;
     const isteklo = istekao(oglas);
@@ -375,7 +344,11 @@ export class OglasService {
     });
   }
 
-  private proveriVrstu(vrsta: VrstaOglasa, p: Pristup, zgradaId: number) {
+  private proveriVrstu(
+    vrsta: VrstaOglasa,
+    p: PristupZgradama,
+    zgradaId: number,
+  ) {
     if (vrsta === VrstaOglasa.OBAVESTENJE && !sadrzi(p.upravlja, zgradaId)) {
       throw new ForbiddenException('Obaveštenje objavljuje upravnik zgrade.');
     }

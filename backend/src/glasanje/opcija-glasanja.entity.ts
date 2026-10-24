@@ -1,5 +1,5 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Glasanje } from '../glasanje/glasanje.entity.js';
+import type { Glasanje } from './glasanje.entity.js';
 
 @Entity()
 export class OpcijaGlasanja {
@@ -9,6 +9,6 @@ export class OpcijaGlasanja {
   @Column()
   tekst: string;
 
-  @ManyToOne(() => Glasanje, { onDelete: 'CASCADE' })
+  @ManyToOne('Glasanje', 'opcije', { nullable: false, onDelete: 'CASCADE' })
   glasanje: Glasanje;
 }
