@@ -74,7 +74,7 @@ export class GlasanjeService {
     });
 
     return {
-      stavke: await this.saRezultatima(stavke, korisnikId, p),
+      stavke: await this.saRezultatima(stavke, korisnikId, p, sada),
       ukupno,
     };
   }
@@ -223,6 +223,7 @@ export class GlasanjeService {
     glasanja: Glasanje[],
     korisnikId: number,
     p: PristupZgradama,
+    sada = new Date(),
   ) {
     if (glasanja.length === 0) {
       return [];
@@ -263,7 +264,6 @@ export class GlasanjeService {
       moji.map((glas) => [glas.glasanje.id, glas.opcija.id]),
     );
     const stanaraPoZgradi = new Map(stanari.map((r) => [r.zgradaId, r.broj]));
-    const sada = new Date();
 
     return glasanja.map((glasanje) => {
       const zgradaId = glasanje.zgrada.id;

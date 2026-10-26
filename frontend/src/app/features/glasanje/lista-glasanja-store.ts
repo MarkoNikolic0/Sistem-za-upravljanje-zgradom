@@ -22,7 +22,7 @@ interface ListaGlasanjaState {
   glasanja: Glasanje[];
   stanje: StanjeGlasanja;
   zgradaId: number | null;
-  glasanjeUToku: number | null;
+  glasUToku: boolean;
   greskaGlasa: { id: number; tekst: string } | null;
   najava: string;
 }
@@ -32,7 +32,7 @@ export const ListaGlasanjaStore = signalStore(
     glasanja: [],
     stanje: 'aktivna',
     zgradaId: null,
-    glasanjeUToku: null,
+    glasUToku: false,
     greskaGlasa: null,
     najava: '',
   }),
@@ -68,14 +68,12 @@ export const ListaGlasanjaStore = signalStore(
       ),
     );
 
-    // Glas menja samo jednu karticu, pa uspeh i greška ostaju u njoj (bez poruke iznad liste).
-    // Vraća false kad je poruka iznad liste, da bi komponenta prebacila fokus na nju.
     async function promeniGlas(
       id: number,
       poziv: () => Observable<Glasanje>,
       najava: string,
     ): Promise<boolean> {
-      patchState(store, { glasanjeUToku: id, greskaGlasa: null, najava: '', poruka: null });
+      patchState(store, { glasUToku: true, greskaGlasa: null, najava: '', poruka: null });
       try {
         const glasanje = await firstValueFrom(poziv());
         patchState(store, {
@@ -85,7 +83,6 @@ export const ListaGlasanjaStore = signalStore(
         return true;
       } catch (err) {
         const greska = err instanceof HttpErrorResponse ? err : null;
-        // Anketa je u međuvremenu završena, obrisana ili više nije dostupna
         if (greska && [403, 404, 409].includes(greska.status)) {
           patchState(store, {
             poruka: { tip: 'greska', tekst: porukaServera(greska) ?? 'Glas nije zabeležen.' },
@@ -98,7 +95,7 @@ export const ListaGlasanjaStore = signalStore(
         });
         return true;
       } finally {
-        patchState(store, { glasanjeUToku: null });
+        patchState(store, { glasUToku: false });
       }
     }
 

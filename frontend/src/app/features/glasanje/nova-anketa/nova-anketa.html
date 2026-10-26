@@ -172,6 +172,7 @@
           inputId="rok"
           formControlName="rok"
           [minDate]="danas"
+          [maxDate]="najkasnije"
           [readonlyInput]="true"
           [showIcon]="true"
           [fluid]="true"
@@ -191,7 +192,8 @@
           </small>
         } @else {
           <small id="rok-pomoc" class="text-sm text-priguseno">
-            Do kraja izabranog dana. Možeš je zatvoriti i ranije.
+            Do kraja izabranog dana, najviše {{ najviseDana }} dana unapred. Možeš je zatvoriti i
+            ranije.
           </small>
         }
       </div>

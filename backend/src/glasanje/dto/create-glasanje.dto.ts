@@ -9,13 +9,16 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  MaxDate,
   MaxLength,
   MinDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
+import { MS_PO_DANU } from '../../shared/vreme.js';
 
 export const MAKS_OPCIJA = 10;
+export const MAKS_DANA_ROKA = 30;
 
 export class CreateGlasanjeDto {
   @UkloniRazmake()
@@ -49,6 +52,10 @@ export class CreateGlasanjeDto {
   @IsArray({ message: 'Dodaj bar dve opcije.' })
   opcije: string[];
 
+  // Rok je kraj izabranog dana u zoni korisnika, pa server dopušta dva dana više
+  @MaxDate(() => new Date(Date.now() + (MAKS_DANA_ROKA + 2) * MS_PO_DANU), {
+    message: `Rok može biti najviše ${MAKS_DANA_ROKA} dana unapred.`,
+  })
   @MinDate(() => new Date(), { message: 'Rok mora biti u budućnosti.' })
   @IsDate({ message: 'Unesi rok za glasanje.' })
   @Type(() => Date)

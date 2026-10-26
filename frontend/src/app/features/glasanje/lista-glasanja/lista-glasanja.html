@@ -70,7 +70,7 @@
           @for (glasanje of store.glasanja(); track glasanje.id) {
             <app-kartica-ankete
               [glasanje]="glasanje"
-              [uToku]="store.glasanjeUToku() === glasanje.id"
+              [uToku]="store.glasUToku()"
               [greska]="store.greskaGlasa()?.id === glasanje.id ? store.greskaGlasa()!.tekst : null"
               [prikaziZgradu]="zgrade().length > 1"
               [akcijaUToku]="store.akcijaUToku()"

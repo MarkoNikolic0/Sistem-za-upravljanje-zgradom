@@ -24,7 +24,7 @@ import {
   NAJVISE_OPCIJA,
 } from '../glasanje-models';
 import { GlasanjeService } from '../glasanje-service';
-import { DANA_ANKETE, razliciteOpcije } from '../pravila-glasanja';
+import { DANA_ANKETE, NAJVISE_DANA_ANKETE, razliciteOpcije } from '../pravila-glasanja';
 
 type Polje = 'zgradaId' | 'pitanje' | 'opis' | 'opcije' | 'rok';
 
@@ -71,6 +71,8 @@ export class NovaAnketa {
   protected readonly najmanjeOpcija = NAJMANJE_OPCIJA;
 
   protected readonly danas = new Date();
+  protected readonly najkasnije = zaDana(NAJVISE_DANA_ANKETE);
+  protected readonly najviseDana = NAJVISE_DANA_ANKETE;
   protected readonly greska = signal('');
   protected readonly slanje = signal(false);
 

@@ -48,7 +48,6 @@ export class KarticaAnkete {
   protected readonly glasova = glasova;
 
   protected izaberi(opcija: OpcijaGlasanja): void {
-    // Dugme se ne isključuje (disabled bi izbacio fokus), nego se drugi klik zanemaruje
     if (!this.uToku() && opcija.id !== this.glasanje().mojGlas) {
       this.glasaj.emit(opcija.id);
     }

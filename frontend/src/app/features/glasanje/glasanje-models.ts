@@ -13,7 +13,6 @@ export const NAJVISE_OPCIJA = 10;
 export interface OpcijaGlasanja {
   id: number;
   tekst: string;
-  // null dok stanar ne glasa (rezultati se ne šalju)
   brojGlasova: number | null;
 }
 
