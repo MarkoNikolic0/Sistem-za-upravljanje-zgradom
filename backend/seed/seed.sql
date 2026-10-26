@@ -4,8 +4,7 @@
 -- Pokretanje (u terminalu iz foldera backend, dok radi Docker kontejner; radi i u PowerShell-u):
 --   docker cp seed/seed.sql zgrada_container:/tmp/seed.sql
 --   docker exec zgrada_container sh -c 'psql -q -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/seed.sql'
--- Prva komanda kopira fajl u kontejner sa bazom, druga ga izvrsava u bazi. Ako nista ne ispise,
--- proslo je; posle greske (ERROR) se nista ne menja, jer je cela skripta jedna transakcija.
+-- Prva komanda kopira fajl u kontejner sa bazom, druga ga izvrsava u bazi.
 --
 -- Svi test nalozi imaju lozinku: Zgrada123!
 -- Izuzetak: prvi nalozi napravljeni rucno (marko@, marija@, danijel@, petar@gmail.com) zadrzavaju
