@@ -34,6 +34,9 @@ import {
   sadrzi,
   samoZgrada,
 } from '../korisnik/pristup-zgradama.js';
+import { GlasanjeService } from '../glasanje/glasanje.service.js';
+import { jeDupliUnos } from '../shared/greske-baze.js';
+import { greskaPolja } from '../shared/greske-validacije.js';
 
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
@@ -49,6 +52,7 @@ export class OglasService {
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
     private prilogService: PrilogOglasaService,
+    private glasanjeService: GlasanjeService,
     private dataSource: DataSource,
   ) {}
 
@@ -123,18 +127,33 @@ export class OglasService {
       );
     }
     this.proveriVrstu(dto.vrsta, p, dto.zgradaId);
+    if (dto.glasanjeId !== undefined) {
+      if (dto.vrsta !== VrstaOglasa.OBAVESTENJE) {
+        throw greskaPolja('vrsta', 'Odluka se objavljuje kao obaveštenje.');
+      }
+      await this.glasanjeService.proveriObjavu(dto.glasanjeId, dto.zgradaId);
+    }
 
-    return await this.oglasRepository.save(
-      this.oglasRepository.create({
-        naslov: dto.naslov,
-        tekst: dto.tekst,
-        vrsta: dto.vrsta,
-        vazno: dto.vazno,
-        vaziDo: dto.vaziDo,
-        zgrada: { id: dto.zgradaId },
-        autor: { id: korisnikId },
-      }),
-    );
+    try {
+      return await this.oglasRepository.save(
+        this.oglasRepository.create({
+          naslov: dto.naslov,
+          tekst: dto.tekst,
+          vrsta: dto.vrsta,
+          vazno: dto.vazno,
+          vaziDo: dto.vaziDo,
+          zgrada: { id: dto.zgradaId },
+          autor: { id: korisnikId },
+          glasanje:
+            dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
+        }),
+      );
+    } catch (greska) {
+      if (jeDupliUnos(greska)) {
+        throw new ConflictException('Odluka je već objavljena.');
+      }
+      throw greska;
+    }
   }
 
   async update(

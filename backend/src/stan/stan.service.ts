@@ -15,6 +15,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
+import { Glas } from '../glasanje/glas.entity.js';
 
 const redosled = new Intl.Collator('sr', { numeric: true });
 
@@ -28,6 +29,7 @@ export class StanService {
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(ZahtevPovezivanje)
     private zahtevRepository: Repository<ZahtevPovezivanje>,
+    @InjectRepository(Glas) private glasRepository: Repository<Glas>,
     private korisnikService: KorisnikService,
   ) {}
 
@@ -114,14 +116,15 @@ export class StanService {
     const stan = await this.findOne(id);
     await this.proveriZgradu(korisnikId, uloga, stan.zgrada.id);
 
-    const [stanari, kvarovi, zahtevi] = await Promise.all([
+    const [stanari, kvarovi, zahtevi, glasovi] = await Promise.all([
       this.stanarStanaRepository.count({ where: { stan: { id } } }),
       this.kvarRepository.count({ where: { stan: { id } } }),
       this.zahtevRepository.count({ where: { stan: { id } } }),
+      this.glasRepository.count({ where: { stan: { id } } }),
     ]);
-    if (stanari + kvarovi + zahtevi > 0) {
+    if (stanari + kvarovi + zahtevi + glasovi > 0) {
       throw new ConflictException(
-        `Stan se ne može obrisati jer ima: stanara ${stanari}, kvarova ${kvarovi}, zahteva za povezivanje ${zahtevi}.`,
+        `Stan se ne može obrisati jer ima: stanara ${stanari}, kvarova ${kvarovi}, zahteva za povezivanje ${zahtevi}, glasova u odlukama ${glasovi}.`,
       );
     }
 

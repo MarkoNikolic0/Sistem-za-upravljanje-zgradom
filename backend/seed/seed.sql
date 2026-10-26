@@ -1,8 +1,11 @@
 -- Test podaci za razvoj i demonstraciju: tri zgrade u Nisu, stanovi, upravnici, serviseri,
--- stanari, zahtevi za povezivanje, kvarovi u razlicitim statusima, oglasi i ankete.
+-- stanari, zahtevi za povezivanje, kvarovi u razlicitim statusima, oglasi, ankete i odluke.
 --
--- Pokretanje (iz foldera backend, dok radi Docker kontejner):
---   docker exec -i zgrada_container sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < seed/seed.sql
+-- Pokretanje (u terminalu iz foldera backend, dok radi Docker kontejner; radi i u PowerShell-u):
+--   docker cp seed/seed.sql zgrada_container:/tmp/seed.sql
+--   docker exec zgrada_container sh -c 'psql -q -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/seed.sql'
+-- Prva komanda kopira fajl u kontejner sa bazom, druga ga izvrsava u bazi. Ako nista ne ispise,
+-- proslo je; posle greske (ERROR) se nista ne menja, jer je cela skripta jedna transakcija.
 --
 -- Svi test nalozi imaju lozinku: Zgrada123!
 -- Izuzetak: prvi nalozi napravljeni rucno (marko@, marija@, danijel@, petar@gmail.com) zadrzavaju
@@ -99,6 +102,12 @@ FROM (VALUES
   ('Bojan', 'Tasić', 'bojan.tasic@example.com', '+381631234520', 'stanar', NULL),
   ('Marina', 'Cvetković', 'marina.cvetkovic@example.com', '+381641234521', 'stanar', NULL),
   ('Goran', 'Stamenković', 'goran.stamenkovic@example.com', '+381651234522', 'stanar', NULL),
+  -- vlasnici Delta Residence bez drugih podataka (da odluka moze da ima kvorum)
+  ('Nenad', 'Vasić', 'nenad.vasic@example.com', '+381661234526', 'stanar', NULL),
+  ('Dušica', 'Mladenović', 'dusica.mladenovic@example.com', '+381601234527', 'stanar', NULL),
+  ('Igor', 'Stevanović', 'igor.stevanovic@example.com', '+381611234528', 'stanar', NULL),
+  ('Jasmina', 'Krstić', 'jasmina.krstic@example.com', '+381621234529', 'stanar', NULL),
+  ('Vladimir', 'Antić', 'vladimir.antic@example.com', '+381631234530', 'stanar', NULL),
   -- stanari bez stana (za testiranje povezivanja)
   ('Katarina', 'Lazić', 'katarina.lazic@example.com', '+381631234515', 'stanar', NULL),
   ('Luka', 'Živković', 'luka.zivkovic@example.com', '+381641234516', 'stanar', NULL),
@@ -146,6 +155,13 @@ FROM (VALUES
   ('milan.stojkovic@example.com', 'Bulevar Nemanjića 45, Niš', '5', true),
   ('ivana.nikolic@example.com', 'Bulevar Nemanjića 45, Niš', '5', false),
   ('stefan.popovic@example.com', 'Bulevar Nemanjića 45, Niš', '15', true),
+  -- Nenad je vlasnik dva stana (u odluci ima dva glasa)
+  ('nenad.vasic@example.com', 'Bulevar Nemanjića 45, Niš', '3', true),
+  ('nenad.vasic@example.com', 'Bulevar Nemanjića 45, Niš', '4', true),
+  ('dusica.mladenovic@example.com', 'Bulevar Nemanjića 45, Niš', '8', true),
+  ('igor.stevanovic@example.com', 'Bulevar Nemanjića 45, Niš', '11', true),
+  ('jasmina.krstic@example.com', 'Bulevar Nemanjića 45, Niš', '16', true),
+  ('vladimir.antic@example.com', 'Bulevar Nemanjića 45, Niš', '17', true),
   ('milica.djordjevic@example.com', 'Obrenovićeva 30, Niš', '4', true),
   ('nemanja.kostic@example.com', 'Obrenovićeva 30, Niš', '7', true),
   ('tijana.pavlovic@example.com', 'Obrenovićeva 30, Niš', '10', false),
@@ -531,10 +547,10 @@ WHERE p.id = pr.id;
 -- OGLASI ------------------------------------------------------------------------------------
 -- Oglasi iz skripte se pri svakom pokretanju vracaju na pocetno stanje: datumi se racunaju od
 -- sadasnjeg trenutka, a izmena i sakrivanje se pisu iznova. Oglasi iz aplikacije se ne diraju.
--- Glavni nalozi (Delta Residence, 11 oglasa: ko vidi i sakriven, ima dve strane po 10):
+-- Glavni nalozi (Delta Residence, 12 oglasa: ko vidi i sakriven, ima dve strane po 10):
 --   Marija: radovi (izmenjen), nadjeni kljucevi (istekli, dugme Obnovi) i reklama koju je
 --     Danijel sakrio (vidi razlog); ne vidi isteklu Ivaninu prodaju bicikla
---   Danijel (upravnik): dva obavestenja (iskljucenje vode je vazno); sakriva tudje oglase,
+--   Danijel (upravnik): tri obavestenja (iskljucenje vode je vazno, jedno objavljuje odluku); sakriva tudje oglase,
 --     vidi i sakriven Marijin i istekle oglase
 --   Marko (admin): obavestenje u Delti; vidi oglase sve tri zgrade i filter po zgradi
 --   Petar (serviser) nema oglasnu tablu
@@ -549,6 +565,11 @@ FROM (VALUES
    E'U četvrtak od 9 do 13 h neće biti vode zbog zamene glavnog ventila u podrumu.\nNapunite flaše na vreme.',
    'obavestenje', 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com',
    interval '2 hours', NULL::interval, NULL::interval, NULL, true, interval '3 days'),
+  ('Usvojena odluka: nova ulazna vrata',
+   E'Skupština je usvojila odluku o zameni ulaznih vrata po ponudi od 150.000 dinara (Za 8, Protiv 3, Uzdržan 1; glasalo 12 od 20 stanova).
+Radovi počinju sledećeg ponedeljka.',
+   'obavestenje', 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com',
+   interval '1 day', NULL, NULL, NULL, false, NULL),
   ('Bušenje u stanu 14 u subotu',
    'U subotu od 10 do 12 h bušim zid u kupatilu. Izvinjavam se zbog buke.',
    'radovi', 'Bulevar Nemanjića 45, Niš', 'marija@gmail.com',
@@ -617,10 +638,13 @@ FROM seed_oglas v
 WHERE o.id = (SELECT min(o2.id) FROM oglas o2
               WHERE o2.naslov = v.naslov AND o2."zgradaId" = v.zgrada_id);
 
--- GLASANJE (ANKETE) -------------------------------------------------------------------------
--- Ankete iz skripte se pri svakom pokretanju brisu i prave iznova, zajedno sa opcijama i
--- glasovima, pa rokovi uvek vaze od danas. Ankete iz aplikacije (drugo pitanje) se ne diraju.
--- Glavni nalozi (Delta Residence, 13 stanara sa pravom glasa):
+-- GLASANJE (ANKETE I ODLUKE) ----------------------------------------------------------------
+-- Glasanja iz skripte se pri svakom pokretanju brisu i prave iznova, zajedno sa opcijama i
+-- glasovima, pa rokovi uvek vaze od danas. Glasanja iz aplikacije (drugo pitanje) se ne diraju.
+-- Delta Residence ima 20 stanova i 18 stanara sa pravom glasa u anketi; vlasnici imaju 15
+-- stanova, pa je kvorum odluke 11 stanova, a 2/3 je 14 stanova (vlasnik nije u aplikaciji
+-- za 9, 13, 18, 19 i 20).
+-- Ankete:
 --   Marija: boja ulaza (nije glasala, ne vidi rezultate), ciscenje podruma (glasala, istice
 --     sutra: menja ili povlaci glas), kamera na ulazu (istice danas); u Zavrsenim klupa
 --     (njen glas Da je vodeci) i kabasti otpad (Danijel zatvorio ranije)
@@ -628,10 +652,18 @@ WHERE o.id = (SELECT min(o2.id) FROM oglas o2
 --   Marko (admin): ankete sve tri zgrade i filter po zgradi; ne glasa jer nema stan
 --   Nikola (upravnik Lamele bez stana): vidi rezultate, ne glasa
 --   Petar (serviser) nema glasanje
--- dana = rok je kraj dana toliko dana od danas (negativno = zavrsena);
+-- Odluke (vide ih samo vlasnici, upravnik i admin; Natalija i Goran ih ne vide):
+--   krecenje ulaza: Marija nije glasala; za stan 6 je glasala Sanja, pa Dejan ne glasa;
+--     Nenad je jednim glasom glasao za stanove 3 i 4
+--   profesionalni upravnik (2/3): Marija glasala Za (menja ili povlaci), Nenad nije glasao
+--   u Zavrsenim: ulazna vrata (usvojena i objavljena na oglasnoj tabli), prostorija u
+--     prizemlju (2/3: Za 11 od 13, a nije usvojena) i dezurstvo za sneg (nema kvoruma);
+--     Danijel moze da objavi prostoriju i dezurstvo
+-- dana = rok je kraj dana toliko dana od danas (negativno = zavrseno);
 -- ranije = upravnik je zatvorio anketu pre toliko vremena (rok se tada pomera na taj trenutak)
-CREATE TEMP TABLE seed_anketa ON COMMIT DROP AS
-SELECT v.rb, v.pitanje, v.opis, z.id AS zgrada_id, k.id AS kreirao_id,
+CREATE TEMP TABLE seed_glasanje ON COMMIT DROP AS
+SELECT v.rb, v.vrsta::glasanje_vrsta_enum AS vrsta, v.vecina::glasanje_vecina_enum AS vecina,
+       v.pitanje, v.opis, z.id AS zgrada_id, k.id AS kreirao_id,
        now() - v.pre AS datum_kreiranja,
        CASE WHEN v.ranije IS NOT NULL THEN now() - v.ranije
             ELSE (date_trunc('day', now() AT TIME ZONE 'Europe/Belgrade')
@@ -640,28 +672,43 @@ SELECT v.rb, v.pitanje, v.opis, z.id AS zgrada_id, k.id AS kreirao_id,
        END AS rok,
        v.ranije IS NOT NULL AS zatvoreno_ranije
 FROM (VALUES
-  (1, 'Koju boju da izaberemo za zidove ulaza?',
+  (1, 'anketa', NULL, 'Koju boju da izaberemo za zidove ulaza?',
    'Krečenje ulaza je planirano za jun. Izvođač nudi tri boje po istoj ceni.',
    'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '2 days', 5, NULL::interval),
-  (2, 'Kada da organizujemo generalno čišćenje podruma?', NULL,
+  (2, 'anketa', NULL, 'Kada da organizujemo generalno čišćenje podruma?', NULL,
    'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '4 days', 1, NULL),
-  (3, 'Da li ste za postavljanje kamere na ulazu?',
+  (3, 'anketa', NULL, 'Da li ste za postavljanje kamere na ulazu?',
    E'Kamera bi snimala samo ulazna vrata i poštanske sandučiće.\nSnimci se čuvaju 7 dana.',
    'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '6 days', 0, NULL),
-  (4, 'Da li da postavimo klupu ispred ulaza?', NULL,
+  (4, 'anketa', NULL, 'Da li da postavimo klupu ispred ulaza?', NULL,
    'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '12 days', -3, NULL),
-  (5, 'Novi termin odnošenja kabastog otpada', 'Komunalno preduzeće nudi dva termina mesečno.',
+  (5, 'anketa', NULL, 'Novi termin odnošenja kabastog otpada', 'Komunalno preduzeće nudi dva termina mesečno.',
    'Bulevar Nemanjića 45, Niš', 'marko@gmail.com', interval '9 days', NULL, interval '1 day'),
+  (8, 'odluka', 'obicna', 'Prihvatamo ponudu za krečenje ulaza od 280.000 dinara',
+   'Ponuda firme Bojadisanje DOO: krečenje ulaza i stepeništa do 6. sprata, radovi traju 5 dana.',
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '1 day', 6, NULL),
+  (9, 'odluka', 'dve_trecine', 'Poveravamo upravljanje zgradom profesionalnom upravniku',
+   'Profesionalni upravnik preuzima održavanje i finansije zgrade za 1.500 dinara po stanu mesečno.',
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '3 days', 10, NULL),
+  (10, 'odluka', 'obicna', 'Menjamo ulazna vrata po ponudi od 150.000 dinara', NULL,
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '14 days', -2, NULL),
+  (11, 'odluka', 'dve_trecine', 'Izdajemo prostoriju u prizemlju za ostavu',
+   'Prostorija pored podruma bi se izdavala za 5.000 dinara mesečno, prihod ide u fond zgrade.',
+   'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', interval '20 days', -5, NULL),
+  (12, 'odluka', 'obicna', 'Uvodimo dežurstvo stanova za čišćenje snega', NULL,
+   'Bulevar Nemanjića 45, Niš', 'marko@gmail.com', interval '25 days', -8, NULL),
   -- Ostale zgrade: Marko ih vidi uz filter po zgradi
-  (6, 'Da li da zamenimo sijalice na stepeništu LED sijalicama?', NULL,
+  (6, 'anketa', NULL, 'Da li da zamenimo sijalice na stepeništu LED sijalicama?', NULL,
    'Obrenovićeva 30, Niš', 'jelena.markovic@example.com', interval '1 day', 6, NULL),
-  (7, 'Treba li nam dodatni stalak za bicikle?', NULL,
-   'Vizantijski bulevar 12, Niš', 'nikola.ilic@example.com', interval '3 days', 4, NULL)
-) AS v(rb, pitanje, opis, adresa, email, pre, dana, ranije)
+  (7, 'anketa', NULL, 'Treba li nam dodatni stalak za bicikle?', NULL,
+   'Vizantijski bulevar 12, Niš', 'nikola.ilic@example.com', interval '3 days', 4, NULL),
+  (13, 'odluka', 'obicna', 'Postavljamo interfon sa kamerom', NULL,
+   'Obrenovićeva 30, Niš', 'jelena.markovic@example.com', interval '2 days', 3, NULL)
+) AS v(rb, vrsta, vecina, pitanje, opis, adresa, email, pre, dana, ranije)
 JOIN zgrada z ON z.adresa = v.adresa
 JOIN korisnik k ON k.email = v.email;
 
-CREATE TEMP TABLE seed_opcija (anketa int, rb int, tekst text) ON COMMIT DROP;
+CREATE TEMP TABLE seed_opcija (glasanje int, rb int, tekst text) ON COMMIT DROP;
 INSERT INTO seed_opcija VALUES
   (1, 1, 'Bela'), (1, 2, 'Svetlo siva'), (1, 3, 'Bež'),
   (2, 1, 'Subota prepodne'), (2, 2, 'Subota popodne'), (2, 3, 'Nedelja prepodne'),
@@ -670,9 +717,16 @@ INSERT INTO seed_opcija VALUES
   (5, 1, 'Prva subota u mesecu'), (5, 2, 'Poslednja subota u mesecu'),
   (6, 1, 'Da'), (6, 2, 'Ne'),
   (7, 1, 'Da, pored ulaza'), (7, 2, 'Da, u podrumu'), (7, 3, 'Ne treba');
+-- Odluka uvek ima opcije Za, Protiv i Uzdrzan (kao ODGOVORI_ODLUKE u aplikaciji)
+INSERT INTO seed_opcija
+SELECT g.rb, o.rb, o.tekst
+FROM seed_glasanje g
+CROSS JOIN (VALUES (1, 'Za'), (2, 'Protiv'), (3, 'Uzdržan')) AS o(rb, tekst)
+WHERE g.vrsta = 'odluka';
 
-CREATE TEMP TABLE seed_glas (anketa int, email text, opcija text) ON COMMIT DROP;
-INSERT INTO seed_glas VALUES
+-- stan = broj stana za koji vlasnik glasa u odluci (u anketi glas pripada korisniku)
+CREATE TEMP TABLE seed_glas (glasanje int, email text, opcija text, stan text) ON COMMIT DROP;
+INSERT INTO seed_glas (glasanje, email, opcija) VALUES
   (1, 'vesna.djokic@example.com', 'Svetlo siva'), (1, 'ana.jovanovic@example.com', 'Bela'),
   (1, 'milan.stojkovic@example.com', 'Svetlo siva'), (1, 'ivana.nikolic@example.com', 'Svetlo siva'),
   (1, 'dejan.milosavljevic@example.com', 'Bež'), (1, 'sanja.milosavljevic@example.com', 'Svetlo siva'),
@@ -689,31 +743,68 @@ INSERT INTO seed_glas VALUES
   (6, 'milica.djordjevic@example.com', 'Da'), (6, 'nemanja.kostic@example.com', 'Da'),
   (6, 'tijana.pavlovic@example.com', 'Ne'),
   (7, 'jovana.mitic@example.com', 'Da, u podrumu');
+INSERT INTO seed_glas VALUES
+  -- krecenje ulaza (u toku)
+  (8, 'sanja.milosavljevic@example.com', 'Za', '6'), (8, 'vesna.djokic@example.com', 'Za', '1'),
+  (8, 'bojan.tasic@example.com', 'Protiv', '10'),
+  (8, 'nenad.vasic@example.com', 'Za', '3'), (8, 'nenad.vasic@example.com', 'Za', '4'),
+  -- profesionalni upravnik (u toku, 2/3)
+  (9, 'marija@gmail.com', 'Za', '14'), (9, 'stefan.popovic@example.com', 'Za', '15'),
+  (9, 'ana.jovanovic@example.com', 'Protiv', '2'),
+  -- ulazna vrata: 12 od 20 stanova, Za 8 -> usvojena
+  (10, 'vesna.djokic@example.com', 'Za', '1'), (10, 'ana.jovanovic@example.com', 'Za', '2'),
+  (10, 'nenad.vasic@example.com', 'Za', '3'), (10, 'nenad.vasic@example.com', 'Za', '4'),
+  (10, 'milan.stojkovic@example.com', 'Protiv', '5'), (10, 'dejan.milosavljevic@example.com', 'Za', '6'),
+  (10, 'danijel@gmail.com', 'Za', '7'), (10, 'dusica.mladenovic@example.com', 'Uzdržan', '8'),
+  (10, 'bojan.tasic@example.com', 'Protiv', '10'), (10, 'igor.stevanovic@example.com', 'Za', '11'),
+  (10, 'marija@gmail.com', 'Za', '14'), (10, 'stefan.popovic@example.com', 'Protiv', '15'),
+  -- prostorija u prizemlju: Za 11 od 13, a za 2/3 treba 14 od 20 -> nije usvojena
+  (11, 'vesna.djokic@example.com', 'Za', '1'), (11, 'ana.jovanovic@example.com', 'Za', '2'),
+  (11, 'nenad.vasic@example.com', 'Za', '3'), (11, 'nenad.vasic@example.com', 'Za', '4'),
+  (11, 'milan.stojkovic@example.com', 'Za', '5'), (11, 'danijel@gmail.com', 'Za', '7'),
+  (11, 'dusica.mladenovic@example.com', 'Za', '8'), (11, 'bojan.tasic@example.com', 'Za', '10'),
+  (11, 'igor.stevanovic@example.com', 'Za', '11'), (11, 'marina.cvetkovic@example.com', 'Za', '12'),
+  (11, 'jasmina.krstic@example.com', 'Za', '16'),
+  (11, 'marija@gmail.com', 'Protiv', '14'), (11, 'vladimir.antic@example.com', 'Protiv', '17'),
+  -- dezurstvo za sneg: 6 od 20 stanova -> nema kvoruma
+  (12, 'marija@gmail.com', 'Za', '14'), (12, 'vesna.djokic@example.com', 'Za', '1'),
+  (12, 'danijel@gmail.com', 'Za', '7'), (12, 'stefan.popovic@example.com', 'Za', '15'),
+  (12, 'marina.cvetkovic@example.com', 'Za', '12'), (12, 'bojan.tasic@example.com', 'Protiv', '10');
 
 DELETE FROM glasanje g
-USING seed_anketa s
+USING seed_glasanje s
 WHERE g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id;
 
-INSERT INTO glasanje (vrsta, pitanje, opis, rok, "zatvorenoRanije", "zgradaId", "kreiraoId", "datumKreiranja")
-SELECT 'anketa', s.pitanje, s.opis, s.rok, s.zatvoreno_ranije, s.zgrada_id, s.kreirao_id, s.datum_kreiranja
-FROM seed_anketa s
+INSERT INTO glasanje (vrsta, vecina, pitanje, opis, rok, "zatvorenoRanije", "zgradaId", "kreiraoId", "datumKreiranja")
+SELECT s.vrsta, s.vecina, s.pitanje, s.opis, s.rok, s.zatvoreno_ranije, s.zgrada_id, s.kreirao_id, s.datum_kreiranja
+FROM seed_glasanje s
 ORDER BY s.rb;
 
 -- Redosled opcija u aplikaciji je redosled id-jeva
 INSERT INTO opcija_glasanja (tekst, "glasanjeId")
 SELECT o.tekst, g.id
 FROM seed_opcija o
-JOIN seed_anketa s ON s.rb = o.anketa
+JOIN seed_glasanje s ON s.rb = o.glasanje
 JOIN glasanje g ON g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id
-ORDER BY o.anketa, o.rb;
+ORDER BY o.glasanje, o.rb;
 
--- Glas je dat pre roka (za zavrsene ankete) i posle pravljenja ankete
-INSERT INTO glas ("glasanjeId", "opcijaId", "korisnikId", "datumGlasanja")
-SELECT g.id, o.id, k.id, s.datum_kreiranja + (least(now(), s.rok) - s.datum_kreiranja) / 2
+-- Glas je dat pre roka (za zavrsena glasanja) i posle pravljenja glasanja
+INSERT INTO glas ("glasanjeId", "opcijaId", "korisnikId", "stanId", "datumGlasanja")
+SELECT g.id, o.id, k.id, st.id, s.datum_kreiranja + (least(now(), s.rok) - s.datum_kreiranja) / 2
 FROM seed_glas sg
-JOIN seed_anketa s ON s.rb = sg.anketa
+JOIN seed_glasanje s ON s.rb = sg.glasanje
 JOIN glasanje g ON g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id
 JOIN opcija_glasanja o ON o."glasanjeId" = g.id AND o.tekst = sg.opcija
-JOIN korisnik k ON k.email = sg.email;
+JOIN korisnik k ON k.email = sg.email
+LEFT JOIN stan st ON st."zgradaId" = s.zgrada_id AND st.broj = sg.stan;
+
+-- Usvojena odluka o ulaznim vratima je objavljena na oglasnoj tabli
+UPDATE oglas o
+SET "glasanjeId" = g.id
+FROM seed_glasanje s
+JOIN glasanje g ON g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id
+WHERE s.rb = 10
+  AND o.id = (SELECT min(o2.id) FROM oglas o2
+              WHERE o2.naslov = 'Usvojena odluka: nova ulazna vrata' AND o2."zgradaId" = s.zgrada_id);
 
 COMMIT;

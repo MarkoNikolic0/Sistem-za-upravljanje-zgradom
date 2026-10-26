@@ -5,12 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  FindOptionsWhere,
-  QueryFailedError,
-  Repository,
-} from 'typeorm';
+import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import { jeDupliUnos } from '../shared/greske-baze.js';
 import { ZahtevPovezivanje } from './zahtev-povezivanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -58,11 +54,7 @@ export class ZahtevPovezivanjeService {
     try {
       return await this.zahtevRepository.save(zahtev);
     } catch (greska) {
-      if (
-        greska instanceof QueryFailedError &&
-        'code' in greska.driverError &&
-        greska.driverError.code === '23505'
-      ) {
+      if (jeDupliUnos(greska)) {
         throw new ConflictException(
           'Već imate zahtev na čekanju za ovaj stan!',
         );

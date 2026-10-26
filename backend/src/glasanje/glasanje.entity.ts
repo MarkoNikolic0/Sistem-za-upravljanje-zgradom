@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
-import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
+import { VecinaOdluke, VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import type { OpcijaGlasanja } from './opcija-glasanja.entity.js';
 
 @Entity()
@@ -18,6 +18,9 @@ export class Glasanje {
 
   @Column({ type: 'enum', enum: VrstaGlasanja, default: VrstaGlasanja.ANKETA })
   vrsta: VrstaGlasanja;
+
+  @Column({ type: 'enum', enum: VecinaOdluke, nullable: true })
+  vecina: VecinaOdluke | null;
 
   @Column()
   pitanje: string;

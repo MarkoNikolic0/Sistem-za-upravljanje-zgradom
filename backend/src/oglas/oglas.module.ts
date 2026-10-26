@@ -9,6 +9,7 @@ import { OglasService } from './oglas.service.js';
 import { PrilogOglasa } from './prilog-oglasa.entity.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
 import { SkladisteModule } from '../shared/skladiste/skladiste.module.js';
+import { GlasanjeModule } from '../glasanje/glasanje.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SkladisteModule } from '../shared/skladiste/skladiste.module.js';
     AuthModule,
     KorisnikModule,
     SkladisteModule,
+    GlasanjeModule,
   ],
   controllers: [OglasController],
   providers: [OglasService, PrilogOglasaService],

@@ -2,8 +2,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
@@ -11,6 +13,7 @@ import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
 import { Exclude } from 'class-transformer';
 import type { PrilogOglasa } from './prilog-oglasa.entity.js';
+import type { Glasanje } from '../glasanje/glasanje.entity.js';
 
 @Entity()
 export class Oglas {
@@ -57,6 +60,10 @@ export class Oglas {
 
   @Column({ type: 'text', nullable: true })
   razlogSakrivanja: string | null;
+
+  @OneToOne('Glasanje', { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn()
+  glasanje: Glasanje | null;
 
   @OneToMany('PrilogOglasa', 'oglas')
   prilozi: PrilogOglasa[];

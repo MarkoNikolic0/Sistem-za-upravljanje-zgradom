@@ -4,6 +4,7 @@ import {
   ArrayUnique,
   IsArray,
   IsDate,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -12,15 +13,23 @@ import {
   MaxDate,
   MaxLength,
   MinDate,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 import { MS_PO_DANU } from '../../shared/vreme.js';
+import {
+  VecinaOdluke,
+  VrstaGlasanja,
+} from '../../shared/enums/glasanje.enums.js';
 
 export const MAKS_OPCIJA = 10;
 export const MAKS_DANA_ROKA = 30;
 
 export class CreateGlasanjeDto {
+  @IsEnum(VrstaGlasanja, { message: 'Izaberi vrstu glasanja.' })
+  vrsta: VrstaGlasanja = VrstaGlasanja.ANKETA;
+
   @UkloniRazmake()
   @IsString()
   @MaxLength(200, { message: 'Pitanje može imati najviše 200 znakova.' })
@@ -33,6 +42,7 @@ export class CreateGlasanjeDto {
   @MaxLength(1000, { message: 'Opis može imati najviše 1000 znakova.' })
   opis?: string;
 
+  @ValidateIf((dto: CreateGlasanjeDto) => dto.vrsta === VrstaGlasanja.ANKETA)
   @UkloniRazmake()
   @ArrayUnique(
     (opcija: unknown) =>
@@ -50,7 +60,11 @@ export class CreateGlasanjeDto {
   })
   @ArrayMinSize(2, { message: 'Dodaj bar dve opcije.' })
   @IsArray({ message: 'Dodaj bar dve opcije.' })
-  opcije: string[];
+  opcije?: string[];
+
+  @ValidateIf((dto: CreateGlasanjeDto) => dto.vrsta === VrstaGlasanja.ODLUKA)
+  @IsEnum(VecinaOdluke, { message: 'Izaberi potrebnu većinu.' })
+  vecina?: VecinaOdluke;
 
   // Rok je kraj izabranog dana u zoni korisnika, pa server dopušta dva dana više
   @MaxDate(() => new Date(Date.now() + (MAKS_DANA_ROKA + 2) * MS_PO_DANU), {

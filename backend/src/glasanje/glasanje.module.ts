@@ -9,6 +9,8 @@ import { AuthModule } from '../auth/auth.module.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { GlasanjeController } from './glasanje.controller.js';
 import { GlasanjeService } from './glasanje.service.js';
+import { Stan } from '../stan/stan.entity.js';
+import { Oglas } from '../oglas/oglas.entity.js';
 
 @Module({
   imports: [
@@ -17,12 +19,15 @@ import { GlasanjeService } from './glasanje.service.js';
       OpcijaGlasanja,
       Glas,
       StanarStana,
+      Stan,
       Zgrada,
+      Oglas,
     ]),
     AuthModule,
     KorisnikModule,
   ],
   controllers: [GlasanjeController],
   providers: [GlasanjeService],
+  exports: [GlasanjeService],
 })
 export class GlasanjeModule {}

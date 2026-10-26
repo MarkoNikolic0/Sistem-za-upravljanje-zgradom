@@ -33,17 +33,24 @@ export class KorisnikService {
     const veze = await this.stanarStanaRepository.find({
       where: { korisnik: { id: korisnikId } },
       relations: { stan: { zgrada: true } },
-      select: { id: true, stan: { id: true, zgrada: { id: true } } },
+      select: {
+        id: true,
+        vlasnik: true,
+        stan: { id: true, zgrada: { id: true } },
+      },
     });
     const stanuje = [...new Set(veze.map((v) => v.stan.zgrada.id))];
+    const poseduje = [
+      ...new Set(veze.filter((v) => v.vlasnik).map((v) => v.stan.zgrada.id)),
+    ];
     if (uloga === Uloga.ADMIN) {
-      return { stanuje, zgrade: null, upravlja: null };
+      return { stanuje, poseduje, zgrade: null, upravlja: null };
     }
     const zgradaUpravnika =
       uloga === Uloga.UPRAVNIK ? await this.zgradaUpravnika(korisnikId) : null;
     const upravlja = zgradaUpravnika === null ? [] : [zgradaUpravnika];
     const zgrade = [...new Set([...stanuje, ...upravlja])];
-    return { stanuje, zgrade, upravlja };
+    return { stanuje, poseduje, zgrade, upravlja };
   }
 
   async mojProfil(korisnikId: number) {

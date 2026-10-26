@@ -12,12 +12,15 @@ import {
   IsNull,
   LessThanOrEqual,
   MoreThan,
+  Not,
   Repository,
 } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
-import { Glas, JEDAN_GLAS_ANKETE } from './glas.entity.js';
+import { Glas, JEDAN_GLAS_ANKETE, JEDAN_GLAS_STANA } from './glas.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import { Stan } from '../stan/stan.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { Oglas } from '../oglas/oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import {
   type PristupZgradama,
@@ -33,8 +36,17 @@ import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateGlasanjeDto } from './dto/create-glasanje.dto.js';
 import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
+import { ODGOVORI_ODLUKE, ZA, ishodOdluke } from './ishod-odluke.js';
 
 const PORUKA_ZAVRSENA = 'Glasanje je završeno.';
+const PORUKA_VLASNICI = 'Za odluke glasaju vlasnici stanova u zgradi.';
+
+// Odluke vide samo vlasnici stanova u zgradi, upravnik i admin
+function zgradeOdluka(p: PristupZgradama) {
+  return p.upravlja === null
+    ? null
+    : [...new Set([...p.poseduje, ...p.upravlja])];
+}
 
 @Injectable()
 export class GlasanjeService {
@@ -44,7 +56,9 @@ export class GlasanjeService {
     @InjectRepository(Glas) private glasRepository: Repository<Glas>,
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
+    @InjectRepository(Stan) private stanRepository: Repository<Stan>,
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
+    @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
     private korisnikService: KorisnikService,
     private dataSource: DataSource,
   ) {}
@@ -55,18 +69,30 @@ export class GlasanjeService {
     upit: GlasanjeUpitDto,
   ): Promise<Stranica<Glasanje>> {
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
-    const zgrade = samoZgrada(p.zgrade, upit.zgradaId);
-    if (zgrade?.length === 0) {
+    const aktivna = upit.stanje === StanjeGlasanja.AKTIVNA;
+    const sada = new Date();
+    const rok = aktivna ? MoreThan(sada) : LessThanOrEqual(sada);
+
+    const uslovi = [
+      { vrsta: VrstaGlasanja.ANKETA, zgrade: p.zgrade },
+      { vrsta: VrstaGlasanja.ODLUKA, zgrade: zgradeOdluka(p) },
+    ]
+      .map(({ vrsta, zgrade }) => ({
+        vrsta,
+        zgrade: samoZgrada(zgrade, upit.zgradaId),
+      }))
+      .filter(({ zgrade }) => zgrade?.length !== 0)
+      .map(({ vrsta, zgrade }) => ({
+        vrsta,
+        rok,
+        ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
+      }));
+    if (uslovi.length === 0) {
       return { stavke: [], ukupno: 0 };
     }
 
-    const aktivna = upit.stanje === StanjeGlasanja.AKTIVNA;
-    const sada = new Date();
     const [stavke, ukupno] = await this.glasanjeRepository.findAndCount({
-      where: {
-        ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
-        rok: aktivna ? MoreThan(sada) : LessThanOrEqual(sada),
-      },
+      where: uslovi,
       relations: { zgrada: true, kreirao: true, opcije: true },
       // Bez reda po opcijama: uz LIMIT bi TypeORM brojao redove anketa×opcija, a ne ankete
       order: { rok: aktivna ? 'ASC' : 'DESC', id: 'DESC' },
@@ -82,7 +108,7 @@ export class GlasanjeService {
   async create(korisnikId: number, uloga: Uloga, dto: CreateGlasanjeDto) {
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.upravlja, dto.zgradaId)) {
-      throw new ForbiddenException('Anketu pravi upravnik zgrade.');
+      throw new ForbiddenException('Glasanje pravi upravnik zgrade.');
     }
     if (
       p.upravlja === null &&
@@ -92,16 +118,24 @@ export class GlasanjeService {
         `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
       );
     }
+    const odluka = dto.vrsta === VrstaGlasanja.ODLUKA;
+    if (odluka && dto.opcije !== undefined) {
+      throw greskaPolja('opcije', 'Odluka ima opcije Za, Protiv i Uzdržan.');
+    }
+    if (!odluka && dto.vecina !== undefined) {
+      throw greskaPolja('vecina', 'Većina se bira samo za odluku.');
+    }
 
     const { id } = await this.glasanjeRepository.save(
       this.glasanjeRepository.create({
-        vrsta: VrstaGlasanja.ANKETA,
+        vrsta: dto.vrsta,
+        vecina: dto.vecina ?? null,
         pitanje: dto.pitanje,
         opis: dto.opis || null,
         rok: dto.rok,
         zgrada: { id: dto.zgradaId },
         kreirao: { id: korisnikId },
-        opcije: dto.opcije.map((tekst) => ({ tekst })),
+        opcije: (dto.opcije ?? ODGOVORI_ODLUKE).map((tekst) => ({ tekst })),
       }),
     );
     return this.jedno(id, korisnikId, p);
@@ -110,11 +144,15 @@ export class GlasanjeService {
   async glasaj(id: number, korisnikId: number, uloga: Uloga, opcijaId: number) {
     const { glasanje, p } = await this.findZaGlasanje(id, korisnikId, uloga);
     if (!glasanje.opcije.some((opcija) => opcija.id === opcijaId)) {
-      throw greskaPolja('opcijaId', 'Izabrana opcija nije u ovoj anketi.');
+      throw greskaPolja('opcijaId', 'Izabrana opcija nije u ovom glasanju.');
     }
 
     await this.dataSource.transaction(async (manager) => {
       await this.proveriDaJeOtvoreno(manager, id);
+      if (glasanje.vrsta === VrstaGlasanja.ODLUKA) {
+        await this.glasajZaStanove(manager, glasanje, korisnikId, opcijaId);
+        return;
+      }
       // Novi glas ili promena postojeceg, u jednom upitu
       await manager
         .createQueryBuilder()
@@ -134,20 +172,25 @@ export class GlasanjeService {
   }
 
   async povuciGlas(id: number, korisnikId: number, uloga: Uloga) {
-    const { p } = await this.findZaGlasanje(id, korisnikId, uloga);
+    const { glasanje, p } = await this.findZaGlasanje(id, korisnikId, uloga);
     await this.dataSource.transaction(async (manager) => {
       await this.proveriDaJeOtvoreno(manager, id);
       await manager.delete(Glas, {
         glasanje: { id },
         korisnik: { id: korisnikId },
-        stan: IsNull(),
+        stan:
+          glasanje.vrsta === VrstaGlasanja.ODLUKA ? Not(IsNull()) : IsNull(),
       });
     });
     return this.jedno(id, korisnikId, p);
   }
 
   async zatvori(id: number, korisnikId: number, uloga: Uloga) {
-    const { p } = await this.findZaUpravljanje(id, korisnikId, uloga);
+    const { glasanje, p } = await this.findZaUpravljanje(id, korisnikId, uloga);
+    // Ranim zatvaranjem bi se odluka mogla zatvoriti baš kad ishod odgovara
+    if (glasanje.vrsta === VrstaGlasanja.ODLUKA) {
+      throw new ConflictException('Odluka traje do roka.');
+    }
     const sada = new Date();
     const rezultat = await this.glasanjeRepository.update(
       { id, rok: MoreThan(sada) },
@@ -164,6 +207,26 @@ export class GlasanjeService {
     await this.glasanjeRepository.delete(id);
   }
 
+  // Završena odluka se jednom objavljuje kao obaveštenje u svojoj zgradi
+  async proveriObjavu(glasanjeId: number, zgradaId: number) {
+    const odluka = await this.glasanjeRepository.findOneBy({
+      id: glasanjeId,
+      vrsta: VrstaGlasanja.ODLUKA,
+      zgrada: { id: zgradaId },
+    });
+    if (!odluka) {
+      throw new NotFoundException(
+        `Odluka sa id-jem ${glasanjeId} ne postoji u ovoj zgradi!`,
+      );
+    }
+    if (odluka.rok > new Date()) {
+      throw new ConflictException('Odluka se objavljuje posle roka.');
+    }
+    if (await this.oglasRepository.existsBy({ glasanje: { id: glasanjeId } })) {
+      throw new ConflictException('Odluka je već objavljena.');
+    }
+  }
+
   private async findDostupno(id: number, korisnikId: number, uloga: Uloga) {
     const glasanje = await this.glasanjeRepository.findOne({
       where: { id },
@@ -173,7 +236,9 @@ export class GlasanjeService {
       throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
-    if (!sadrzi(p.zgrade, glasanje.zgrada.id)) {
+    const zgrade =
+      glasanje.vrsta === VrstaGlasanja.ODLUKA ? zgradeOdluka(p) : p.zgrade;
+    if (!sadrzi(zgrade, glasanje.zgrada.id)) {
       throw new ForbiddenException('Nemate pristup ovom glasanju!');
     }
     return { glasanje, p };
@@ -181,7 +246,12 @@ export class GlasanjeService {
 
   private async findZaGlasanje(id: number, korisnikId: number, uloga: Uloga) {
     const dostupno = await this.findDostupno(id, korisnikId, uloga);
-    if (!dostupno.p.stanuje.includes(dostupno.glasanje.zgrada.id)) {
+    const { glasanje, p } = dostupno;
+    if (glasanje.vrsta === VrstaGlasanja.ODLUKA) {
+      if (!p.poseduje.includes(glasanje.zgrada.id)) {
+        throw new ForbiddenException(PORUKA_VLASNICI);
+      }
+    } else if (!p.stanuje.includes(glasanje.zgrada.id)) {
       throw new ForbiddenException('Glasaju stanari ove zgrade.');
     }
     return dostupno;
@@ -194,7 +264,7 @@ export class GlasanjeService {
   ) {
     const dostupno = await this.findDostupno(id, korisnikId, uloga);
     if (!sadrzi(dostupno.p.upravlja, dostupno.glasanje.zgrada.id)) {
-      throw new ForbiddenException('Anketom upravlja upravnik zgrade.');
+      throw new ForbiddenException('Glasanjem upravlja upravnik zgrade.');
     }
     return dostupno;
   }
@@ -207,6 +277,52 @@ export class GlasanjeService {
     });
     if (!otvoreno) {
       throw new ConflictException(PORUKA_ZAVRSENA);
+    }
+  }
+
+  // Glas odluke pripada stanu (čl. 43): vlasnik jednim glasom glasa za sve svoje stanove
+  // u zgradi za koje niko nije glasao, a menja samo glasove koje je sam dao
+  private async glasajZaStanove(
+    manager: EntityManager,
+    glasanje: Glasanje,
+    korisnikId: number,
+    opcijaId: number,
+  ) {
+    const veze = await manager.find(StanarStana, {
+      where: {
+        korisnik: { id: korisnikId },
+        vlasnik: true,
+        stan: { zgrada: { id: glasanje.zgrada.id } },
+      },
+      relations: { stan: true },
+      select: { id: true, stan: { id: true } },
+    });
+    const stanovi = veze.map((veza) => veza.stan.id);
+    if (stanovi.length === 0) {
+      throw new ForbiddenException(PORUKA_VLASNICI);
+    }
+
+    // Novi glas za stan bez glasa ili promena svog glasa, u jednom upitu; stan za koji je
+    // suvlasnik već glasao se preskače, jer se tuđ glas ne menja
+    const { raw } = await manager
+      .createQueryBuilder()
+      .insert()
+      .into(Glas)
+      .values(
+        stanovi.map((stanId) => ({
+          glasanje: { id: glasanje.id },
+          opcija: { id: opcijaId },
+          korisnik: { id: korisnikId },
+          stan: { id: stanId },
+        })),
+      )
+      .orUpdate(['opcijaId', 'datumGlasanja'], ['glasanjeId', 'stanId'], {
+        indexPredicate: JEDAN_GLAS_STANA,
+        overwriteCondition: { where: { korisnik: { id: korisnikId } } },
+      })
+      .execute();
+    if (raw.length === 0) {
+      throw new ConflictException('Za tvoj stan je već glasao suvlasnik.');
     }
   }
 
@@ -230,50 +346,100 @@ export class GlasanjeService {
     }
     const ids = glasanja.map((g) => g.id);
     const zgrade = [...new Set(glasanja.map((g) => g.zgrada.id))];
+    const odluke = glasanja
+      .filter((g) => g.vrsta === VrstaGlasanja.ODLUKA)
+      .map((g) => g.id);
 
-    const [poOpciji, moji, stanari] = await Promise.all([
-      this.glasRepository
-        .createQueryBuilder('glas')
-        .select('glas.opcijaId', 'opcijaId')
-        .addSelect('COUNT(*)::int', 'broj')
-        .where('glas.glasanjeId IN (:...ids)', { ids })
-        .groupBy('glas.opcijaId')
-        .getRawMany<{ opcijaId: number; broj: number }>(),
-      this.glasRepository.find({
-        where: {
-          glasanje: { id: In(ids) },
-          korisnik: { id: korisnikId },
-          stan: IsNull(),
-        },
-        relations: { glasanje: true, opcija: true },
-        select: { id: true, glasanje: { id: true }, opcija: { id: true } },
-      }),
-      // Pravo glasa ima svako ko ima stan u zgradi (vlasnik i ukucanin)
-      this.stanarStanaRepository
-        .createQueryBuilder('veza')
-        .innerJoin('veza.stan', 'stan')
-        .select('stan.zgradaId', 'zgradaId')
-        .addSelect('COUNT(DISTINCT veza.korisnikId)::int', 'broj')
-        .where('stan.zgradaId IN (:...zgrade)', { zgrade })
-        .groupBy('stan.zgradaId')
-        .getRawMany<{ zgradaId: number; broj: number }>(),
-    ]);
+    const [poOpciji, moji, stanari, stanovi, mojiStanovi, objave] =
+      await Promise.all([
+        this.glasRepository
+          .createQueryBuilder('glas')
+          .select('glas.opcijaId', 'opcijaId')
+          .addSelect('COUNT(*)::int', 'broj')
+          .where('glas.glasanjeId IN (:...ids)', { ids })
+          .groupBy('glas.opcijaId')
+          .getRawMany<{ opcijaId: number; broj: number }>(),
+        this.glasRepository.find({
+          where: {
+            glasanje: { id: In(ids) },
+            korisnik: { id: korisnikId },
+            stan: IsNull(),
+          },
+          relations: { glasanje: true, opcija: true },
+          select: { id: true, glasanje: { id: true }, opcija: { id: true } },
+        }),
+        // Pravo glasa u anketi ima svako ko ima stan u zgradi (vlasnik i ukucanin)
+        this.stanarStanaRepository
+          .createQueryBuilder('veza')
+          .innerJoin('veza.stan', 'stan')
+          .select('stan.zgradaId', 'zgradaId')
+          .addSelect('COUNT(DISTINCT veza.korisnikId)::int', 'broj')
+          .where('stan.zgradaId IN (:...zgrade)', { zgrade })
+          .groupBy('stan.zgradaId')
+          .getRawMany<{ zgradaId: number; broj: number }>(),
+        // U odluci je svaki stan zgrade jedan glas, i kad vlasnik nije u aplikaciji
+        odluke.length === 0
+          ? []
+          : this.stanRepository
+              .createQueryBuilder('stan')
+              .select('stan.zgradaId', 'zgradaId')
+              .addSelect('COUNT(*)::int', 'broj')
+              .where('stan.zgradaId IN (:...zgrade)', { zgrade })
+              .groupBy('stan.zgradaId')
+              .getRawMany<{ zgradaId: number; broj: number }>(),
+        odluke.length === 0
+          ? { stanovi: [], glasovi: [] }
+          : this.mojiStanoviUOdlukama(odluke, korisnikId),
+        odluke.length === 0
+          ? []
+          : this.oglasRepository.find({
+              where: { glasanje: { id: In(odluke) } },
+              relations: { glasanje: true },
+              select: { id: true, glasanje: { id: true } },
+            }),
+      ]);
 
     const brojPoOpciji = new Map(poOpciji.map((r) => [r.opcijaId, r.broj]));
     const mojGlasPoAnketi = new Map(
       moji.map((glas) => [glas.glasanje.id, glas.opcija.id]),
     );
     const stanaraPoZgradi = new Map(stanari.map((r) => [r.zgradaId, r.broj]));
+    const stanovaPoZgradi = new Map(stanovi.map((r) => [r.zgradaId, r.broj]));
+    const oglasPoOdluci = new Map(
+      objave.map((oglas) => [oglas.glasanje?.id, oglas.id]),
+    );
 
     return glasanja.map((glasanje) => {
       const zgradaId = glasanje.zgrada.id;
-      const mojGlas = mojGlasPoAnketi.get(glasanje.id) ?? null;
+      const odluka = glasanje.vrsta === VrstaGlasanja.ODLUKA;
       const zavrseno = glasanje.rok <= sada;
       const upravlja = sadrzi(p.upravlja, zgradaId);
-      // Stanar vidi rezultate tek kad glasa, da ga tuđi glasovi ne bi usmerili
-      const vidiRezultate = upravlja || zavrseno || mojGlas !== null;
+
+      const brojMojihStanova = mojiStanovi.stanovi.filter(
+        (stan) => stan.zgradaId === zgradaId,
+      ).length;
+      const glasoviStanova = mojiStanovi.glasovi.filter(
+        (glas) => glas.glasanjeId === glasanje.id,
+      );
+      const mojGlas = odluka
+        ? (glasoviStanova.find((glas) => glas.moj)?.opcijaId ?? null)
+        : (mojGlasPoAnketi.get(glasanje.id) ?? null);
+      // U odluci glasa vlasnik koji je već glasao ili ima stan za koji niko nije glasao
+      const imaPravoGlasa = odluka
+        ? mojGlas !== null || brojMojihStanova > glasoviStanova.length
+        : p.stanuje.includes(zgradaId);
+      // Stanar vidi rezultate tek kad je glasano za njega (u odluci za njegov stan),
+      // da ga tuđi glasovi ne bi usmerili
+      const vidiRezultate =
+        upravlja || zavrseno || mojGlas !== null || glasoviStanova.length > 0;
+
       const opcije = glasanje.opcije.toSorted((a, b) => a.id - b.id);
       const brojevi = opcije.map((o) => brojPoOpciji.get(o.id) ?? 0);
+      const brojGlasaca = brojevi.reduce((zbir, broj) => zbir + broj, 0);
+      const ukupnoGlasaca =
+        (odluka ? stanovaPoZgradi : stanaraPoZgradi).get(zgradaId) ?? 0;
+      const za = brojevi[opcije.findIndex((o) => o.tekst === ZA)] ?? 0;
+      const oglasId = oglasPoOdluci.get(glasanje.id) ?? null;
 
       return Object.assign(glasanje, {
         opcije: opcije.map((opcija, i) => ({
@@ -282,13 +448,62 @@ export class GlasanjeService {
           brojGlasova: vidiRezultate ? brojevi[i] : null,
         })),
         mojGlas,
-        brojGlasaca: brojevi.reduce((zbir, broj) => zbir + broj, 0),
-        brojStanara: stanaraPoZgradi.get(zgradaId) ?? 0,
+        glasaliSuvlasnici: glasoviStanova
+          .filter((glas) => !glas.moj)
+          .map((glas) => glas.stan),
+        brojGlasaca,
+        ukupnoGlasaca,
         zavrseno,
-        smeDaGlasa: !zavrseno && p.stanuje.includes(zgradaId),
-        smeDaZatvori: !zavrseno && upravlja,
+        ishod:
+          glasanje.vecina !== null && zavrseno
+            ? ishodOdluke(glasanje.vecina, za, brojGlasaca, ukupnoGlasaca)
+            : null,
+        oglasId,
+        smeDaGlasa: !zavrseno && imaPravoGlasa,
+        smeDaZatvori: !zavrseno && !odluka && upravlja,
         smeDaObrise: upravlja,
+        smeDaObjavi: zavrseno && odluka && upravlja && oglasId === null,
       });
     });
+  }
+
+  // Stanovi u kojima je korisnik vlasnik i glasovi za njih u datim odlukama
+  private async mojiStanoviUOdlukama(odluke: number[], korisnikId: number) {
+    const veze = await this.stanarStanaRepository.find({
+      where: { korisnik: { id: korisnikId }, vlasnik: true },
+      relations: { stan: { zgrada: true } },
+      select: { id: true, stan: { id: true, zgrada: { id: true } } },
+    });
+    const stanovi = veze.map((veza) => ({
+      id: veza.stan.id,
+      zgradaId: veza.stan.zgrada.id,
+    }));
+    if (stanovi.length === 0) {
+      return { stanovi, glasovi: [] };
+    }
+
+    const glasovi = await this.glasRepository.find({
+      where: {
+        glasanje: { id: In(odluke) },
+        stan: { id: In(stanovi.map((stan) => stan.id)) },
+      },
+      relations: { glasanje: true, opcija: true, korisnik: true, stan: true },
+      select: {
+        id: true,
+        glasanje: { id: true },
+        opcija: { id: true },
+        korisnik: { id: true },
+        stan: { id: true, broj: true },
+      },
+    });
+    return {
+      stanovi,
+      glasovi: glasovi.map((glas) => ({
+        glasanjeId: glas.glasanje.id,
+        opcijaId: glas.opcija.id,
+        stan: glas.stan?.broj ?? '',
+        moj: glas.korisnik.id === korisnikId,
+      })),
+    };
   }
 }

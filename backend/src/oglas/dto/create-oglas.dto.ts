@@ -47,4 +47,9 @@ export class CreateOglasDto {
   @IsInt()
   @IsPositive()
   zgradaId: number;
+
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  glasanjeId?: number;
 }

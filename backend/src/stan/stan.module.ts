@@ -9,6 +9,7 @@ import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
+import { Glas } from '../glasanje/glas.entity.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.enti
       StanarStana,
       Kvar,
       ZahtevPovezivanje,
+      Glas,
     ]),
     AuthModule,
     KorisnikModule,
