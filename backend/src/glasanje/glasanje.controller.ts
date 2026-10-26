@@ -49,6 +49,14 @@ export class GlasanjeController {
     return this.glasanjeService.findAll(korisnik.id, korisnik.uloga, upit);
   }
 
+  @Get(':id')
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.glasanjeService.findOne(id, korisnik.id, korisnik.uloga);
+  }
+
   @Put(':id/glas')
   glasaj(
     @Param('id', ParseIntPipe) id: number,

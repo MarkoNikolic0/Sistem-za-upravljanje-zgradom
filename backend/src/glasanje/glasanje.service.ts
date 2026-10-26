@@ -36,7 +36,12 @@ import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateGlasanjeDto } from './dto/create-glasanje.dto.js';
 import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
-import { ODGOVORI_ODLUKE, ZA, ishodOdluke } from './ishod-odluke.js';
+import {
+  ODGOVORI_ODLUKE,
+  ZA,
+  ishodOdluke,
+  pragoviOdluke,
+} from './ishod-odluke.js';
 
 const PORUKA_ZAVRSENA = 'Glasanje je završeno.';
 const PORUKA_VLASNICI = 'Za odluke glasaju vlasnici stanova u zgradi.';
@@ -103,6 +108,12 @@ export class GlasanjeService {
       stavke: await this.saRezultatima(stavke, korisnikId, p, sada),
       ukupno,
     };
+  }
+
+  async findOne(id: number, korisnikId: number, uloga: Uloga) {
+    const { glasanje, p } = await this.findDostupno(id, korisnikId, uloga);
+    const [rezultat] = await this.saRezultatima([glasanje], korisnikId, p);
+    return rezultat;
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateGlasanjeDto) {
@@ -207,7 +218,6 @@ export class GlasanjeService {
     await this.glasanjeRepository.delete(id);
   }
 
-  // Završena odluka se jednom objavljuje kao obaveštenje u svojoj zgradi
   async proveriObjavu(glasanjeId: number, zgradaId: number) {
     const odluka = await this.glasanjeRepository.findOneBy({
       id: glasanjeId,
@@ -280,8 +290,6 @@ export class GlasanjeService {
     }
   }
 
-  // Glas odluke pripada stanu (čl. 43): vlasnik jednim glasom glasa za sve svoje stanove
-  // u zgradi za koje niko nije glasao, a menja samo glasove koje je sam dao
   private async glasajZaStanove(
     manager: EntityManager,
     glasanje: Glasanje,
@@ -302,8 +310,6 @@ export class GlasanjeService {
       throw new ForbiddenException(PORUKA_VLASNICI);
     }
 
-    // Novi glas za stan bez glasa ili promena svog glasa, u jednom upitu; stan za koji je
-    // suvlasnik već glasao se preskače, jer se tuđ glas ne menja
     const { raw } = await manager
       .createQueryBuilder()
       .insert()
@@ -458,6 +464,10 @@ export class GlasanjeService {
           glasanje.vecina !== null && zavrseno
             ? ishodOdluke(glasanje.vecina, za, brojGlasaca, ukupnoGlasaca)
             : null,
+        pragovi:
+          glasanje.vecina === null
+            ? null
+            : pragoviOdluke(glasanje.vecina, brojGlasaca, ukupnoGlasaca),
         oglasId,
         smeDaGlasa: !zavrseno && imaPravoGlasa,
         smeDaZatvori: !zavrseno && !odluka && upravlja,
