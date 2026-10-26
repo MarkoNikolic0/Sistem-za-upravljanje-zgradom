@@ -774,8 +774,11 @@ DELETE FROM glasanje g
 USING seed_glasanje s
 WHERE g.pitanje = s.pitanje AND g."zgradaId" = s.zgrada_id;
 
-INSERT INTO glasanje (vrsta, vecina, pitanje, opis, rok, "zatvorenoRanije", "zgradaId", "kreiraoId", "datumKreiranja")
-SELECT s.vrsta, s.vecina, s.pitanje, s.opis, s.rok, s.zatvoreno_ranije, s.zgrada_id, s.kreirao_id, s.datum_kreiranja
+-- Odluka pamti broj stanova zgrade iz vremena kad je napravljena (ukupan broj glasova)
+INSERT INTO glasanje (vrsta, vecina, "ukupnoStanova", pitanje, opis, rok, "zatvorenoRanije", "zgradaId", "kreiraoId", "datumKreiranja")
+SELECT s.vrsta, s.vecina,
+       CASE WHEN s.vrsta = 'odluka' THEN (SELECT count(*) FROM stan st WHERE st."zgradaId" = s.zgrada_id) END,
+       s.pitanje, s.opis, s.rok, s.zatvoreno_ranije, s.zgrada_id, s.kreirao_id, s.datum_kreiranja
 FROM seed_glasanje s
 ORDER BY s.rb;
 

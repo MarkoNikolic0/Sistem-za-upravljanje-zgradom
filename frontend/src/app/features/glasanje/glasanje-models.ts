@@ -14,8 +14,6 @@ export const MAKS_OPCIJA_TEKST = 100;
 export const NAJMANJE_OPCIJA = 2;
 export const NAJVISE_OPCIJA = 10;
 
-export const ZA = 'Za';
-
 export const VRSTE_GLASANJA: Record<VrstaGlasanja, { naziv: string; opis: string }> = {
   anketa: {
     naziv: 'Anketa',
@@ -70,6 +68,7 @@ export interface Glasanje {
   mojGlas: number | null;
   glasaliSuvlasnici: string[];
   brojGlasaca: number;
+  brojZa: number | null;
   ukupnoGlasaca: number;
   zavrseno: boolean;
   ishod: IshodOdluke | null;

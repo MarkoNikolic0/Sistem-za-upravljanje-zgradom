@@ -22,6 +22,11 @@ export class Glasanje {
   @Column({ type: 'enum', enum: VecinaOdluke, nullable: true })
   vecina: VecinaOdluke | null;
 
+  // Ukupan broj glasova odluke (stanovi zgrade) u trenutku pravljenja, da se ishod ne menja
+  // kad se kasnije doda ili obriše stan
+  @Column({ type: 'int', nullable: true })
+  ukupnoStanova: number | null;
+
   @Column()
   pitanje: string;
 

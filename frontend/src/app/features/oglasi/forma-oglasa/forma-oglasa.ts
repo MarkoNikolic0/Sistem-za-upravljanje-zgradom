@@ -5,7 +5,6 @@ import {
   ElementRef,
   inject,
   input,
-  numberAttribute,
   signal,
   untracked,
 } from '@angular/core';
@@ -21,7 +20,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
 import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
-import { jeIspravanId } from '../../../shared/ispravan-id';
+import { idIzAdrese, jeIspravanId } from '../../../shared/ispravan-id';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { OglasService } from '../oglas-service';
 import { MAKS_NASLOV_OGLASA, MAKS_TEKST_OGLASA, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
@@ -67,7 +66,7 @@ export class FormaOglasa {
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly id = input(undefined, {
-    transform: (id: string | undefined) => (id === undefined ? undefined : numberAttribute(id)),
+    transform: idIzAdrese,
   });
   protected readonly izmena = computed(() => this.id() !== undefined);
   protected readonly neispravanId = computed(() => {
@@ -80,7 +79,7 @@ export class FormaOglasa {
 
   // Objava završene odluke: /oglasi/novi?odluka=63
   readonly odluka = input(undefined, {
-    transform: (id: string | undefined) => (id === undefined ? undefined : numberAttribute(id)),
+    transform: idIzAdrese,
   });
   protected readonly objava = computed(() => !this.izmena() && this.odluka() !== undefined);
   protected readonly glasanje = this.glasanjeService.glasanje(

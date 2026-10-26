@@ -1,6 +1,6 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { MS_PO_DANU } from '../../shared/datum';
-import { Glasanje, IshodOdluke, ZA } from './glasanje-models';
+import { Glasanje, IshodOdluke } from './glasanje-models';
 
 const nabrajanje = new Intl.ListFormat('sr-Latn', { type: 'conjunction' });
 
@@ -42,10 +42,6 @@ export function stanova(broj: number): string {
   return uMnozini(broj, 'stan', 'stana', 'stanova');
 }
 
-export function glasoviZa(glasanje: Glasanje): number | null {
-  return glasanje.opcije.find((o) => o.tekst === ZA)?.brojGlasova ?? null;
-}
-
 export function udeo(broj: number, ukupno: number): number {
   return ukupno === 0 ? 0 : broj / ukupno;
 }
@@ -80,7 +76,7 @@ export function detaljIshoda(glasanje: Glasanje): string {
   if (ishod === 'nema_kvoruma') {
     return `Potrebno je da glasa najmanje ${stanova(pragovi.kvorum)}.`;
   }
-  const za = glasoviZa(glasanje) ?? 0;
+  const za = glasanje.brojZa ?? 0;
   return vecina === 'dve_trecine'
     ? `Za ${za}, potrebno ${pragovi.potrebnoZa} od ${stanova(ukupnoGlasaca)}.`
     : `Za ${za} od ${glasova(brojGlasaca)}, potrebno ${pragovi.potrebnoZa}.`;

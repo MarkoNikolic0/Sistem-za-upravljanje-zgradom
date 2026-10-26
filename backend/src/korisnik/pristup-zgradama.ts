@@ -1,6 +1,7 @@
 export interface PristupZgradama {
   stanuje: number[];
   poseduje: number[];
+  vlasnickiStanovi: { id: number; zgradaId: number }[];
   zgrade: number[] | null;
   upravlja: number[] | null;
 }

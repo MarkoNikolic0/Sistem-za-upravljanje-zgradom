@@ -166,7 +166,6 @@ export class NovoGlasanje {
     return kontrola.invalid && kontrola.touched;
   }
 
-  // Greška cele liste: iste opcije ili poruka servera
   protected greskaListeOpcija(): string | null {
     const greske = this.opcije.errors;
     if (!greske || !this.opcije.touched) {

@@ -9,6 +9,7 @@ import {
   FindOptionsWhere,
   In,
   IsNull,
+  Not,
   LessThanOrEqual,
   MoreThan,
   Or,
@@ -166,6 +167,13 @@ export class OglasService {
     if (dto.vrsta) {
       this.proveriVrstu(dto.vrsta, p, oglas.zgrada.id);
     }
+    if (
+      dto.vrsta &&
+      dto.vrsta !== VrstaOglasa.OBAVESTENJE &&
+      (await this.oglasRepository.existsBy({ id, glasanje: Not(IsNull()) }))
+    ) {
+      throw greskaPolja('vrsta', 'Objava odluke ostaje obaveštenje.');
+    }
 
     const izmene: Partial<Oglas> = {
       naslov: dto.naslov ?? oglas.naslov,
@@ -254,9 +262,11 @@ export class OglasService {
       );
     }
 
+    // Sakrivena objava više ne važi, pa upravnik odluku može da objavi ponovo
     const izmene = {
       datumSakrivanja: new Date(),
       razlogSakrivanja: dto.razlog,
+      glasanje: null,
     };
     const rezultat = await this.oglasRepository.update(
       { id, datumSakrivanja: IsNull() },

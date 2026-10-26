@@ -141,6 +141,9 @@ export class GlasanjeService {
       this.glasanjeRepository.create({
         vrsta: dto.vrsta,
         vecina: dto.vecina ?? null,
+        ukupnoStanova: odluka
+          ? await this.stanRepository.countBy({ zgrada: { id: dto.zgradaId } })
+          : null,
         pitanje: dto.pitanje,
         opis: dto.opis || null,
         rok: dto.rok,
@@ -161,7 +164,7 @@ export class GlasanjeService {
     await this.dataSource.transaction(async (manager) => {
       await this.proveriDaJeOtvoreno(manager, id);
       if (glasanje.vrsta === VrstaGlasanja.ODLUKA) {
-        await this.glasajZaStanove(manager, glasanje, korisnikId, opcijaId);
+        await this.glasajZaStanove(manager, glasanje, korisnikId, opcijaId, p);
         return;
       }
       // Novi glas ili promena postojeceg, u jednom upitu
@@ -295,17 +298,11 @@ export class GlasanjeService {
     glasanje: Glasanje,
     korisnikId: number,
     opcijaId: number,
+    p: PristupZgradama,
   ) {
-    const veze = await manager.find(StanarStana, {
-      where: {
-        korisnik: { id: korisnikId },
-        vlasnik: true,
-        stan: { zgrada: { id: glasanje.zgrada.id } },
-      },
-      relations: { stan: true },
-      select: { id: true, stan: { id: true } },
-    });
-    const stanovi = veze.map((veza) => veza.stan.id);
+    const stanovi = p.vlasnickiStanovi
+      .filter((stan) => stan.zgradaId === glasanje.zgrada.id)
+      .map((stan) => stan.id);
     if (stanovi.length === 0) {
       throw new ForbiddenException(PORUKA_VLASNICI);
     }
@@ -356,8 +353,8 @@ export class GlasanjeService {
       .filter((g) => g.vrsta === VrstaGlasanja.ODLUKA)
       .map((g) => g.id);
 
-    const [poOpciji, moji, stanari, stanovi, mojiStanovi, objave] =
-      await Promise.all([
+    const [poOpciji, moji, stanari, glasoviStanova, objave] = await Promise.all(
+      [
         this.glasRepository
           .createQueryBuilder('glas')
           .select('glas.opcijaId', 'opcijaId')
@@ -383,19 +380,9 @@ export class GlasanjeService {
           .where('stan.zgradaId IN (:...zgrade)', { zgrade })
           .groupBy('stan.zgradaId')
           .getRawMany<{ zgradaId: number; broj: number }>(),
-        // U odluci je svaki stan zgrade jedan glas, i kad vlasnik nije u aplikaciji
         odluke.length === 0
           ? []
-          : this.stanRepository
-              .createQueryBuilder('stan')
-              .select('stan.zgradaId', 'zgradaId')
-              .addSelect('COUNT(*)::int', 'broj')
-              .where('stan.zgradaId IN (:...zgrade)', { zgrade })
-              .groupBy('stan.zgradaId')
-              .getRawMany<{ zgradaId: number; broj: number }>(),
-        odluke.length === 0
-          ? { stanovi: [], glasovi: [] }
-          : this.mojiStanoviUOdlukama(odluke, korisnikId),
+          : this.glasoviMojihStanova(odluke, korisnikId, p),
         odluke.length === 0
           ? []
           : this.oglasRepository.find({
@@ -403,14 +390,14 @@ export class GlasanjeService {
               relations: { glasanje: true },
               select: { id: true, glasanje: { id: true } },
             }),
-      ]);
+      ],
+    );
 
     const brojPoOpciji = new Map(poOpciji.map((r) => [r.opcijaId, r.broj]));
     const mojGlasPoAnketi = new Map(
       moji.map((glas) => [glas.glasanje.id, glas.opcija.id]),
     );
     const stanaraPoZgradi = new Map(stanari.map((r) => [r.zgradaId, r.broj]));
-    const stanovaPoZgradi = new Map(stanovi.map((r) => [r.zgradaId, r.broj]));
     const oglasPoOdluci = new Map(
       objave.map((oglas) => [oglas.glasanje?.id, oglas.id]),
     );
@@ -421,29 +408,33 @@ export class GlasanjeService {
       const zavrseno = glasanje.rok <= sada;
       const upravlja = sadrzi(p.upravlja, zgradaId);
 
-      const brojMojihStanova = mojiStanovi.stanovi.filter(
+      const brojMojihStanova = p.vlasnickiStanovi.filter(
         (stan) => stan.zgradaId === zgradaId,
       ).length;
-      const glasoviStanova = mojiStanovi.glasovi.filter(
+      const glasoviMojihStanova = glasoviStanova.filter(
         (glas) => glas.glasanjeId === glasanje.id,
       );
       const mojGlas = odluka
-        ? (glasoviStanova.find((glas) => glas.moj)?.opcijaId ?? null)
+        ? (glasoviMojihStanova.find((glas) => glas.moj)?.opcijaId ?? null)
         : (mojGlasPoAnketi.get(glasanje.id) ?? null);
       // U odluci glasa vlasnik koji je već glasao ili ima stan za koji niko nije glasao
       const imaPravoGlasa = odluka
-        ? mojGlas !== null || brojMojihStanova > glasoviStanova.length
+        ? mojGlas !== null || brojMojihStanova > glasoviMojihStanova.length
         : p.stanuje.includes(zgradaId);
       // Stanar vidi rezultate tek kad je glasano za njega (u odluci za njegov stan),
       // da ga tuđi glasovi ne bi usmerili
       const vidiRezultate =
-        upravlja || zavrseno || mojGlas !== null || glasoviStanova.length > 0;
+        upravlja ||
+        zavrseno ||
+        mojGlas !== null ||
+        glasoviMojihStanova.length > 0;
 
       const opcije = glasanje.opcije.toSorted((a, b) => a.id - b.id);
       const brojevi = opcije.map((o) => brojPoOpciji.get(o.id) ?? 0);
       const brojGlasaca = brojevi.reduce((zbir, broj) => zbir + broj, 0);
-      const ukupnoGlasaca =
-        (odluka ? stanovaPoZgradi : stanaraPoZgradi).get(zgradaId) ?? 0;
+      const ukupnoGlasaca = odluka
+        ? (glasanje.ukupnoStanova ?? 0)
+        : (stanaraPoZgradi.get(zgradaId) ?? 0);
       const za = brojevi[opcije.findIndex((o) => o.tekst === ZA)] ?? 0;
       const oglasId = oglasPoOdluci.get(glasanje.id) ?? null;
 
@@ -454,10 +445,11 @@ export class GlasanjeService {
           brojGlasova: vidiRezultate ? brojevi[i] : null,
         })),
         mojGlas,
-        glasaliSuvlasnici: glasoviStanova
+        glasaliSuvlasnici: glasoviMojihStanova
           .filter((glas) => !glas.moj)
           .map((glas) => glas.stan),
         brojGlasaca,
+        brojZa: odluka && vidiRezultate ? za : null,
         ukupnoGlasaca,
         zavrseno,
         ishod:
@@ -477,25 +469,19 @@ export class GlasanjeService {
     });
   }
 
-  // Stanovi u kojima je korisnik vlasnik i glasovi za njih u datim odlukama
-  private async mojiStanoviUOdlukama(odluke: number[], korisnikId: number) {
-    const veze = await this.stanarStanaRepository.find({
-      where: { korisnik: { id: korisnikId }, vlasnik: true },
-      relations: { stan: { zgrada: true } },
-      select: { id: true, stan: { id: true, zgrada: { id: true } } },
-    });
-    const stanovi = veze.map((veza) => ({
-      id: veza.stan.id,
-      zgradaId: veza.stan.zgrada.id,
-    }));
-    if (stanovi.length === 0) {
-      return { stanovi, glasovi: [] };
+  // Glasovi u datim odlukama za stanove u kojima je korisnik vlasnik
+  private async glasoviMojihStanova(
+    odluke: number[],
+    korisnikId: number,
+    p: PristupZgradama,
+  ) {
+    if (p.vlasnickiStanovi.length === 0) {
+      return [];
     }
-
     const glasovi = await this.glasRepository.find({
       where: {
         glasanje: { id: In(odluke) },
-        stan: { id: In(stanovi.map((stan) => stan.id)) },
+        stan: { id: In(p.vlasnickiStanovi.map((stan) => stan.id)) },
       },
       relations: { glasanje: true, opcija: true, korisnik: true, stan: true },
       select: {
@@ -506,14 +492,11 @@ export class GlasanjeService {
         stan: { id: true, broj: true },
       },
     });
-    return {
-      stanovi,
-      glasovi: glasovi.map((glas) => ({
-        glasanjeId: glas.glasanje.id,
-        opcijaId: glas.opcija.id,
-        stan: glas.stan?.broj ?? '',
-        moj: glas.korisnik.id === korisnikId,
-      })),
-    };
+    return glasovi.map((glas) => ({
+      glasanjeId: glas.glasanje.id,
+      opcijaId: glas.opcija.id,
+      stan: glas.stan?.broj ?? '',
+      moj: glas.korisnik.id === korisnikId,
+    }));
   }
 }

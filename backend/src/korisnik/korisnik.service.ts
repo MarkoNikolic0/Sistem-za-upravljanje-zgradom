@@ -40,17 +40,24 @@ export class KorisnikService {
       },
     });
     const stanuje = [...new Set(veze.map((v) => v.stan.zgrada.id))];
-    const poseduje = [
-      ...new Set(veze.filter((v) => v.vlasnik).map((v) => v.stan.zgrada.id)),
-    ];
+    const vlasnickiStanovi = veze
+      .filter((v) => v.vlasnik)
+      .map((v) => ({ id: v.stan.id, zgradaId: v.stan.zgrada.id }));
+    const poseduje = [...new Set(vlasnickiStanovi.map((s) => s.zgradaId))];
     if (uloga === Uloga.ADMIN) {
-      return { stanuje, poseduje, zgrade: null, upravlja: null };
+      return {
+        stanuje,
+        poseduje,
+        vlasnickiStanovi,
+        zgrade: null,
+        upravlja: null,
+      };
     }
     const zgradaUpravnika =
       uloga === Uloga.UPRAVNIK ? await this.zgradaUpravnika(korisnikId) : null;
     const upravlja = zgradaUpravnika === null ? [] : [zgradaUpravnika];
     const zgrade = [...new Set([...stanuje, ...upravlja])];
-    return { stanuje, poseduje, zgrade, upravlja };
+    return { stanuje, poseduje, vlasnickiStanovi, zgrade, upravlja };
   }
 
   async mojProfil(korisnikId: number) {
