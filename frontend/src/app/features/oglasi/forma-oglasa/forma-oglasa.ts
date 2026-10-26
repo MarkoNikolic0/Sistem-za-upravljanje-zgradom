@@ -34,6 +34,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { IzabraniFajlovi } from '../../../shared/izabrani-fajlovi/izabrani-fajlovi';
 import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { GlasanjeService } from '../../glasanje/glasanje-service';
+import { objavaOdluke } from '../../glasanje/pravila-glasanja';
 
 type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst' | 'vaziDo';
 
@@ -58,6 +60,7 @@ type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst' | 'vaziDo';
 })
 export class FormaOglasa {
   private oglasService = inject(OglasService);
+  private glasanjeService = inject(GlasanjeService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -74,6 +77,28 @@ export class FormaOglasa {
   protected readonly oglas = this.oglasService.oglas(
     computed(() => (this.neispravanId() ? undefined : this.id())),
   );
+
+  // Objava završene odluke: /oglasi/novi?odluka=63
+  readonly odluka = input(undefined, {
+    transform: (id: string | undefined) => (id === undefined ? undefined : numberAttribute(id)),
+  });
+  protected readonly objava = computed(() => !this.izmena() && this.odluka() !== undefined);
+  protected readonly glasanje = this.glasanjeService.glasanje(
+    computed(() => {
+      const id = this.odluka();
+      return this.objava() && id !== undefined && jeIspravanId(id) ? id : undefined;
+    }),
+  );
+  protected readonly nemaOdluke = computed(() => {
+    const id = this.odluka();
+    return (
+      this.objava() &&
+      (id === undefined ||
+        !jeIspravanId(id) ||
+        !!this.glasanje.error() ||
+        (this.glasanje.hasValue() && !this.glasanje.value().smeDaObjavi))
+    );
+  });
 
   private readonly zgradeOglasa = injectZgradeKorisnika();
   protected readonly profil = this.zgradeOglasa.profil;
@@ -176,6 +201,19 @@ export class FormaOglasa {
       }
     });
 
+    effect(() => {
+      if (this.glasanje.hasValue() && this.glasanje.value().smeDaObjavi) {
+        const odluka = this.glasanje.value();
+        untracked(() =>
+          this.forma.patchValue({
+            zgradaId: odluka.zgrada.id,
+            vrsta: 'obavestenje',
+            ...objavaOdluke(odluka, MAKS_NASLOV_OGLASA),
+          }),
+        );
+      }
+    });
+
     // Dok korisnik sam ne izabere rok, predlažemo ga prema vrsti
     effect(() => {
       const vrsta = this.vrsta();
@@ -215,12 +253,18 @@ export class FormaOglasa {
     this.greska.set('');
     this.slanje.set(true);
     try {
+      const glasanjeId = this.objava() ? this.odluka() : undefined;
       const oglasId =
         id === undefined
-          ? (await firstValueFrom(this.oglasService.objavi({ ...podaci, zgradaId }))).id
+          ? (await firstValueFrom(this.oglasService.objavi({ ...podaci, zgradaId, glasanjeId }))).id
           : (await firstValueFrom(this.oglasService.izmeni(id, podaci))).id;
       const { nisuSacuvani, ukupno } = await this.sacuvajPriloge(oglasId);
-      const uradjeno = id === undefined ? 'Oglas je objavljen' : 'Oglas je izmenjen';
+      const uradjeno =
+        id !== undefined
+          ? 'Oglas je izmenjen'
+          : glasanjeId !== undefined
+            ? 'Odluka je objavljena na oglasnoj tabli'
+            : 'Oglas je objavljen';
       await this.router.navigate(['/oglasi'], {
         state: {
           poruka:
@@ -275,7 +319,7 @@ export class FormaOglasa {
       }
     }
     this.greska.set(
-      err.status === 403 || err.status === 409 ? (porukaServera(err) ?? neuspeh) : neuspeh,
+      [403, 404, 409].includes(err.status) ? (porukaServera(err) ?? neuspeh) : neuspeh,
     );
   }
 

@@ -61,7 +61,8 @@ export const ListaGlasanjaStore = signalStore(
                   }
                   patchState(store, { glasanja: stavke, ukupno }, setFulfilled());
                 },
-                error: () => patchState(store, setError('Ankete trenutno ne mogu da se učitaju.')),
+                error: () =>
+                  patchState(store, setError('Glasanja trenutno ne mogu da se učitaju.')),
               }),
             ),
         ),
@@ -139,14 +140,15 @@ export const ListaGlasanjaStore = signalStore(
           ucitaj,
         );
       },
-      obrisi(id: number): Promise<boolean> {
+      obrisi(glasanje: Glasanje): Promise<boolean> {
+        const naziv = glasanje.vrsta === 'odluka' ? 'Odluka' : 'Anketa';
         return store.izvrsi(
           async () => {
-            await firstValueFrom(glasanjeService.obrisi(id));
+            await firstValueFrom(glasanjeService.obrisi(glasanje.id));
             ucitaj();
           },
-          'Anketa je obrisana.',
-          'Anketa nije obrisana. Pokušaj ponovo.',
+          `${naziv} je obrisana.`,
+          `${naziv} nije obrisana. Pokušaj ponovo.`,
           ucitaj,
         );
       },

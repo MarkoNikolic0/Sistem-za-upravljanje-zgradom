@@ -1,7 +1,15 @@
 <div class="stranica">
   <p class="oznaka">Oglasi</p>
-  <h1 class="naslov-stranice mt-3">{{ izmena() ? 'Izmena oglasa' : 'Novi oglas' }}</h1>
-  <p class="mt-2 text-priguseno max-sm:hidden">Oglas vide svi stanari zgrade.</p>
+  <h1 class="naslov-stranice mt-3">
+    {{ izmena() ? 'Izmena oglasa' : objava() ? 'Objava odluke' : 'Novi oglas' }}
+  </h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">
+    {{
+      objava()
+        ? 'Obaveštenje je zakačeno na vrh table i vide ga svi stanari, i oni koji nisu vlasnici.'
+        : 'Oglas vide svi stanari zgrade.'
+    }}
+  </p>
 
   @if (neispravanId() || oglas.error() || greskaUcitavanja()) {
     <section class="odeljak">
@@ -14,7 +22,14 @@
       </p-message>
       <a pButton routerLink="/oglasi" outlined class="mt-4">Nazad na oglase</a>
     </section>
-  } @else if (!ucitano() || (izmena() && !oglas.hasValue())) {
+  } @else if (nemaOdluke()) {
+    <section class="odeljak">
+      <p-message severity="error">
+        Odluka ne postoji, još traje, već je objavljena ili nemaš pravo da je objaviš.
+      </p-message>
+      <a pButton routerLink="/glasanje" outlined class="mt-4">Nazad na glasanje</a>
+    </section>
+  } @else if (!ucitano() || (izmena() && !oglas.hasValue()) || (objava() && !glasanje.hasValue())) {
     <div class="odeljak ucitavanje" aria-hidden="true">
       <p-skeleton height="2.5rem" />
       <p-skeleton height="2.5rem" styleClass="mt-5" />
@@ -39,7 +54,12 @@
     </div>
 
     <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-5">
-      @if (oglas.hasValue()) {
+      @if (glasanje.hasValue()) {
+        <div class="flex flex-col gap-1.5">
+          <p class="text-sm font-medium">Zgrada i vrsta</p>
+          <p class="text-naslov">{{ glasanje.value().zgrada.naziv }} · Obaveštenje</p>
+        </div>
+      } @else if (oglas.hasValue()) {
         <div class="flex flex-col gap-1.5">
           <p class="text-sm font-medium">Zgrada</p>
           <p class="text-naslov">{{ oglas.value().zgrada.naziv }}</p>
@@ -69,35 +89,37 @@
         </div>
       }
 
-      <div class="flex flex-col gap-1.5">
-        <span id="vrsta-oznaka" class="text-sm font-medium">Vrsta oglasa</span>
-        <p-select
-          inputId="vrsta"
-          ariaLabelledBy="vrsta-oznaka"
-          formControlName="vrsta"
-          [options]="vrste()"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Izaberi vrstu"
-          [fluid]="true"
-          [invalid]="nevazece('vrsta')"
-        />
-        @if (nevazece('vrsta')) {
-          <small class="text-sm text-greska">
-            {{ forma.controls.vrsta.errors?.['server'] ?? 'Izaberi vrstu oglasa.' }}
-          </small>
-        }
-        @if (imaStan()) {
-          <small class="text-sm text-priguseno">
-            Kvar (lift, voda, struja) prijavi u
-            <a
-              routerLink="/kvarovi/novi"
-              class="text-naslov underline decoration-ivica underline-offset-4 hover:decoration-svetlo"
-              >Kvarovima</a
-            >, da bi ga upravnik video i rešio.
-          </small>
-        }
-      </div>
+      @if (!objava()) {
+        <div class="flex flex-col gap-1.5">
+          <span id="vrsta-oznaka" class="text-sm font-medium">Vrsta oglasa</span>
+          <p-select
+            inputId="vrsta"
+            ariaLabelledBy="vrsta-oznaka"
+            formControlName="vrsta"
+            [options]="vrste()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Izaberi vrstu"
+            [fluid]="true"
+            [invalid]="nevazece('vrsta')"
+          />
+          @if (nevazece('vrsta')) {
+            <small class="text-sm text-greska">
+              {{ forma.controls.vrsta.errors?.['server'] ?? 'Izaberi vrstu oglasa.' }}
+            </small>
+          }
+          @if (imaStan()) {
+            <small class="text-sm text-priguseno">
+              Kvar (lift, voda, struja) prijavi u
+              <a
+                routerLink="/kvarovi/novi"
+                class="text-naslov underline decoration-ivica underline-offset-4 hover:decoration-svetlo"
+                >Kvarovima</a
+              >, da bi ga upravnik video i rešio.
+            </small>
+          }
+        </div>
+      }
 
       <div class="flex flex-col gap-1.5">
         <label for="naslov" class="text-sm font-medium">Naslov</label>
@@ -220,7 +242,7 @@
             <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
             Slanje…
           } @else {
-            {{ izmena() ? 'Sačuvaj izmene' : 'Objavi oglas' }}
+            {{ izmena() ? 'Sačuvaj izmene' : objava() ? 'Objavi odluku' : 'Objavi oglas' }}
           }
         </button>
         <!-- Dok se šalje, Odustani bi prekinuo otpremanje priloga na pola -->

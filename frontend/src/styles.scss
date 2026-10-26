@@ -168,6 +168,43 @@ body {
   }
 }
 
+// Izbor kao pločica: pravi radio je skriven, a pločica pokazuje izbor i fokus
+.plocica {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  &:hover {
+    border-color: var(--color-priguseno);
+  }
+
+  &:has(:checked) {
+    border-color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 8%, transparent);
+
+    .ikonica,
+    .pi {
+      color: var(--color-svetlo);
+    }
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+
+  &.nevazeca {
+    border-color: color-mix(in srgb, var(--color-greska) 60%, transparent);
+  }
+}
+
 // PDF u mreži sličica (izbor fajlova u formi i prilozi oglasa)
 .plocica-fajla {
   display: flex;

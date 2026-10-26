@@ -24,6 +24,10 @@
     }
   </div>
 
+  @if (g.vecina; as vecina) {
+    <p class="oznaka mb-2">Odluka · {{ vecine[vecina].naziv }}</p>
+  }
+
   <h2 class="pitanje" [id]="'pitanje-' + g.id">{{ g.pitanje }}</h2>
   @if (g.opis) {
     <p class="mt-2 text-priguseno whitespace-pre-line wrap-anywhere">{{ g.opis }}</p>
@@ -62,18 +66,26 @@
     <p class="mt-3 text-sm text-utisano">Rezultate vidiš kad glasaš.</p>
   }
 
-  <div class="ucesce">
-    <div class="flex items-baseline justify-between gap-3 text-sm">
-      <span class="text-priguseno">Glasalo</span>
-      <span class="text-naslov tabular-nums">
-        {{ g.brojGlasaca }} od {{ g.brojStanara }}
-        <span class="text-utisano">· {{ uProcentima(ucesce()) }}</span>
-      </span>
+  @if (suvlasnici(); as tekst) {
+    <p class="mt-3 text-sm text-priguseno">{{ tekst }}</p>
+  }
+
+  @if (g.vrsta === 'odluka') {
+    <app-stanje-odluke [glasanje]="g" />
+  } @else {
+    <div class="ucesce">
+      <div class="flex items-baseline justify-between gap-3 text-sm">
+        <span class="text-priguseno">Glasalo</span>
+        <span class="text-naslov tabular-nums">
+          {{ g.brojGlasaca }} od {{ g.ukupnoGlasaca }}
+          <span class="text-utisano">· {{ uProcentima(ucesce()) }}</span>
+        </span>
+      </div>
+      <div class="traka-ucesca" aria-hidden="true">
+        <span [style.--udeo]="ucesce()"></span>
+      </div>
     </div>
-    <div class="traka-ucesca" aria-hidden="true">
-      <span [style.--udeo]="ucesce()"></span>
-    </div>
-  </div>
+  }
 
   <div class="podnozje">
     <p class="min-w-0 text-xs text-utisano">
@@ -95,6 +107,16 @@
         >
           Povuci glas
         </button>
+      }
+      @if (g.smeDaObjavi) {
+        <a pButton text size="small" routerLink="/oglasi/novi" [queryParams]="{ odluka: g.id }">
+          Objavi na tabli
+        </a>
+      } @else if (g.oglasId !== null) {
+        <a pButton text size="small" severity="secondary" routerLink="/oglasi">
+          <i class="pi pi-check" aria-hidden="true"></i>
+          Objavljeno na tabli
+        </a>
       }
       @if (g.smeDaZatvori) {
         <button

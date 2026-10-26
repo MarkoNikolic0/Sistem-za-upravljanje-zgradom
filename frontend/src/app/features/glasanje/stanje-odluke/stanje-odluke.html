@@ -1,0 +1,31 @@
+@let g = glasanje();
+@if (g.pragovi; as prag) {
+  @if (g.ishod; as ishod) {
+    <p class="ishod" [class]="ishod">
+      <i class="pi" [class]="ikonice[ishod]" aria-hidden="true"></i>
+      <span>
+        <span class="font-medium">{{ nazivi[ishod] }}</span>
+        <span class="block text-sm text-priguseno">{{ detalj() }}</span>
+      </span>
+    </p>
+  }
+  <div class="flex items-baseline justify-between gap-3 text-sm">
+    <span class="text-priguseno">Glasalo</span>
+    <span class="text-naslov tabular-nums">
+      {{ g.brojGlasaca }} od {{ stanova(g.ukupnoGlasaca) }}
+      <span class="text-utisano">· {{ uProcentima(ucesce()) }}</span>
+    </span>
+  </div>
+  <div class="traka-ucesca" aria-hidden="true">
+    <span class="popunjeno" [style.--udeo]="ucesce()"></span>
+    <span class="prag" [style.--polozaj]="polozajKvoruma()"></span>
+  </div>
+  <p class="mt-1.5 text-xs text-utisano">
+    Kvorum {{ stanova(prag.kvorum) }} ·
+    @if (g.vecina === 'dve_trecine') {
+      usvojena sa najmanje {{ glasova(prag.potrebnoZa) }} Za
+    } @else {
+      usvojena kad je Za više od pola glasova
+    }
+  </p>
+}

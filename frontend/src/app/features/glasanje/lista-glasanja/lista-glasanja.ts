@@ -14,7 +14,7 @@ import { StanjeNavigacije } from '../../../shared/poruka';
 import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
 import { Glasanje, StanjeGlasanja } from '../glasanje-models';
 import { ListaGlasanjaStore } from '../lista-glasanja-store';
-import { KarticaAnkete } from '../kartica-ankete/kartica-ankete';
+import { KarticaGlasanja } from '../kartica-glasanja/kartica-glasanja';
 
 @Component({
   imports: [
@@ -27,7 +27,7 @@ import { KarticaAnkete } from '../kartica-ankete/kartica-ankete';
     SelectButtonModule,
     SkeletonModule,
     Paginacija,
-    KarticaAnkete,
+    KarticaGlasanja,
   ],
   providers: [ListaGlasanjaStore, ConfirmationService],
   selector: 'app-lista-glasanja',
@@ -57,8 +57,8 @@ export class ListaGlasanja {
       !this.zgradeKorisnika.admin() &&
       this.zgrade().length === 0,
   );
-  // Anketu pravi upravnik (zgrada u profilu je samo zgrada kojom upravlja) i admin
-  protected readonly praviAnkete = computed(() => {
+  // Glasanje pravi upravnik (zgrada u profilu je samo zgrada kojom upravlja) i admin
+  protected readonly praviGlasanja = computed(() => {
     const profil = this.zgradeKorisnika.profil;
     return profil.hasValue() && (profil.value().uloga === 'admin' || !!profil.value().zgrada);
   });
@@ -102,11 +102,12 @@ export class ListaGlasanja {
   }
 
   protected obrisi(event: Event, glasanje: Glasanje): void {
+    const odluka = glasanje.vrsta === 'odluka';
     this.potvrdi(event, {
-      header: 'Brisanje ankete',
-      message: `Obrisati anketu „${glasanje.pitanje}“ i sve glasove? Ovo ne može da se poništi.`,
+      header: odluka ? 'Brisanje odluke' : 'Brisanje ankete',
+      message: `Obrisati ${odluka ? 'odluku' : 'anketu'} „${glasanje.pitanje}“ i sve glasove? Ovo ne može da se poništi.`,
       natpis: 'Obriši',
-      akcija: () => this.store.obrisi(glasanje.id),
+      akcija: () => this.store.obrisi(glasanje),
     });
   }
 

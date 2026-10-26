@@ -93,6 +93,7 @@ export interface OglasRequest {
 
 export interface NoviOglasRequest extends OglasRequest {
   zgradaId: number;
+  glasanjeId?: number;
 }
 
 export interface UpitOglasa extends UpitStrane {

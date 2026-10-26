@@ -10,7 +10,7 @@ export default [
   {
     path: 'nova',
     canActivate: [ulogaGuard('upravnik', 'admin')],
-    loadComponent: () => import('./nova-anketa/nova-anketa').then((m) => m.NovaAnketa),
-    title: 'Nova anketa | Upravljanje zgradom',
+    loadComponent: () => import('./novo-glasanje/novo-glasanje').then((m) => m.NovoGlasanje),
+    title: 'Novo glasanje | Upravljanje zgradom',
   },
 ] satisfies Routes;

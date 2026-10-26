@@ -2,10 +2,8 @@
   <a routerLink="/glasanje" class="nazad"
     ><i class="pi pi-arrow-left" aria-hidden="true"></i>Glasanje</a
   >
-  <h1 class="naslov-stranice mt-4">Nova anketa</h1>
-  <p class="mt-2 text-priguseno max-sm:hidden">
-    Glasaju svi stanari zgrade, jednom po osobi. Glas je tajan i može se promeniti do roka.
-  </p>
+  <h1 class="naslov-stranice mt-4">Novo glasanje</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">Glas je tajan i može se promeniti do roka.</p>
 
   @if (greskaUcitavanja()) {
     <section class="odeljak">
@@ -21,7 +19,7 @@
     <span class="sr-only">Učitavanje…</span>
   } @else if (zgrade().length === 0) {
     <section class="odeljak">
-      <p class="text-tekst">Anketu pokreće upravnik zgrade kad mu je zgrada dodeljena.</p>
+      <p class="text-tekst">Glasanje pokreće upravnik zgrade kad mu je zgrada dodeljena.</p>
       <a pButton routerLink="/glasanje" outlined class="mt-5">Nazad na glasanje</a>
     </section>
   } @else {
@@ -57,13 +55,32 @@
         </div>
       }
 
+      <fieldset>
+        <legend class="text-sm font-medium">Vrsta</legend>
+        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+          @for (v of vrste; track v.value) {
+            <label class="plocica">
+              <input type="radio" class="sr-only" formControlName="vrsta" [value]="v.value" />
+              <span class="min-w-0">
+                <span class="block font-medium text-naslov">{{ v.naziv }}</span>
+                <span class="mt-0.5 block text-sm text-priguseno">{{ v.opis }}</span>
+              </span>
+            </label>
+          }
+        </div>
+      </fieldset>
+
       <div class="flex flex-col gap-1.5">
         <label for="pitanje" class="text-sm font-medium">Pitanje</label>
         <input
           pInputText
           id="pitanje"
           formControlName="pitanje"
-          placeholder="npr. Koju boju da izaberemo za ulaz?"
+          [placeholder]="
+            vrsta() === 'odluka'
+              ? 'npr. Prihvatamo ponudu za krečenje ulaza'
+              : 'npr. Koju boju da izaberemo za ulaz?'
+          "
           autocomplete="off"
           enterkeyhint="next"
           [attr.maxlength]="maksPitanje"
@@ -106,65 +123,90 @@
         }
       </div>
 
-      <fieldset class="flex flex-col gap-2" aria-describedby="opcije-pomoc">
-        <legend class="text-sm font-medium">Opcije</legend>
-        <small id="opcije-pomoc" class="text-sm text-priguseno">
-          Najmanje {{ najmanjeOpcija }}, najviše {{ najviseOpcija }}. Stanar bira jednu.
-        </small>
-        <ol class="mt-1 flex flex-col gap-2" formArrayName="opcije">
-          @for (opcija of opcije.controls; track opcija; let i = $index) {
-            <li class="flex flex-col gap-1.5">
-              <div class="opcija">
-                <span class="redni-broj" aria-hidden="true">{{ i + 1 }}</span>
-                <input
-                  pInputText
-                  [id]="'opcija-' + i"
-                  [formControlName]="i"
-                  autocomplete="off"
-                  enterkeyhint="next"
-                  [attr.aria-label]="'Opcija ' + (i + 1)"
-                  [attr.maxlength]="maksOpcija"
-                  [fluid]="true"
-                  [invalid]="nevazecaOpcija(i)"
-                  [attr.aria-invalid]="nevazecaOpcija(i)"
-                  [attr.aria-describedby]="nevazecaOpcija(i) ? 'opcija-greska-' + i : null"
-                />
-                @if (opcije.length > najmanjeOpcija) {
-                  <button
-                    pButton
-                    type="button"
-                    text
-                    severity="secondary"
-                    icon="pi pi-times"
-                    [attr.aria-label]="'Ukloni opciju ' + (i + 1)"
-                    (click)="ukloniOpciju(i)"
-                  ></button>
-                }
-              </div>
-              @if (nevazecaOpcija(i)) {
-                <small [id]="'opcija-greska-' + i" class="pl-9 text-sm text-greska">
-                  Popuni opciju ili je ukloni.
-                </small>
-              }
-            </li>
+      @if (vrsta() === 'odluka') {
+        <fieldset [attr.aria-describedby]="nevazece('vecina') ? 'vecina-greska' : null">
+          <legend class="text-sm font-medium">Potrebna većina</legend>
+          <div class="mt-2 grid gap-3">
+            @for (v of vecine; track v.value) {
+              <label class="plocica" [class.nevazeca]="nevazece('vecina')">
+                <input type="radio" class="sr-only" formControlName="vecina" [value]="v.value" />
+                <span class="min-w-0">
+                  <span class="block font-medium text-naslov">{{ v.naziv }}</span>
+                  <span class="mt-0.5 block text-sm text-priguseno">{{ v.opis }}</span>
+                </span>
+              </label>
+            }
+          </div>
+          @if (nevazece('vecina')) {
+            <small id="vecina-greska" class="mt-1.5 block text-sm text-greska">
+              {{ forma.controls.vecina.errors?.['server'] ?? 'Izaberi potrebnu većinu.' }}
+            </small>
           }
-        </ol>
-        @if (greskaListeOpcija(); as poruka) {
-          <small class="text-sm text-greska" role="alert">{{ poruka }}</small>
-        }
-        @if (opcije.length < najviseOpcija) {
-          <button
-            pButton
-            type="button"
-            text
-            icon="pi pi-plus"
-            class="self-start"
-            (click)="dodajOpciju()"
-          >
-            Dodaj opciju
-          </button>
-        }
-      </fieldset>
+          <p class="mt-2 text-sm text-priguseno">
+            Vlasnici biraju Za, Protiv ili Uzdržan. Ishod se vidi posle roka.
+          </p>
+        </fieldset>
+      } @else {
+        <fieldset class="flex flex-col gap-2" aria-describedby="opcije-pomoc">
+          <legend class="text-sm font-medium">Opcije</legend>
+          <small id="opcije-pomoc" class="text-sm text-priguseno">
+            Najmanje {{ najmanjeOpcija }}, najviše {{ najviseOpcija }}. Stanar bira jednu.
+          </small>
+          <ol class="mt-1 flex flex-col gap-2" formArrayName="opcije">
+            @for (opcija of opcije.controls; track opcija; let i = $index) {
+              <li class="flex flex-col gap-1.5">
+                <div class="opcija">
+                  <span class="redni-broj" aria-hidden="true">{{ i + 1 }}</span>
+                  <input
+                    pInputText
+                    [id]="'opcija-' + i"
+                    [formControlName]="i"
+                    autocomplete="off"
+                    enterkeyhint="next"
+                    [attr.aria-label]="'Opcija ' + (i + 1)"
+                    [attr.maxlength]="maksOpcija"
+                    [fluid]="true"
+                    [invalid]="nevazecaOpcija(i)"
+                    [attr.aria-invalid]="nevazecaOpcija(i)"
+                    [attr.aria-describedby]="nevazecaOpcija(i) ? 'opcija-greska-' + i : null"
+                  />
+                  @if (opcije.length > najmanjeOpcija) {
+                    <button
+                      pButton
+                      type="button"
+                      text
+                      severity="secondary"
+                      icon="pi pi-times"
+                      [attr.aria-label]="'Ukloni opciju ' + (i + 1)"
+                      (click)="ukloniOpciju(i)"
+                    ></button>
+                  }
+                </div>
+                @if (nevazecaOpcija(i)) {
+                  <small [id]="'opcija-greska-' + i" class="pl-9 text-sm text-greska">
+                    Popuni opciju ili je ukloni.
+                  </small>
+                }
+              </li>
+            }
+          </ol>
+          @if (greskaListeOpcija(); as poruka) {
+            <small class="text-sm text-greska" role="alert">{{ poruka }}</small>
+          }
+          @if (opcije.length < najviseOpcija) {
+            <button
+              pButton
+              type="button"
+              text
+              icon="pi pi-plus"
+              class="self-start"
+              (click)="dodajOpciju()"
+            >
+              Dodaj opciju
+            </button>
+          }
+        </fieldset>
+      }
 
       <div class="flex flex-col gap-1.5">
         <label for="rok" class="text-sm font-medium">Glasanje traje do</label>
@@ -192,8 +234,12 @@
           </small>
         } @else {
           <small id="rok-pomoc" class="text-sm text-priguseno">
-            Do kraja izabranog dana, najviše {{ najviseDana }} dana unapred. Možeš je zatvoriti i
-            ranije.
+            Do kraja izabranog dana, najviše {{ najviseDana }} dana unapred.
+            {{
+              vrsta() === 'odluka'
+                ? 'Odluka traje do roka i ne može se zatvoriti ranije.'
+                : 'Anketu možeš zatvoriti i ranije.'
+            }}
           </small>
         }
       </div>
@@ -204,7 +250,7 @@
             <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
             Slanje…
           } @else {
-            Pokreni anketu
+            {{ vrsta() === 'odluka' ? 'Pokreni glasanje o odluci' : 'Pokreni anketu' }}
           }
         </button>
         @if (!slanje()) {

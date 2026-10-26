@@ -22,11 +22,16 @@ import {
   MAKS_PITANJE,
   NAJMANJE_OPCIJA,
   NAJVISE_OPCIJA,
+  VecinaOdluke,
+  VECINE_ODLUKE,
+  VrstaGlasanja,
+  VRSTE_GLASANJA,
 } from '../glasanje-models';
 import { GlasanjeService } from '../glasanje-service';
 import { DANA_ANKETE, NAJVISE_DANA_ANKETE, razliciteOpcije } from '../pravila-glasanja';
+import { toSignal } from '@angular/core/rxjs-interop';
 
-type Polje = 'zgradaId' | 'pitanje' | 'opis' | 'opcije' | 'rok';
+type Polje = 'zgradaId' | 'vrsta' | 'pitanje' | 'opis' | 'opcije' | 'vecina' | 'rok';
 
 @Component({
   imports: [
@@ -40,11 +45,11 @@ type Polje = 'zgradaId' | 'pitanje' | 'opis' | 'opcije' | 'rok';
     SkeletonModule,
     TextareaModule,
   ],
-  selector: 'app-nova-anketa',
-  styleUrl: './nova-anketa.scss',
-  templateUrl: './nova-anketa.html',
+  selector: 'app-novo-glasanje',
+  styleUrl: './novo-glasanje.scss',
+  templateUrl: './novo-glasanje.html',
 })
-export class NovaAnketa {
+export class NovoGlasanje {
   private glasanjeService = inject(GlasanjeService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -70,6 +75,15 @@ export class NovaAnketa {
   protected readonly najviseOpcija = NAJVISE_OPCIJA;
   protected readonly najmanjeOpcija = NAJMANJE_OPCIJA;
 
+  protected readonly vrste = Object.entries(VRSTE_GLASANJA).map(([value, vrsta]) => ({
+    value: value as VrstaGlasanja,
+    ...vrsta,
+  }));
+  protected readonly vecine = Object.entries(VECINE_ODLUKE).map(([value, vecina]) => ({
+    value: value as VecinaOdluke,
+    ...vecina,
+  }));
+
   protected readonly danas = new Date();
   protected readonly najkasnije = zaDana(NAJVISE_DANA_ANKETE);
   protected readonly najviseDana = NAJVISE_DANA_ANKETE;
@@ -78,6 +92,7 @@ export class NovaAnketa {
 
   protected readonly forma = this.fb.group({
     zgradaId: this.fb.control<number | null>(null, Validators.required),
+    vrsta: this.fb.nonNullable.control<VrstaGlasanja>('anketa'),
     pitanje: this.fb.nonNullable.control('', [
       Validators.required,
       Validators.pattern(NIJE_PRAZNO),
@@ -88,10 +103,29 @@ export class NovaAnketa {
       Array.from({ length: NAJMANJE_OPCIJA }, () => this.novaOpcija()),
       { validators: razliciteOpcije },
     ),
+    vecina: this.fb.control<VecinaOdluke | null>(
+      { value: null, disabled: true },
+      Validators.required,
+    ),
     rok: this.fb.control<Date | null>(zaDana(DANA_ANKETE), [Validators.required, rokNijeProsao]),
   });
 
+  protected readonly vrsta = toSignal(this.forma.controls.vrsta.valueChanges, {
+    initialValue: this.forma.controls.vrsta.value,
+  });
+
   constructor() {
+    effect(() => {
+      const odluka = this.vrsta() === 'odluka';
+      const { opcije, vecina } = this.forma.controls;
+      if (odluka) {
+        opcije.disable();
+        vecina.enable();
+      } else {
+        opcije.enable();
+        vecina.disable();
+      }
+    });
     effect(() => {
       const zgrade = this.zgrade();
       if (zgrade.length === 1 && this.forma.controls.zgradaId.value === null) {
@@ -142,8 +176,9 @@ export class NovaAnketa {
   }
 
   protected async posalji(): Promise<void> {
-    const { zgradaId, pitanje, opis, opcije, rok } = this.forma.getRawValue();
-    if (this.forma.invalid || zgradaId === null || rok === null) {
+    const { zgradaId, vrsta, pitanje, opis, opcije, vecina, rok } = this.forma.getRawValue();
+    const odluka = vrsta === 'odluka';
+    if (this.forma.invalid || zgradaId === null || rok === null || (odluka && vecina === null)) {
       this.forma.markAllAsTouched();
       this.fokusirajPrvoNevazece();
       return;
@@ -155,15 +190,21 @@ export class NovaAnketa {
       await firstValueFrom(
         this.glasanjeService.napravi({
           zgradaId,
+          vrsta,
           pitanje: pitanje.trim(),
           opis: opis.trim() || undefined,
-          opcije: opcije.map((o) => o.trim()),
+          ...(odluka ? { vecina: vecina ?? undefined } : { opcije: opcije.map((o) => o.trim()) }),
           rok: krajDana(rok),
         }),
       );
       await this.router.navigate(['/glasanje'], {
         state: {
-          poruka: { tip: 'uspeh', tekst: 'Anketa je pokrenuta. Stanari mogu da glasaju.' },
+          poruka: {
+            tip: 'uspeh',
+            tekst: odluka
+              ? 'Glasanje o odluci je pokrenuto. Vlasnici mogu da glasaju.'
+              : 'Anketa je pokrenuta. Stanari mogu da glasaju.',
+          },
         } satisfies StanjeNavigacije,
       });
     } catch (err) {
@@ -174,12 +215,12 @@ export class NovaAnketa {
   }
 
   private obradiGresku(err: unknown): void {
-    const neuspeh = 'Anketa nije pokrenuta. Pokušaj ponovo za nekoliko trenutaka.';
+    const neuspeh = 'Glasanje nije pokrenuto. Pokušaj ponovo za nekoliko trenutaka.';
     if (!(err instanceof HttpErrorResponse)) {
       this.greska.set(neuspeh);
       return;
     }
-    for (const polje of ['pitanje', 'opis', 'opcije', 'rok'] as const) {
+    for (const polje of ['vrsta', 'pitanje', 'opis', 'opcije', 'vecina', 'rok'] as const) {
       const poruka = greskaPolja(err, polje);
       if (poruka) {
         this.forma.controls[polje].setErrors({ server: poruka });
@@ -193,11 +234,15 @@ export class NovaAnketa {
   }
 
   private fokusirajPrvoNevazece(): void {
-    const polja: Polje[] = ['zgradaId', 'pitanje', 'opis', 'opcije', 'rok'];
+    const polja: Polje[] = ['zgradaId', 'vrsta', 'pitanje', 'opis', 'opcije', 'vecina', 'rok'];
     const prvo = polja.find((polje) => this.forma.controls[polje].invalid);
     if (prvo === 'opcije') {
       const i = this.opcije.controls.findIndex((o) => o.invalid);
       this.host.nativeElement.querySelector<HTMLElement>(`#opcija-${Math.max(i, 0)}`)?.focus();
+    } else if (prvo === 'vecina') {
+      this.host.nativeElement
+        .querySelector<HTMLElement>('input[formControlName="vecina"]')
+        ?.focus();
     } else if (prvo) {
       this.host.nativeElement.querySelector<HTMLElement>(`#${prvo}`)?.focus();
     }

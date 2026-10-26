@@ -1,9 +1,9 @@
-import { inject, Service } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Service, Signal } from '@angular/core';
+import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
-import { Glasanje, NovaAnketaRequest, UpitGlasanja } from './glasanje-models';
+import { Glasanje, NovoGlasanjeRequest, UpitGlasanja } from './glasanje-models';
 
 @Service()
 export class GlasanjeService {
@@ -21,7 +21,14 @@ export class GlasanjeService {
     return this.http.get<Stranica<Glasanje>>(this.apiUrl, { params });
   }
 
-  napravi(podaci: NovaAnketaRequest): Observable<Glasanje> {
+  glasanje(id: Signal<number | undefined>) {
+    return httpResource<Glasanje>(() => {
+      const glasanjeId = id();
+      return glasanjeId === undefined ? undefined : `${this.apiUrl}/${glasanjeId}`;
+    });
+  }
+
+  napravi(podaci: NovoGlasanjeRequest): Observable<Glasanje> {
     return this.http.post<Glasanje>(this.apiUrl, podaci);
   }
 

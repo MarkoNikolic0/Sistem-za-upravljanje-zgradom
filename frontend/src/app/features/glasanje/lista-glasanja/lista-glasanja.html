@@ -2,12 +2,12 @@
   <p class="oznaka">Zgrada</p>
   <h1 class="naslov-stranice mt-3">Glasanje</h1>
   <p class="mt-2 text-priguseno max-sm:hidden">
-    Ankete upravnika: šta komšije misle o zajedničkim stvarima.
+    Ankete upravnika i odluke skupštine o zajedničkim stvarima.
   </p>
 
   @if (bezZgrade()) {
     <p class="mt-6 text-sm text-priguseno">
-      Da bi glasao u anketama svoje zgrade,
+      Da bi glasao u svojoj zgradi,
       <a
         routerLink="/povezivanje"
         class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
@@ -15,8 +15,8 @@
       >.
     </p>
   } @else {
-    @if (praviAnkete()) {
-      <a pButton routerLink="/glasanje/nova" class="mt-6">Nova anketa</a>
+    @if (praviGlasanja()) {
+      <a pButton routerLink="/glasanje/nova" class="mt-6">Novo glasanje</a>
     }
 
     <div class="alatke">
@@ -29,7 +29,7 @@
         (ngModelChange)="store.promeniStanje($event)"
         ariaLabelledBy="glasanje-filter"
       />
-      <span id="glasanje-filter" class="sr-only">Prikaz anketa</span>
+      <span id="glasanje-filter" class="sr-only">Prikaz glasanja</span>
       @if (zgrade().length > 1) {
         <p-select
           class="sm:w-60"
@@ -53,7 +53,7 @@
     </div>
     <p class="sr-only" aria-live="polite">{{ store.najava() }}</p>
 
-    <section class="odeljak" aria-label="Ankete" [attr.aria-busy]="store.isPending()">
+    <section class="odeljak" aria-label="Glasanja" [attr.aria-busy]="store.isPending()">
       @if (store.error(); as greska) {
         <p-message severity="error">{{ greska }}</p-message>
         <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
@@ -64,11 +64,11 @@
           <p-skeleton height="18rem" />
           <p-skeleton height="18rem" />
         </div>
-        <span class="sr-only">Učitavanje anketa…</span>
+        <span class="sr-only">Učitavanje glasanja…</span>
       } @else {
         <div class="ankete">
           @for (glasanje of store.glasanja(); track glasanje.id) {
-            <app-kartica-ankete
+            <app-kartica-glasanja
               [glasanje]="glasanje"
               [uToku]="store.glasUToku()"
               [greska]="store.greskaGlasa()?.id === glasanje.id ? store.greskaGlasa()!.tekst : null"
@@ -86,15 +86,17 @@
               ></span>
               <p class="text-naslov">
                 {{
-                  store.stanje() === 'aktivna' ? 'Nema aktivnih anketa' : 'Nema završenih anketa'
+                  store.stanje() === 'aktivna'
+                    ? 'Nema aktivnih glasanja'
+                    : 'Nema završenih glasanja'
                 }}
               </p>
               @if (store.stanje() === 'aktivna') {
                 <p class="mt-1 text-sm text-priguseno">
                   {{
-                    praviAnkete()
-                      ? 'Pitaj komšije za mišljenje: boja ulaza, termin čišćenja, nova klupa.'
-                      : 'Kad upravnik pokrene anketu, pojaviće se ovde.'
+                    praviGlasanja()
+                      ? 'Pitaj komšije za mišljenje ili pokreni glasanje o odluci skupštine.'
+                      : 'Kad upravnik pokrene glasanje, pojaviće se ovde.'
                   }}
                 </p>
               }
