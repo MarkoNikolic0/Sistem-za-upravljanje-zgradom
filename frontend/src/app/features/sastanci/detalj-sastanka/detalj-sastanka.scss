@@ -1,0 +1,87 @@
+:host {
+  display: block;
+}
+
+.stranica {
+  max-width: 48rem;
+}
+
+.poziv {
+  display: flex;
+  gap: 1.25rem;
+
+  @media (width < 40rem) {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &.otkazan .datum-kalendara {
+    opacity: 0.5;
+  }
+}
+
+.podaci {
+  display: grid;
+  gap: 0.625rem;
+  margin-top: 1.25rem;
+
+  > div {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  dt {
+    font-size: 0.875rem;
+    color: var(--color-utisano);
+  }
+
+  dd {
+    color: var(--color-tekst);
+  }
+}
+
+.otkazano {
+  display: flex;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--color-greska) 35%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-greska) 6%, transparent);
+
+  > .pi {
+    margin-top: 0.1875rem;
+    color: var(--color-greska);
+  }
+}
+
+.dnevni-red {
+  > li {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-linija);
+
+    &:last-child {
+      border-bottom: 1px solid var(--color-linija);
+    }
+  }
+
+  .broj {
+    flex-shrink: 0;
+    width: 2rem;
+    font-size: 1.5rem;
+    font-weight: 200;
+    line-height: 1.1;
+    color: var(--color-priguseno);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.odluka {
+  margin-top: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--color-linija);
+  border-radius: 10px;
+  background: var(--color-povrsina);
+}

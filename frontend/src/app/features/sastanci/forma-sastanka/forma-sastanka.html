@@ -1,0 +1,321 @@
+<div class="stranica">
+  <a [routerLink]="izmena() ? ['/sastanci', id()] : '/sastanci'" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>{{ izmena() ? 'Sastanak' : 'Sastanci' }}</a
+  >
+  <h1 class="naslov-stranice mt-4">{{ izmena() ? 'Izmena sastanka' : 'Zakazivanje sastanka' }}</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">
+    Poziv sa danom, vremenom, mestom i dnevnim redom vide svi koji su pozvani.
+  </p>
+
+  @if (neispravanId() || sastanak.error() || greskaUcitavanja()) {
+    <section class="odeljak">
+      <p-message severity="error">
+        {{
+          greskaUcitavanja()
+            ? 'Podaci trenutno ne mogu da se učitaju.'
+            : 'Sastanak ne postoji ili nemaš pristup.'
+        }}
+      </p-message>
+      <a pButton routerLink="/sastanci" outlined class="mt-4">Nazad na sastanke</a>
+    </section>
+  } @else if (!ucitano() || (izmena() && !sastanak.hasValue())) {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton height="7rem" />
+      <p-skeleton height="2.5rem" styleClass="mt-5" />
+      <p-skeleton height="2.5rem" styleClass="mt-5" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (sastanak.hasValue() && !sastanak.value().smeDaMenja) {
+    <section class="odeljak">
+      <p class="text-tekst">Sastanak je već počeo ili je otkazan, pa ne može da se menja.</p>
+      <a pButton [routerLink]="['/sastanci', id()]" outlined class="mt-5">Nazad na sastanak</a>
+    </section>
+  } @else if (zgrade().length === 0) {
+    <section class="odeljak">
+      <p class="text-tekst">Sastanak zakazuje upravnik zgrade kad mu je zgrada dodeljena.</p>
+      <a pButton routerLink="/sastanci" outlined class="mt-5">Nazad na sastanke</a>
+    </section>
+  } @else {
+    <div aria-live="polite" class="mt-6 empty:hidden">
+      @if (greska()) {
+        <p-message severity="error">{{ greska() }}</p-message>
+      }
+    </div>
+
+    <form [formGroup]="forma" (ngSubmit)="posalji()" class="odeljak flex flex-col gap-6">
+      @if (izmena() && sastanak.hasValue()) {
+        <div class="flex flex-col gap-1.5">
+          <p class="text-sm font-medium">Zgrada</p>
+          <p class="text-naslov">{{ sastanak.value().zgrada.naziv }}</p>
+        </div>
+      } @else if (zgrade().length > 1) {
+        <div class="flex flex-col gap-1.5">
+          <span id="zgrada-oznaka" class="text-sm font-medium">Zgrada</span>
+          <p-select
+            inputId="zgradaId"
+            ariaLabelledBy="zgrada-oznaka"
+            formControlName="zgradaId"
+            [options]="zgrade()"
+            optionLabel="naziv"
+            optionValue="id"
+            placeholder="Izaberi zgradu"
+            [fluid]="true"
+            [invalid]="nevazece('zgradaId')"
+          />
+          @if (nevazece('zgradaId')) {
+            <small class="text-sm text-greska">Izaberi zgradu.</small>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col gap-1.5">
+          <p class="text-sm font-medium">Zgrada</p>
+          <p class="text-naslov">{{ zgrade()[0].naziv }}</p>
+        </div>
+      }
+
+      <fieldset>
+        <legend class="text-sm font-medium">Vrsta sastanka</legend>
+        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+          @for (v of vrste; track v.value) {
+            <label class="plocica">
+              <input
+                type="radio"
+                class="sr-only"
+                formControlName="vrsta"
+                [value]="v.value"
+                [id]="$first ? 'vrsta' : null"
+              />
+              <span class="min-w-0">
+                <span class="block font-medium text-naslov">{{ v.naziv }}</span>
+                <span class="mt-0.5 block text-sm text-priguseno">{{ v.opis }}</span>
+              </span>
+            </label>
+          }
+        </div>
+      </fieldset>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="naslov" class="text-sm font-medium">Naslov</label>
+        <input
+          pInputText
+          id="naslov"
+          formControlName="naslov"
+          [placeholder]="
+            skupstina() ? 'npr. Redovna sednica skupštine' : 'npr. Dogovor o čišćenju podruma'
+          "
+          autocomplete="off"
+          enterkeyhint="next"
+          [attr.maxlength]="maksNaslov"
+          [fluid]="true"
+          [invalid]="nevazece('naslov')"
+          [attr.aria-invalid]="nevazece('naslov')"
+          [attr.aria-describedby]="nevazece('naslov') ? 'naslov-greska' : null"
+        />
+        @if (nevazece('naslov')) {
+          <small id="naslov-greska" class="text-sm text-greska">
+            {{ forma.controls.naslov.errors?.['server'] ?? 'Unesi naslov.' }}
+          </small>
+        }
+      </div>
+
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div class="flex flex-col gap-1.5">
+          <label for="pocetak" class="text-sm font-medium">Dan i vreme</label>
+          <p-datepicker
+            inputId="pocetak"
+            formControlName="pocetak"
+            [showTime]="true"
+            hourFormat="24"
+            [stepMinute]="15"
+            [minDate]="najranije()"
+            [maxDate]="najkasnije"
+            [readonlyInput]="true"
+            [showIcon]="true"
+            [fluid]="true"
+            [invalid]="nevazeciTermin()"
+            [pt]="{
+              pcInputText: {
+                root: {
+                  'aria-invalid': nevazeciTermin(),
+                  'aria-describedby': nevazeciTermin() ? 'pocetak-greska' : 'pocetak-pomoc',
+                },
+              },
+            }"
+          />
+          @if (nevazeciTermin()) {
+            <small id="pocetak-greska" class="text-sm text-greska">{{ greskaTermina() }}</small>
+          } @else {
+            <small id="pocetak-pomoc" class="text-sm text-priguseno">
+              {{
+                skupstina() && !hitno()
+                  ? 'Poziv za skupštinu ide najmanje ' + danaZaPoziv + ' dana pre sednice.'
+                  : 'Može i danas, a najviše godinu dana unapred.'
+              }}
+            </small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="lokacija" class="text-sm font-medium">Mesto</label>
+          <input
+            pInputText
+            id="lokacija"
+            formControlName="lokacija"
+            placeholder="npr. Prostorija u prizemlju"
+            autocomplete="off"
+            enterkeyhint="next"
+            [attr.maxlength]="maksLokacija"
+            [fluid]="true"
+            [invalid]="nevazece('lokacija')"
+            [attr.aria-invalid]="nevazece('lokacija')"
+            [attr.aria-describedby]="nevazece('lokacija') ? 'lokacija-greska' : null"
+          />
+          @if (nevazece('lokacija')) {
+            <small id="lokacija-greska" class="text-sm text-greska">
+              {{ forma.controls.lokacija.errors?.['server'] ?? 'Unesi mesto održavanja.' }}
+            </small>
+          }
+        </div>
+      </div>
+
+      @if (skupstina()) {
+        <div class="flex items-start gap-3">
+          <p-checkbox
+            inputId="hitno"
+            formControlName="hitno"
+            [binary]="true"
+            [pt]="{ input: { 'aria-describedby': 'hitno-pomoc' } }"
+          />
+          <div>
+            <label for="hitno" class="font-medium">Hitna sednica</label>
+            <p id="hitno-pomoc" class="mt-0.5 text-sm text-priguseno">
+              Može se zakazati i za danas, kad odluka ne može da čeka. Sastanak dobija oznaku Hitno.
+            </p>
+          </div>
+        </div>
+      }
+
+      <div class="flex flex-col gap-1.5">
+        <label for="opis" class="text-sm font-medium">
+          Napomena <span class="font-normal text-priguseno">(nije obavezno)</span>
+        </label>
+        <textarea
+          pTextarea
+          id="opis"
+          formControlName="opis"
+          rows="2"
+          [autoResize]="true"
+          [attr.maxlength]="maksOpis"
+          [fluid]="true"
+          [invalid]="nevazece('opis')"
+          [attr.aria-invalid]="nevazece('opis')"
+          [attr.aria-describedby]="nevazece('opis') ? 'opis-greska' : 'opis-pomoc'"
+        ></textarea>
+        @if (nevazece('opis')) {
+          <small id="opis-greska" class="text-sm text-greska">
+            {{ forma.controls.opis.errors?.['server'] ?? 'Napomena je predugačka.' }}
+          </small>
+        } @else {
+          <small id="opis-pomoc" class="text-sm text-priguseno">
+            Na primer šta da ponesu ili ko vodi sednicu.
+          </small>
+        }
+      </div>
+
+      <fieldset class="flex flex-col gap-2" aria-describedby="tacke-pomoc">
+        <legend class="text-sm font-medium">Dnevni red</legend>
+        <small id="tacke-pomoc" class="text-sm text-priguseno">
+          {{
+            skupstina()
+              ? 'Uz tačku možeš da vežeš odluku. O njoj vlasnici glasaju elektronski do roka, a o ostalim tačkama na sednici.'
+              : 'Teme o kojima se razgovara, redom.'
+          }}
+        </small>
+        <ol class="mt-1 flex flex-col gap-3" formArrayName="tacke">
+          @for (tacka of tacke.controls; track tacka; let i = $index) {
+            <li class="tacka" [formGroupName]="i">
+              <span class="redni-broj" aria-hidden="true">{{ i + 1 }}</span>
+              <div class="flex min-w-0 flex-1 flex-col gap-2">
+                <input
+                  pInputText
+                  [id]="'tacka-' + i"
+                  formControlName="naslov"
+                  autocomplete="off"
+                  enterkeyhint="next"
+                  [attr.aria-label]="'Tačka ' + (i + 1)"
+                  [attr.maxlength]="maksTacka"
+                  [fluid]="true"
+                  [invalid]="nevazecaTacka(i)"
+                  [attr.aria-invalid]="nevazecaTacka(i)"
+                  [attr.aria-describedby]="nevazecaTacka(i) ? 'tacka-greska-' + i : null"
+                />
+                @if (nevazecaTacka(i)) {
+                  <small [id]="'tacka-greska-' + i" class="text-sm text-greska">
+                    {{ tacka.controls.naslov.errors?.['server'] ?? 'Popuni tačku ili je ukloni.' }}
+                  </small>
+                }
+                @if (skupstina()) {
+                  <p-select
+                    formControlName="odlukaId"
+                    [options]="opcijeOdluka()"
+                    optionLabel="naziv"
+                    optionValue="id"
+                    [showClear]="true"
+                    placeholder="Bez glasanja, odlučuje se na sednici"
+                    [emptyMessage]="
+                      odluke.isLoading() ? 'Učitavanje…' : 'Nema odluka u ovoj zgradi.'
+                    "
+                    [ariaLabel]="'Odluka uz tačku ' + (i + 1)"
+                    [fluid]="true"
+                    size="small"
+                    (onChange)="izabranaOdluka(i, $event.value)"
+                  />
+                }
+              </div>
+              @if (tacke.length > 1) {
+                <button
+                  pButton
+                  type="button"
+                  text
+                  severity="secondary"
+                  icon="pi pi-times"
+                  [attr.aria-label]="'Ukloni tačku ' + (i + 1)"
+                  (click)="ukloniTacku(i)"
+                ></button>
+              }
+            </li>
+          }
+        </ol>
+        @if (greskaListeTacaka(); as poruka) {
+          <small class="text-sm text-greska" role="alert">{{ poruka }}</small>
+        }
+        @if (tacke.length < najviseTacaka) {
+          <button
+            pButton
+            type="button"
+            text
+            icon="pi pi-plus"
+            class="self-start"
+            (click)="dodajTacku()"
+          >
+            Dodaj tačku
+          </button>
+        }
+      </fieldset>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <button pButton type="submit" [disabled]="slanje()">
+          @if (slanje()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Slanje…
+          } @else {
+            {{ izmena() ? 'Sačuvaj izmene' : 'Zakaži sastanak' }}
+          }
+        </button>
+        @if (!slanje()) {
+          <a pButton [routerLink]="izmena() ? ['/sastanci', id()] : '/sastanci'" text>Odustani</a>
+        }
+      </div>
+    </form>
+  }
+</div>

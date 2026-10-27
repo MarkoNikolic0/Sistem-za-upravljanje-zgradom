@@ -1,0 +1,154 @@
+<div class="stranica">
+  <p class="oznaka">Zgrada</p>
+  <h1 class="naslov-stranice mt-3">Sastanci</h1>
+  <p class="mt-2 text-priguseno max-sm:hidden">
+    Skupštine i zborovi stanara, sa dnevnim redom i mestom održavanja.
+  </p>
+
+  @if (bezZgrade()) {
+    <p class="mt-6 text-sm text-priguseno">
+      Da bi video sastanke svoje zgrade,
+      <a
+        routerLink="/povezivanje"
+        class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+        >poveži nalog sa stanom</a
+      >.
+    </p>
+  } @else {
+    @if (zakazuje()) {
+      <a pButton routerLink="/sastanci/novi" class="mt-6">Zakaži sastanak</a>
+    }
+
+    <div class="alatke">
+      <p-selectbutton
+        [options]="filteri"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        [ngModel]="store.stanje()"
+        (ngModelChange)="store.promeniStanje($event)"
+        ariaLabelledBy="sastanci-filter"
+      />
+      <span id="sastanci-filter" class="sr-only">Prikaz sastanaka</span>
+      @if (zgrade().length > 1) {
+        <p-select
+          class="sm:w-60"
+          ariaLabel="Zgrada"
+          [options]="opcijeZgrada()"
+          optionLabel="naziv"
+          optionValue="id"
+          [ngModel]="store.zgradaId()"
+          (ngModelChange)="store.promeniZgradu($event)"
+          [fluid]="true"
+        />
+      }
+    </div>
+
+    <section class="odeljak" aria-label="Sastanci" [attr.aria-busy]="store.isPending()">
+      @if (store.error(); as greska) {
+        <p-message severity="error">{{ greska }}</p-message>
+        <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj()">
+          Pokušaj ponovo
+        </button>
+      } @else if (store.isPending() && store.sastanci().length === 0) {
+        <div class="ucitavanje flex flex-col gap-3" aria-hidden="true">
+          <p-skeleton height="11rem" />
+          <p-skeleton height="4.5rem" />
+          <p-skeleton height="4.5rem" />
+        </div>
+        <span class="sr-only">Učitavanje sastanaka…</span>
+      } @else if (store.sastanci().length === 0) {
+        <div class="prazno">
+          <span class="prazno-ikonica neutralno" aria-hidden="true"
+            ><i class="pi pi-calendar"></i
+          ></span>
+          <p class="text-naslov">
+            {{
+              store.stanje() === 'predstojeci'
+                ? 'Nema zakazanih sastanaka'
+                : 'Nema održanih sastanaka'
+            }}
+          </p>
+          @if (store.stanje() === 'predstojeci') {
+            <p class="mt-1 text-sm text-priguseno">
+              {{
+                zakazuje()
+                  ? 'Zakaži skupštinu ili zbor stanara i napiši dnevni red.'
+                  : 'Kad upravnik zakaže sastanak, poziv će se pojaviti ovde.'
+              }}
+            </p>
+          }
+        </div>
+      } @else {
+        @if (sledeci(); as s) {
+          <a [routerLink]="['/sastanci', s.id]" class="panel istaknut sledeci">
+            <p class="oznaka">Sledeći sastanak · {{ kadaJe(s.pocetak) }}</p>
+            <div class="mt-4 flex gap-4 sm:gap-6">
+              <div class="datum-kalendara veliki" aria-hidden="true">
+                <span class="dan">{{ s.pocetak | date: 'd' }}</span>
+                <span class="mesec">{{ s.pocetak | date: 'MMM' }}</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <app-oznake-sastanka [sastanak]="s" />
+                <h2 class="mt-2 text-xl font-light text-naslov sm:text-2xl">{{ s.naslov }}</h2>
+                <p class="mt-1 text-sm text-tekst">
+                  <time [attr.datetime]="s.pocetak">{{
+                    s.pocetak | date: "EEEE, d. MMMM 'u' HH:mm"
+                  }}</time>
+                  · {{ s.lokacija }}
+                </p>
+                <ol class="kratak-red">
+                  @for (t of s.tacke.slice(0, 3); track t.id) {
+                    <li>{{ t.naslov }}</li>
+                  }
+                </ol>
+                @if (s.tacke.length > 3) {
+                  <p class="mt-1 text-sm text-utisano">i još {{ tacaka(s.tacke.length - 3) }}</p>
+                }
+              </div>
+            </div>
+          </a>
+        }
+
+        @for (grupa of meseci(); track grupa.mesec) {
+          <h2 class="naslov-odeljka mt-8 mb-3">{{ grupa.mesec }}</h2>
+          <ul class="panel raspored">
+            @for (s of grupa.sastanci; track s.id) {
+              <li>
+                <a [routerLink]="['/sastanci', s.id]" class="stavka" [class.otkazan]="s.otkazan">
+                  <div class="datum-kalendara" aria-hidden="true">
+                    <span class="dan">{{ s.pocetak | date: 'd' }}</span>
+                    <span class="dan-u-nedelji">{{ s.pocetak | date: 'EEE' }}</span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="naslov truncate">{{ s.naslov }}</p>
+                    <p class="mt-0.5 truncate text-sm text-priguseno">
+                      <time [attr.datetime]="s.pocetak">{{
+                        s.pocetak | date: "d. MMMM 'u' HH:mm"
+                      }}</time>
+                      · {{ s.lokacija }}
+                      @if (zgrade().length > 1) {
+                        · {{ s.zgrada.naziv }}
+                      }
+                    </p>
+                  </div>
+                  <div class="max-sm:hidden">
+                    <app-oznake-sastanka [sastanak]="s" />
+                  </div>
+                  <i class="pi pi-chevron-right text-xs text-utisano" aria-hidden="true"></i>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      }
+
+      <app-paginacija
+        [strana]="store.strana()"
+        [ukupno]="store.ukupno()"
+        [poStrani]="store.poStrani"
+        (promena)="store.promeniStranu($event)"
+      />
+    </section>
+  }
+</div>

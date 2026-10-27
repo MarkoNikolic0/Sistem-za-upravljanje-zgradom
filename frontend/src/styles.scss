@@ -298,3 +298,104 @@ a.plocica-fajla:hover {
     border-color: color-mix(in srgb, var(--color-svetlo) 25%, transparent);
   }
 }
+
+// List kalendara sa danom i mesecom (sastanci)
+.datum-kalendara {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 10px;
+  line-height: 1;
+
+  .dan {
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--color-naslov);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dan-u-nedelji,
+  .mesec,
+  .sat {
+    margin-top: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-priguseno);
+  }
+
+  &.veliki {
+    width: 4.5rem;
+    height: auto;
+    min-height: 4.75rem;
+    padding: 0.625rem 0;
+    border-color: color-mix(in srgb, var(--color-svetlo) 40%, transparent);
+
+    .dan {
+      font-size: 2rem;
+    }
+
+    .mesec {
+      color: var(--color-svetlo);
+    }
+
+    .sat {
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--color-linija);
+      letter-spacing: 0.04em;
+      color: var(--color-tekst);
+    }
+  }
+}
+
+// Redni broj u listi koja se popunjava (opcije ankete, tačke dnevnog reda)
+.redni-broj {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--color-priguseno);
+  background: rgb(255 255 255 / 0.06);
+}
+
+// Mala oznaka uz naslov (vrsta sastanka, hitno, otkazan)
+.oznake {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.znacka {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--color-priguseno);
+
+  &.skupstina {
+    color: var(--color-info);
+    border-color: color-mix(in srgb, var(--color-info) 35%, transparent);
+  }
+
+  &.hitno {
+    color: var(--color-upozorenje);
+    border-color: color-mix(in srgb, var(--color-upozorenje) 40%, transparent);
+  }
+
+  &.otkazan {
+    color: var(--color-greska);
+    border-color: color-mix(in srgb, var(--color-greska) 40%, transparent);
+  }
+}

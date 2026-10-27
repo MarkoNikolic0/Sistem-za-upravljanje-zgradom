@@ -1,5 +1,6 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { MS_PO_DANU } from '../../shared/datum';
+import { danaDo } from '../../shared/datum';
+import { uMnozini } from '../../shared/mnozina';
 import { Glasanje, IshodOdluke } from './glasanje-models';
 
 const nabrajanje = new Intl.ListFormat('sr-Latn', { type: 'conjunction' });
@@ -10,28 +11,13 @@ export const NAJVISE_DANA_ANKETE = 30;
 const relativno = new Intl.RelativeTimeFormat('sr-Latn', { numeric: 'auto' });
 const procenat = new Intl.NumberFormat('sr-Latn', { style: 'percent', maximumFractionDigits: 0 });
 
-// Broj kalendarskih dana do roka (0 = danas), da „sutra“ važi i kad je rok sutra ujutru
-function danaDoRoka(rok: string, sada = new Date()): number {
-  const kraj = new Date(rok);
-  const danKraja = new Date(kraj.getFullYear(), kraj.getMonth(), kraj.getDate());
-  const danas = new Date(sada.getFullYear(), sada.getMonth(), sada.getDate());
-  return Math.round((danKraja.getTime() - danas.getTime()) / MS_PO_DANU);
-}
-
 // „ističe danas“, „ističe sutra“, „ističe za 5 dana“
 export function istice(rok: string): string {
-  return `ističe ${relativno.format(danaDoRoka(rok), 'day')}`;
+  return `ističe ${relativno.format(danaDo(rok), 'day')}`;
 }
 
 export function isticeUskoro(rok: string): boolean {
-  return danaDoRoka(rok) <= 1;
-}
-
-const mnozina = new Intl.PluralRules('sr-Latn');
-
-function uMnozini(broj: number, one: string, few: string, other: string): string {
-  const oblik = mnozina.select(broj);
-  return `${broj} ${oblik === 'one' ? one : oblik === 'few' ? few : other}`;
+  return danaDo(rok) <= 1;
 }
 
 export function glasova(broj: number): string {

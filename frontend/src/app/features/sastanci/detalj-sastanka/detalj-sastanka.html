@@ -1,0 +1,170 @@
+<div class="stranica">
+  <a routerLink="/sastanci" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>Sastanci</a
+  >
+
+  @if (neispravanId() || sastanak.error()) {
+    <section class="odeljak">
+      <h1 class="naslov-stranice">Sastanak</h1>
+      <p-message severity="error" styleClass="mt-6">
+        Sastanak ne postoji ili nemaš pristup.
+      </p-message>
+      <a pButton routerLink="/sastanci" outlined class="mt-4">Nazad na sastanke</a>
+    </section>
+  } @else if (!sastanak.hasValue()) {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton height="12rem" />
+      <p-skeleton height="16rem" styleClass="mt-6" />
+    </div>
+    <span class="sr-only">Učitavanje sastanka…</span>
+  } @else {
+    @let s = sastanak.value();
+    <header class="panel poziv mt-4" [class.istaknut]="!s.otkazan" [class.otkazan]="s.otkazan">
+      <div class="datum-kalendara veliki" aria-hidden="true">
+        <span class="dan">{{ s.pocetak | date: 'd' }}</span>
+        <span class="mesec">{{ s.pocetak | date: 'MMM' }}</span>
+        <span class="sat">{{ s.pocetak | date: 'HH:mm' }}</span>
+      </div>
+      <div class="min-w-0">
+        <app-oznake-sastanka [sastanak]="s" />
+        <h1 class="naslov-stranice mt-3">{{ s.naslov }}</h1>
+        <dl class="podaci">
+          <div>
+            <dt>Kada</dt>
+            <dd>
+              <time [attr.datetime]="s.pocetak">{{
+                s.pocetak | date: "EEEE, d. MMMM y. 'u' HH:mm"
+              }}</time>
+              <span class="text-priguseno"> · {{ kadaJe(s.pocetak) }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Gde</dt>
+            <dd>{{ s.lokacija }}</dd>
+          </div>
+          <div>
+            <dt>Zgrada</dt>
+            <dd>{{ s.zgrada.naziv }}, {{ s.zgrada.adresa }}</dd>
+          </div>
+          @if (s.organizator; as o) {
+            <div>
+              <dt>Saziva</dt>
+              <dd>{{ o.ime }} {{ o.prezime }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+    </header>
+
+    <div id="poruka-sastanka" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (poruka(); as p) {
+        <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+      }
+    </div>
+
+    @if (s.otkazan) {
+      <div class="otkazano mt-6" role="note">
+        <i class="pi pi-ban" aria-hidden="true"></i>
+        <div>
+          <p class="font-medium text-naslov">
+            Sastanak je otkazan
+            @if (s.datumOtkazivanja) {
+              {{ s.datumOtkazivanja | date: formatRoka(s.datumOtkazivanja) }}
+            }
+          </p>
+          @if (s.razlogOtkazivanja) {
+            <p class="mt-1 whitespace-pre-line text-tekst">{{ s.razlogOtkazivanja }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    @if (s.opis) {
+      <p class="mt-6 whitespace-pre-line text-tekst">{{ s.opis }}</p>
+    }
+
+    <section class="odeljak" aria-labelledby="dnevni-red">
+      <h2 id="dnevni-red" class="naslov-odeljka mb-4">Dnevni red</h2>
+      <ol class="dnevni-red">
+        @for (t of s.tacke; track t.id) {
+          <li>
+            <span class="broj" aria-hidden="true">{{ t.redniBroj }}</span>
+            <div class="min-w-0 flex-1">
+              <p class="text-naslov">{{ t.naslov }}</p>
+              @if (t.opis) {
+                <p class="mt-1 whitespace-pre-line text-sm text-priguseno">{{ t.opis }}</p>
+              }
+              @if (t.odluka; as odluka) {
+                <div class="odluka">
+                  <p class="flex flex-wrap items-center gap-x-2 text-sm">
+                    <i class="pi pi-check-square text-svetlo" aria-hidden="true"></i>
+                    <span class="text-naslov">Elektronsko glasanje</span>
+                    <span class="text-priguseno">
+                      · {{ vecine[odluka.vecina ?? 'obicna'].naziv }} ·
+                      {{ odluka.zavrseno ? 'završeno' : 'do' }}
+                      <time [attr.datetime]="odluka.rok">{{
+                        odluka.rok | date: formatRoka(odluka.rok)
+                      }}</time>
+                    </span>
+                  </p>
+                  @if (odluka.pitanje !== t.naslov) {
+                    <p class="mt-2 text-sm text-tekst">„{{ odluka.pitanje }}“</p>
+                  }
+                  <app-stanje-odluke class="mt-3 block" [glasanje]="odluka" />
+                  @if (odluka.smeDaGlasa) {
+                    <a pButton routerLink="/glasanje" size="small" outlined class="mt-4">
+                      {{ odluka.mojGlas === null ? 'Glasaj' : 'Promeni glas' }}
+                    </a>
+                  }
+                </div>
+              } @else if (s.vrsta === 'skupstina') {
+                <p class="mt-1 text-sm text-utisano">Odlučuje se na sednici.</p>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    </section>
+
+    @if (s.smeDaMenja || s.smeDaOtkaze) {
+      <section class="odeljak panel" aria-labelledby="upravljanje">
+        <h2 id="upravljanje" class="naslov-odeljka">Upravljanje</h2>
+        @if (otkazivanje()) {
+          <div class="mt-4">
+            <app-forma-razloga
+              oznaka="Razlog otkazivanja"
+              natpis="Otkaži sastanak"
+              pomoc="Stanari vide razlog uz otkazan sastanak."
+              porukaGreske="Napiši razlog otkazivanja."
+              [opasno]="true"
+              [slanje]="slanje()"
+              (posalji)="otkazi($event)"
+              (odustani)="odustani()"
+            />
+          </div>
+        } @else {
+          <p class="mt-2 text-sm text-priguseno">
+            Izmeni termin, mesto ili dnevni red dok sastanak ne počne.
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            @if (s.smeDaMenja) {
+              <a pButton [routerLink]="['/sastanci', s.id, 'izmena']" outlined>Izmeni</a>
+            }
+            @if (s.smeDaOtkaze) {
+              <button
+                pButton
+                id="otkazi-sastanak"
+                type="button"
+                severity="danger"
+                text
+                (click)="zapocniOtkazivanje()"
+              >
+                Otkaži sastanak
+              </button>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

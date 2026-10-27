@@ -52,6 +52,11 @@ export const routes: Routes = [
         loadChildren: () => import('./features/oglasi/oglasi.routes'),
       },
       {
+        path: 'sastanci',
+        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
+        loadChildren: () => import('./features/sastanci/sastanci.routes'),
+      },
+      {
         path: 'glasanje',
         canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
         loadChildren: () => import('./features/glasanje/glasanje.routes'),

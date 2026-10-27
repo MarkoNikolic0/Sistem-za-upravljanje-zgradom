@@ -1,9 +1,13 @@
 import { inject, Service, Signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { forkJoin, map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
 import { Glasanje, NovoGlasanjeRequest, UpitGlasanja } from './glasanje-models';
+
+// Najviše koliko server vraća na jednoj strani
+const NAJVISE_ODLUKA = 50;
 
 @Service()
 export class GlasanjeService {
@@ -25,6 +29,21 @@ export class GlasanjeService {
     return httpResource<Glasanje>(() => {
       const glasanjeId = id();
       return glasanjeId === undefined ? undefined : `${this.apiUrl}/${glasanjeId}`;
+    });
+  }
+
+  // Odluke zgrade, aktivne i završene, za izbor uz tačku dnevnog reda sastanka
+  odlukeZgrade(zgradaId: Signal<number | undefined>) {
+    return rxResource({
+      params: zgradaId,
+      stream: ({ params }) =>
+        forkJoin(
+          (['aktivna', 'zavrsena'] as const).map((stanje) =>
+            this.lista({ stanje, zgradaId: params, strana: 1, poStrani: NAJVISE_ODLUKA }),
+          ),
+        ).pipe(
+          map((strane) => strane.flatMap((s) => s.stavke).filter((g) => g.vrsta === 'odluka')),
+        ),
     });
   }
 

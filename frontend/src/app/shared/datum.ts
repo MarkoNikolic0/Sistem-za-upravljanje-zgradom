@@ -6,6 +6,14 @@ export function zaDana(broj: number, od = new Date()): Date {
   return new Date(od.getFullYear(), od.getMonth(), od.getDate() + broj);
 }
 
+// Broj kalendarskih dana do datuma (0 = danas), da „sutra“ važi i kad je sutra ujutru
+export function danaDo(datum: Date | string, sada = new Date()): number {
+  const d = new Date(datum);
+  const dan = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const danas = new Date(sada.getFullYear(), sada.getMonth(), sada.getDate());
+  return Math.round((dan.getTime() - danas.getTime()) / MS_PO_DANU);
+}
+
 export function krajDana(datum: Date): Date {
   return new Date(datum.getFullYear(), datum.getMonth(), datum.getDate(), 23, 59, 59, 999);
 }
