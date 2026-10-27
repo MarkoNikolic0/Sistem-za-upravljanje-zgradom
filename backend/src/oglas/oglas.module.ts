@@ -8,6 +8,7 @@ import { OglasController } from './oglas.controller.js';
 import { OglasService } from './oglas.service.js';
 import { PrilogOglasa } from './prilog-oglasa.entity.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
+import { OglasPravaService } from './oglas-prava.service.js';
 import { SkladisteModule } from '../shared/skladiste/skladiste.module.js';
 import { GlasanjeModule } from '../glasanje/glasanje.module.js';
 
@@ -20,6 +21,6 @@ import { GlasanjeModule } from '../glasanje/glasanje.module.js';
     GlasanjeModule,
   ],
   controllers: [OglasController],
-  providers: [OglasService, PrilogOglasaService],
+  providers: [OglasService, PrilogOglasaService, OglasPravaService],
 })
 export class OglasModule {}
