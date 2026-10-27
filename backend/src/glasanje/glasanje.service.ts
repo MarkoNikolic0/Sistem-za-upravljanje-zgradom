@@ -5,13 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, MoreThan, Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThan, Repository } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
-import { sadrzi, samoZgrada } from '../korisnik/pristup-zgradama.js';
+import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import {
   StanjeGlasanja,
@@ -22,12 +22,9 @@ import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateGlasanjeDto } from './dto/create-glasanje.dto.js';
 import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
 import { ODGOVORI_ODLUKE } from './ishod-odluke.js';
-import {
-  GlasanjePravaService,
-  zgradeOdluka,
-} from './glasanje-prava.service.js';
+import { GlasanjePravaService } from './glasanje-prava.service.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
-import { PORUKA_ZAVRSENA } from './glasanje-glasovi.service.js';
+import { PORUKA_ZAVRSENA } from './glasanje.constants.js';
 
 @Injectable()
 export class GlasanjeService {
@@ -52,20 +49,9 @@ export class GlasanjeService {
     const sada = new Date();
     const rok = aktivna ? MoreThan(sada) : LessThanOrEqual(sada);
 
-    const uslovi = [
-      { vrsta: VrstaGlasanja.ANKETA, zgrade: p.zgrade },
-      { vrsta: VrstaGlasanja.ODLUKA, zgrade: zgradeOdluka(p) },
-    ]
-      .map(({ vrsta, zgrade }) => ({
-        vrsta,
-        zgrade: samoZgrada(zgrade, upit.zgradaId),
-      }))
-      .filter(({ zgrade }) => zgrade?.length !== 0)
-      .map(({ vrsta, zgrade }) => ({
-        vrsta,
-        rok,
-        ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
-      }));
+    const uslovi = this.prava
+      .usloviVidljivosti(p, upit.zgradaId)
+      .map((uslov) => ({ ...uslov, rok }));
     if (uslovi.length === 0) {
       return { stavke: [], ukupno: 0 };
     }
@@ -90,12 +76,7 @@ export class GlasanjeService {
       korisnikId,
       uloga,
     );
-    const [rezultat] = await this.rezultati.saRezultatima(
-      [glasanje],
-      korisnikId,
-      p,
-    );
-    return rezultat;
+    return this.rezultati.jednoSaRezultatima(glasanje, korisnikId, p);
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateGlasanjeDto) {

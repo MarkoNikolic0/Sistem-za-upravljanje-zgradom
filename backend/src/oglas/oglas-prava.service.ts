@@ -22,10 +22,10 @@ import {
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
 import { OglasUpitDto } from './dto/oglas-upit.dto.js';
+import { istekao } from './oglas.constants.js';
 
-export function istekao(oglas: Oglas, sada = new Date()) {
-  return oglas.vaziDo !== null && oglas.vaziDo <= sada;
-}
+// Šta sa oglasom sme samo onaj ko ga je objavio
+type RadnjaAutora = 'menja' | 'obriše' | 'obnovi';
 
 @Injectable()
 export class OglasPravaService {
@@ -85,11 +85,16 @@ export class OglasPravaService {
     return { oglas, p };
   }
 
-  async findZaIzmenu(id: number, korisnikId: number, uloga: Uloga) {
+  async findZaAutora(
+    id: number,
+    korisnikId: number,
+    uloga: Uloga,
+    radnja: RadnjaAutora,
+  ) {
     const dostupan = await this.findDostupan(id, korisnikId, uloga);
     if (dostupan.oglas.autor.id !== korisnikId) {
       throw new ForbiddenException(
-        'Oglas može da menja samo onaj ko ga je objavio.',
+        `Oglas može da ${radnja} samo onaj ko ga je objavio.`,
       );
     }
     return dostupan;

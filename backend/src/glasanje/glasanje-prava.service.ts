@@ -4,17 +4,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
-import { type PristupZgradama, sadrzi } from '../korisnik/pristup-zgradama.js';
+import {
+  type PristupZgradama,
+  sadrzi,
+  samoZgrada,
+} from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
-
-export const PORUKA_VLASNICI = 'Za odluke glasaju vlasnici stanova u zgradi.';
+import { PORUKA_VLASNICI } from './glasanje.constants.js';
 
 // Odluke vide samo vlasnici stanova u zgradi, upravnik i admin
-export function zgradeOdluka(p: PristupZgradama) {
+function zgradeOdluka(p: PristupZgradama) {
   return p.upravlja === null
     ? null
     : [...new Set([...p.poseduje, ...p.upravlja])];
@@ -27,6 +30,26 @@ export class GlasanjePravaService {
     private glasanjeRepository: Repository<Glasanje>,
     private korisnikService: KorisnikService,
   ) {}
+
+  // Prazan niz znači da korisnik ne vidi nijedno glasanje
+  usloviVidljivosti(
+    p: PristupZgradama,
+    zgradaId?: number,
+  ): FindOptionsWhere<Glasanje>[] {
+    return [
+      { vrsta: VrstaGlasanja.ANKETA, zgrade: p.zgrade },
+      { vrsta: VrstaGlasanja.ODLUKA, zgrade: zgradeOdluka(p) },
+    ]
+      .map(({ vrsta, zgrade }) => ({
+        vrsta,
+        zgrade: samoZgrada(zgrade, zgradaId),
+      }))
+      .filter(({ zgrade }) => zgrade?.length !== 0)
+      .map(({ vrsta, zgrade }) => ({
+        vrsta,
+        ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
+      }));
+  }
 
   async findDostupno(id: number, korisnikId: number, uloga: Uloga) {
     const glasanje = await this.glasanjeRepository.findOne({

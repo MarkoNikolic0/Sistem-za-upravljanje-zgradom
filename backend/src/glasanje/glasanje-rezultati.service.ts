@@ -26,6 +26,14 @@ export class GlasanjeRezultatiService {
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
     });
+    return this.jednoSaRezultatima(glasanje, korisnikId, p);
+  }
+
+  async jednoSaRezultatima(
+    glasanje: Glasanje,
+    korisnikId: number,
+    p: PristupZgradama,
+  ) {
     const [rezultat] = await this.saRezultatima([glasanje], korisnikId, p);
     return rezultat;
   }

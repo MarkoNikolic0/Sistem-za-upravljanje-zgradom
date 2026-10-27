@@ -16,12 +16,12 @@ import { CreateOglasDto } from './dto/create-oglas.dto.js';
 import { UpdateOglasDto } from './dto/update-oglas.dto.js';
 import { SakrijOglasDto } from './dto/sakrij-oglas.dto.js';
 import { OglasUpitDto } from './dto/oglas-upit.dto.js';
-import { DANA_VAZENJA, PORUKA_SAKRIVEN } from './oglas.constants.js';
+import { DANA_VAZENJA, PORUKA_SAKRIVEN, istekao } from './oglas.constants.js';
 import { VREMENSKA_ZONA } from '../shared/vreme.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
 import { PrilogOglasa } from './prilog-oglasa.entity.js';
 import { type PristupZgradama, sadrzi } from '../korisnik/pristup-zgradama.js';
-import { OglasPravaService, istekao } from './oglas-prava.service.js';
+import { OglasPravaService } from './oglas-prava.service.js';
 import { GlasanjeService } from '../glasanje/glasanje.service.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
@@ -127,7 +127,12 @@ export class OglasService {
     uloga: Uloga,
     dto: UpdateOglasDto,
   ) {
-    const { oglas, p } = await this.prava.findZaIzmenu(id, korisnikId, uloga);
+    const { oglas, p } = await this.prava.findZaAutora(
+      id,
+      korisnikId,
+      uloga,
+      'menja',
+    );
     if (dto.vrsta) {
       this.prava.proveriVrstu(dto.vrsta, p, oglas.zgrada.id);
     }
@@ -165,12 +170,7 @@ export class OglasService {
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
-    const { oglas } = await this.prava.findDostupan(id, korisnikId, uloga);
-    if (oglas.autor.id !== korisnikId) {
-      throw new ForbiddenException(
-        'Oglas može da obriše samo onaj ko ga je objavio.',
-      );
-    }
+    await this.prava.findZaAutora(id, korisnikId, uloga, 'obriše');
     const prilozi = await this.dataSource.transaction(async (manager) => {
       await manager.findOne(Oglas, {
         where: { id },
@@ -193,7 +193,12 @@ export class OglasService {
     uloga: Uloga,
     fajl: Express.Multer.File | undefined,
   ) {
-    const { oglas } = await this.prava.findZaIzmenu(id, korisnikId, uloga);
+    const { oglas } = await this.prava.findZaAutora(
+      id,
+      korisnikId,
+      uloga,
+      'menja',
+    );
     this.proveriDaNijeSakriven(oglas);
     return this.prilogService.dodaj(oglas.id, fajl);
   }
@@ -204,7 +209,12 @@ export class OglasService {
     korisnikId: number,
     uloga: Uloga,
   ) {
-    const { oglas } = await this.prava.findZaIzmenu(id, korisnikId, uloga);
+    const { oglas } = await this.prava.findZaAutora(
+      id,
+      korisnikId,
+      uloga,
+      'menja',
+    );
     const prilog = oglas.prilozi.find((p) => p.id === prilogId);
     if (!prilog) {
       throw new NotFoundException(`Prilog sa id-jem ${prilogId} ne postoji!`);
@@ -243,12 +253,12 @@ export class OglasService {
   }
 
   async obnovi(id: number, korisnikId: number, uloga: Uloga) {
-    const { oglas, p } = await this.prava.findDostupan(id, korisnikId, uloga);
-    if (oglas.autor.id !== korisnikId) {
-      throw new ForbiddenException(
-        'Oglas može da obnovi samo onaj ko ga je objavio.',
-      );
-    }
+    const { oglas, p } = await this.prava.findZaAutora(
+      id,
+      korisnikId,
+      uloga,
+      'obnovi',
+    );
     if (oglas.datumSakrivanja !== null) {
       throw new ConflictException(
         'Oglas je sakriven, pa ne može da se obnovi.',

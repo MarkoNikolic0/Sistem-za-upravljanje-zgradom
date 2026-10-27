@@ -7,16 +7,12 @@ import { DataSource, EntityManager, IsNull, MoreThan, Not } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
 import { Glas, JEDAN_GLAS_ANKETE, JEDAN_GLAS_STANA } from './glas.entity.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
-import {
-  GlasanjePravaService,
-  PORUKA_VLASNICI,
-} from './glasanje-prava.service.js';
+import { GlasanjePravaService } from './glasanje-prava.service.js';
+import { PORUKA_VLASNICI, PORUKA_ZAVRSENA } from './glasanje.constants.js';
 import type { PristupZgradama } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
-
-export const PORUKA_ZAVRSENA = 'Glasanje je završeno.';
 
 @Injectable()
 export class GlasanjeGlasoviService {
