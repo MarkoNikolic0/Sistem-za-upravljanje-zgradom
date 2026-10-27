@@ -9,6 +9,9 @@ import { AuthModule } from '../auth/auth.module.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { GlasanjeController } from './glasanje.controller.js';
 import { GlasanjeService } from './glasanje.service.js';
+import { GlasanjeGlasoviService } from './glasanje-glasovi.service.js';
+import { GlasanjePravaService } from './glasanje-prava.service.js';
+import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 
@@ -27,7 +30,12 @@ import { Oglas } from '../oglas/oglas.entity.js';
     KorisnikModule,
   ],
   controllers: [GlasanjeController],
-  providers: [GlasanjeService],
+  providers: [
+    GlasanjeService,
+    GlasanjeGlasoviService,
+    GlasanjePravaService,
+    GlasanjeRezultatiService,
+  ],
   exports: [GlasanjeService],
 })
 export class GlasanjeModule {}

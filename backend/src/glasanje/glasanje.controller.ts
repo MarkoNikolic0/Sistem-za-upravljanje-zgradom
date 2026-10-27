@@ -21,6 +21,7 @@ import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { GlasanjeService } from './glasanje.service.js';
+import { GlasanjeGlasoviService } from './glasanje-glasovi.service.js';
 import { CreateGlasanjeDto } from './dto/create-glasanje.dto.js';
 import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
 import { GlasDto } from './dto/glas.dto.js';
@@ -30,7 +31,10 @@ import { GlasDto } from './dto/glas.dto.js';
 @Roles(Uloga.STANAR, Uloga.UPRAVNIK, Uloga.ADMIN)
 @Controller('glasanje')
 export class GlasanjeController {
-  constructor(private readonly glasanjeService: GlasanjeService) {}
+  constructor(
+    private readonly glasanjeService: GlasanjeService,
+    private readonly glasoviService: GlasanjeGlasoviService,
+  ) {}
 
   @Post()
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
@@ -63,7 +67,7 @@ export class GlasanjeController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: GlasDto,
   ) {
-    return this.glasanjeService.glasaj(
+    return this.glasoviService.glasaj(
       id,
       korisnik.id,
       korisnik.uloga,
@@ -76,7 +80,7 @@ export class GlasanjeController {
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
-    return this.glasanjeService.povuciGlas(id, korisnik.id, korisnik.uloga);
+    return this.glasoviService.povuciGlas(id, korisnik.id, korisnik.uloga);
   }
 
   @Patch(':id/zatvori')

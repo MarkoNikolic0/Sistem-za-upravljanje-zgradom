@@ -809,4 +809,80 @@ WHERE s.rb = 10
   AND o.id = (SELECT min(o2.id) FROM oglas o2
               WHERE o2.naslov = 'Usvojena odluka: nova ulazna vrata' AND o2."zgradaId" = s.zgrada_id);
 
+-- SASTANCI ------------------------------------------------------------------------------------
+-- Sastanci iz skripte se pri svakom pokretanju brisu i prave iznova (po naslovu i zgradi),
+-- pa termini uvek vaze od danas. Skupstinu vide samo vlasnici, upravnik i admin; zbor svi stanari.
+--   Delta, predstojeci: redovna skupstina (krecenje i profesionalni upravnik kao odluke),
+--     zbor o kucnom redu, hitna sednica sutra, otkazan zbor o parkingu (Natalija vidi samo zborove)
+--   Delta, odrzani: skupstina sa odlukama o ulaznim vratima i prostoriji, zbor o ciscenju podruma
+--   Obrenoviceva (Jelena) i Lamela (Nikola): po jedan predstojeci, Marko ih vidi uz filter
+-- dana i sat = termin po beogradskom vremenu; odluka = rb iz seed_glasanje
+CREATE TEMP TABLE seed_sastanak ON COMMIT DROP AS
+SELECT v.rb, v.vrsta::sastanak_vrsta_enum AS vrsta, v.naslov, v.opis, v.lokacija, v.hitno,
+       z.id AS zgrada_id, k.id AS organizator_id,
+       (date_trunc('day', now() AT TIME ZONE 'Europe/Belgrade') + v.dana * interval '1 day' + v.sat)
+         AT TIME ZONE 'Europe/Belgrade' AS pocetak,
+       v.razlog
+FROM (VALUES
+  (1, 'skupstina', 'Redovna sednica skupštine stambene zajednice',
+   'Prva redovna sednica ove jeseni. Glasanje o odlukama traje elektronski do roka u aplikaciji.',
+   'Prostorija u prizemlju', false, 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', 6, interval '18 hours', NULL),
+  (2, 'zbor', 'Dogovor o kućnom redu', NULL,
+   'Ispred ulaza', false, 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', 2, interval '19 hours', NULL),
+  (3, 'skupstina', 'Hitna sednica: zamena vertikale', 'Vertikala u stanu 10 curi u stanove ispod.',
+   'Prostorija u prizemlju', true, 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', 1, interval '19 hours 30 minutes', NULL),
+  (4, 'zbor', 'Raspored parking mesta u dvorištu', NULL,
+   'Dvorište zgrade', false, 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', 9, interval '18 hours',
+   'Dvorište je tog dana zauzeto zbog radova na vodovodu. Javiću novi termin.'),
+  (5, 'skupstina', 'Sednica skupštine o ulaznim vratima', NULL,
+   'Prostorija u prizemlju', false, 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', -20, interval '18 hours', NULL),
+  (6, 'zbor', 'Akcija čišćenja podruma', NULL,
+   'Podrum', false, 'Bulevar Nemanjića 45, Niš', 'marko@gmail.com', -45, interval '10 hours', NULL),
+  (7, 'skupstina', 'Sednica skupštine o interfonu', NULL,
+   'Ulaz zgrade', false, 'Obrenovićeva 30, Niš', 'jelena.markovic@example.com', 8, interval '19 hours', NULL),
+  (8, 'zbor', 'Uređenje zelene površine', NULL,
+   'Dvorište', false, 'Vizantijski bulevar 12, Niš', 'nikola.ilic@example.com', 4, interval '17 hours', NULL)
+) AS v(rb, vrsta, naslov, opis, lokacija, hitno, adresa, email, dana, sat, razlog)
+JOIN zgrada z ON z.adresa = v.adresa
+JOIN korisnik k ON k.email = v.email;
+
+CREATE TEMP TABLE seed_tacka (sastanak int, rb int, naslov text, opis text, odluka int) ON COMMIT DROP;
+INSERT INTO seed_tacka VALUES
+  (1, 1, 'Izveštaj upravnika o radu za proteklih šest meseci', NULL, NULL),
+  (1, 2, 'Krečenje ulaza i stepeništa', 'Ponuda firme Bojadisanje DOO od 280.000 dinara.', 8),
+  (1, 3, 'Poveravanje upravljanja profesionalnom upravniku', NULL, 9),
+  (1, 4, 'Razno', NULL, NULL),
+  (2, 1, 'Raspored iznošenja smeća i kabastog otpada', NULL, NULL),
+  (2, 2, 'Buka posle 22 časa', NULL, NULL),
+  (2, 3, 'Bicikli i kolica u hodniku', 'Predlog: ostavljati ih u podrumu.', NULL),
+  (3, 1, 'Hitna zamena vertikale i izbor izvođača', 'Stigle su dve ponude, obe za radove ove nedelje.', NULL),
+  (4, 1, 'Raspored parking mesta', NULL, NULL),
+  (4, 2, 'Mesto za parkiranje dostavnih vozila', NULL, NULL),
+  (5, 1, 'Zamena ulaznih vrata', NULL, 10),
+  (5, 2, 'Izdavanje prostorije u prizemlju', NULL, 11),
+  (5, 3, 'Razno', NULL, NULL),
+  (6, 1, 'Podela posla i termin akcije', NULL, NULL),
+  (7, 1, 'Postavljanje interfona sa kamerom', NULL, 13),
+  (8, 1, 'Sadnja drveća i klupe u dvorištu', NULL, NULL);
+
+DELETE FROM sastanak s
+USING seed_sastanak v
+WHERE s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id;
+
+INSERT INTO sastanak (vrsta, naslov, opis, pocetak, lokacija, hitno, "datumOtkazivanja", "razlogOtkazivanja", "zgradaId", "organizatorId", "datumKreiranja")
+SELECT v.vrsta, v.naslov, v.opis, v.pocetak, v.lokacija, v.hitno,
+       CASE WHEN v.razlog IS NOT NULL THEN now() - interval '1 day' END, v.razlog,
+       v.zgrada_id, v.organizator_id, least(now(), v.pocetak) - interval '7 days'
+FROM seed_sastanak v
+ORDER BY v.rb;
+
+INSERT INTO tacka_dnevnog_reda ("redniBroj", naslov, opis, "sastanakId", "odlukaId")
+SELECT t.rb, t.naslov, t.opis, s.id, g.id
+FROM seed_tacka t
+JOIN seed_sastanak v ON v.rb = t.sastanak
+JOIN sastanak s ON s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id
+LEFT JOIN seed_glasanje sg ON sg.rb = t.odluka
+LEFT JOIN glasanje g ON g.pitanje = sg.pitanje AND g."zgradaId" = sg.zgrada_id
+ORDER BY t.sastanak, t.rb;
+
 COMMIT;
