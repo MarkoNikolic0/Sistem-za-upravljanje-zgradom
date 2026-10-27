@@ -13,6 +13,7 @@ import { CreateZgradaDto } from './dto/create-zgrada.dto.js';
 import { UpdateZgradaDto } from './dto/update-zgrada.dto.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
+import { Sastanak } from '../sastanak/sastanak.entity.js';
 
 @Injectable()
 export class ZgradaService {
@@ -25,6 +26,8 @@ export class ZgradaService {
     @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
     @InjectRepository(Glasanje)
     private glasanjeRepository: Repository<Glasanje>,
+    @InjectRepository(Sastanak)
+    private sastanakRepository: Repository<Sastanak>,
   ) {}
 
   async create(dto: CreateZgradaDto) {
@@ -53,16 +56,18 @@ export class ZgradaService {
   async remove(id: number) {
     const zgrada = await this.findOne(id);
 
-    const [stanovi, kvarovi, upravnici, oglasi, glasanja] = await Promise.all([
-      this.stanRepository.count({ where: { zgrada: { id } } }),
-      this.kvarRepository.count({ where: { zgrada: { id } } }),
-      this.korisnikRepository.count({ where: { zgrada: { id } } }),
-      this.oglasRepository.count({ where: { zgrada: { id } } }),
-      this.glasanjeRepository.count({ where: { zgrada: { id } } }),
-    ]);
-    if (stanovi + kvarovi + upravnici + oglasi + glasanja > 0) {
+    const [stanovi, kvarovi, upravnici, oglasi, glasanja, sastanci] =
+      await Promise.all([
+        this.stanRepository.count({ where: { zgrada: { id } } }),
+        this.kvarRepository.count({ where: { zgrada: { id } } }),
+        this.korisnikRepository.count({ where: { zgrada: { id } } }),
+        this.oglasRepository.count({ where: { zgrada: { id } } }),
+        this.glasanjeRepository.count({ where: { zgrada: { id } } }),
+        this.sastanakRepository.count({ where: { zgrada: { id } } }),
+      ]);
+    if (stanovi + kvarovi + upravnici + oglasi + glasanja + sastanci > 0) {
       throw new ConflictException(
-        `Zgrada se ne može obrisati jer ima: stanova ${stanovi}, kvarova ${kvarovi}, upravnika ${upravnici}, oglasa ${oglasi}, glasanja ${glasanja}.`,
+        `Zgrada se ne može obrisati jer ima: stanova ${stanovi}, kvarova ${kvarovi}, upravnika ${upravnici}, oglasa ${oglasi}, glasanja ${glasanja}, sastanaka ${sastanci}.`,
       );
     }
 

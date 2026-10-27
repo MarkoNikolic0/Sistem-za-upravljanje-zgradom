@@ -9,10 +9,19 @@ import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
+import { Sastanak } from '../sastanak/sastanak.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Zgrada, Stan, Kvar, Korisnik, Oglas, Glasanje]),
+    TypeOrmModule.forFeature([
+      Zgrada,
+      Stan,
+      Kvar,
+      Korisnik,
+      Oglas,
+      Glasanje,
+      Sastanak,
+    ]),
     AuthModule,
   ],
   controllers: [ZgradaController],

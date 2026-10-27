@@ -38,6 +38,18 @@ export class GlasanjeRezultatiService {
     return rezultat;
   }
 
+  // Odluke sa rezultatima za dnevni red sastanka (pristup sastanku je već proveren)
+  async odluke(ids: number[], korisnikId: number, p: PristupZgradama) {
+    if (ids.length === 0) {
+      return [];
+    }
+    const odluke = await this.glasanjeRepository.find({
+      where: { id: In(ids), vrsta: VrstaGlasanja.ODLUKA },
+      relations: { zgrada: true, kreirao: true, opcije: true },
+    });
+    return this.saRezultatima(odluke, korisnikId, p);
+  }
+
   async saRezultatima(
     glasanja: Glasanje[],
     korisnikId: number,

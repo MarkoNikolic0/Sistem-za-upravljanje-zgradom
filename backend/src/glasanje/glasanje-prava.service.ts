@@ -11,17 +11,11 @@ import {
   type PristupZgradama,
   sadrzi,
   samoZgrada,
+  zgradeVlasnika,
 } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { PORUKA_VLASNICI } from './glasanje.constants.js';
-
-// Odluke vide samo vlasnici stanova u zgradi, upravnik i admin
-function zgradeOdluka(p: PristupZgradama) {
-  return p.upravlja === null
-    ? null
-    : [...new Set([...p.poseduje, ...p.upravlja])];
-}
 
 @Injectable()
 export class GlasanjePravaService {
@@ -38,7 +32,7 @@ export class GlasanjePravaService {
   ): FindOptionsWhere<Glasanje>[] {
     return [
       { vrsta: VrstaGlasanja.ANKETA, zgrade: p.zgrade },
-      { vrsta: VrstaGlasanja.ODLUKA, zgrade: zgradeOdluka(p) },
+      { vrsta: VrstaGlasanja.ODLUKA, zgrade: zgradeVlasnika(p) },
     ]
       .map(({ vrsta, zgrade }) => ({
         vrsta,
@@ -61,7 +55,7 @@ export class GlasanjePravaService {
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     const zgrade =
-      glasanje.vrsta === VrstaGlasanja.ODLUKA ? zgradeOdluka(p) : p.zgrade;
+      glasanje.vrsta === VrstaGlasanja.ODLUKA ? zgradeVlasnika(p) : p.zgrade;
     if (!sadrzi(zgrade, glasanje.zgrada.id)) {
       throw new ForbiddenException('Nemate pristup ovom glasanju!');
     }
