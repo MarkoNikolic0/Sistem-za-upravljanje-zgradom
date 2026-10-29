@@ -1,13 +1,9 @@
 import { inject, Service, Signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { forkJoin, map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/stranica';
-import { Glasanje, NovoGlasanjeRequest, UpitGlasanja } from './glasanje-models';
-
-// Najviše koliko server vraća na jednoj strani
-const NAJVISE_ODLUKA = 50;
+import { Glasanje, NovoGlasanjeRequest, OdlukaZgrade, UpitGlasanja } from './glasanje-models';
 
 @Service()
 export class GlasanjeService {
@@ -32,18 +28,13 @@ export class GlasanjeService {
     });
   }
 
-  // Odluke zgrade, aktivne i završene, za izbor uz tačku dnevnog reda sastanka
+  // Sve odluke zgrade, bez rezultata, za izbor uz tačku dnevnog reda sastanka
   odlukeZgrade(zgradaId: Signal<number | undefined>) {
-    return rxResource({
-      params: zgradaId,
-      stream: ({ params }) =>
-        forkJoin(
-          (['aktivna', 'zavrsena'] as const).map((stanje) =>
-            this.lista({ stanje, zgradaId: params, strana: 1, poStrani: NAJVISE_ODLUKA }),
-          ),
-        ).pipe(
-          map((strane) => strane.flatMap((s) => s.stavke).filter((g) => g.vrsta === 'odluka')),
-        ),
+    return httpResource<OdlukaZgrade[]>(() => {
+      const id = zgradaId();
+      return id === undefined
+        ? undefined
+        : { url: `${this.apiUrl}/odluke`, params: { zgradaId: id } };
     });
   }
 

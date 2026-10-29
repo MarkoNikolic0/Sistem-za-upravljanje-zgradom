@@ -9,13 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -52,17 +46,11 @@ import {
   NAJVISE_DANA_UNAPRED,
   najranijiDan,
   predlozenTermin,
+  razliciteOdluke,
   rokPoziva,
 } from '../pravila-sastanka';
 
 type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'pocetak' | 'lokacija' | 'opis' | 'tacke';
-
-function razliciteOdluke(tacke: AbstractControl): ValidationErrors | null {
-  const odluke = (tacke.value as { odlukaId: number | null }[])
-    .map((t) => t.odlukaId)
-    .filter((id) => id !== null);
-  return new Set(odluke).size === odluke.length ? null : { isteOdluke: true };
-}
 
 @Component({
   imports: [
@@ -152,9 +140,9 @@ export class FormaSastanka {
         Validators.maxLength(MAKS_LOKACIJA),
       ]),
       opis: this.fb.nonNullable.control('', Validators.maxLength(MAKS_OPIS)),
-      tacke: this.fb.array([this.novaTacka()], { validators: razliciteOdluke }),
+      tacke: this.fb.array([this.novaTacka()]),
     },
-    { validators: rokPoziva(() => this.pocetni()) },
+    { validators: [rokPoziva(() => this.pocetni()), razliciteOdluke] },
   );
 
   protected readonly vrsta = toSignal(this.forma.controls.vrsta.valueChanges, {
@@ -179,6 +167,15 @@ export class FormaSastanka {
       naziv: o.zavrseno ? `${o.pitanje} (završeno)` : o.pitanje,
     })),
   );
+  protected readonly bezOdluka = computed(() => {
+    if (this.zgradaId() === null) {
+      return 'Prvo izaberi zgradu.';
+    }
+    if (this.odluke.error()) {
+      return 'Odluke trenutno ne mogu da se učitaju.';
+    }
+    return this.odluke.isLoading() ? 'Učitavanje…' : 'Nema odluka u ovoj zgradi.';
+  });
 
   constructor() {
     effect(() => {
@@ -252,10 +249,19 @@ export class FormaSastanka {
     this.fokusiraj(`#tacka-${Math.min(i, this.tacke.length - 1)}`);
   }
 
+  // Odluke prethodne zgrade ne važe u novoj
+  protected promenjenaZgrada(): void {
+    for (const tacka of this.tacke.controls) {
+      tacka.controls.odlukaId.setValue(null);
+    }
+  }
+
   // Izabrana odluka popunjava praznu tačku svojim pitanjem
   protected izabranaOdluka(i: number, odlukaId: number | null): void {
     const naslov = this.tacke.at(i).controls.naslov;
-    const odluka = this.odluke.value()?.find((o) => o.id === odlukaId);
+    const odluka = this.odluke.hasValue()
+      ? this.odluke.value().find((o) => o.id === odlukaId)
+      : undefined;
     if (odluka && !naslov.value.trim()) {
       naslov.setValue(odluka.pitanje.slice(0, MAKS_TACKA));
     }
@@ -293,14 +299,11 @@ export class FormaSastanka {
   }
 
   protected greskaListeTacaka(): string | null {
-    const greske = this.tacke.errors;
-    if (!greske || !this.tacke.touched) {
+    if (!this.tacke.touched) {
       return null;
     }
-    return (
-      (greske['server'] as string | undefined) ??
-      (greske['isteOdluke'] ? 'Ista odluka je uz više tačaka.' : null)
-    );
+    const server = this.tacke.errors?.['server'] as string | undefined;
+    return server ?? (this.forma.errors?.['isteOdluke'] ? 'Ista odluka je uz više tačaka.' : null);
   }
 
   protected async posalji(): Promise<void> {

@@ -24,6 +24,7 @@ import { GlasanjeService } from './glasanje.service.js';
 import { GlasanjeGlasoviService } from './glasanje-glasovi.service.js';
 import { CreateGlasanjeDto } from './dto/create-glasanje.dto.js';
 import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
+import { OdlukeZgradeUpitDto } from './dto/odluke-zgrade-upit.dto.js';
 import { GlasDto } from './dto/glas.dto.js';
 
 @ApiBearerAuth()
@@ -51,6 +52,20 @@ export class GlasanjeController {
     @Query() upit: GlasanjeUpitDto,
   ) {
     return this.glasanjeService.findAll(korisnik.id, korisnik.uloga, upit);
+  }
+
+  // Pre :id, inače bi ParseIntPipe odbio reč odluke
+  @Get('odluke')
+  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
+  odlukeZgrade(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Query() upit: OdlukeZgradeUpitDto,
+  ) {
+    return this.glasanjeService.odlukeZgrade(
+      korisnik.id,
+      korisnik.uloga,
+      upit.zgradaId,
+    );
   }
 
   @Get(':id')

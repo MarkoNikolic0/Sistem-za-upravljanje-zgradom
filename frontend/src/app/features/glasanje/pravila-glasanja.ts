@@ -1,6 +1,7 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { danaDo } from '../../shared/datum';
 import { uMnozini } from '../../shared/mnozina';
+import { imaPonavljanja } from '../../shared/ponavljanje';
 import { Glasanje, IshodOdluke } from './glasanje-models';
 
 const nabrajanje = new Intl.ListFormat('sr-Latn', { type: 'conjunction' });
@@ -44,8 +45,8 @@ export function vodece(glasanje: Glasanje): number[] {
 }
 
 export function razliciteOpcije(polje: AbstractControl<string[]>): ValidationErrors | null {
-  const opcije = polje.value.map((o) => o.trim().toLocaleLowerCase('sr')).filter(Boolean);
-  return new Set(opcije).size === opcije.length ? null : { iste: true };
+  const opcije = polje.value.map((o) => o.trim().toLocaleLowerCase('sr'));
+  return imaPonavljanja(opcije) ? { iste: true } : null;
 }
 
 export function glasaliSuvlasnici(stanovi: string[]): string {

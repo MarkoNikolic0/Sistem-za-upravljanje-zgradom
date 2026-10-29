@@ -80,6 +80,14 @@ export interface Glasanje {
   smeDaObjavi: boolean;
 }
 
+// Odluka u izboru uz tačku dnevnog reda sastanka
+export interface OdlukaZgrade {
+  id: number;
+  pitanje: string;
+  rok: string;
+  zavrseno: boolean;
+}
+
 export interface NovoGlasanjeRequest {
   vrsta: VrstaGlasanja;
   pitanje: string;

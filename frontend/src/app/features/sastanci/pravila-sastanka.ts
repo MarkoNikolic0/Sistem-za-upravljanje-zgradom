@@ -1,6 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { danaDo, zaDana } from '../../shared/datum';
 import { uMnozini } from '../../shared/mnozina';
+import { imaPonavljanja } from '../../shared/ponavljanje';
 import { Sastanak, VrstaSastanka } from './sastanak-models';
 
 // Zakon: poziv za sednicu skupštine najmanje tri dana pre, osim u hitnim slučajevima
@@ -65,6 +66,17 @@ export function rokPoziva(pocetni: () => Termin | null): ValidatorFn {
       ? { rokPoziva: true }
       : null;
   };
+}
+
+// Ista odluka ne sme uz dve tačke; zbor ne šalje odluke, pa se kod njega ne proverava
+export function razliciteOdluke(forma: AbstractControl): ValidationErrors | null {
+  const { vrsta, tacke } = forma.getRawValue() as {
+    vrsta: VrstaSastanka;
+    tacke: { odlukaId: number | null }[];
+  };
+  return vrsta === 'skupstina' && imaPonavljanja(tacke.map((t) => t.odlukaId))
+    ? { isteOdluke: true }
+    : null;
 }
 
 export function poMesecima(sastanci: Sastanak[]): { mesec: string; sastanci: Sastanak[] }[] {

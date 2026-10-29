@@ -70,6 +70,26 @@ export class GlasanjeService {
     };
   }
 
+  // Lak spisak odluka zgrade za izbor uz tačku dnevnog reda, bez rezultata
+  async odlukeZgrade(korisnikId: number, uloga: Uloga, zgradaId: number) {
+    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
+    if (!sadrzi(p.upravlja, zgradaId)) {
+      throw new ForbiddenException('Odluke za sastanak bira upravnik zgrade.');
+    }
+    const sada = new Date();
+    const odluke = await this.glasanjeRepository.find({
+      select: { id: true, pitanje: true, rok: true },
+      where: { vrsta: VrstaGlasanja.ODLUKA, zgrada: { id: zgradaId } },
+      order: { rok: 'DESC', id: 'DESC' },
+    });
+    return odluke.map(({ id, pitanje, rok }) => ({
+      id,
+      pitanje,
+      rok,
+      zavrseno: rok <= sada,
+    }));
+  }
+
   async findOne(id: number, korisnikId: number, uloga: Uloga) {
     const { glasanje, p } = await this.prava.findDostupno(
       id,

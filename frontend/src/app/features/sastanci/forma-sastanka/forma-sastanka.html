@@ -61,6 +61,7 @@
             placeholder="Izaberi zgradu"
             [fluid]="true"
             [invalid]="nevazece('zgradaId')"
+            (onChange)="promenjenaZgrada()"
           />
           @if (nevazece('zgradaId')) {
             <small class="text-sm text-greska">Izaberi zgradu.</small>
@@ -262,9 +263,7 @@
                     optionValue="id"
                     [showClear]="true"
                     placeholder="Bez glasanja, odlučuje se na sednici"
-                    [emptyMessage]="
-                      odluke.isLoading() ? 'Učitavanje…' : 'Nema odluka u ovoj zgradi.'
-                    "
+                    [emptyMessage]="bezOdluka()"
                     [ariaLabel]="'Odluka uz tačku ' + (i + 1)"
                     [fluid]="true"
                     size="small"
