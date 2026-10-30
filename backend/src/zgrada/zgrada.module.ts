@@ -10,6 +10,9 @@ import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
 import { Sastanak } from '../sastanak/sastanak.entity.js';
+import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
+import { KorisnikModule } from '../korisnik/korisnik.module.js';
+import { ZgradaPregledService } from './zgrada-pregled.service.js';
 
 @Module({
   imports: [
@@ -21,10 +24,12 @@ import { Sastanak } from '../sastanak/sastanak.entity.js';
       Oglas,
       Glasanje,
       Sastanak,
+      ZahtevPovezivanje,
     ]),
     AuthModule,
+    KorisnikModule,
   ],
   controllers: [ZgradaController],
-  providers: [ZgradaService],
+  providers: [ZgradaService, ZgradaPregledService],
 })
 export class ZgradaModule {}

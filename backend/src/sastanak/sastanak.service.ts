@@ -32,7 +32,7 @@ import {
   StanjeSastanka,
   VrstaSastanka,
 } from '../shared/enums/sastanak.enums.js';
-import { VREMENSKA_ZONA, danaDo } from '../shared/vreme.js';
+import { POCETAK_DANA, danaDo } from '../shared/vreme.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateSastanakDto, TackaDto } from './dto/create-sastanak.dto.js';
@@ -41,8 +41,7 @@ import { SastanakUpitDto } from './dto/sastanak-upit.dto.js';
 
 // Zakon: obaveštenje o sednici skupštine najmanje tri dana pre, osim u hitnim slučajevima
 export const DANA_ZA_POZIV = 3;
-// Sastanak ostaje među predstojećima do kraja dana kad se održava
-const POCETAK_DANA = `date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}') AT TIME ZONE '${VREMENSKA_ZONA}'`;
+
 const PORUKA_PROSAO = 'Sastanak je već počeo ili je otkazan.';
 
 function zgradeVrste(vrsta: VrstaSastanka, p: PristupZgradama) {

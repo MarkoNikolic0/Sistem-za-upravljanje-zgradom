@@ -17,12 +17,18 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { CreateZgradaDto } from './dto/create-zgrada.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { UpdateZgradaDto } from './dto/update-zgrada.dto.js';
+import { ZgradaPregledService } from './zgrada-pregled.service.js';
+import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('zgrada')
 export class ZgradaController {
-  constructor(private readonly zgradaService: ZgradaService) {}
+  constructor(
+    private readonly zgradaService: ZgradaService,
+    private readonly pregledService: ZgradaPregledService,
+  ) {}
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN)
@@ -34,6 +40,13 @@ export class ZgradaController {
   @Get()
   findAll() {
     return this.zgradaService.findAll();
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
+  @Get('pregled')
+  pregled(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.pregledService.pregled(korisnik.id, korisnik.uloga);
   }
 
   @Get(':id')
