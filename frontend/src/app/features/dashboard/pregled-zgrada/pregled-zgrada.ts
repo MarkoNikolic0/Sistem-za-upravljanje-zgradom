@@ -19,7 +19,6 @@ const BROJACI: Brojac[] = [
   { naziv: 'Odluke za objavu', putanja: '/glasanje', broj: (p) => p.neobjavljeneOdluke },
 ];
 
-// Početna za admina: šta čeka u svakoj zgradi i njen sledeći sastanak
 @Component({
   selector: 'app-pregled-zgrada',
   imports: [DatePipe, RouterLink, ButtonModule, SkeletonModule],
