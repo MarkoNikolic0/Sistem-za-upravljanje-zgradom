@@ -10,7 +10,7 @@ import { GlasanjeService } from '../../glasanje/glasanje-service';
 import { SastanakService } from '../../sastanci/sastanak-service';
 import { OglasService } from '../../oglasi/oglas-service';
 import { uMnozini } from '../../../shared/mnozina';
-import { cekaMojGlas, zaDanas } from './za-danas';
+import { cekaMojGlas, predstoji, zaDanas } from './za-danas';
 
 const NAJVISE_AKTIVNIH = 50;
 const BROJ_SASTANAKA = 3;
@@ -47,6 +47,8 @@ export class Danas {
   );
   protected readonly neucitani = computed(() => this.resursi().filter((r) => r.error()));
 
+  protected readonly potpuno = computed(() => this.neucitani().length === 0);
+
   protected readonly stavke = computed(() =>
     zaDanas({
       pregled: this.pregled.hasValue() ? (this.pregled.value()[0] ?? null) : null,
@@ -62,13 +64,19 @@ export class Danas {
     this.glasanja.hasValue() ? this.glasanja.value().stavke.filter(cekaMojGlas).length : 0,
   );
   protected readonly sledeciSastanak = computed(() =>
-    this.sastanci.hasValue() ? this.sastanci.value().stavke.find((s) => !s.otkazan) : undefined,
+    this.sastanci.hasValue() ? this.sastanci.value().stavke.find((s) => predstoji(s)) : undefined,
   );
 
-  protected readonly zgrada = computed(() => {
+  protected readonly zgrade = computed(() => {
     const p = this.profil();
-    return p.zgrada ?? p.stanovi[0]?.zgrada ?? null;
+    const sve = [p.zgrada, ...p.stanovi.map((s) => s.zgrada)].filter((z) => z !== null);
+    return sve.filter((z, i) => sve.findIndex((d) => d.id === z.id) === i);
   });
+  protected readonly nazivZgrade = computed(() =>
+    this.zgrade()
+      .map((z) => z.naziv)
+      .join(' · '),
+  );
   protected readonly prozori = computed(() => {
     const upaljeno = this.stavke().length;
     return RED_PALJENJA.map((_, prozor) => RED_PALJENJA.indexOf(prozor) < upaljeno);

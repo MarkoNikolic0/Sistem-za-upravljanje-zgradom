@@ -63,7 +63,10 @@ export class ZgradaPregledService {
       this.brojPoZgradi(
         this.kvarRepository
           .createQueryBuilder('kvar')
-          .where('kvar.status = :status', { status: StatusKvara.PRIJAVLJEN }),
+          .where('kvar.status = :status', { status: StatusKvara.PRIJAVLJEN })
+          .andWhere('kvar.prioritet <> :prioritet', {
+            prioritet: Prioritet.HITNO,
+          }),
         'kvar.zgradaId',
         ids,
       ),

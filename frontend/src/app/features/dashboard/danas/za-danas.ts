@@ -1,6 +1,6 @@
 import { Glasanje } from '../../glasanje/glasanje-models';
 import { Oglas } from '../../oglasi/oglas-models';
-import { Sastanak } from '../../sastanci/sastanak-models';
+import { Sastanak, VRSTE_SASTANKA } from '../../sastanci/sastanak-models';
 import { PregledZgrade } from '../../zgrade/zgrada-models';
 import { danaDo } from '../../../shared/datum';
 import { uMnozini } from '../../../shared/mnozina';
@@ -31,6 +31,10 @@ export function cekaMojGlas(g: Glasanje): boolean {
   return g.smeDaGlasa && g.mojGlas === null && g.glasaliSuvlasnici.length === 0;
 }
 
+export function predstoji(s: Pick<Sastanak, 'pocetak'>, sada = new Date()): boolean {
+  return new Date(s.pocetak).getTime() > sada.getTime();
+}
+
 function kadaSastanak(pocetak: string): string {
   const dana = danaDo(pocetak);
   const sat = new Date(pocetak).toLocaleTimeString('sr-Latn', {
@@ -46,8 +50,6 @@ function kadaSastanak(pocetak: string): string {
   return `Za ${uMnozini(dana, 'dan', 'dana', 'dana')}, u ${sat}`;
 }
 
-// Redosled je dogovor aplikacije: prvo ono što ne može da čeka (hitno, danas, ističe),
-// pa ono što čeka odluku upravnika, pa obaveštenja
 export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): StavkaDanas[] {
   const stavke: { vaznost: number; stavka: StavkaDanas }[] = [];
   const dodaj = (vaznost: number, stavka: StavkaDanas) => stavke.push({ vaznost, stavka });
@@ -64,7 +66,7 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
     });
   }
 
-  const sastanak = sastanci.find((s) => !s.otkazan && danaDo(s.pocetak) <= DANA_DO_SASTANKA);
+  const sastanak = sastanci.find((s) => predstoji(s) && danaDo(s.pocetak) <= DANA_DO_SASTANKA);
   if (sastanak) {
     const dana = danaDo(sastanak.pocetak);
     dodaj(dana <= 1 ? 2 : 8, {
@@ -72,7 +74,7 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
       ikonica: 'pi pi-calendar',
       oznaka: kadaSastanak(sastanak.pocetak),
       naslov: sastanak.naslov,
-      opis: `${sastanak.vrsta === 'skupstina' ? 'Skupština' : 'Zbor stanara'} · ${sastanak.lokacija}`,
+      opis: `${VRSTE_SASTANKA[sastanak.vrsta].naziv} · ${sastanak.lokacija}`,
       putanja: ['/sastanci', sastanak.id],
       hitno: sastanak.hitno,
     });
@@ -91,7 +93,11 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
           : `${uMnozini(zaGlas.length, 'glasanje čeka', 'glasanja čekaju', 'glasanja čeka')} tvoj glas`,
       naslov: prvo.pitanje,
       opis:
-        istice === 0 ? 'Ističe danas' : istice === 1 ? 'Ističe sutra' : `Ističe za ${istice} dana`,
+        istice === 0
+          ? 'Ističe danas'
+          : istice === 1
+            ? 'Ističe sutra'
+            : `Ističe za ${uMnozini(istice, 'dan', 'dana', 'dana')}`,
       putanja: ['/glasanje'],
       hitno: false,
     });

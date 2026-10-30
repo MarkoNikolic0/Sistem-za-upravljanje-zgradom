@@ -7,11 +7,13 @@
       }
     </span>
   </div>
-  @if (zgrada(); as z) {
+  @if (zgrade().length > 0) {
     <div class="min-w-0">
-      <p class="naziv-zgrade">{{ z.naziv }}</p>
-      <p class="text-sm text-priguseno">{{ z.adresa }}</p>
-      @if (stiglo()) {
+      <p class="naziv-zgrade">{{ nazivZgrade() }}</p>
+      @if (zgrade().length === 1) {
+        <p class="text-sm text-priguseno">{{ zgrade()[0].adresa }}</p>
+      }
+      @if (stiglo() && (stavke().length > 0 || potpuno())) {
         <p class="mt-3 text-sm" [class.text-svetlo]="stavke().length > 0">
           @if (stavke().length === 0) {
             Ništa ne čeka tebe
@@ -61,7 +63,7 @@
           }
         </ul>
       }
-    } @else {
+    } @else if (potpuno()) {
       <div class="mirno">
         <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-check"></i></span>
         <p class="text-naslov">Sve je mirno</p>
@@ -85,7 +87,7 @@
     <span class="opis-brojaca">
       @if (sledeciSastanak(); as s) {
         sledeći <time [attr.datetime]="s.pocetak">{{ s.pocetak | date: 'd. MMM' }}</time>
-      } @else {
+      } @else if (sastanci.hasValue()) {
         nema zakazanih
       }
     </span>

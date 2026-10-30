@@ -83,6 +83,7 @@ export class SastanakService {
       .map(({ vrsta, zgrade }): FindOptionsWhere<Sastanak> => ({
         vrsta,
         pocetak,
+        ...(upit.otkazani === false ? { datumOtkazivanja: IsNull() } : {}),
         ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
       }));
     if (uslovi.length === 0) {
