@@ -1,0 +1,114 @@
+<header class="zgrada-zaglavlje">
+  <div class="fasada" aria-hidden="true">
+    <span class="krov"></span>
+    <span class="prozori">
+      @for (upaljen of prozori(); track $index) {
+        <span class="prozor" [class.upaljen]="upaljen"></span>
+      }
+    </span>
+  </div>
+  @if (zgrada(); as z) {
+    <div class="min-w-0">
+      <p class="naziv-zgrade">{{ z.naziv }}</p>
+      <p class="text-sm text-priguseno">{{ z.adresa }}</p>
+      @if (stiglo()) {
+        <p class="mt-3 text-sm" [class.text-svetlo]="stavke().length > 0">
+          @if (stavke().length === 0) {
+            Ništa ne čeka tebe
+          } @else {
+            {{
+              uMnozini(stavke().length, 'stvar čeka tebe', 'stvari čekaju tebe', 'stvari čeka tebe')
+            }}
+          }
+        </p>
+      }
+    </div>
+  }
+</header>
+
+<section class="danas" aria-labelledby="danas-naslov" [attr.aria-busy]="!stiglo()">
+  <h2 id="danas-naslov" class="naslov-odeljka">Za tebe danas</h2>
+
+  @if (!stiglo()) {
+    <div class="ucitavanje mt-3 flex flex-col gap-2" aria-hidden="true">
+      <p-skeleton height="9rem" />
+      <p-skeleton height="3rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else {
+    @if (glavna(); as g) {
+      <a class="glavna" [class.hitno]="g.hitno" [routerLink]="g.putanja">
+        <span class="oznaka-stavke"
+          ><i [class]="g.ikonica" aria-hidden="true"></i> {{ g.oznaka }}</span
+        >
+        <span class="naslov-glavne">{{ g.naslov }}</span>
+        <span class="opis-glavne">{{ g.opis }}</span>
+        <span class="dalje" aria-hidden="true">Otvori <i class="pi pi-arrow-right"></i></span>
+      </a>
+      @if (sporedne().length > 0) {
+        <ul class="mt-2">
+          @for (s of sporedne(); track s.kljuc) {
+            <li>
+              <a class="stavka" [routerLink]="s.putanja">
+                <i [class]="s.ikonica" class="ikonica-stavke" aria-hidden="true"></i>
+                <span class="tekst-stavke">
+                  <span class="opis-stavke" [class.text-upozorenje]="s.hitno">{{ s.oznaka }}</span>
+                  <span class="naslov-stavke">{{ s.naslov }}</span>
+                </span>
+                <i class="pi pi-angle-right text-priguseno" aria-hidden="true"></i>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <div class="mirno">
+        <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-check"></i></span>
+        <p class="text-naslov">Sve je mirno</p>
+        <p class="mt-1 text-sm text-priguseno">Ništa ne čeka tvoju odluku ni glas.</p>
+      </div>
+    }
+  }
+
+  @if (stiglo() && neucitani().length > 0) {
+    <p class="mt-4 text-sm text-priguseno">
+      Deo podataka trenutno nije moguće učitati.
+      <button type="button" class="ponovo" (click)="ponovo()">Pokušaj ponovo</button>
+    </p>
+  }
+</section>
+
+<section class="brojaci" aria-label="Pregled zgrade">
+  <a class="brojac" routerLink="/sastanci">
+    <span class="naziv-brojaca">Sastanci</span>
+    <span class="broj">{{ sastanci.hasValue() ? sastanci.value().ukupno : '–' }}</span>
+    <span class="opis-brojaca">
+      @if (sledeciSastanak(); as s) {
+        sledeći <time [attr.datetime]="s.pocetak">{{ s.pocetak | date: 'd. MMM' }}</time>
+      } @else {
+        nema zakazanih
+      }
+    </span>
+  </a>
+  <a class="brojac" routerLink="/glasanje" [class.ima]="zaGlas() > 0">
+    <span class="naziv-brojaca">Glasanje</span>
+    <span class="broj">{{ glasanja.hasValue() ? glasanja.value().ukupno : '–' }}</span>
+    <span class="opis-brojaca">{{ zaGlas() > 0 ? zaGlas() + ' bez tvog glasa' : 'aktivnih' }}</span>
+  </a>
+  <a class="brojac" routerLink="/kvarovi">
+    <span class="naziv-brojaca">Kvarovi</span>
+    <span class="broj">{{ kvarovi.hasValue() ? kvarovi.value().ukupno : '–' }}</span>
+    <span class="opis-brojaca">aktivnih</span>
+  </a>
+  <a class="brojac" routerLink="/oglasi">
+    <span class="naziv-brojaca">Oglasna tabla</span>
+    <span class="broj">{{ oglasi.hasValue() ? oglasi.value().ukupno : '–' }}</span>
+    <span class="opis-brojaca truncate">
+      @if (oglasi.hasValue() && oglasi.value().stavke[0]; as prvi) {
+        {{ prvi.naslov }}
+      } @else {
+        oglasa
+      }
+    </span>
+  </a>
+</section>

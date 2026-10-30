@@ -21,6 +21,14 @@ export class SastanakService {
     return this.http.get<Stranica<Sastanak>>(this.apiUrl, { params });
   }
 
+  // Prvi predstojeći sastanci, i otkazani (početna)
+  predstojeci(broj: number) {
+    return httpResource<Stranica<Sastanak>>(() => ({
+      url: this.apiUrl,
+      params: { stanje: 'predstojeci', strana: 1, poStrani: broj },
+    }));
+  }
+
   sastanak(id: Signal<number | undefined>) {
     return httpResource<Sastanak>(() => {
       const sastanakId = id();

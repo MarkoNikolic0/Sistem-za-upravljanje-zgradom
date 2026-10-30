@@ -5,12 +5,23 @@ import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProfileService } from '../../profile/profile-service';
 import { ZahtevService } from '../../zahtevi/zahtev-service';
+import { DatePipe } from '@angular/common';
+import { PregledZgrada } from '../pregled-zgrada/pregled-zgrada';
+import { Danas } from '../danas/danas';
 
 // Prvi korak za stanara koji jos nema stan
 type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
 
 @Component({
-  imports: [RouterLink, ButtonModule, MessageModule, SkeletonModule],
+  imports: [
+    DatePipe,
+    RouterLink,
+    ButtonModule,
+    MessageModule,
+    SkeletonModule,
+    PregledZgrada,
+    Danas,
+  ],
   selector: 'app-home',
   styleUrl: './home.scss',
   templateUrl: './home.html',
@@ -21,6 +32,7 @@ export class Home {
 
   protected readonly profil = this.profileService.profile();
   protected readonly zahtevi = this.zahtevService.mojiZahtevi();
+  protected readonly danas = new Date();
 
   protected readonly zahteviStigli = computed(
     () => this.zahtevi.hasValue() && !this.zahtevi.isLoading(),

@@ -28,6 +28,14 @@ export class GlasanjeService {
     });
   }
 
+  // Aktivna glasanja, najviše jedna strana (početna)
+  aktivna(broj: number) {
+    return httpResource<Stranica<Glasanje>>(() => ({
+      url: this.apiUrl,
+      params: { stanje: 'aktivna', strana: 1, poStrani: broj },
+    }));
+  }
+
   // Sve odluke zgrade, bez rezultata, za izbor uz tačku dnevnog reda sastanka
   odlukeZgrade(zgradaId: Signal<number | undefined>) {
     return httpResource<OdlukaZgrade[]>(() => {

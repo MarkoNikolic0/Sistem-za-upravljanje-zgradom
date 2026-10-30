@@ -1,6 +1,6 @@
 <div class="pocetna">
   @if (profil.hasValue() && zahteviStigli()) {
-    <p class="oznaka">Početna</p>
+    <p class="oznaka">{{ danas | date: 'EEEE, d. MMMM' }}</p>
     <h1 class="naslov-stranice mt-3">Zdravo, {{ profil.value().ime }}</h1>
 
     @switch (prviKorak()) {
@@ -43,6 +43,13 @@
             <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
           </section>
         }
+      }
+    }
+    @if (prviKorak() === null) {
+      @if (profil.value().uloga === 'admin') {
+        <app-pregled-zgrada class="panel mt-8" />
+      } @else {
+        <app-danas [profil]="profil.value()" />
       }
     }
   } @else if (profil.error() || zahtevi.error()) {

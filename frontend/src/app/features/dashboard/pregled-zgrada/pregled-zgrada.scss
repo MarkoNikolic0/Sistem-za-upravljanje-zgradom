@@ -1,0 +1,83 @@
+:host {
+  display: block;
+}
+
+.zgrada + .zgrada {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-linija);
+}
+
+.naziv-zgrade {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-naslov);
+}
+
+.brojaci {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--color-linija);
+  border-radius: 10px;
+  background: var(--color-linija);
+
+  @media (width >= 40rem) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.brojac {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-pozadina);
+  transition: background-color 150ms;
+
+  &:hover {
+    background: var(--color-povrsina);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: -2px;
+  }
+}
+
+.broj {
+  font-size: 2rem;
+  font-weight: 200;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-utisano);
+
+  .ima & {
+    color: var(--color-svetlo);
+  }
+}
+
+.naziv-brojaca {
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+
+  .ima & {
+    color: var(--color-tekst);
+  }
+}
+
+.sastanak {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+
+  .pi {
+    font-size: 0.75rem;
+  }
+}

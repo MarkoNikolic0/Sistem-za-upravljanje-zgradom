@@ -1,7 +1,7 @@
 import { Service, signal, Signal } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { StanOsnovno, ZgradaOsnovno } from './zgrada-models';
+import { PregledZgrade, StanOsnovno, ZgradaOsnovno } from './zgrada-models';
 
 @Service()
 export class ZgradaService {
@@ -11,6 +11,12 @@ export class ZgradaService {
     return httpResource<ZgradaOsnovno[]>(() => (ucitaj() ? `${this.apiUrl}/zgrada` : undefined), {
       defaultValue: [],
     });
+  }
+
+  pregled(ucitaj: Signal<boolean> = signal(true)) {
+    return httpResource<PregledZgrade[]>(() =>
+      ucitaj() ? `${this.apiUrl}/zgrada/pregled` : undefined,
+    );
   }
 
   stanovi(zgradaId: Signal<number | null>) {

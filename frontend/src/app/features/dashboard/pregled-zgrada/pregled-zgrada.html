@@ -1,0 +1,45 @@
+<section aria-labelledby="zgrade-naslov" [attr.aria-busy]="pregled.isLoading()">
+  <h2 id="zgrade-naslov" class="naslov-odeljka mb-3">Zgrade</h2>
+
+  @if (pregled.error()) {
+    <p class="text-sm text-priguseno">Pregled zgrada trenutno nije moguće učitati.</p>
+    <button pButton type="button" size="small" outlined class="mt-3" (click)="pregled.reload()">
+      Pokušaj ponovo
+    </button>
+  } @else if (!pregled.hasValue()) {
+    <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+      <p-skeleton height="6rem" />
+      <p-skeleton height="6rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (pregled.value().length === 0) {
+    <p class="text-sm text-priguseno">Još nema zgrada u sistemu.</p>
+  } @else {
+    @for (p of pregled.value(); track p.zgrada.id) {
+      <div class="zgrada">
+        <h3 class="naziv-zgrade">{{ p.zgrada.naziv }}</h3>
+        <ul class="brojaci">
+          @for (b of brojaci; track b.naziv) {
+            <li>
+              <a class="brojac" [class.ima]="b.broj(p) > 0" [routerLink]="b.putanja">
+                <span class="broj">{{ b.broj(p) }}</span>
+                <span class="naziv-brojaca">{{ b.naziv }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+        <p class="sastanak">
+          <i class="pi pi-calendar" aria-hidden="true"></i>
+          @if (p.sledeciSastanak; as s) {
+            <a [routerLink]="['/sastanci', s.id]" class="hover:text-naslov">
+              <time [attr.datetime]="s.pocetak">{{ s.pocetak | date: "d. MMMM 'u' HH:mm" }}</time>
+              · {{ s.naslov }}
+            </a>
+          } @else {
+            Nema zakazanog sastanka
+          }
+        </p>
+      </div>
+    }
+  }
+</section>

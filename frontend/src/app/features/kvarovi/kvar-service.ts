@@ -40,6 +40,14 @@ export class KvarService {
     return this.http.get<Stranica<Kvar>>(this.apiUrl, { params });
   }
 
+  // Najnoviji aktivni kvarovi i njihov ukupan broj (početna)
+  najnoviji(broj: number) {
+    return httpResource<Stranica<Kvar>>(() => ({
+      url: this.apiUrl,
+      params: { stanje: 'aktivni', strana: 1, poStrani: broj },
+    }));
+  }
+
   zgradeSaKvarovima(ucitaj: Signal<boolean>) {
     return httpResource<ZgradaOsnovno[]>(() => (ucitaj() ? `${this.apiUrl}/zgrade` : undefined), {
       defaultValue: [],

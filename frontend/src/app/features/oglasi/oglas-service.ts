@@ -21,6 +21,14 @@ export class OglasService {
     return this.http.get<Stranica<Oglas>>(this.apiUrl, { params });
   }
 
+  // Zakačena obaveštenja pa najnoviji oglasi (početna)
+  najnoviji(broj: number) {
+    return httpResource<Stranica<Oglas>>(() => ({
+      url: this.apiUrl,
+      params: { strana: 1, poStrani: broj },
+    }));
+  }
+
   oglas(id: Signal<number | undefined>) {
     return httpResource<Oglas>(() => {
       const oglasId = id();
