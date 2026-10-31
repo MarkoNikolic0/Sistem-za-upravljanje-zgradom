@@ -70,6 +70,15 @@ export const routes: Routes = [
           ),
         title: 'Zahtevi | Upravljanje zgradom',
       },
+      {
+        path: 'kontakti',
+        canActivate: [ulogaGuard('upravnik', 'admin')],
+        loadComponent: () =>
+          import('./features/kontakti/kontakti-zgrade/kontakti-zgrade').then(
+            (m) => m.KontaktiZgrade,
+          ),
+        title: 'Važni kontakti | Upravljanje zgradom',
+      },
     ],
   },
   { path: '**', redirectTo: '' },

@@ -1,0 +1,71 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--color-linija);
+}
+
+.ikonica-kontakta {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-linija);
+  color: var(--color-priguseno);
+  font-size: 0.875rem;
+}
+
+.podaci {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.uloga {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-utisano);
+}
+
+.naziv {
+  margin-top: 0.125rem;
+  color: var(--color-naslov);
+  overflow-wrap: anywhere;
+}
+
+.broj {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-priguseno);
+}
+
+.poziv {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-svetlo) 40%, transparent);
+  border-radius: 999px;
+  color: var(--color-svetlo);
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  &:hover {
+    border-color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 10%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+}

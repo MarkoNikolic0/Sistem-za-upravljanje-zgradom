@@ -886,7 +886,7 @@ LEFT JOIN glasanje g ON g.pitanje = sg.pitanje AND g."zgradaId" = sg.zgrada_id
 ORDER BY t.sastanak, t.rb;
 
 -- VAZNI KONTAKTI ZGRADE -----------------------------------------------------------------------
--- Kontakti iz skripte se pisu iznova; kontakti dodati kroz aplikaciju se ne diraju.
+-- Kontakti iz skripte (isti broj u istoj zgradi) se pisu iznova; ostali kontakti se ne diraju.
 -- Delta: upravnik Danijel se sam dodao, servis lifta, domar, dezurne sluzbe;
 -- Obrenoviceva: upravnica i servis lifta; Lamela bez kontakata (prazno stanje).
 -- Hitne sluzbe (192, 193, 194) nisu u bazi, prikazuje ih aplikacija.
@@ -896,8 +896,8 @@ FROM (VALUES
   (1, 'Danijel Stojanovic', 'Upravnik zgrade', '+381600000003', 'Bulevar Nemanjića 45, Niš'),
   (2, 'Lift Servis Niš', 'Servis lifta', '+381184150001', 'Bulevar Nemanjića 45, Niš'),
   (3, 'Zoran Ilić', 'Domar', '+381641234590', 'Bulevar Nemanjića 45, Niš'),
-  (4, 'Vodovod, dežurna služba', 'Kvar na vodovodu', '+381184150002', 'Bulevar Nemanjića 45, Niš'),
-  (5, 'Elektrodistribucija, dežurna služba', 'Nestanak struje', '+381184150003', 'Bulevar Nemanjića 45, Niš'),
+  (4, 'Dežurna služba vodovoda', 'Vodovod', '+381184150002', 'Bulevar Nemanjića 45, Niš'),
+  (5, 'Dežurna služba elektrodistribucije', 'Elektrodistribucija', '+381184150003', 'Bulevar Nemanjića 45, Niš'),
   (6, 'Jelena Marković', 'Upravnik zgrade', '+381631234501', 'Obrenovićeva 30, Niš'),
   (7, 'Lift Servis Niš', 'Servis lifta', '+381184150001', 'Obrenovićeva 30, Niš')
 ) AS v(rb, naziv, uloga, telefon, zgrada)
@@ -905,7 +905,7 @@ JOIN zgrada z ON z.adresa = v.zgrada;
 
 DELETE FROM kontakt_zgrade k
 USING seed_kontakt v
-WHERE k.naziv = v.naziv AND k."zgradaId" = v.zgrada_id;
+WHERE k.telefon = v.telefon AND k."zgradaId" = v.zgrada_id;
 
 INSERT INTO kontakt_zgrade (naziv, uloga, telefon, "zgradaId")
 SELECT v.naziv, v.uloga, v.telefon, v.zgrada_id

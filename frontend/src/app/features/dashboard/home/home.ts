@@ -8,6 +8,8 @@ import { ZahtevService } from '../../zahtevi/zahtev-service';
 import { DatePipe } from '@angular/common';
 import { PregledZgrada } from '../pregled-zgrada/pregled-zgrada';
 import { Danas } from '../danas/danas';
+import { VazniKontakti } from '../../kontakti/vazni-kontakti/vazni-kontakti';
+import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
 
 // Prvi korak za stanara koji jos nema stan
 type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
@@ -21,6 +23,7 @@ type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
     SkeletonModule,
     PregledZgrada,
     Danas,
+    VazniKontakti,
   ],
   selector: 'app-home',
   styleUrl: './home.scss',
@@ -33,6 +36,10 @@ export class Home {
   protected readonly profil = this.profileService.profile();
   protected readonly zahtevi = this.zahtevService.mojiZahtevi();
   protected readonly danas = new Date();
+
+  protected readonly zgrade = computed(() =>
+    this.profil.hasValue() ? zgradeIzProfila(this.profil.value()) : [],
+  );
 
   protected readonly zahteviStigli = computed(
     () => this.zahtevi.hasValue() && !this.zahtevi.isLoading(),

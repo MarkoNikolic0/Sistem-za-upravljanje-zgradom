@@ -1,0 +1,59 @@
+<section aria-labelledby="kontakti-naslov" [attr.aria-busy]="kontakti.isLoading()">
+  <div class="zaglavlje-odeljka">
+    <h2 id="kontakti-naslov" class="naslov-odeljka">Važni kontakti</h2>
+    @if (zgradaUpravnika() !== null) {
+      <a pButton routerLink="/kontakti" size="small" text>Uredi</a>
+    }
+  </div>
+
+  <ul class="hitne" aria-label="Hitne službe">
+    @for (s of hitneSluzbe; track s.broj) {
+      <li>
+        <a class="hitna" [href]="'tel:' + s.broj">
+          <span class="broj-hitne">{{ s.broj }}</span>
+          <span class="naziv-hitne"
+            ><i [class]="s.ikonica" aria-hidden="true"></i> {{ s.naziv }}</span
+          >
+        </a>
+      </li>
+    }
+  </ul>
+
+  @if (kontakti.error()) {
+    <p class="mt-4 text-sm text-priguseno">
+      Kontakte zgrade trenutno nije moguće učitati.
+      <button type="button" class="ponovo" (click)="kontakti.reload()">Pokušaj ponovo</button>
+    </p>
+  } @else if (kontakti.isLoading()) {
+    <div class="ucitavanje mt-4 flex flex-col gap-2" aria-hidden="true">
+      <p-skeleton height="3rem" />
+      <p-skeleton height="3rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (kontakti.hasValue()) {
+    @for (zgrada of zgrade(); track zgrada.id; let i = $index) {
+      <div class="zgrada">
+        @if (zgrade().length > 1) {
+          <h3 class="naziv-zgrade">{{ zgrada.naziv }}</h3>
+        }
+        @if (kontakti.value()[i]; as lista) {
+          @if (lista.length > 0) {
+            <ul>
+              @for (k of lista; track k.id) {
+                <li><app-red-kontakta [kontakt]="k" /></li>
+              }
+            </ul>
+          } @else {
+            <p class="prazna-zgrada">
+              @if (zgrada.id === zgradaUpravnika()) {
+                Još nema kontakata. Dodaj ih da bi ih stanari videli.
+              } @else {
+                Upravnik još nije dodao kontakte zgrade.
+              }
+            </p>
+          }
+        }
+      </div>
+    }
+  }
+</section>

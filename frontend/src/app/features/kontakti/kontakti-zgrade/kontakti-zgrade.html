@@ -1,0 +1,142 @@
+<div class="stranica">
+  <p class="oznaka">Zgrada</p>
+  <h1 class="naslov-stranice mt-3">Važni kontakti</h1>
+  <p class="mt-2 text-priguseno">
+    Stanari ih vide na početnoj i zovu jednim dodirom. Hitne službe (192, 193, 194) su uvek
+    prikazane.
+  </p>
+
+  @if (profil.error() || (admin() && sveZgrade.error())) {
+    <p-message severity="error" styleClass="mt-6">Zgrade trenutno nije moguće učitati.</p-message>
+  } @else if (!ucitano()) {
+    <div class="ucitavanje mt-6" aria-hidden="true"><p-skeleton height="3rem" /></div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (zgradaId(); as izabrana) {
+    @if (zgrade().length > 1) {
+      <div class="mt-6 flex flex-col gap-1.5 sm:w-72">
+        <span id="kontakti-zgrada" class="text-sm font-medium">Zgrada</span>
+        <p-select
+          ariaLabelledBy="kontakti-zgrada"
+          [options]="zgrade()"
+          optionLabel="naziv"
+          optionValue="id"
+          [ngModel]="zgradaId()"
+          (ngModelChange)="promeniZgradu($event)"
+          [fluid]="true"
+        />
+      </div>
+    }
+
+    <div id="poruka-kontakata" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (poruka(); as p) {
+        <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+      }
+    </div>
+
+    <section
+      class="odeljak"
+      aria-labelledby="lista-kontakata"
+      [attr.aria-busy]="kontakti.isLoading()"
+    >
+      <div class="zaglavlje-odeljka">
+        <h2 id="lista-kontakata" class="naslov-odeljka">Kontakti zgrade</h2>
+        @if (kontakti.hasValue() && forma() !== 'novi' && !popunjeno()) {
+          <button pButton id="dodaj-kontakt" type="button" size="small" (click)="otvori('novi')">
+            <i class="pi pi-plus" aria-hidden="true"></i>
+            Dodaj kontakt
+          </button>
+        }
+      </div>
+
+      @if (forma() === 'novi') {
+        <div class="panel mb-4">
+          <h3 class="naslov-forme">Novi kontakt</h3>
+          <app-forma-kontakta
+            [zgradaId]="izabrana"
+            [ja]="ja()"
+            (sacuvan)="sacuvan($event)"
+            (odustani)="zatvori()"
+          />
+        </div>
+      }
+
+      @if (kontakti.error()) {
+        <p class="text-sm text-priguseno">
+          Kontakte trenutno nije moguće učitati.
+          <button type="button" class="ponovo" (click)="kontakti.reload()">Pokušaj ponovo</button>
+        </p>
+      } @else if (!kontakti.hasValue()) {
+        <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+          <p-skeleton height="3.5rem" />
+          <p-skeleton height="3.5rem" />
+        </div>
+        <span class="sr-only">Učitavanje…</span>
+      } @else if (kontakti.value().length === 0 && forma() !== 'novi') {
+        <div class="prazno">
+          <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-phone"></i></span>
+          <p class="text-naslov">Još nema kontakata</p>
+          <p class="mt-1 text-sm text-priguseno">
+            Dodaj upravnika, servis lifta, domara ili dežurne službe.
+          </p>
+        </div>
+      } @else {
+        <ul class="lista">
+          @for (k of kontakti.value(); track k.id) {
+            <li>
+              @if (forma() === k.id) {
+                <div class="panel my-3">
+                  <h3 class="naslov-forme">Izmena kontakta</h3>
+                  <app-forma-kontakta
+                    [zgradaId]="izabrana"
+                    [kontakt]="k"
+                    (sacuvan)="sacuvan($event)"
+                    (odustani)="zatvori()"
+                  />
+                </div>
+              } @else {
+                <app-red-kontakta [kontakt]="k">
+                  <span class="akcije">
+                    <button
+                      pButton
+                      [id]="'izmeni-' + k.id"
+                      type="button"
+                      size="small"
+                      text
+                      iconOnly
+                      [attr.aria-label]="'Izmeni ' + k.naziv"
+                      (click)="otvori(k.id)"
+                    >
+                      <i class="pi pi-pencil" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      pButton
+                      type="button"
+                      size="small"
+                      text
+                      severity="danger"
+                      iconOnly
+                      [attr.aria-label]="'Obriši ' + k.naziv"
+                      [disabled]="brisanje()"
+                      (click)="obrisi($event, k)"
+                    >
+                      <i class="pi pi-trash" aria-hidden="true"></i>
+                    </button>
+                  </span>
+                </app-red-kontakta>
+              }
+            </li>
+          }
+        </ul>
+        @if (popunjeno()) {
+          <p class="mt-3 text-sm text-priguseno">
+            Zgrada može imati najviše {{ maksKontakata }} kontakata. Obriši neki da bi dodao novi.
+          </p>
+        }
+      }
+    </section>
+  } @else {
+    <p class="mt-6 text-sm text-priguseno">Nijedna zgrada ti nije dodeljena za upravljanje.</p>
+  }
+</div>
+
+<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

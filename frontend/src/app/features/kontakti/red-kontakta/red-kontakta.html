@@ -1,0 +1,14 @@
+<span class="ikonica-kontakta" aria-hidden="true"><i class="pi pi-user"></i></span>
+<span class="podaci">
+  <span class="uloga">{{ kontakt().uloga }}</span>
+  <span class="naziv">{{ kontakt().naziv }}</span>
+  <span class="broj">{{ broj() }}</span>
+</span>
+<a
+  class="poziv"
+  [href]="'tel:' + kontakt().telefon"
+  [attr.aria-label]="'Pozovi ' + kontakt().naziv + ', ' + broj()"
+>
+  <i class="pi pi-phone" aria-hidden="true"></i>
+</a>
+<ng-content />

@@ -1,9 +1,35 @@
 :host {
   display: block;
+  container-type: inline-size;
 }
 
 .pocetna {
   max-width: 48rem;
+
+  // Dovoljno široko: kontakti u koloni desno, od vrha stranice
+  @container (width >= 66rem) {
+    &:has(app-vazni-kontakti) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 18rem;
+      grid-template-rows: auto auto 1fr;
+      column-gap: 3rem;
+      max-width: 69rem;
+    }
+  }
+}
+
+.kontakti {
+  margin-top: 2.5rem;
+
+  // Ostaju vidljivi pri skrolovanju, ispod gornje trake
+  @container (width >= 66rem) {
+    position: sticky;
+    top: calc(var(--visina-gornje-trake) + 2rem);
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: start;
+    margin-top: 0;
+  }
 }
 
 .prvi-korak {

@@ -238,6 +238,18 @@ a.plocica-fajla:hover {
   }
 }
 
+.ponovo {
+  font-weight: 500;
+  color: var(--color-naslov);
+  text-decoration: underline;
+  text-decoration-color: var(--color-ivica);
+  text-underline-offset: 4px;
+
+  &:hover {
+    text-decoration-color: var(--color-svetlo);
+  }
+}
+
 // Prazna lista (kvarovi, glasanje)
 .prazno {
   display: flex;

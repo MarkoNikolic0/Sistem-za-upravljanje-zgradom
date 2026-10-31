@@ -1,0 +1,120 @@
+<form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="flex flex-col gap-5" novalidate>
+  @if (ja() && !kontakt()) {
+    <button pButton type="button" size="small" outlined class="self-start" (click)="popuniMene()">
+      <i class="pi pi-user" aria-hidden="true"></i>
+      Dodaj mene
+    </button>
+  }
+
+  <div class="flex flex-col gap-1.5">
+    <label for="kontakt-naziv" class="text-sm font-medium">Naziv</label>
+    <input
+      pInputText
+      id="kontakt-naziv"
+      formControlName="naziv"
+      autocomplete="off"
+      [attr.maxlength]="maksNaziva"
+      aria-describedby="kontakt-naziv-pomoc"
+      [fluid]="true"
+      [invalid]="nevazece('naziv')"
+      [attr.aria-invalid]="nevazece('naziv')"
+    />
+    <small
+      id="kontakt-naziv-pomoc"
+      class="text-sm"
+      [class]="nevazece('naziv') ? 'text-greska' : 'text-priguseno'"
+    >
+      @if (forma.controls.naziv.hasError('server')) {
+        {{ forma.controls.naziv.getError('server') }}
+      } @else if (nevazece('naziv')) {
+        Unesi naziv.
+      } @else {
+        Ime osobe ili firme, npr. Lift Servis Niš
+      }
+    </small>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label for="kontakt-uloga" class="text-sm font-medium">Uloga</label>
+    <input
+      pInputText
+      id="kontakt-uloga"
+      formControlName="uloga"
+      autocomplete="off"
+      [attr.maxlength]="maksUloge"
+      aria-describedby="kontakt-uloga-pomoc"
+      [fluid]="true"
+      [invalid]="nevazece('uloga')"
+      [attr.aria-invalid]="nevazece('uloga')"
+    />
+    <small
+      id="kontakt-uloga-pomoc"
+      class="text-sm"
+      [class]="nevazece('uloga') ? 'text-greska' : 'text-priguseno'"
+    >
+      @if (forma.controls.uloga.hasError('server')) {
+        {{ forma.controls.uloga.getError('server') }}
+      } @else if (nevazece('uloga')) {
+        Unesi ulogu.
+      } @else {
+        Upiši ili izaberi ispod
+      }
+    </small>
+    <div class="predlozi" role="group" aria-label="Predlozi uloga">
+      @for (p of predlozi; track p) {
+        <button
+          type="button"
+          class="predlog"
+          [class.izabran]="forma.controls.uloga.value === p"
+          (click)="izaberiUlogu(p)"
+        >
+          {{ p }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label for="kontakt-telefon" class="text-sm font-medium">Telefon</label>
+    <input
+      pInputText
+      id="kontakt-telefon"
+      type="tel"
+      formControlName="telefon"
+      autocomplete="off"
+      enterkeyhint="done"
+      aria-describedby="kontakt-telefon-pomoc"
+      [fluid]="true"
+      [invalid]="nevazece('telefon')"
+      [attr.aria-invalid]="nevazece('telefon')"
+    />
+    <small
+      id="kontakt-telefon-pomoc"
+      class="text-sm"
+      [class]="nevazece('telefon') ? 'text-greska' : 'text-priguseno'"
+    >
+      @if (forma.controls.telefon.hasError('server')) {
+        {{ forma.controls.telefon.getError('server') }}
+      } @else if (nevazece('telefon')) {
+        Unesi broj telefona.
+      } @else {
+        Mobilni ili fiksni, npr. 064 123 4567 ili 018 415 0001
+      }
+    </small>
+  </div>
+
+  <div id="greska-kontakta" tabindex="-1" class="outline-none empty:hidden">
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <button pButton type="submit" [loading]="slanje()">
+      {{ kontakt() ? 'Sačuvaj izmene' : 'Dodaj kontakt' }}
+    </button>
+    <button pButton type="button" severity="secondary" text (click)="odustani.emit()">
+      Odustani
+    </button>
+  </div>
+</form>

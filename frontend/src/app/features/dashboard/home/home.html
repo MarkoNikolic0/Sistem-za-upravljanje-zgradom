@@ -50,6 +50,11 @@
         <app-pregled-zgrada class="panel mt-8" />
       } @else {
         <app-danas [profil]="profil.value()" />
+        <app-vazni-kontakti
+          class="kontakti"
+          [zgrade]="zgrade()"
+          [zgradaUpravnika]="profil.value().zgrada?.id ?? null"
+        />
       }
     }
   } @else if (profil.error() || zahtevi.error()) {

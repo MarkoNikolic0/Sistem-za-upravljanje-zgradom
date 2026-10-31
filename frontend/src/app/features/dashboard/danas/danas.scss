@@ -152,19 +152,6 @@
   color: var(--color-priguseno);
 }
 
-.ponovo {
-  font-weight: 500;
-  color: var(--color-naslov);
-  text-decoration: underline;
-  text-decoration-color: var(--color-ivica);
-  text-underline-offset: 4px;
-
-  &:hover {
-    text-decoration-color: var(--color-svetlo);
-  }
-}
-
-// Brojači ispod
 .brojaci {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -225,7 +212,6 @@
   }
 }
 
-// Zaglavlje: zgrada, a upaljeni prozori su stvari koje čekaju
 .zgrada-zaglavlje {
   display: flex;
   align-items: center;

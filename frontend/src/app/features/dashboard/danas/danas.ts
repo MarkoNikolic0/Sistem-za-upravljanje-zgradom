@@ -10,6 +10,7 @@ import { GlasanjeService } from '../../glasanje/glasanje-service';
 import { SastanakService } from '../../sastanci/sastanak-service';
 import { OglasService } from '../../oglasi/oglas-service';
 import { uMnozini } from '../../../shared/mnozina';
+import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
 import { cekaMojGlas, predstoji, zaDanas } from './za-danas';
 
 const NAJVISE_AKTIVNIH = 50;
@@ -67,11 +68,7 @@ export class Danas {
     this.sastanci.hasValue() ? this.sastanci.value().stavke.find((s) => predstoji(s)) : undefined,
   );
 
-  protected readonly zgrade = computed(() => {
-    const p = this.profil();
-    const sve = [p.zgrada, ...p.stanovi.map((s) => s.zgrada)].filter((z) => z !== null);
-    return sve.filter((z, i) => sve.findIndex((d) => d.id === z.id) === i);
-  });
+  protected readonly zgrade = computed(() => zgradeIzProfila(this.profil()));
   protected readonly nazivZgrade = computed(() =>
     this.zgrade()
       .map((z) => z.naziv)

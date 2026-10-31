@@ -39,6 +39,15 @@
             Nema zakazanog sastanka
           }
         </p>
+        <p class="kontakti">
+          <i class="pi pi-phone" aria-hidden="true"></i>
+          <a
+            routerLink="/kontakti"
+            [queryParams]="{ zgrada: p.zgrada.id }"
+            class="hover:text-naslov"
+            >Važni kontakti</a
+          >
+        </p>
       </div>
     }
   }

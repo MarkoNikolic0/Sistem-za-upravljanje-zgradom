@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.predlozi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+// Najmanje 24px visine za dodir (WCAG 2.5.8)
+.predlog {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+  transition:
+    border-color 150ms,
+    color 150ms;
+
+  &:hover {
+    border-color: var(--color-priguseno);
+    color: var(--color-tekst);
+  }
+
+  &.izabran {
+    border-color: var(--color-svetlo);
+    color: var(--color-naslov);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+}
