@@ -19,12 +19,7 @@
     }
   </ul>
 
-  @if (kontakti.error()) {
-    <p class="mt-4 text-sm text-priguseno">
-      Kontakte zgrade trenutno nije moguće učitati.
-      <button type="button" class="ponovo" (click)="kontakti.reload()">Pokušaj ponovo</button>
-    </p>
-  } @else if (kontakti.isLoading()) {
+  @if (kontakti.isLoading()) {
     <div class="ucitavanje mt-4 flex flex-col gap-2" aria-hidden="true">
       <p-skeleton height="3rem" />
       <p-skeleton height="3rem" />
@@ -36,7 +31,13 @@
         @if (zgrade().length > 1) {
           <h3 class="naziv-zgrade">{{ zgrada.naziv }}</h3>
         }
-        @if (kontakti.value()[i]; as lista) {
+        @let lista = kontakti.value()[i];
+        @if (lista === null) {
+          <p class="prazna-zgrada">
+            Kontakte ove zgrade trenutno nije moguće učitati.
+            <button type="button" class="ponovo" (click)="kontakti.reload()">Pokušaj ponovo</button>
+          </p>
+        } @else if (lista) {
           @if (lista.length > 0) {
             <ul>
               @for (k of lista; track k.id) {

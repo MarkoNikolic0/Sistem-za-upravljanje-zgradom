@@ -110,7 +110,10 @@
   </div>
 
   <div class="flex flex-wrap gap-3">
-    <button pButton type="submit" [loading]="slanje()">
+    <button pButton type="submit" [disabled]="slanje()">
+      @if (slanje()) {
+        <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+      }
       {{ kontakt() ? 'Sačuvaj izmene' : 'Dodaj kontakt' }}
     </button>
     <button pButton type="button" severity="secondary" text (click)="odustani.emit()">

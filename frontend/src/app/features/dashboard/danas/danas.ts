@@ -5,12 +5,12 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProfileResponse } from '../../profile/profile-models';
 import { ZgradaService } from '../../zgrade/zgrada-service';
+import { ZgradaOsnovno } from '../../zgrade/zgrada-models';
 import { KvarService } from '../../kvarovi/kvar-service';
 import { GlasanjeService } from '../../glasanje/glasanje-service';
 import { SastanakService } from '../../sastanci/sastanak-service';
 import { OglasService } from '../../oglasi/oglas-service';
 import { uMnozini } from '../../../shared/mnozina';
-import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
 import { cekaMojGlas, predstoji, zaDanas } from './za-danas';
 
 const NAJVISE_AKTIVNIH = 50;
@@ -26,6 +26,7 @@ const RED_PALJENJA = [4, 9, 1, 7, 11, 2, 6, 10, 0, 5, 8, 3];
 })
 export class Danas {
   readonly profil = input.required<ProfileResponse>();
+  readonly zgrade = input.required<ZgradaOsnovno[]>();
 
   private readonly upravnik = computed(() => this.profil().uloga === 'upravnik');
 
@@ -68,7 +69,6 @@ export class Danas {
     this.sastanci.hasValue() ? this.sastanci.value().stavke.find((s) => predstoji(s)) : undefined,
   );
 
-  protected readonly zgrade = computed(() => zgradeIzProfila(this.profil()));
   protected readonly nazivZgrade = computed(() =>
     this.zgrade()
       .map((z) => z.naziv)

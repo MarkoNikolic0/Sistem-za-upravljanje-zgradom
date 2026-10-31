@@ -886,7 +886,7 @@ LEFT JOIN glasanje g ON g.pitanje = sg.pitanje AND g."zgradaId" = sg.zgrada_id
 ORDER BY t.sastanak, t.rb;
 
 -- VAZNI KONTAKTI ZGRADE -----------------------------------------------------------------------
--- Kontakti iz skripte (isti broj u istoj zgradi) se pisu iznova; ostali kontakti se ne diraju.
+-- Kontakti iz skripte se pisu iznova; kontakti dodati kroz aplikaciju se ne diraju.
 -- Delta: upravnik Danijel se sam dodao, servis lifta, domar, dezurne sluzbe;
 -- Obrenoviceva: upravnica i servis lifta; Lamela bez kontakata (prazno stanje).
 -- Hitne sluzbe (192, 193, 194) nisu u bazi, prikazuje ih aplikacija.
@@ -905,7 +905,7 @@ JOIN zgrada z ON z.adresa = v.zgrada;
 
 DELETE FROM kontakt_zgrade k
 USING seed_kontakt v
-WHERE k.telefon = v.telefon AND k."zgradaId" = v.zgrada_id;
+WHERE k.naziv = v.naziv AND k."zgradaId" = v.zgrada_id;
 
 INSERT INTO kontakt_zgrade (naziv, uloga, telefon, "zgradaId")
 SELECT v.naziv, v.uloga, v.telefon, v.zgrada_id

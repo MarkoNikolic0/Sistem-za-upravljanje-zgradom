@@ -35,6 +35,8 @@ export class FormaKontakta implements OnInit {
 
   readonly sacuvan = output<KontaktZgrade>();
   readonly odustani = output<void>();
+  // Kontakt je u međuvremenu obrisan ili je zgrada popunjena: stranica osvežava listu
+  readonly zastarelo = output<string>();
 
   protected readonly maksNaziva = MAKS_NAZIVA;
   protected readonly maksUloge = MAKS_ULOGE;
@@ -125,9 +127,15 @@ export class FormaKontakta implements OnInit {
         return;
       }
     }
-    this.greska.set(
-      [403, 404, 409].includes(err.status) ? (porukaServera(err) ?? neuspeh) : neuspeh,
-    );
+    if (err.status === 404 && this.kontakt()) {
+      this.zastarelo.emit('Kontakt je u međuvremenu obrisan.');
+      return;
+    }
+    if (err.status === 409) {
+      this.zastarelo.emit(porukaServera(err) ?? neuspeh);
+      return;
+    }
+    this.greska.set(err.status === 403 ? (porukaServera(err) ?? neuspeh) : neuspeh);
     this.fokusiraj('#greska-kontakta');
   }
 }

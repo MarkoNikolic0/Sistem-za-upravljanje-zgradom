@@ -7,6 +7,7 @@ import {
   numberAttribute,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -24,8 +25,6 @@ import { KontaktRequest, KontaktZgrade } from '../kontakt-models';
 import { KontaktService } from '../kontakt-service';
 import { FormaKontakta } from '../forma-kontakta/forma-kontakta';
 import { RedKontakta } from '../red-kontakta/red-kontakta';
-
-const MAKS_KONTAKATA = 20;
 
 @Component({
   imports: [
@@ -87,11 +86,6 @@ export class KontaktiZgrade {
     return vecJe ? undefined : { naziv: `${ime} ${prezime}`, uloga: 'Upravnik zgrade', telefon };
   });
 
-  protected readonly popunjeno = computed(
-    () => this.kontakti.hasValue() && this.kontakti.value().length >= MAKS_KONTAKATA,
-  );
-  protected readonly maksKontakata = MAKS_KONTAKATA;
-
   protected readonly forma = signal<'novi' | number | null>(null);
   protected readonly poruka = signal<Poruka | null>(null);
   protected readonly brisanje = signal(false);
@@ -125,6 +119,12 @@ export class KontaktiZgrade {
     });
   }
 
+  protected zastarelo(tekst: string): void {
+    this.forma.set(null);
+    this.kontakti.reload();
+    this.prikazi({ tip: 'greska', tekst });
+  }
+
   protected obrisi(event: Event, kontakt: KontaktZgrade): void {
     const dugme = event.currentTarget as HTMLElement;
     const zgradaId = this.zgradaId();
@@ -142,8 +142,14 @@ export class KontaktiZgrade {
         try {
           await firstValueFrom(this.kontaktService.obrisi(zgradaId, kontakt.id));
           this.prikazi({ tip: 'uspeh', tekst: `Kontakt „${kontakt.naziv}“ je obrisan.` });
-        } catch {
-          this.prikazi({ tip: 'greska', tekst: 'Kontakt nije obrisan. Pokušaj ponovo.' });
+        } catch (err) {
+          // Već obrisan (drugi tab, drugi upravnik): cilj je postignut, lista se osvežava
+          const vecObrisan = err instanceof HttpErrorResponse && err.status === 404;
+          this.prikazi(
+            vecObrisan
+              ? { tip: 'uspeh', tekst: `Kontakt „${kontakt.naziv}“ je već obrisan.` }
+              : { tip: 'greska', tekst: 'Kontakt nije obrisan. Pokušaj ponovo.' },
+          );
         } finally {
           this.brisanje.set(false);
           this.kontakti.reload();

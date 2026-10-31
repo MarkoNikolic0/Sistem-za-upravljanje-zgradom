@@ -49,7 +49,7 @@
       @if (profil.value().uloga === 'admin') {
         <app-pregled-zgrada class="panel mt-8" />
       } @else {
-        <app-danas [profil]="profil.value()" />
+        <app-danas [profil]="profil.value()" [zgrade]="zgrade()" />
         <app-vazni-kontakti
           class="kontakti"
           [zgrade]="zgrade()"

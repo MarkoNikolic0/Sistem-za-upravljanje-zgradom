@@ -41,7 +41,7 @@
     >
       <div class="zaglavlje-odeljka">
         <h2 id="lista-kontakata" class="naslov-odeljka">Kontakti zgrade</h2>
-        @if (kontakti.hasValue() && forma() !== 'novi' && !popunjeno()) {
+        @if (kontakti.hasValue() && forma() !== 'novi') {
           <button pButton id="dodaj-kontakt" type="button" size="small" (click)="otvori('novi')">
             <i class="pi pi-plus" aria-hidden="true"></i>
             Dodaj kontakt
@@ -56,6 +56,7 @@
             [zgradaId]="izabrana"
             [ja]="ja()"
             (sacuvan)="sacuvan($event)"
+            (zastarelo)="zastarelo($event)"
             (odustani)="zatvori()"
           />
         </div>
@@ -91,6 +92,7 @@
                     [zgradaId]="izabrana"
                     [kontakt]="k"
                     (sacuvan)="sacuvan($event)"
+                    (zastarelo)="zastarelo($event)"
                     (odustani)="zatvori()"
                   />
                 </div>
@@ -128,11 +130,6 @@
             </li>
           }
         </ul>
-        @if (popunjeno()) {
-          <p class="mt-3 text-sm text-priguseno">
-            Zgrada može imati najviše {{ maksKontakata }} kontakata. Obriši neki da bi dodao novi.
-          </p>
-        }
       }
     </section>
   } @else {

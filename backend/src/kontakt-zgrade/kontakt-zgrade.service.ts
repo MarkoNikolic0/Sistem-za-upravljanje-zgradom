@@ -53,11 +53,14 @@ export class KontaktZgradeService {
     await this.proveriUpravnika(zgradaId, korisnikId, uloga);
 
     return await this.dataSource.transaction(async (manager) => {
-      await manager.findOne(Zgrada, {
+      const zgrada = await manager.findOne(Zgrada, {
         where: { id: zgradaId },
         select: { id: true },
         lock: { mode: 'pessimistic_write' },
       });
+      if (!zgrada) {
+        throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+      }
       const broj = await manager.count(KontaktZgrade, {
         where: { zgrada: { id: zgradaId } },
       });
