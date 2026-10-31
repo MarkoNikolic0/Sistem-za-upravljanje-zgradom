@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -29,6 +30,7 @@ const MAKS_KONTAKATA = 20;
 @Component({
   imports: [
     FormsModule,
+    RouterLink,
     ButtonModule,
     ConfirmDialogModule,
     MessageModule,

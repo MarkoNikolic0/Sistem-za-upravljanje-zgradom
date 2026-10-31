@@ -1,4 +1,13 @@
-import { Component, computed, inject, input } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -12,6 +21,8 @@ import { RedKontakta } from '../red-kontakta/red-kontakta';
   imports: [RouterLink, ButtonModule, SkeletonModule, RedKontakta],
   templateUrl: './vazni-kontakti.html',
   styleUrl: './vazni-kontakti.scss',
+  // Sopstvena visina za lepljenje desne kolone na početnoj (home.scss)
+  host: { '[style.--visina-kontakata.px]': 'visina()' },
 })
 export class VazniKontakti {
   readonly zgrade = input.required<ZgradaOsnovno[]>();
@@ -21,4 +32,15 @@ export class VazniKontakti {
   protected readonly kontakti = inject(KontaktService).kontaktiZgrada(this.zgradeId);
 
   protected readonly hitneSluzbe = HITNE_SLUZBE;
+
+  protected readonly visina = signal(0);
+
+  constructor() {
+    const element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const posmatrac = new ResizeObserver(([unos]) =>
+      this.visina.set(unos.borderBoxSize[0].blockSize),
+    );
+    afterNextRender(() => posmatrac.observe(element));
+    inject(DestroyRef).onDestroy(() => posmatrac.disconnect());
+  }
 }

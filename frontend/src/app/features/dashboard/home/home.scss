@@ -21,10 +21,14 @@
 .kontakti {
   margin-top: 2.5rem;
 
-  // Ostaju vidljivi pri skrolovanju, ispod gornje trake
+  // Ostaju vidljivi pri skrolovanju: ispod gornje trake, a kad su viši od ekrana,
+  // prvo se skroluju sa stranicom pa se zalepe kad se vidi njihov kraj
   @container (width >= 66rem) {
     position: sticky;
-    top: calc(var(--visina-gornje-trake) + 2rem);
+    top: min(
+      calc(var(--visina-gornje-trake) + 2rem),
+      calc(100dvh - var(--visina-kontakata, 0px) - 2rem)
+    );
     grid-column: 2;
     grid-row: 1 / -1;
     align-self: start;
