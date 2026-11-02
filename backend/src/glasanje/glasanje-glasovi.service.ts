@@ -3,16 +3,21 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { DataSource, EntityManager, IsNull, MoreThan, Not } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
 import { Glas, JEDAN_GLAS_ANKETE, JEDAN_GLAS_STANA } from './glas.entity.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
 import { GlasanjePravaService } from './glasanje-prava.service.js';
-import { PORUKA_VLASNICI, PORUKA_ZAVRSENA } from './glasanje.constants.js';
-import type { PristupZgradama } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
+import { DataSource, EntityManager, In, IsNull, MoreThan, Not } from 'typeorm';
+import {
+  PORUKA_STANARI,
+  PORUKA_VLASNICI,
+  PORUKA_ZAVRSENA,
+} from './glasanje.constants.js';
+import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
+import type { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 
 @Injectable()
 export class GlasanjeGlasoviService {
@@ -34,11 +39,20 @@ export class GlasanjeGlasoviService {
 
     await this.dataSource.transaction(async (manager) => {
       await this.proveriDaJeOtvoreno(manager, id);
+      const veze = await zakljucajVeze(manager, korisnikId, glasanje.zgrada.id);
       if (glasanje.vrsta === VrstaGlasanja.ODLUKA) {
-        await this.glasajZaStanove(manager, glasanje, korisnikId, opcijaId, p);
+        await this.glasajZaStanove(
+          manager,
+          glasanje,
+          korisnikId,
+          opcijaId,
+          veze,
+        );
         return;
       }
-      // Novi glas ili promena postojeceg, u jednom upitu
+      if (veze.length === 0) {
+        throw new ForbiddenException(PORUKA_STANARI);
+      }
       await manager
         .createQueryBuilder()
         .insert()
@@ -74,6 +88,30 @@ export class GlasanjeGlasoviService {
     return this.rezultati.jedno(id, korisnikId, p);
   }
 
+  async ukloniGlasove(
+    manager: EntityManager,
+    korisnikId: number,
+    zgradaId: number,
+    stanId: number,
+    iAnkete: boolean,
+  ) {
+    const aktivna = await manager.find(Glasanje, {
+      where: { zgrada: { id: zgradaId }, rok: MoreThan(new Date()) },
+      select: { id: true },
+    });
+    if (aktivna.length === 0) {
+      return;
+    }
+    const uslov = {
+      glasanje: { id: In(aktivna.map((g) => g.id)) },
+      korisnik: { id: korisnikId },
+    };
+    await manager.delete(Glas, { ...uslov, stan: { id: stanId } });
+    if (iAnkete) {
+      await manager.delete(Glas, { ...uslov, stan: IsNull() });
+    }
+  }
+
   private async proveriDaJeOtvoreno(manager: EntityManager, id: number) {
     const otvoreno = await manager.findOne(Glasanje, {
       where: { id, rok: MoreThan(new Date()) },
@@ -90,11 +128,9 @@ export class GlasanjeGlasoviService {
     glasanje: Glasanje,
     korisnikId: number,
     opcijaId: number,
-    p: PristupZgradama,
+    veze: StanarStana[],
   ) {
-    const stanovi = p.vlasnickiStanovi
-      .filter((stan) => stan.zgradaId === glasanje.zgrada.id)
-      .map((stan) => stan.id);
+    const stanovi = veze.filter((v) => v.vlasnik).map((v) => v.stan.id);
     if (stanovi.length === 0) {
       throw new ForbiddenException(PORUKA_VLASNICI);
     }

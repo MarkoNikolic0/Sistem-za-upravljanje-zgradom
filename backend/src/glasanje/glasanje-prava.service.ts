@@ -15,7 +15,7 @@ import {
 } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
-import { PORUKA_VLASNICI } from './glasanje.constants.js';
+import { PORUKA_STANARI, PORUKA_VLASNICI } from './glasanje.constants.js';
 
 @Injectable()
 export class GlasanjePravaService {
@@ -25,7 +25,6 @@ export class GlasanjePravaService {
     private korisnikService: KorisnikService,
   ) {}
 
-  // Prazan niz znači da korisnik ne vidi nijedno glasanje
   usloviVidljivosti(
     p: PristupZgradama,
     zgradaId?: number,
@@ -70,7 +69,7 @@ export class GlasanjePravaService {
         throw new ForbiddenException(PORUKA_VLASNICI);
       }
     } else if (!p.stanuje.includes(glasanje.zgrada.id)) {
-      throw new ForbiddenException('Glasaju stanari ove zgrade.');
+      throw new ForbiddenException(PORUKA_STANARI);
     }
     return dostupno;
   }

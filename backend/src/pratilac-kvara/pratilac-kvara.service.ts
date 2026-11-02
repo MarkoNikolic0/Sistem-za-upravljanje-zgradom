@@ -1,12 +1,17 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { PratilacKvara } from './pratilac-kvara.entity.js';
 import { KvarService } from '../kvar/kvar.service.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OTVORENI_STATUSI } from '../kvar/kvar.constants.js';
 import { Kvar } from '../kvar/kvar.entity.js';
+import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
 
 @Injectable()
 export class PratilacKvaraService {
@@ -31,6 +36,10 @@ export class PratilacKvaraService {
       if (!zakljucan || !OTVORENI_STATUSI.includes(zakljucan.status)) {
         throw new ConflictException('Kvar je već rešen ili završen!');
       }
+      const veze = await zakljucajVeze(manager, korisnikId, kvar.zgrada.id);
+      if (veze.length === 0) {
+        throw new ForbiddenException('Kvar prate stanari ove zgrade!');
+      }
       await manager
         .createQueryBuilder()
         .insert()
@@ -49,6 +58,27 @@ export class PratilacKvaraService {
       korisnik: { id: korisnikId },
     });
     return await this.stanje(kvarId, korisnikId);
+  }
+
+  // Stanar koji se odselio iz zgrade više ne prati njene kvarove
+  async ukloniPracenja(
+    manager: EntityManager,
+    korisnikId: number,
+    zgradaId: number,
+  ) {
+    const pracenja = await manager.find(PratilacKvara, {
+      where: {
+        korisnik: { id: korisnikId },
+        kvar: { zgrada: { id: zgradaId } },
+      },
+      select: { id: true },
+    });
+    if (pracenja.length > 0) {
+      await manager.delete(
+        PratilacKvara,
+        pracenja.map((p) => p.id),
+      );
+    }
   }
 
   private async stanje(kvarId: number, korisnikId: number) {

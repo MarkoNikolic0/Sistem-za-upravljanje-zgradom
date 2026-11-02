@@ -6,12 +6,16 @@ import { AuthModule } from '../auth/auth.module.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { StanarStanaController } from './stanar-stana.controller.js';
 import { StanarStanaService } from './stanar-stana.service.js';
+import { GlasanjeModule } from '../glasanje/glasanje.module.js';
+import { PratilacKvaraModule } from '../pratilac-kvara/pratilac-kvara.module.js';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([StanarStana, Stan]),
     AuthModule,
     KorisnikModule,
+    GlasanjeModule,
+    PratilacKvaraModule,
   ],
   controllers: [StanarStanaController],
   providers: [StanarStanaService],

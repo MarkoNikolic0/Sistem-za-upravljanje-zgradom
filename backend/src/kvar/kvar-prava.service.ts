@@ -15,6 +15,7 @@ export class KvarPravaService {
     private korisnikService: KorisnikService,
   ) {}
 
+  // Prazan niz znači da korisnik ne vidi nijedan kvar
   async usloviVidljivosti(
     korisnikId: number,
     uloga: Uloga,
@@ -49,13 +50,12 @@ export class KvarPravaService {
   private async usloviStanara(
     korisnikId: number,
   ): Promise<FindOptionsWhere<Kvar>[]> {
-    const sopstveni: FindOptionsWhere<Kvar> = { korisnik: { id: korisnikId } };
     const veze = await this.stanarStanaRepository.find({
       where: { korisnik: { id: korisnikId } },
       relations: { stan: { zgrada: true } },
     });
     if (veze.length === 0) {
-      return [sopstveni];
+      return [];
     }
     const stanIds = veze.map((v) => v.stan.id);
     const zgradaIds = [...new Set(veze.map((v) => v.stan.zgrada.id))];
@@ -65,7 +65,6 @@ export class KvarPravaService {
         zgrada: { id: In(zgradaIds) },
         lokacijaTip: LokacijaTip.ZAJEDNICKI_PROSTOR,
       },
-      sopstveni,
     ];
   }
 
@@ -95,10 +94,8 @@ export class KvarPravaService {
     }
   }
 
+  // Po trenutnom stanu: ko se odselio, ne vidi ni kvarove koje je sam prijavio
   private async smeKaoStanar(kvar: Kvar, korisnikId: number): Promise<boolean> {
-    if (kvar.korisnik.id === korisnikId) {
-      return true;
-    }
     if (kvar.stan) {
       return await this.stanarStanaRepository.exists({
         where: { korisnik: { id: korisnikId }, stan: { id: kvar.stan.id } },

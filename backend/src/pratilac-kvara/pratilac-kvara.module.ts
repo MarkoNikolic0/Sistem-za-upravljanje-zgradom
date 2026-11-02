@@ -10,5 +10,6 @@ import { KvarModule } from '../kvar/kvar.module.js';
   imports: [TypeOrmModule.forFeature([PratilacKvara]), AuthModule, KvarModule],
   controllers: [PratilacKvaraController],
   providers: [PratilacKvaraService],
+  exports: [PratilacKvaraService],
 })
 export class PratilacKvaraModule {}

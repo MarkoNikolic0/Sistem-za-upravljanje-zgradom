@@ -36,6 +36,6 @@ import { Oglas } from '../oglas/oglas.entity.js';
     GlasanjePravaService,
     GlasanjeRezultatiService,
   ],
-  exports: [GlasanjeService, GlasanjeRezultatiService],
+  exports: [GlasanjeService, GlasanjeRezultatiService, GlasanjeGlasoviService],
 })
 export class GlasanjeModule {}

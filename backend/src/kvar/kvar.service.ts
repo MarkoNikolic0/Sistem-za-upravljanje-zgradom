@@ -97,6 +97,9 @@ export class KvarService {
       uloga,
       upit.zgradaId,
     );
+    if (vidljivi.length === 0) {
+      return { stavke: [], ukupno: 0 };
+    }
 
     // TypeORM baca grešku na undefined u where, pa se filter dodaje samo kad je zadat
     const filter: FindOptionsWhere<Kvar> = {
