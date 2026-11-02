@@ -176,10 +176,12 @@
                       type="button"
                       text
                       severity="secondary"
-                      icon="pi pi-times"
+                      iconOnly
                       [attr.aria-label]="'Ukloni opciju ' + (i + 1)"
                       (click)="ukloniOpciju(i)"
-                    ></button>
+                    >
+                      <i class="pi pi-times" aria-hidden="true"></i>
+                    </button>
                   }
                 </div>
                 @if (nevazecaOpcija(i)) {
@@ -194,14 +196,8 @@
             <small class="text-sm text-greska" role="alert">{{ poruka }}</small>
           }
           @if (opcije.length < najviseOpcija) {
-            <button
-              pButton
-              type="button"
-              text
-              icon="pi pi-plus"
-              class="self-start"
-              (click)="dodajOpciju()"
-            >
+            <button pButton type="button" text class="self-start" (click)="dodajOpciju()">
+              <i class="pi pi-plus" aria-hidden="true"></i>
               Dodaj opciju
             </button>
           }

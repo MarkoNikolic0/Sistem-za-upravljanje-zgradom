@@ -277,10 +277,12 @@
                   type="button"
                   text
                   severity="secondary"
-                  icon="pi pi-times"
+                  iconOnly
                   [attr.aria-label]="'Ukloni tačku ' + (i + 1)"
                   (click)="ukloniTacku(i)"
-                ></button>
+                >
+                  <i class="pi pi-times" aria-hidden="true"></i>
+                </button>
               }
             </li>
           }
@@ -289,14 +291,8 @@
           <small class="text-sm text-greska" role="alert">{{ poruka }}</small>
         }
         @if (tacke.length < najviseTacaka) {
-          <button
-            pButton
-            type="button"
-            text
-            icon="pi pi-plus"
-            class="self-start"
-            (click)="dodajTacku()"
-          >
+          <button pButton type="button" text class="self-start" (click)="dodajTacku()">
+            <i class="pi pi-plus" aria-hidden="true"></i>
             Dodaj tačku
           </button>
         }
