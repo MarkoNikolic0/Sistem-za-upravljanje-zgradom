@@ -109,13 +109,12 @@ export class KontaktZgradeService {
     korisnikId: number,
     uloga: Uloga,
   ) {
-    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
-    if (!sadrzi(p.upravlja, zgradaId)) {
-      throw new ForbiddenException(
-        'Kontakte uređuje samo upravnik ove zgrade!',
-      );
-    }
-    await this.postojiZgrada(zgradaId);
+    await this.korisnikService.proveriUpravnikaZgrade(
+      korisnikId,
+      uloga,
+      zgradaId,
+      'Kontakte uređuje samo upravnik ove zgrade!',
+    );
   }
 
   private async postojiZgrada(zgradaId: number) {

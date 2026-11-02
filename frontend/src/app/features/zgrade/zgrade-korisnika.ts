@@ -20,7 +20,8 @@ export function upravljaZgradom(profil: ProfileResponse, zgradaId: number | null
   return profil.uloga === 'admin' || (zgradaId !== null && profil.zgrada?.id === zgradaId);
 }
 
-export function injectZgradeKorisnika() {
+// Zgrade za izbor na stranici: admin dobija sve posebnim zahtevom, ostali iz profila
+function injectZgrade(izProfila: (profil: ProfileResponse) => ZgradaOsnovno[]) {
   const profil = inject(ProfileService).profile();
   const admin = computed(() => profil.hasValue() && profil.value().uloga === 'admin');
   const sveZgrade = inject(ZgradaService).zgrade(admin);
@@ -31,7 +32,7 @@ export function injectZgradeKorisnika() {
     if (admin()) {
       return sveZgrade.hasValue() ? sveZgrade.value() : [];
     }
-    return zgradeIzProfila(profil.value());
+    return izProfila(profil.value());
   });
   // Adminu zgrade stižu posebnim zahtevom, pa je spremno tek kad stigne i on
   const ucitano = computed(
@@ -41,23 +42,12 @@ export function injectZgradeKorisnika() {
   return { profil, admin, zgrade, ucitano, greska };
 }
 
+// Zgrade koje korisnik vidi (oglasi, glasanje)
+export function injectZgradeKorisnika() {
+  return injectZgrade(zgradeIzProfila);
+}
+
+// Zgrade kojima korisnik upravlja (kontakti, stanari)
 export function injectZgradeUpravnika() {
-  const profil = inject(ProfileService).profile();
-  const admin = computed(() => profil.hasValue() && profil.value().uloga === 'admin');
-  const sveZgrade = inject(ZgradaService).zgrade(admin);
-  const zgrade = computed(() => {
-    if (!profil.hasValue()) {
-      return [];
-    }
-    if (admin()) {
-      return sveZgrade.value();
-    }
-    const zgrada = profil.value().zgrada;
-    return zgrada ? [zgrada] : [];
-  });
-  const ucitano = computed(
-    () => profil.hasValue() && (!admin() || sveZgrade.status() === 'resolved'),
-  );
-  const greska = computed(() => profil.error() ?? sveZgrade.error());
-  return { profil, admin, zgrade, ucitano, greska };
+  return injectZgrade((profil) => (profil.zgrada ? [profil.zgrada] : []));
 }

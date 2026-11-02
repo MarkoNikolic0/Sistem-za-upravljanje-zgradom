@@ -1,12 +1,4 @@
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  linkedSignal,
-  numberAttribute,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, numberAttribute } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
@@ -35,6 +27,7 @@ export class StanariZgrade {
   readonly zgrada = input(undefined, { transform: numberAttribute });
 
   private readonly izbor = injectZgradeUpravnika();
+  protected readonly admin = this.izbor.admin;
   protected readonly zgrade = this.izbor.zgrade;
   protected readonly ucitano = this.izbor.ucitano;
   protected readonly greska = this.izbor.greska;
@@ -45,7 +38,8 @@ export class StanariZgrade {
   });
   protected readonly stanovi = inject(StanariService).stanovi(this.zgradaId);
 
-  protected readonly upit = signal('');
+  // Nova zgrada (izbor ili link) počinje bez pretrage
+  protected readonly upit = linkedSignal({ source: this.zgradaId, computation: () => '' });
   protected readonly pronadjeni = computed(() =>
     this.stanovi.hasValue() ? pretraziStanove(this.stanovi.value(), this.upit()) : [],
   );
@@ -54,7 +48,9 @@ export class StanariZgrade {
   protected readonly spratovi = computed(() => {
     const spratovi = new Map<number, StanSaStanarima[]>();
     for (const stan of this.pronadjeni()) {
-      spratovi.set(stan.sprat, [...(spratovi.get(stan.sprat) ?? []), stan]);
+      const naSpratu = spratovi.get(stan.sprat) ?? [];
+      naSpratu.push(stan);
+      spratovi.set(stan.sprat, naSpratu);
     }
     return [...spratovi.entries()]
       .map(([sprat, stanovi]): Sprat => ({ sprat, stanovi }))
@@ -62,7 +58,7 @@ export class StanariZgrade {
   });
 
   protected readonly zbir = computed(() => {
-    if (!this.stanovi.hasValue()) {
+    if (!this.stanovi.hasValue() || this.stanovi.value().length === 0) {
       return '';
     }
     const stanovi = this.stanovi.value();
@@ -85,6 +81,5 @@ export class StanariZgrade {
 
   protected promeniZgradu(id: number): void {
     this.zgradaId.set(id);
-    this.upit.set('');
   }
 }

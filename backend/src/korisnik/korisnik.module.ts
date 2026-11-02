@@ -5,9 +5,13 @@ import { KorisnikService } from './korisnik.service.js';
 import { KorisnikController } from './korisnik.controller.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Korisnik, StanarStana]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Korisnik, StanarStana, Zgrada]),
+    AuthModule,
+  ],
   controllers: [KorisnikController],
   providers: [KorisnikService],
   exports: [KorisnikService],

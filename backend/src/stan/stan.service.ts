@@ -16,8 +16,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
-
-const redosled = new Intl.Collator('sr', { numeric: true });
+import { poRedosleduStanova } from './redosled-stanova.js';
 
 @Injectable()
 export class StanService {
@@ -62,9 +61,7 @@ export class StanService {
     const stanovi = await this.stanRepository.find({
       where: { zgrada: { id: zgradaId } },
     });
-    return stanovi.sort(
-      (a, b) => a.sprat - b.sprat || redosled.compare(a.broj, b.broj),
-    );
+    return stanovi.sort(poRedosleduStanova);
   }
 
   async findOne(stanId: number) {

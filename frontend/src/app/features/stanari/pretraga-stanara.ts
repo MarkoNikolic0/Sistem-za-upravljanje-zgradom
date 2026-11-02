@@ -16,8 +16,10 @@ export function pretraziStanove(stanovi: StanSaStanarima[], upit: string): StanS
   return stanovi.filter(
     (stan) =>
       bezKvacica(stan.broj) === trazi ||
-      stan.stanari.some((s) =>
-        bezKvacica(`${s.korisnik.ime} ${s.korisnik.prezime}`).includes(trazi),
+      stan.stanari.some(({ korisnik: k }) =>
+        [`${k.ime} ${k.prezime}`, `${k.prezime} ${k.ime}`].some((ime) =>
+          bezKvacica(ime).includes(trazi),
+        ),
       ),
   );
 }

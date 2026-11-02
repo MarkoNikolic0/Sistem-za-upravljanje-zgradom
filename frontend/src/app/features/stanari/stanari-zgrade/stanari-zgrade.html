@@ -10,8 +10,8 @@
     <span class="sr-only">Učitavanje…</span>
   } @else if (zgradaId() !== null) {
     <p class="mt-2 text-priguseno">
-      @if (stanovi.hasValue()) {
-        {{ zbir() }}
+      @if (zbir(); as zbir) {
+        {{ zbir }}
       } @else {
         Ko živi u kom stanu i kako da ga dobiješ.
       }
@@ -83,8 +83,8 @@
                 @for (stan of sprat.stanovi; track stan.id) {
                   <li class="stan" [class.prazan]="stan.stanari.length === 0">
                     <p class="naslov-stana">
-                      <span class="sr-only">Stan</span>
-                      <span class="broj">{{ stan.broj }}</span>
+                      <span class="sr-only">Stan {{ stan.broj }}</span>
+                      <span class="broj" aria-hidden="true">{{ stan.broj }}</span>
                     </p>
                     @if (stan.stanari.length === 0) {
                       <p class="niko">Prazan stan</p>
@@ -124,6 +124,10 @@
       }
     </section>
   } @else {
-    <p class="mt-6 text-sm text-priguseno">Nijedna zgrada ti nije dodeljena za upravljanje.</p>
+    <p class="mt-6 text-sm text-priguseno">
+      {{
+        admin() ? 'U sistemu još nema zgrada.' : 'Nijedna zgrada ti nije dodeljena za upravljanje.'
+      }}
+    </p>
   }
 </div>

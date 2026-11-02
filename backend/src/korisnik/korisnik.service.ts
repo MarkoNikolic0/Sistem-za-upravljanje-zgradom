@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Korisnik } from './korisnik.entity.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,7 +10,8 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { UpdateProfilDto } from './dto/update-profil.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
-import type { PristupZgradama } from './pristup-zgradama.js';
+import { sadrzi, type PristupZgradama } from './pristup-zgradama.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 
 @Injectable()
 export class KorisnikService {
@@ -15,6 +20,8 @@ export class KorisnikService {
     private readonly korisnikRepository: Repository<Korisnik>,
     @InjectRepository(StanarStana)
     private readonly stanarStanaRepository: Repository<StanarStana>,
+    @InjectRepository(Zgrada)
+    private readonly zgradaRepository: Repository<Zgrada>,
   ) {}
 
   async zgradaUpravnika(korisnikId: number): Promise<number | null> {
@@ -58,6 +65,22 @@ export class KorisnikService {
     const upravlja = zgradaUpravnika === null ? [] : [zgradaUpravnika];
     const zgrade = [...new Set([...stanuje, ...upravlja])];
     return { stanuje, poseduje, vlasnickiStanovi, zgrade, upravlja };
+  }
+
+  // Upravnik te zgrade ili admin; 403 pre 404 da upravnik ne sazna koje tuđe zgrade postoje
+  async proveriUpravnikaZgrade(
+    korisnikId: number,
+    uloga: Uloga,
+    zgradaId: number,
+    poruka: string,
+  ) {
+    const p = await this.pristupZgradama(korisnikId, uloga);
+    if (!sadrzi(p.upravlja, zgradaId)) {
+      throw new ForbiddenException(poruka);
+    }
+    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
+      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+    }
   }
 
   async mojProfil(korisnikId: number) {

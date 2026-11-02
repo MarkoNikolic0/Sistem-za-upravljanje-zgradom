@@ -51,6 +51,7 @@ export class KontaktiZgrade {
 
   private readonly izbor = injectZgradeUpravnika();
   protected readonly profil = this.izbor.profil;
+  protected readonly admin = this.izbor.admin;
   protected readonly zgrade = this.izbor.zgrade;
   protected readonly ucitano = this.izbor.ucitano;
   protected readonly greska = this.izbor.greska;

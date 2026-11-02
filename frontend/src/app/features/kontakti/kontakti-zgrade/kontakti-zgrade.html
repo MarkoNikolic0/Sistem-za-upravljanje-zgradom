@@ -133,7 +133,11 @@
       }
     </section>
   } @else {
-    <p class="mt-6 text-sm text-priguseno">Nijedna zgrada ti nije dodeljena za upravljanje.</p>
+    <p class="mt-6 text-sm text-priguseno">
+      {{
+        admin() ? 'U sistemu još nema zgrada.' : 'Nijedna zgrada ti nije dodeljena za upravljanje.'
+      }}
+    </p>
   }
 </div>
 

@@ -1,18 +1,11 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StanarStana } from './stanar-stana.entity.js';
 import { Stan } from '../stan/stan.entity.js';
-import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { poRedosleduStanova } from '../stan/redosled-stanova.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
-import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
-
-const redosled = new Intl.Collator('sr', { numeric: true });
 
 @Injectable()
 export class StanarStanaService {
@@ -20,18 +13,16 @@ export class StanarStanaService {
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Stan) private stanRepository: Repository<Stan>,
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
   ) {}
 
   async findAll(zgradaId: number, korisnikId: number, uloga: Uloga) {
-    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
-    if (!sadrzi(p.upravlja, zgradaId)) {
-      throw new ForbiddenException('Stanare vidi samo upravnik ove zgrade!');
-    }
-    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
-    }
+    await this.korisnikService.proveriUpravnikaZgrade(
+      korisnikId,
+      uloga,
+      zgradaId,
+      'Stanare vidi samo upravnik ove zgrade!',
+    );
 
     const [stanovi, veze] = await Promise.all([
       this.stanRepository.find({
@@ -60,15 +51,20 @@ export class StanarStanaService {
       }),
     ]);
 
-    return stanovi
-      .sort((a, b) => a.sprat - b.sprat || redosled.compare(a.broj, b.broj))
-      .map(({ id, broj, sprat }) => ({
-        id,
-        broj,
-        sprat,
-        stanari: veze
-          .filter((v) => v.stan.id === id)
-          .map((v) => ({ id: v.id, vlasnik: v.vlasnik, korisnik: v.korisnik })),
-      }));
+    const stanariStana = new Map<
+      number,
+      Pick<StanarStana, 'id' | 'vlasnik' | 'korisnik'>[]
+    >();
+    for (const v of veze) {
+      const stanari = stanariStana.get(v.stan.id) ?? [];
+      stanari.push({ id: v.id, vlasnik: v.vlasnik, korisnik: v.korisnik });
+      stanariStana.set(v.stan.id, stanari);
+    }
+    return stanovi.sort(poRedosleduStanova).map(({ id, broj, sprat }) => ({
+      id,
+      broj,
+      sprat,
+      stanari: stanariStana.get(id) ?? [],
+    }));
   }
 }
