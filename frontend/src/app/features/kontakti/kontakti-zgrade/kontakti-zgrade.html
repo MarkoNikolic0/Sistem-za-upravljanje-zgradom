@@ -29,7 +29,7 @@
     }
 
     <div id="poruka-kontakata" tabindex="-1" class="mt-6 outline-none empty:hidden">
-      @if (poruka(); as p) {
+      @if (akcije.poruka(); as p) {
         <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
       }
     </div>
@@ -119,7 +119,7 @@
                       severity="danger"
                       iconOnly
                       [attr.aria-label]="'Obriši ' + k.naziv"
-                      [disabled]="brisanje()"
+                      [disabled]="akcije.akcijaUToku()"
                       (click)="obrisi($event, k)"
                     >
                       <i class="pi pi-trash" aria-hidden="true"></i>

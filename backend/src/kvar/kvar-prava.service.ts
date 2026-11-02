@@ -6,6 +6,7 @@ import { LokacijaTip, StatusKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
+import { PORUKA_PRACENJE } from './kvar.constants.js';
 
 @Injectable()
 export class KvarPravaService {
@@ -164,9 +165,7 @@ export class KvarPravaService {
 
   async proveriPracenje(kvar: Kvar, korisnikId: number) {
     if (!(await this.smeDaPrati(kvar, korisnikId))) {
-      throw new ForbiddenException(
-        'Kvar u zajedničkom prostoru prate stanari zgrade koji ga nisu prijavili!',
-      );
+      throw new ForbiddenException(PORUKA_PRACENJE);
     }
   }
 

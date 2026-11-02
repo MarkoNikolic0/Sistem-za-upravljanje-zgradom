@@ -7,7 +7,6 @@ import {
   numberAttribute,
   signal,
 } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -19,6 +18,7 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { Poruka } from '../../../shared/poruka';
+import { AkcijeStore } from '../../../shared/with-akcije';
 import { KontaktRequest, KontaktZgrade } from '../kontakt-models';
 import { KontaktService } from '../kontakt-service';
 import { FormaKontakta } from '../forma-kontakta/forma-kontakta';
@@ -37,7 +37,7 @@ import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
     FormaKontakta,
     RedKontakta,
   ],
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, AkcijeStore],
   selector: 'app-kontakti-zgrade',
   templateUrl: './kontakti-zgrade.html',
   styleUrl: './kontakti-zgrade.scss',
@@ -45,6 +45,7 @@ import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
 export class KontaktiZgrade {
   private kontaktService = inject(KontaktService);
   private confirmationService = inject(ConfirmationService);
+  protected readonly akcije = inject(AkcijeStore);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly zgrada = input(undefined, { transform: numberAttribute });
@@ -73,18 +74,16 @@ export class KontaktiZgrade {
   });
 
   protected readonly forma = signal<'novi' | number | null>(null);
-  protected readonly poruka = signal<Poruka | null>(null);
-  protected readonly brisanje = signal(false);
 
   protected promeniZgradu(id: number): void {
     this.zgradaId.set(id);
     this.forma.set(null);
-    this.poruka.set(null);
+    this.akcije.ponisti();
   }
 
   protected otvori(forma: 'novi' | number): void {
     this.forma.set(forma);
-    this.poruka.set(null);
+    this.akcije.ponisti();
   }
 
   protected zatvori(): void {
@@ -124,21 +123,20 @@ export class KontaktiZgrade {
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Obriši', severity: 'danger' },
       accept: async () => {
-        this.brisanje.set(true);
-        try {
-          await firstValueFrom(this.kontaktService.obrisi(zgradaId, kontakt.id));
-          this.prikazi({ tip: 'uspeh', tekst: `Kontakt „${kontakt.naziv}“ je obrisan.` });
-        } catch (err) {
-          // Već obrisan (drugi tab, drugi upravnik): cilj je postignut, lista se osvežava
-          const vecObrisan = err instanceof HttpErrorResponse && err.status === 404;
-          this.prikazi(
-            vecObrisan
-              ? { tip: 'uspeh', tekst: `Kontakt „${kontakt.naziv}“ je već obrisan.` }
-              : { tip: 'greska', tekst: 'Kontakt nije obrisan. Pokušaj ponovo.' },
-          );
-        } finally {
-          this.brisanje.set(false);
-          this.kontakti.reload();
+        const osvezi = () => this.kontakti.reload();
+        await this.akcije.izvrsi(
+          async () => {
+            await firstValueFrom(this.kontaktService.obrisi(zgradaId, kontakt.id));
+            osvezi();
+          },
+          `Kontakt „${kontakt.naziv}“ je obrisan.`,
+          'Kontakt nije obrisan. Pokušaj ponovo.',
+          osvezi,
+          // Već obrisan (drugi tab, drugi upravnik): cilj je postignut
+          { tip: 'uspeh', tekst: `Kontakt „${kontakt.naziv}“ je već obrisan.` },
+        );
+        if (this.akcije.poruka()) {
+          this.fokusiraj('#poruka-kontakata');
         }
       },
       reject: () => dugme.focus(),
@@ -146,7 +144,7 @@ export class KontaktiZgrade {
   }
 
   private prikazi(poruka: Poruka): void {
-    this.poruka.set(poruka);
+    this.akcije.prikaziPoruku(poruka);
     this.fokusiraj('#poruka-kontakata');
   }
 }

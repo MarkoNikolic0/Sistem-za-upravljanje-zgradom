@@ -49,7 +49,7 @@
     </div>
     <p class="sr-only" aria-live="polite">{{ rezultat() }}</p>
     <div id="poruka-stanara" tabindex="-1" class="mt-6 outline-none empty:hidden">
-      @if (poruka(); as p) {
+      @if (akcije.poruka(); as p) {
         <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
       }
     </div>
@@ -125,7 +125,9 @@
                               iconOnly
                               class="-mt-1 shrink-0"
                               aria-haspopup="true"
-                              [attr.aria-expanded]="meniOtvoren() && izabran()?.stanar === stanar"
+                              [attr.aria-expanded]="
+                                meniOtvoren() && izabran()?.stanar?.id === stanar.id
+                              "
                               [attr.aria-label]="'Radnje: ' + ime(stanar)"
                               (click)="otvoriMeni($event, meni, stan, stanar)"
                             >

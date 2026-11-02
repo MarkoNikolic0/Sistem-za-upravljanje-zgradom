@@ -7,7 +7,6 @@ import {
   numberAttribute,
   signal,
 } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom, Observable } from 'rxjs';
@@ -22,6 +21,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { uMnozini } from '../../../shared/mnozina';
 import { Poruka } from '../../../shared/poruka';
+import { AkcijeStore } from '../../../shared/with-akcije';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
 import { StanSaStanarima, Stanar } from '../stanari-models';
@@ -51,7 +51,7 @@ interface Izabran {
     SelectModule,
     SkeletonModule,
   ],
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, AkcijeStore],
   selector: 'app-stanari-zgrade',
   templateUrl: './stanari-zgrade.html',
   styleUrl: './stanari-zgrade.scss',
@@ -59,6 +59,7 @@ interface Izabran {
 export class StanariZgrade {
   private stanariService = inject(StanariService);
   private confirmationService = inject(ConfirmationService);
+  protected readonly akcije = inject(AkcijeStore);
   private readonly fokusiraj = fokusPosleCrtanja();
   readonly zgrada = input(undefined, { transform: numberAttribute });
 
@@ -109,8 +110,6 @@ export class StanariZgrade {
 
   protected readonly izabran = signal<Izabran | null>(null);
   protected readonly meniOtvoren = signal(false);
-  protected readonly uToku = signal(false);
-  protected readonly poruka = signal<Poruka | null>(null);
 
   protected readonly radnje = computed((): MenuItem[] => {
     const izabran = this.izabran();
@@ -122,13 +121,13 @@ export class StanariZgrade {
       {
         label: vlasnik ? 'Postavi za ukućanina' : 'Postavi za vlasnika',
         icon: vlasnik ? 'pi pi-user' : 'pi pi-key',
-        disabled: this.uToku(),
+        disabled: this.akcije.akcijaUToku(),
         command: () => this.promeniVlasnika(izabran),
       },
       {
         label: 'Odseli',
         icon: 'pi pi-sign-out',
-        disabled: this.uToku(),
+        disabled: this.akcije.akcijaUToku(),
         command: () => this.odseli(izabran),
       },
     ];
@@ -146,7 +145,7 @@ export class StanariZgrade {
 
   protected promeniZgradu(id: number): void {
     this.zgradaId.set(id);
-    this.poruka.set(null);
+    this.akcije.ponisti();
   }
 
   protected otvoriMeni(event: MouseEvent, meni: Menu, stan: StanSaStanarima, stanar: Stanar) {
@@ -205,24 +204,19 @@ export class StanariZgrade {
   }
 
   private async izvrsi(zahtev: Observable<unknown>, uspeh: string, nema: Poruka): Promise<void> {
-    this.uToku.set(true);
-    try {
-      await firstValueFrom(zahtev);
-      this.prikazi({ tip: 'uspeh', tekst: uspeh });
-    } catch (err) {
-      this.prikazi(
-        err instanceof HttpErrorResponse && err.status === 404
-          ? nema
-          : { tip: 'greska', tekst: 'Promena nije sačuvana. Pokušaj ponovo.' },
-      );
-    } finally {
-      this.uToku.set(false);
-      this.stanovi.reload();
+    const osvezi = () => this.stanovi.reload();
+    await this.akcije.izvrsi(
+      async () => {
+        await firstValueFrom(zahtev);
+        osvezi();
+      },
+      uspeh,
+      'Promena nije sačuvana. Pokušaj ponovo.',
+      osvezi,
+      nema,
+    );
+    if (this.akcije.poruka()) {
+      this.fokusiraj('#poruka-stanara');
     }
-  }
-
-  private prikazi(poruka: Poruka): void {
-    this.poruka.set(poruka);
-    this.fokusiraj('#poruka-stanara');
   }
 }

@@ -4,12 +4,12 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, Raw, Repository } from 'typeorm';
 import { PratilacKvara } from './pratilac-kvara.entity.js';
 import { KvarService } from '../kvar/kvar.service.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
-import { OTVORENI_STATUSI } from '../kvar/kvar.constants.js';
+import { OTVORENI_STATUSI, PORUKA_PRACENJE } from '../kvar/kvar.constants.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
 
@@ -38,7 +38,7 @@ export class PratilacKvaraService {
       }
       const veze = await zakljucajVeze(manager, korisnikId, kvar.zgrada.id);
       if (veze.length === 0) {
-        throw new ForbiddenException('Kvar prate stanari ove zgrade!');
+        throw new ForbiddenException(PORUKA_PRACENJE);
       }
       await manager
         .createQueryBuilder()
@@ -66,19 +66,16 @@ export class PratilacKvaraService {
     korisnikId: number,
     zgradaId: number,
   ) {
-    const pracenja = await manager.find(PratilacKvara, {
-      where: {
-        korisnik: { id: korisnikId },
-        kvar: { zgrada: { id: zgradaId } },
+    await manager.delete(PratilacKvara, {
+      korisnik: { id: korisnikId },
+      kvar: {
+        id: Raw(
+          (kolona) =>
+            `${kolona} IN (SELECT "id" FROM "kvar" WHERE "zgradaId" = :zgradaId)`,
+          { zgradaId },
+        ),
       },
-      select: { id: true },
     });
-    if (pracenja.length > 0) {
-      await manager.delete(
-        PratilacKvara,
-        pracenja.map((p) => p.id),
-      );
-    }
   }
 
   private async stanje(kvarId: number, korisnikId: number) {

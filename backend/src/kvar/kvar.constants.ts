@@ -27,6 +27,9 @@ export function jeZavrsen(status: StatusKvara): boolean {
 
 export const MAKS_SLICNIH = 5;
 
+export const PORUKA_PRACENJE =
+  'Kvar u zajedničkom prostoru prate stanari zgrade koji ga nisu prijavili!';
+
 export const DANA_ZA_POTVRDU = 7;
 
 export const DANA_ZA_RESAVANJE: Record<Prioritet, number> = {
