@@ -48,6 +48,11 @@
       </div>
     </div>
     <p class="sr-only" aria-live="polite">{{ rezultat() }}</p>
+    <div id="poruka-stanara" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (poruka(); as p) {
+        <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+      }
+    </div>
 
     <section class="odeljak" aria-label="Stanovi" [attr.aria-busy]="stanovi.isLoading()">
       @if (stanovi.error()) {
@@ -95,7 +100,7 @@
                             <span class="inicijali" aria-hidden="true"
                               >{{ stanar.korisnik.ime[0] }}{{ stanar.korisnik.prezime[0] }}</span
                             >
-                            <div class="min-w-0">
+                            <div class="min-w-0 flex-1">
                               <p class="ime">
                                 {{ stanar.korisnik.ime }} {{ stanar.korisnik.prezime }}
                                 <span class="znacka" [class.vlasnik]="stanar.vlasnik">{{
@@ -111,6 +116,21 @@
                                 }}</a>
                               </p>
                             </div>
+                            <button
+                              pButton
+                              type="button"
+                              size="small"
+                              severity="secondary"
+                              text
+                              iconOnly
+                              class="-mt-1 shrink-0"
+                              aria-haspopup="true"
+                              [attr.aria-expanded]="meniOtvoren() && izabran()?.stanar === stanar"
+                              [attr.aria-label]="'Radnje: ' + ime(stanar)"
+                              (click)="otvoriMeni($event, meni, stan, stanar)"
+                            >
+                              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                            </button>
                           </li>
                         }
                       </ul>
@@ -123,6 +143,18 @@
         </ol>
       }
     </section>
+    <p-menu
+      #meni
+      [model]="radnje()"
+      [popup]="true"
+      ariaLabel="Radnje sa stanarom"
+      (onShow)="meniOtvoren.set(true)"
+      (onHide)="meniOtvoren.set(false)"
+    />
+    <p-confirmdialog
+      [closable]="false"
+      [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
+    />
   } @else {
     <p class="mt-6 text-sm text-priguseno">
       {{
