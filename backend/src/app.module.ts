@@ -21,6 +21,7 @@ import { OglasModule } from './oglas/oglas.module.js';
 import { GlasanjeModule } from './glasanje/glasanje.module.js';
 import { SastanakModule } from './sastanak/sastanak.module.js';
 import { KontaktZgradeModule } from './kontakt-zgrade/kontakt-zgrade.module.js';
+import { StanarStanaModule } from './stanar-stana/stanar-stana.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -62,6 +63,7 @@ const __dirname = dirname(__filename);
     GlasanjeModule,
     SastanakModule,
     KontaktZgradeModule,
+    StanarStanaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
