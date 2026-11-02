@@ -20,7 +20,6 @@ export function upravljaZgradom(profil: ProfileResponse, zgradaId: number | null
   return profil.uloga === 'admin' || (zgradaId !== null && profil.zgrada?.id === zgradaId);
 }
 
-// Zgrade koje korisnik vidi (oglasi, glasanje): admin sve, ostali iz profila
 export function injectZgradeKorisnika() {
   const profil = inject(ProfileService).profile();
   const admin = computed(() => profil.hasValue() && profil.value().uloga === 'admin');
@@ -35,6 +34,27 @@ export function injectZgradeKorisnika() {
     return zgradeIzProfila(profil.value());
   });
   // Adminu zgrade stižu posebnim zahtevom, pa je spremno tek kad stigne i on
+  const ucitano = computed(
+    () => profil.hasValue() && (!admin() || sveZgrade.status() === 'resolved'),
+  );
+  const greska = computed(() => profil.error() ?? sveZgrade.error());
+  return { profil, admin, zgrade, ucitano, greska };
+}
+
+export function injectZgradeUpravnika() {
+  const profil = inject(ProfileService).profile();
+  const admin = computed(() => profil.hasValue() && profil.value().uloga === 'admin');
+  const sveZgrade = inject(ZgradaService).zgrade(admin);
+  const zgrade = computed(() => {
+    if (!profil.hasValue()) {
+      return [];
+    }
+    if (admin()) {
+      return sveZgrade.value();
+    }
+    const zgrada = profil.value().zgrada;
+    return zgrada ? [zgrada] : [];
+  });
   const ucitano = computed(
     () => profil.hasValue() && (!admin() || sveZgrade.status() === 'resolved'),
   );

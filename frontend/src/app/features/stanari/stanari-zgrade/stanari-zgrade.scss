@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.stranica {
+  max-width: 64rem;
+}
+
+.alati {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  @media (min-width: 40rem) {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+// Osobe u stanu
+.ljudi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.osoba {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.ime {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  color: var(--color-naslov);
+}
+
+.znacka.vlasnik {
+  color: var(--color-svetlo);
+  border-color: color-mix(in srgb, var(--color-svetlo) 40%, transparent);
+}
+
+.veze {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+
+  a {
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+
+    &:hover {
+      color: var(--color-naslov);
+    }
+  }
+}
+
+.niko {
+  font-size: 0.875rem;
+  color: var(--color-utisano);
+}
+
+// A: fasada — sprat je red prozora, upaljen prozor = naseljen stan
+.fasada {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.naziv-sprata {
+  margin-bottom: 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-utisano);
+}
+
+.stanovi-sprata {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.75rem;
+}
+
+.stan {
+  padding: 1rem;
+  border: 1px solid var(--color-linija);
+  border-top: 2px solid color-mix(in srgb, var(--color-svetlo) 70%, transparent);
+  border-radius: 0.5rem;
+  background: var(--color-panel);
+
+  &.prazan {
+    border-top-color: var(--color-ivica);
+    background: transparent;
+  }
+}
+
+.naslov-stana {
+  margin-bottom: 0.75rem;
+
+  .broj {
+    font-size: 1.75rem;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--color-naslov);
+  }
+}
+
+.prazan .broj {
+  color: var(--color-utisano);
+}

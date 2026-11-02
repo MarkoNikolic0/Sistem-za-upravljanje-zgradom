@@ -39,14 +39,13 @@
             Nema zakazanog sastanka
           }
         </p>
-        <p class="kontakti">
-          <i class="pi pi-phone" aria-hidden="true"></i>
-          <a
-            routerLink="/kontakti"
-            [queryParams]="{ zgrada: p.zgrada.id }"
-            class="hover:text-naslov"
-            >Važni kontakti</a
-          >
+        <p class="precice">
+          <a routerLink="/stanari" [queryParams]="{ zgrada: p.zgrada.id }">
+            <i class="pi pi-users" aria-hidden="true"></i>Stanari
+          </a>
+          <a routerLink="/kontakti" [queryParams]="{ zgrada: p.zgrada.id }">
+            <i class="pi pi-phone" aria-hidden="true"></i>Važni kontakti
+          </a>
         </p>
       </div>
     }

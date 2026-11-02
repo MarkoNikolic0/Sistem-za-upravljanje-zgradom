@@ -42,7 +42,7 @@ export const STAVKE_NAVIGACIJE: StavkaNavigacije[] = [
     naziv: 'Stanari',
     ikonica: 'pi pi-users',
     putanja: '/stanari',
-    uloge: ['upravnik'],
+    uloge: ['upravnik', 'admin'],
   },
   {
     naziv: 'Zahtevi',

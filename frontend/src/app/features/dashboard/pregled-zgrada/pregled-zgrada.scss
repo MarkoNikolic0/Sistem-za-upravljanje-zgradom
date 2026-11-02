@@ -69,14 +69,36 @@
   }
 }
 
-.sastanak,
-.kontakti {
+.sastanak {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
   margin-top: 0.75rem;
   font-size: 0.875rem;
   color: var(--color-priguseno);
+
+  .pi {
+    font-size: 0.75rem;
+  }
+}
+
+.precice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+
+  a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+
+    &:hover {
+      color: var(--color-naslov);
+    }
+  }
 
   .pi {
     font-size: 0.75rem;

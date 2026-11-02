@@ -19,12 +19,11 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { Poruka } from '../../../shared/poruka';
-import { ProfileService } from '../../profile/profile-service';
-import { ZgradaService } from '../../zgrade/zgrada-service';
 import { KontaktRequest, KontaktZgrade } from '../kontakt-models';
 import { KontaktService } from '../kontakt-service';
 import { FormaKontakta } from '../forma-kontakta/forma-kontakta';
 import { RedKontakta } from '../red-kontakta/red-kontakta';
+import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
 
 @Component({
   imports: [
@@ -50,25 +49,11 @@ export class KontaktiZgrade {
 
   readonly zgrada = input(undefined, { transform: numberAttribute });
 
-  protected readonly profil = inject(ProfileService).profile();
-  protected readonly admin = computed(
-    () => this.profil.hasValue() && this.profil.value().uloga === 'admin',
-  );
-  protected readonly sveZgrade = inject(ZgradaService).zgrade(this.admin);
-
-  protected readonly zgrade = computed(() => {
-    if (!this.profil.hasValue()) {
-      return [];
-    }
-    if (this.admin()) {
-      return this.sveZgrade.value();
-    }
-    const zgrada = this.profil.value().zgrada;
-    return zgrada ? [zgrada] : [];
-  });
-  protected readonly ucitano = computed(
-    () => this.profil.hasValue() && (!this.admin() || this.sveZgrade.status() === 'resolved'),
-  );
+  private readonly izbor = injectZgradeUpravnika();
+  protected readonly profil = this.izbor.profil;
+  protected readonly zgrade = this.izbor.zgrade;
+  protected readonly ucitano = this.izbor.ucitano;
+  protected readonly greska = this.izbor.greska;
 
   protected readonly zgradaId = linkedSignal<number | null>(() => {
     const zgrade = this.zgrade();

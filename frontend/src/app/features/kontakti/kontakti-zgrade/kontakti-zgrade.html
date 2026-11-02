@@ -7,7 +7,7 @@
     prikazane.
   </p>
 
-  @if (profil.error() || (admin() && sveZgrade.error())) {
+  @if (greska()) {
     <p-message severity="error" styleClass="mt-6">Zgrade trenutno nije moguće učitati.</p-message>
   } @else if (!ucitano()) {
     <div class="ucitavanje mt-6" aria-hidden="true"><p-skeleton height="3rem" /></div>

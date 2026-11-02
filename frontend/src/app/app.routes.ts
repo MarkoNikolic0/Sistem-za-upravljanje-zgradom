@@ -79,6 +79,13 @@ export const routes: Routes = [
           ),
         title: 'Važni kontakti | Upravljanje zgradom',
       },
+      {
+        path: 'stanari',
+        canActivate: [ulogaGuard('upravnik', 'admin')],
+        loadComponent: () =>
+          import('./features/stanari/stanari-zgrade/stanari-zgrade').then((m) => m.StanariZgrade),
+        title: 'Stanari | Upravljanje zgradom',
+      },
     ],
   },
   { path: '**', redirectTo: '' },
