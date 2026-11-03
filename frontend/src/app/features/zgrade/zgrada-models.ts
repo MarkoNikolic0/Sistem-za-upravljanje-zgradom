@@ -43,7 +43,6 @@ export interface StanRequest {
   kvadratura: number;
 }
 
-// Iste granice kao CreateStanDto i CreateStanoviDto na serveru
 export const GRANICE_STANA = {
   maksBroja: 10,
   minSprat: -5,

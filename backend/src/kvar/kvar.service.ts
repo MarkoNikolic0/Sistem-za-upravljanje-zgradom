@@ -155,7 +155,6 @@ export class KvarService {
       where: { id },
       relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
     });
-    // Kvar arhivirane zgrade se ne vidi i ne menja, ni za admina i servisera
     if (!kvar || kvar.zgrada.arhivirana) {
       throw new NotFoundException(`Kvar sa id-jem ${id} ne postoji!`);
     }

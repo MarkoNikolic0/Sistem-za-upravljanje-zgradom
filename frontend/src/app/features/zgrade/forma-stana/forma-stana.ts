@@ -50,7 +50,6 @@ export class FormaStana {
   });
 
   constructor() {
-    // Forma ostaje ista kad se iz izmene jednog stana pređe na drugi, pa se popunjava iznova
     effect(() => {
       const stan = this.stan();
       untracked(() => {

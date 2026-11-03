@@ -29,7 +29,6 @@ export function porukaServera(err: HttpErrorResponse): string | undefined {
   return typeof poruka === 'string' ? poruka : undefined;
 }
 
-// Greška servera za polje ide ispod tog polja; vraća to polje da se na njega prebaci fokus
 export function oznaciGreskuPolja<P extends string>(
   err: HttpErrorResponse,
   kontrole: Record<P, AbstractControl>,

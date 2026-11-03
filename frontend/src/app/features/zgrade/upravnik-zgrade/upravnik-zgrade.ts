@@ -41,12 +41,10 @@ export class UpravnikZgrade {
   protected readonly izabran = signal<KorisnikPretrage | null>(null);
   protected readonly greskaPretrage = signal(false);
   protected readonly minPretrage = MIN_PRETRAGE;
-  // Raste sa svakom pretragom, da sporiji stariji odgovor ne prepiše noviji
   private pretraga = 0;
 
   protected readonly telefon = formatirajTelefon;
 
-  // Trenutni upravnik je već postavljen, a upravnik druge zgrade se prvo razrešava tamo
   protected readonly upravljaZgradom = (k: KorisnikPretrage) => k.zgrada !== null;
 
   protected readonly ime = (k: { ime: string; prezime: string }) => `${k.ime} ${k.prezime}`;
@@ -151,7 +149,6 @@ export class UpravnikZgrade {
         );
         this.upravnik.set(odgovor);
       },
-      // Uloga je upisana u prijavu, pa novi meni dobija pri sledećem otvaranju aplikacije
       `${this.ime(novi)} je sada upravnik zgrade. Meni upravnika videće kad ponovo otvori aplikaciju.`,
       'Upravnik nije postavljen. Pokušaj ponovo.',
       () => this.upravnik.reload(),

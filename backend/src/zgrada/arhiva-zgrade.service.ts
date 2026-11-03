@@ -8,7 +8,6 @@ import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
 
-// Red pokazuje na stan, kvar ili glasanje ove zgrade; podupit u bazi, bez učitavanja id-jeva
 function uZgradi(
   tabela: 'stan' | 'kvar' | 'glasanje',
   zgradaId: number,
@@ -28,14 +27,12 @@ export class ArhivaZgradeService {
     private upravnikService: UpravnikZgradeService,
   ) {}
 
-  // Podaci zgrade ostaju, a ljudi se iz nje uklanjaju kao pri odseljenju
   async arhiviraj(zgradaId: number) {
     await this.dataSource.transaction(async (manager) => {
       const zgrada = await this.zakljucaj(manager, zgradaId);
       if (zgrada.arhivirana) {
         return;
       }
-      // Prvo zahtevi: prihvatanje u toku se završi pre, pa se i taj stanar odseli ispod
       await manager.update(
         ZahtevPovezivanje,
         {

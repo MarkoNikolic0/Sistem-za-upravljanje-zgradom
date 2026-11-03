@@ -1,7 +1,6 @@
 import { In } from 'typeorm';
 import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 
-// Admin upravlja svim aktivnim zgradama, pa arhivirana ne prolazi nijednu proveru ni za njega
 export interface PristupZgradama {
   stanuje: number[];
   poseduje: number[];
@@ -26,7 +25,6 @@ export function samoZgrada(zgrade: number[], zgradaId?: number) {
   return sadrzi(zgrade, zgradaId) ? [zgradaId] : [];
 }
 
-// Uslov za liste: samo aktivne zgrade, a od njih samo ove (null = sve)
 export function uZgradama(zgrade: number[] | null) {
   return {
     zgrada: {

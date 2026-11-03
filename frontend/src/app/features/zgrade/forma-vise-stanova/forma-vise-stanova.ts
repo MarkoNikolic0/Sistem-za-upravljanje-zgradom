@@ -31,7 +31,6 @@ export class FormaViseStanova implements OnInit {
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly zgradaId = input.required<number>();
-  // Brojevi stanova koji već postoje u zgradi
   readonly postojeci = input.required<string[]>();
   readonly sacuvani = output<number>();
   readonly odustani = output<void>();
@@ -52,7 +51,6 @@ export class FormaViseStanova implements OnInit {
     initialValue: this.forma.getRawValue(),
   });
 
-  // Stanovi se numerišu redom, sprat po sprat, od prvog broja
   protected readonly plan = computed((): Plan | null => {
     const { odSprata, doSprata, poSpratu, prviBroj, kvadratura } = this.vrednosti();
     if (odSprata == null || doSprata == null || !poSpratu || !prviBroj || !kvadratura) {

@@ -25,8 +25,6 @@ FROM (VALUES
 ) AS v(naziv, adresa)
 WHERE NOT EXISTS (SELECT 1 FROM zgrada z WHERE z.adresa = v.adresa);
 
--- Arhivirana zgrada: nema stanara ni upravnika, vidi je samo admin na /zgrade (odeljak Arhivirane).
--- Datum se upisuje samo kad se zgrada pravi, pa ponovno pokretanje ne arhivira vracenu zgradu.
 INSERT INTO zgrada (naziv, adresa, arhivirana)
 SELECT 'Stara zgrada Sinđelićeva', 'Sinđelićev trg 8, Niš', now() - interval '2 months'
 WHERE NOT EXISTS (SELECT 1 FROM zgrada z WHERE z.adresa = 'Sinđelićev trg 8, Niš');
@@ -105,7 +103,6 @@ FROM (VALUES
   ('Vizantijski bulevar 12, Niš', '30', 8, 85),
   ('Vizantijski bulevar 12, Niš', '31', 8, 59),
   ('Vizantijski bulevar 12, Niš', '32', 8, 47),
-  -- Stara zgrada Sinđelićeva (arhivirana): prizemlje do 2. sprata, po 2 stana
   ('Sinđelićev trg 8, Niš', '1', 0, 41),
   ('Sinđelićev trg 8, Niš', '2', 0, 53),
   ('Sinđelićev trg 8, Niš', '3', 1, 48),

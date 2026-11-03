@@ -86,7 +86,6 @@ export class StanariZgrade {
     }
     const stanovi = this.stanovi.value();
     const naseljeni = stanovi.filter((s) => s.stanari.length > 0).length;
-    // Osoba sa dva stana se broji jednom, kao na listi zgrada
     const ljudi = new Set(stanovi.flatMap((s) => s.stanari.map((st) => st.korisnik.id))).size;
     return `${naseljeni} od ${uMnozini(stanovi.length, 'stana', 'stana', 'stanova')} naseljeno · ${uMnozini(ljudi, 'stanar', 'stanara', 'stanara')}`;
   });

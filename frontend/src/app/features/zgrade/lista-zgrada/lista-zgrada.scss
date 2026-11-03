@@ -12,7 +12,6 @@
   gap: 0.75rem;
 }
 
-// Kartica zgrade: broj stanova kao veliki tanki broj, upravnik u podnožju
 .zgrada {
   display: flex;
   flex-direction: column;
@@ -32,7 +31,6 @@
   }
 }
 
-// Arhivirana: nije link, isprekidan okvir i prigušen broj
 .arhivirana {
   border-style: dashed;
   background: transparent;

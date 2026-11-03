@@ -44,7 +44,6 @@ export class OglasPravaService {
       ...uZgradama(ids),
       ...(upit.vrsta ? { vrsta: upit.vrsta } : {}),
     });
-    // Sakriven i istekao oglas vide samo autor i upravnik zgrade (admin upravlja svim zgradama)
     return [
       {
         ...uslov(zgrade),

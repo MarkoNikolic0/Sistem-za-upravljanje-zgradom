@@ -12,7 +12,6 @@ export class Zgrada {
   @Column()
   adresa: string;
 
-  // Kada je arhivirana; prazno znači da je zgrada aktivna
   @Column({ type: 'timestamptz', nullable: true })
   arhivirana: Date | null;
 

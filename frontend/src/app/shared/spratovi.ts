@@ -3,7 +3,6 @@ export interface Sprat<T> {
   stanovi: T[];
 }
 
-// Stanovi grupisani po spratu, najviši sprat prvi (kao fasada zgrade)
 export function poSpratovima<T extends { sprat: number }>(stanovi: T[]): Sprat<T>[] {
   const spratovi = new Map<number, T[]>();
   for (const stan of stanovi) {

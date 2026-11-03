@@ -28,7 +28,6 @@ export class FormaZgrade implements OnInit {
   readonly zgrada = input<ZgradaOsnovno>();
   readonly sacuvana = output<ZgradaOsnovno>();
   readonly odustani = output<void>();
-  // Zgrada je u međuvremenu obrisana: stranica vodi na listu
   readonly obrisana = output<void>();
 
   protected readonly maksNaziva = MAKS_NAZIVA;

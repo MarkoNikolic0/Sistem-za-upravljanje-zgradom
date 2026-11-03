@@ -104,7 +104,6 @@ export class ZgradaService {
   }
 
   async remove(id: number) {
-    // Zaključana zgrada: novi stan, kvar i ostalo čekaju kraj brisanja (strani ključ)
     await this.zgradaRepository.manager.transaction(async (manager) => {
       const zgrada = await manager.findOne(Zgrada, {
         where: { id },
