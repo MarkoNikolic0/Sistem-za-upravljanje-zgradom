@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Zgrada } from './zgrada.entity.js';
+import { AKTIVNA_ZGRADA } from './aktivna-zgrada.js';
 import { IsNull, Not, Repository } from 'typeorm';
 import { Stan } from '../stan/stan.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
@@ -35,12 +36,12 @@ export class ZgradaService {
   }
 
   async findAll() {
-    return await this.zgradaRepository.find();
+    return await this.zgradaRepository.find({ where: AKTIVNA_ZGRADA });
   }
 
   async findSaBrojevima() {
     const zgrade = await this.zgradaRepository.find({
-      select: { id: true, naziv: true, adresa: true },
+      select: { id: true, naziv: true, adresa: true, arhivirana: true },
       order: { naziv: 'ASC' },
     });
     if (zgrade.length === 0) {
@@ -75,10 +76,11 @@ export class ZgradaService {
       ]),
     );
 
-    return zgrade.map(({ id, naziv, adresa }) => ({
+    return zgrade.map(({ id, naziv, adresa, arhivirana }) => ({
       id,
       naziv,
       adresa,
+      arhivirana,
       brojStanova: stanovi.get(id) ?? 0,
       brojStanara: stanari.get(id) ?? 0,
       upravnik: upravnikZgrade.get(id) ?? null,
@@ -86,7 +88,9 @@ export class ZgradaService {
   }
 
   async findOne(id: number) {
-    const zgrada = await this.zgradaRepository.findOne({ where: { id } });
+    const zgrada = await this.zgradaRepository.findOne({
+      where: { id, ...AKTIVNA_ZGRADA },
+    });
     if (!zgrada) {
       throw new NotFoundException(`Zgrada sa id-jem ${id} ne postoji!`);
     }

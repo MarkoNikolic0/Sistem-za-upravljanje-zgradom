@@ -4,13 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import {
   type PristupZgradama,
   sadrzi,
   samoZgrada,
+  uZgradama,
   zgradeVlasnika,
 } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -40,7 +41,7 @@ export class GlasanjePravaService {
       .filter(({ zgrade }) => zgrade?.length !== 0)
       .map(({ vrsta, zgrade }) => ({
         vrsta,
-        ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
+        ...uZgradama(zgrade),
       }));
   }
 
@@ -49,7 +50,7 @@ export class GlasanjePravaService {
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
     });
-    if (!glasanje) {
+    if (!glasanje || glasanje.zgrada.arhivirana) {
       throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);

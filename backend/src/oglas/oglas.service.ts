@@ -21,6 +21,7 @@ import { VREMENSKA_ZONA } from '../shared/vreme.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
 import { PrilogOglasa } from './prilog-oglasa.entity.js';
 import { type PristupZgradama, sadrzi } from '../korisnik/pristup-zgradama.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { OglasPravaService } from './oglas-prava.service.js';
 import { GlasanjeService } from '../glasanje/glasanje.service.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
@@ -85,7 +86,10 @@ export class OglasService {
     }
     if (
       p.zgrade === null &&
-      !(await this.zgradaRepository.existsBy({ id: dto.zgradaId }))
+      !(await this.zgradaRepository.existsBy({
+        id: dto.zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
     ) {
       throw new NotFoundException(
         `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,

@@ -65,8 +65,24 @@
             type="button"
             size="small"
             severity="danger"
+            outlined
+            [disabled]="arhiviranje() || brisanje()"
+            (click)="arhiviraj($event, z)"
+          >
+            <i
+              class="pi"
+              [class]="arhiviranje() ? 'pi-spinner pi-spin' : 'pi-box'"
+              aria-hidden="true"
+            ></i>
+            Arhiviraj
+          </button>
+          <button
+            pButton
+            type="button"
+            size="small"
+            severity="danger"
             text
-            [disabled]="brisanje()"
+            [disabled]="brisanje() || arhiviranje()"
             (click)="obrisi($event, z)"
           >
             <i

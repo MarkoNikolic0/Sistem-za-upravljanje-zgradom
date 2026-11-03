@@ -44,17 +44,19 @@
         <p-skeleton height="11rem" />
       </div>
       <span class="sr-only">Učitavanje…</span>
-    } @else if (zgrade.value().length === 0 && !nova()) {
+    } @else if (aktivne().length === 0 && !nova()) {
       <div class="prazno">
         <span class="prazno-ikonica neutralno" aria-hidden="true"
           ><i class="pi pi-building"></i
         ></span>
-        <p class="text-naslov">U sistemu još nema zgrada</p>
+        <p class="text-naslov">
+          {{ arhivirane().length > 0 ? 'Nema aktivnih zgrada' : 'U sistemu još nema zgrada' }}
+        </p>
         <p class="mt-1 text-sm text-priguseno">Dodaj prvu zgradu, pa njene stanove i upravnika.</p>
       </div>
     } @else {
       <ul class="mreza">
-        @for (z of zgrade.value(); track z.id) {
+        @for (z of aktivne(); track z.id) {
           <li>
             <a class="zgrada" [routerLink]="['/zgrade', z.id]">
               <span class="stanovi">
@@ -79,4 +81,49 @@
       </ul>
     }
   </section>
+
+  @if (arhivirane().length > 0) {
+    <section class="odeljak" aria-labelledby="arhivirane-zgrade">
+      <div class="zaglavlje-odeljka">
+        <h2 id="arhivirane-zgrade" class="naslov-odeljka">Arhivirane</h2>
+      </div>
+      <p class="-mt-1 mb-4 text-sm text-priguseno">
+        Ne vide se nigde u aplikaciji. Podaci su sačuvani i vraćaju se sa zgradom.
+      </p>
+      <ul class="mreza">
+        @for (z of arhivirane(); track z.id) {
+          <li class="zgrada arhivirana">
+            <span class="stanovi">
+              <span class="broj">{{ z.brojStanova }}</span>
+              {{ oblik(z.brojStanova, 'stan', 'stana', 'stanova') }}
+            </span>
+            <span class="naziv">{{ z.naziv }}</span>
+            <span class="adresa">{{ z.adresa }}</span>
+            <span class="podnozje">
+              <span class="truncate"
+                >Arhivirana
+                <time [attr.datetime]="z.arhivirana">{{ z.arhivirana | date: 'd. M. y.' }}</time>
+              </span>
+              <button
+                pButton
+                type="button"
+                size="small"
+                outlined
+                [disabled]="vracanje() !== null"
+                [attr.aria-label]="'Vrati zgradu ' + z.naziv"
+                (click)="vrati(z)"
+              >
+                <i
+                  class="pi"
+                  [class]="vracanje() === z.id ? 'pi-spinner pi-spin' : 'pi-replay'"
+                  aria-hidden="true"
+                ></i>
+                Vrati
+              </button>
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
 </div>

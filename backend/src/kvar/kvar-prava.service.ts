@@ -7,6 +7,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { PORUKA_PRACENJE } from './kvar.constants.js';
+import { uZgradama } from '../korisnik/pristup-zgradama.js';
 
 @Injectable()
 export class KvarPravaService {
@@ -24,7 +25,7 @@ export class KvarPravaService {
   ): Promise<FindOptionsWhere<Kvar>[]> {
     switch (uloga) {
       case Uloga.ADMIN:
-        return [zgradaId ? { zgrada: { id: zgradaId } } : {}];
+        return [uZgradama(zgradaId ? [zgradaId] : null)];
 
       case Uloga.UPRAVNIK: {
         const zgradaUpravnika =
@@ -39,7 +40,7 @@ export class KvarPravaService {
         return [
           {
             serviser: { id: korisnikId },
-            ...(zgradaId ? { zgrada: { id: zgradaId } } : {}),
+            ...uZgradama(zgradaId ? [zgradaId] : null),
           },
         ];
 

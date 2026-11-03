@@ -9,6 +9,7 @@ import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import { jeDupliUnos } from '../shared/greske-baze.js';
 import { ZahtevPovezivanje } from './zahtev-povezivanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { CreateZahtevDto } from './dto/create-zahtev.dto.js';
@@ -33,7 +34,7 @@ export class ZahtevPovezivanjeService {
 
   async create(korisnikId: number, dto: CreateZahtevDto) {
     const stan = await this.stanRepository.findOne({
-      where: { id: dto.stanId },
+      where: { id: dto.stanId, zgrada: AKTIVNA_ZGRADA },
     });
     if (!stan) {
       throw new NotFoundException(`Stan sa id-jem ${dto.stanId} ne postoji!`);
@@ -72,7 +73,9 @@ export class ZahtevPovezivanjeService {
       ? { status: upit.status }
       : {};
 
-    if (uloga !== Uloga.ADMIN) {
+    if (uloga === Uloga.ADMIN) {
+      where.stan = { zgrada: AKTIVNA_ZGRADA };
+    } else {
       const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
       if (zgradaId === null) {
         return { stavke: [], ukupno: 0 };

@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
+import { AKTIVNA_ZGRADA } from './aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 
@@ -20,7 +21,12 @@ export class UpravnikZgradeService {
   ) {}
 
   async find(zgradaId: number) {
-    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
+    if (
+      !(await this.zgradaRepository.existsBy({
+        id: zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
+    ) {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
     const korisnik = await this.korisnikRepository.findOne({
@@ -85,7 +91,7 @@ export class UpravnikZgradeService {
 
   private async zakljucajZgradu(manager: EntityManager, zgradaId: number) {
     const zgrada = await manager.findOne(Zgrada, {
-      where: { id: zgradaId },
+      where: { id: zgradaId, ...AKTIVNA_ZGRADA },
       select: { id: true },
       lock: { mode: 'pessimistic_write' },
     });
@@ -94,7 +100,7 @@ export class UpravnikZgradeService {
     }
   }
 
-  private async vratiUStanara(manager: EntityManager, zgradaId: number) {
+  async vratiUStanara(manager: EntityManager, zgradaId: number) {
     const upravnik = await manager.findOne(Korisnik, {
       where: { zgrada: { id: zgradaId } },
       select: { id: true },

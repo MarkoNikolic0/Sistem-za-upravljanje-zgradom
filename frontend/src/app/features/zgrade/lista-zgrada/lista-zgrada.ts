@@ -1,5 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -11,7 +14,7 @@ import { ZgradaOsnovno } from '../zgrada-models';
 import { ZgradaService } from '../zgrada-service';
 
 @Component({
-  imports: [RouterLink, ButtonModule, MessageModule, SkeletonModule, FormaZgrade],
+  imports: [DatePipe, RouterLink, ButtonModule, MessageModule, SkeletonModule, FormaZgrade],
   selector: 'app-lista-zgrada',
   templateUrl: './lista-zgrada.html',
   styleUrl: './lista-zgrada.scss',
@@ -24,12 +27,20 @@ export class ListaZgrada {
   protected readonly zgrade = this.zgradaService.zgradeSaBrojevima();
   protected readonly nova = signal(false);
   protected readonly poruka = signal<Poruka | null>(null);
+  protected readonly vracanje = signal<number | null>(null);
+
+  protected readonly aktivne = computed(() =>
+    this.zgrade.hasValue() ? this.zgrade.value().filter((z) => z.arhivirana === null) : [],
+  );
+  protected readonly arhivirane = computed(() =>
+    this.zgrade.hasValue() ? this.zgrade.value().filter((z) => z.arhivirana !== null) : [],
+  );
 
   protected readonly zbir = computed(() => {
-    if (!this.zgrade.hasValue() || this.zgrade.value().length === 0) {
+    const zgrade = this.aktivne();
+    if (zgrade.length === 0) {
       return '';
     }
-    const zgrade = this.zgrade.value();
     const stanovi = zgrade.reduce((zbir, z) => zbir + z.brojStanova, 0);
     const stanari = zgrade.reduce((zbir, z) => zbir + z.brojStanara, 0);
     return [
@@ -58,6 +69,30 @@ export class ListaZgrada {
   protected zatvori(): void {
     this.nova.set(false);
     this.fokusiraj('#nova-zgrada');
+  }
+
+  protected async vrati(zgrada: ZgradaOsnovno): Promise<void> {
+    this.poruka.set(null);
+    this.vracanje.set(zgrada.id);
+    try {
+      await firstValueFrom(this.zgradaService.vratiIzArhive(zgrada.id));
+      this.poruka.set({
+        tip: 'uspeh',
+        tekst: `Zgrada „${zgrada.naziv}“ je vraćena, bez stanara i upravnika. Postavi upravnika, a stanari šalju nove zahteve.`,
+      });
+    } catch (err) {
+      this.poruka.set({
+        tip: 'greska',
+        tekst:
+          err instanceof HttpErrorResponse && err.status === 404
+            ? `Zgrada „${zgrada.naziv}“ je u međuvremenu obrisana.`
+            : 'Zgrada nije vraćena. Pokušaj ponovo.',
+      });
+    } finally {
+      this.vracanje.set(null);
+      this.zgrade.reload();
+      this.fokusiraj('#poruka-zgrada');
+    }
   }
 
   protected dodata(zgrada: ZgradaOsnovno): void {

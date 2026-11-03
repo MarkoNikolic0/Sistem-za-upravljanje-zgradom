@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Stan } from './stan.entity.js';
 import { In, Repository } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { CreateStanDto, PodaciStanaDto } from './dto/create-stan.dto.js';
 import { UpdateStanDto } from './dto/update-stan.dto.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
@@ -48,19 +49,22 @@ export class StanService {
   }
 
   async findAll() {
-    return await this.stanRepository.find({ relations: { zgrada: true } });
+    return await this.stanRepository.find({
+      where: { zgrada: AKTIVNA_ZGRADA },
+      relations: { zgrada: true },
+    });
   }
 
   async findByZgrada(zgradaId: number) {
     const stanovi = await this.stanRepository.find({
-      where: { zgrada: { id: zgradaId } },
+      where: { zgrada: { id: zgradaId, ...AKTIVNA_ZGRADA } },
     });
     return stanovi.sort(poRedosleduStanova);
   }
 
   async findOne(stanId: number) {
     const stan = await this.stanRepository.findOne({
-      where: { id: stanId },
+      where: { id: stanId, zgrada: AKTIVNA_ZGRADA },
       relations: { zgrada: true },
     });
     if (!stan) {
@@ -121,7 +125,12 @@ export class StanService {
     podaci: PodaciStanaDto[],
   ) {
     await this.proveriZgradu(korisnikId, uloga, zgradaId);
-    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
+    if (
+      !(await this.zgradaRepository.existsBy({
+        id: zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
+    ) {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
 

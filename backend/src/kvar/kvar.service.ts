@@ -153,7 +153,8 @@ export class KvarService {
       where: { id },
       relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
     });
-    if (!kvar) {
+    // Kvar arhivirane zgrade se ne vidi i ne menja, ni za admina i servisera
+    if (!kvar || kvar.zgrada.arhivirana) {
       throw new NotFoundException(`Kvar sa id-jem ${id} ne postoji!`);
     }
     return kvar;
@@ -212,6 +213,7 @@ export class KvarService {
         }
         return `EXISTS ${kvarovi.getQuery()}`;
       })
+      .andWhere('zgrada.arhivirana IS NULL')
       .setParameter('korisnikId', korisnikId)
       .orderBy('zgrada.naziv', 'ASC')
       .getMany();

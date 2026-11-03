@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { brojPoZgradi } from './broj-po-zgradi.js';
 import { Zgrada } from './zgrada.entity.js';
+import { AKTIVNA_ZGRADA } from './aktivna-zgrada.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
 import { Sastanak } from '../sastanak/sastanak.entity.js';
@@ -109,6 +110,7 @@ export class ZgradaPregledService {
     if (uloga === Uloga.ADMIN) {
       return await this.zgradaRepository.find({
         select: { id: true, naziv: true },
+        where: AKTIVNA_ZGRADA,
         order: { naziv: 'ASC' },
       });
     }

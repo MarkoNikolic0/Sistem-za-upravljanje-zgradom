@@ -15,6 +15,7 @@ export interface ZgradaSaBrojevima extends ZgradaOsnovno {
   brojStanova: number;
   brojStanara: number;
   upravnik: Pick<Upravnik, 'id' | 'ime' | 'prezime'> | null;
+  arhivirana: string | null;
 }
 
 export interface UpravnikZgrade {

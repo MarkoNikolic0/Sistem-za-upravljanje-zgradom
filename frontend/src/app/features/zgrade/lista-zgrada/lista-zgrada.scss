@@ -32,6 +32,21 @@
   }
 }
 
+// Arhivirana: nije link, isprekidan okvir i prigušen broj
+.arhivirana {
+  border-style: dashed;
+  background: transparent;
+
+  &:hover {
+    border-color: var(--color-linija);
+  }
+
+  .broj,
+  .naziv {
+    color: var(--color-tekst);
+  }
+}
+
 .stanovi {
   display: flex;
   align-items: baseline;

@@ -12,6 +12,7 @@ import { UpdateProfilDto } from './dto/update-profil.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { sadrzi, type PristupZgradama } from './pristup-zgradama.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { KorisnikUpitDto } from './dto/korisnik-upit.dto.js';
 
 const MAKS_REZULTATA_PRETRAGE = 20;
@@ -80,7 +81,12 @@ export class KorisnikService {
     if (!sadrzi(p.upravlja, zgradaId)) {
       throw new ForbiddenException(poruka);
     }
-    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
+    if (
+      !(await this.zgradaRepository.existsBy({
+        id: zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
+    ) {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
   }

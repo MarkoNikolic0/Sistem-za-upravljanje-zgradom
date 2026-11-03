@@ -14,6 +14,7 @@ import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.enti
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { ZgradaPregledService } from './zgrada-pregled.service.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
+import { ArhivaZgradeService } from './arhiva-zgrade.service.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 
 @Module({
@@ -33,6 +34,11 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
     KorisnikModule,
   ],
   controllers: [ZgradaController],
-  providers: [ZgradaService, ZgradaPregledService, UpravnikZgradeService],
+  providers: [
+    ZgradaService,
+    ZgradaPregledService,
+    UpravnikZgradeService,
+    ArhivaZgradeService,
+  ],
 })
 export class ZgradaModule {}

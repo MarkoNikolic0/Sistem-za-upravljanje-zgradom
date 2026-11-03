@@ -55,6 +55,7 @@ export class DetaljZgrade {
 
   protected readonly izmena = signal(false);
   protected readonly brisanje = signal(false);
+  protected readonly arhiviranje = signal(false);
   protected readonly poruka = signal<Poruka | null>(null);
 
   constructor() {
@@ -90,7 +91,7 @@ export class DetaljZgrade {
     this.poruka.set(null);
     this.confirmationService.confirm({
       header: 'Brisanje zgrade',
-      message: `Obrisati zgradu „${zgrada.naziv}“? Briše se samo zgrada bez stanova, upravnika i istorije (kvarova, oglasa, glasanja, sastanaka).`,
+      message: `Obrisati zgradu „${zgrada.naziv}“? Briše se samo zgrada bez stanova, upravnika i istorije (kvarova, oglasa, glasanja, sastanaka). Zgradu sa podacima arhiviraj.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Obriši', severity: 'danger' },
@@ -105,10 +106,40 @@ export class DetaljZgrade {
             return;
           }
           const tekst =
-            err instanceof HttpErrorResponse && err.status === 409 ? porukaServera(err) : undefined;
-          this.prikazi({ tip: 'greska', tekst: tekst ?? 'Zgrada nije obrisana. Pokušaj ponovo.' });
+            err instanceof HttpErrorResponse && err.status === 409
+              ? `${porukaServera(err) ?? 'Zgrada ima podatke.'} Umesto brisanja možeš da je arhiviraš.`
+              : 'Zgrada nije obrisana. Pokušaj ponovo.';
+          this.prikazi({ tip: 'greska', tekst });
         } finally {
           this.brisanje.set(false);
+        }
+      },
+      reject: () => dugme.focus(),
+    });
+  }
+
+  protected arhiviraj(event: Event, zgrada: ZgradaOsnovno): void {
+    const dugme = event.currentTarget as HTMLElement;
+    this.poruka.set(null);
+    this.confirmationService.confirm({
+      header: 'Arhiviranje zgrade',
+      message: `Zgrada „${zgrada.naziv}“ nestaje iz aplikacije za sve. Stanari se odseljavaju, upravnik se vraća u stanara, a zahtevi na čekanju se odbijaju. Stanovi, kvarovi, oglasi, glasanja i sastanci ostaju sačuvani i vraćaju se kad vratiš zgradu.`,
+      defaultFocus: 'reject',
+      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
+      acceptButtonProps: { label: 'Arhiviraj', severity: 'danger' },
+      accept: async () => {
+        this.arhiviranje.set(true);
+        try {
+          await firstValueFrom(this.zgradaService.arhiviraj(zgrada.id));
+          this.naListu(`Zgrada „${zgrada.naziv}“ je arhivirana.`);
+        } catch (err) {
+          if (err instanceof HttpErrorResponse && err.status === 404) {
+            this.naListu(`Zgrada „${zgrada.naziv}“ je u međuvremenu obrisana.`);
+            return;
+          }
+          this.prikazi({ tip: 'greska', tekst: 'Zgrada nije arhivirana. Pokušaj ponovo.' });
+        } finally {
+          this.arhiviranje.set(false);
         }
       },
       reject: () => dugme.focus(),

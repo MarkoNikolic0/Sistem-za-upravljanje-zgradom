@@ -25,6 +25,7 @@ import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
 import { PostaviUpravnikaDto } from './dto/postavi-upravnika.dto.js';
+import { ArhivaZgradeService } from './arhiva-zgrade.service.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -34,6 +35,7 @@ export class ZgradaController {
     private readonly zgradaService: ZgradaService,
     private readonly pregledService: ZgradaPregledService,
     private readonly upravnikService: UpravnikZgradeService,
+    private readonly arhivaService: ArhivaZgradeService,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -104,5 +106,21 @@ export class ZgradaController {
   @HttpCode(HttpStatus.NO_CONTENT)
   razresiUpravnika(@Param('id', ParseIntPipe) id: number) {
     return this.upravnikService.razresi(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.ADMIN)
+  @Put(':id/arhiva')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  arhiviraj(@Param('id', ParseIntPipe) id: number) {
+    return this.arhivaService.arhiviraj(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.ADMIN)
+  @Delete(':id/arhiva')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  vrati(@Param('id', ParseIntPipe) id: number) {
+    return this.arhivaService.vrati(id);
   }
 }

@@ -4,20 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  FindOptionsWhere,
-  In,
-  IsNull,
-  MoreThan,
-  Or,
-  Repository,
-} from 'typeorm';
+import { FindOptionsWhere, IsNull, MoreThan, Or, Repository } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import {
   type PristupZgradama,
   sadrzi,
   samoZgrada,
+  uZgradama,
 } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
@@ -46,22 +40,21 @@ export class OglasPravaService {
       return [];
     }
 
-    const uZgradama = (ids: number[] | null): FindOptionsWhere<Oglas> => ({
-      ...(ids === null ? {} : { zgrada: { id: In(ids) } }),
+    const uslov = (ids: number[] | null): FindOptionsWhere<Oglas> => ({
+      ...uZgradama(ids),
       ...(upit.vrsta ? { vrsta: upit.vrsta } : {}),
     });
     // Admin vidi sve; sakriven i istekao oglas od ostalih vide samo autor i upravnik zgrade.
-    // Admin ima poseban uslov jer TypeORM prazan uslov {} izbaci iz OR niza.
     return upravlja === null
-      ? [uZgradama(zgrade)]
+      ? [uslov(zgrade)]
       : [
           {
-            ...uZgradama(zgrade),
+            ...uslov(zgrade),
             datumSakrivanja: IsNull(),
             vaziDo: Or(IsNull(), MoreThan(new Date())),
           },
-          { ...uZgradama(zgrade), autor: { id: korisnikId } },
-          ...(upravlja.length > 0 ? [uZgradama(upravlja)] : []),
+          { ...uslov(zgrade), autor: { id: korisnikId } },
+          ...(upravlja.length > 0 ? [uslov(upravlja)] : []),
         ];
   }
 
@@ -70,7 +63,7 @@ export class OglasPravaService {
       where: { id },
       relations: { zgrada: true, autor: true, prilozi: true },
     });
-    if (!oglas) {
+    if (!oglas || oglas.zgrada.arhivirana) {
       throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);

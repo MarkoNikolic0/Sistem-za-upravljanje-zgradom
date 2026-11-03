@@ -9,6 +9,7 @@ import { DataSource, Repository } from 'typeorm';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { KontaktZgrade } from './kontakt-zgrade.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -54,7 +55,7 @@ export class KontaktZgradeService {
 
     return await this.dataSource.transaction(async (manager) => {
       const zgrada = await manager.findOne(Zgrada, {
-        where: { id: zgradaId },
+        where: { id: zgradaId, ...AKTIVNA_ZGRADA },
         select: { id: true },
         lock: { mode: 'pessimistic_write' },
       });
@@ -118,7 +119,12 @@ export class KontaktZgradeService {
   }
 
   private async postojiZgrada(zgradaId: number) {
-    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
+    if (
+      !(await this.zgradaRepository.existsBy({
+        id: zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
+    ) {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
   }

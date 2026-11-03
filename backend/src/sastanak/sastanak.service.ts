@@ -24,8 +24,10 @@ import {
   type PristupZgradama,
   sadrzi,
   samoZgrada,
+  uZgradama,
   zgradeVlasnika,
 } from '../korisnik/pristup-zgradama.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import {
@@ -84,7 +86,7 @@ export class SastanakService {
         vrsta,
         pocetak,
         ...(upit.otkazani === false ? { datumOtkazivanja: IsNull() } : {}),
-        ...(zgrade === null ? {} : { zgrada: { id: In(zgrade) } }),
+        ...uZgradama(zgrade),
       }));
     if (uslovi.length === 0) {
       return { stavke: [], ukupno: 0 };
@@ -111,7 +113,10 @@ export class SastanakService {
     }
     if (
       p.upravlja === null &&
-      !(await this.zgradaRepository.existsBy({ id: dto.zgradaId }))
+      !(await this.zgradaRepository.existsBy({
+        id: dto.zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
     ) {
       throw new NotFoundException(
         `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
@@ -208,7 +213,7 @@ export class SastanakService {
         tacke: { odluka: true },
       },
     });
-    if (!sastanak) {
+    if (!sastanak || sastanak.zgrada.arhivirana) {
       throw new NotFoundException(`Sastanak sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);

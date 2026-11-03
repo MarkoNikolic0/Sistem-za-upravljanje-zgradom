@@ -61,6 +61,14 @@ export class ZgradaService {
     return this.http.delete<void>(`${this.apiUrl}/zgrada/${id}`);
   }
 
+  arhiviraj(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/zgrada/${id}/arhiva`, null);
+  }
+
+  vratiIzArhive(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/zgrada/${id}/arhiva`);
+  }
+
   upravnik(zgradaId: Signal<number | undefined>) {
     return httpResource<UpravnikZgrade>(() => {
       const id = zgradaId();

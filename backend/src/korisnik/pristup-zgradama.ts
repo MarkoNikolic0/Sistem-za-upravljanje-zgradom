@@ -1,3 +1,6 @@
+import { In } from 'typeorm';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+
 export interface PristupZgradama {
   stanuje: number[];
   poseduje: number[];
@@ -22,4 +25,14 @@ export function samoZgrada(zgrade: number[] | null, zgradaId?: number) {
     return zgrade;
   }
   return sadrzi(zgrade, zgradaId) ? [zgradaId] : [];
+}
+
+// Uslov za liste: samo aktivne zgrade, a od njih samo ove (null = sve, za admina)
+export function uZgradama(zgrade: number[] | null) {
+  return {
+    zgrada: {
+      ...AKTIVNA_ZGRADA,
+      ...(zgrade === null ? {} : { id: In(zgrade) }),
+    },
+  };
 }

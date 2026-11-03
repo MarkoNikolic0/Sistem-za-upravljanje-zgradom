@@ -12,6 +12,7 @@ import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { sadrzi } from '../korisnik/pristup-zgradama.js';
+import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import {
   StanjeGlasanja,
@@ -106,7 +107,10 @@ export class GlasanjeService {
     }
     if (
       p.upravlja === null &&
-      !(await this.zgradaRepository.existsBy({ id: dto.zgradaId }))
+      !(await this.zgradaRepository.existsBy({
+        id: dto.zgradaId,
+        ...AKTIVNA_ZGRADA,
+      }))
     ) {
       throw new NotFoundException(
         `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
