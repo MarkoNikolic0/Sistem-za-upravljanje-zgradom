@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Korisnik } from './korisnik.entity.js';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
@@ -12,6 +12,9 @@ import { UpdateProfilDto } from './dto/update-profil.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { sadrzi, type PristupZgradama } from './pristup-zgradama.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { KorisnikUpitDto } from './dto/korisnik-upit.dto.js';
+
+const MAKS_REZULTATA_PRETRAGE = 20;
 
 @Injectable()
 export class KorisnikService {
@@ -67,7 +70,6 @@ export class KorisnikService {
     return { stanuje, poseduje, vlasnickiStanovi, zgrade, upravlja };
   }
 
-  // Upravnik te zgrade ili admin; 403 pre 404 da upravnik ne sazna koje tuđe zgrade postoje
   async proveriUpravnikaZgrade(
     korisnikId: number,
     uloga: Uloga,
@@ -81,6 +83,38 @@ export class KorisnikService {
     if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
+  }
+
+  async pretrazi({ pretraga, uloga }: KorisnikUpitDto) {
+    const tekst = `%${pretraga.replace(/[\\%_]/g, '\\$&')}%`;
+    const upit = this.korisnikRepository
+      .createQueryBuilder('korisnik')
+      .leftJoin('korisnik.zgrada', 'zgrada')
+      .select([
+        'korisnik.id',
+        'korisnik.ime',
+        'korisnik.prezime',
+        'korisnik.email',
+        'korisnik.uloga',
+        'zgrada.id',
+        'zgrada.naziv',
+      ])
+      .where(
+        new Brackets((qb) =>
+          qb
+            .where("korisnik.ime || ' ' || korisnik.prezime ILIKE :tekst")
+            .orWhere("korisnik.prezime || ' ' || korisnik.ime ILIKE :tekst")
+            .orWhere('korisnik.email ILIKE :tekst'),
+        ),
+        { tekst },
+      )
+      .orderBy('korisnik.prezime')
+      .addOrderBy('korisnik.ime')
+      .take(MAKS_REZULTATA_PRETRAGE);
+    if (uloga?.length) {
+      upit.andWhere('korisnik.uloga IN (:...uloga)', { uloga });
+    }
+    return await upit.getMany();
   }
 
   async mojProfil(korisnikId: number) {

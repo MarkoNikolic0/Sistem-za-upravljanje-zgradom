@@ -34,7 +34,7 @@ export class StanarStanaService {
     const [stanovi, veze] = await Promise.all([
       this.stanRepository.find({
         where: { zgrada: { id: zgradaId } },
-        select: { id: true, broj: true, sprat: true },
+        select: { id: true, broj: true, sprat: true, kvadratura: true },
       }),
       this.stanarStanaRepository.find({
         where: { stan: { zgrada: { id: zgradaId } } },
@@ -67,12 +67,15 @@ export class StanarStanaService {
       stanari.push({ id: v.id, vlasnik: v.vlasnik, korisnik: v.korisnik });
       stanariStana.set(v.stan.id, stanari);
     }
-    return stanovi.sort(poRedosleduStanova).map(({ id, broj, sprat }) => ({
-      id,
-      broj,
-      sprat,
-      stanari: stanariStana.get(id) ?? [],
-    }));
+    return stanovi
+      .sort(poRedosleduStanova)
+      .map(({ id, broj, sprat, kvadratura }) => ({
+        id,
+        broj,
+        sprat,
+        kvadratura,
+        stanari: stanariStana.get(id) ?? [],
+      }));
   }
 
   async update(

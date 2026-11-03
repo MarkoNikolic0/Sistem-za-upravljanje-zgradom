@@ -16,13 +16,13 @@
 BEGIN;
 
 -- ZGRADE ------------------------------------------------------------------------------------
-INSERT INTO zgrada (naziv, adresa, "brojSpratova", "brojStanova")
-SELECT v.naziv, v.adresa, v.spratovi, v.stanovi
+INSERT INTO zgrada (naziv, adresa)
+SELECT v.naziv, v.adresa
 FROM (VALUES
-  ('Delta Residence', 'Bulevar Nemanjića 45, Niš', 6, 20),
-  ('Stambena zgrada Obrenovićeva', 'Obrenovićeva 30, Niš', 5, 15),
-  ('Lamela Vizantijski', 'Vizantijski bulevar 12, Niš', 8, 32)
-) AS v(naziv, adresa, spratovi, stanovi)
+  ('Delta Residence', 'Bulevar Nemanjića 45, Niš'),
+  ('Stambena zgrada Obrenovićeva', 'Obrenovićeva 30, Niš'),
+  ('Lamela Vizantijski', 'Vizantijski bulevar 12, Niš')
+) AS v(naziv, adresa)
 WHERE NOT EXISTS (SELECT 1 FROM zgrada z WHERE z.adresa = v.adresa);
 
 -- STANOVI -----------------------------------------------------------------------------------

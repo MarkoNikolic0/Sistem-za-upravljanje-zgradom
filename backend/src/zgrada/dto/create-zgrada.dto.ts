@@ -1,21 +1,16 @@
-import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 
 export class CreateZgradaDto {
+  @UkloniRazmake()
   @IsString()
-  @IsNotEmpty()
+  @MaxLength(100, { message: 'Naziv može imati najviše 100 znakova.' })
+  @IsNotEmpty({ message: 'Unesi naziv zgrade.' })
   naziv: string;
 
+  @UkloniRazmake()
   @IsString()
-  @IsNotEmpty()
+  @MaxLength(200, { message: 'Adresa može imati najviše 200 znakova.' })
+  @IsNotEmpty({ message: 'Unesi adresu.' })
   adresa: string;
-
-  @IsInt()
-  @IsNotEmpty()
-  @Min(1)
-  brojSpratova: number;
-
-  @IsInt()
-  @IsNotEmpty()
-  @Min(1)
-  brojStanova: number;
 }

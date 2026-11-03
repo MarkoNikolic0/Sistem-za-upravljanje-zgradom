@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -6,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stan } from './stan.entity.js';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
-import { CreateStanDto } from './dto/create-stan.dto.js';
+import { CreateStanDto, PodaciStanaDto } from './dto/create-stan.dto.js';
 import { UpdateStanDto } from './dto/update-stan.dto.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -17,6 +18,8 @@ import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
 import { poRedosleduStanova } from './redosled-stanova.js';
+import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
+import { jeDupliUnos } from '../shared/greske-baze.js';
 
 @Injectable()
 export class StanService {
@@ -33,24 +36,15 @@ export class StanService {
   ) {}
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateStanDto) {
-    await this.proveriZgradu(korisnikId, uloga, dto.zgradaId);
+    const { zgradaId, ...podaci } = dto;
+    const [stan] = await this.sacuvajNove(korisnikId, uloga, zgradaId, [
+      podaci,
+    ]);
+    return stan;
+  }
 
-    const zgrada = await this.zgradaRepository.findOne({
-      where: { id: dto.zgradaId },
-    });
-    if (!zgrada) {
-      throw new NotFoundException(
-        `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
-      );
-    }
-
-    const stan = this.stanRepository.create({
-      broj: dto.broj,
-      sprat: dto.sprat,
-      kvadratura: dto.kvadratura,
-      zgrada,
-    });
-    return await this.stanRepository.save(stan);
+  async createGrupno(korisnikId: number, uloga: Uloga, dto: CreateStanoviDto) {
+    return await this.sacuvajNove(korisnikId, uloga, dto.zgradaId, dto.stanovi);
   }
 
   async findAll() {
@@ -84,29 +78,21 @@ export class StanService {
     const stan = await this.findOne(id);
     await this.proveriZgradu(korisnikId, uloga, stan.zgrada.id);
 
-    if (dto.zgradaId && dto.zgradaId !== stan.zgrada.id) {
-      if (uloga !== Uloga.ADMIN) {
-        throw new ForbiddenException(
-          'Samo admin može premestiti stan u drugu zgradu!',
-        );
-      }
-      const zgrada = await this.zgradaRepository.findOne({
-        where: { id: dto.zgradaId },
-      });
-      if (!zgrada) {
-        throw new NotFoundException(
-          `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
-        );
-      }
-      stan.zgrada = zgrada;
-    }
-
     Object.assign(stan, {
       broj: dto.broj ?? stan.broj,
       sprat: dto.sprat ?? stan.sprat,
       kvadratura: dto.kvadratura ?? stan.kvadratura,
     });
-    return await this.stanRepository.save(stan);
+    try {
+      return await this.stanRepository.save(stan);
+    } catch (greska) {
+      if (jeDupliUnos(greska)) {
+        throw new ConflictException(
+          `Stan broj ${stan.broj} već postoji u ovoj zgradi.`,
+        );
+      }
+      throw greska;
+    }
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
@@ -126,6 +112,56 @@ export class StanService {
     }
 
     return await this.stanRepository.remove(stan);
+  }
+
+  private async sacuvajNove(
+    korisnikId: number,
+    uloga: Uloga,
+    zgradaId: number,
+    podaci: PodaciStanaDto[],
+  ) {
+    await this.proveriZgradu(korisnikId, uloga, zgradaId);
+    if (!(await this.zgradaRepository.existsBy({ id: zgradaId }))) {
+      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+    }
+
+    const brojevi = podaci.map((p) => p.broj);
+    const ponovljeni = brojevi.filter((b, i) => brojevi.indexOf(b) !== i);
+    if (ponovljeni.length > 0) {
+      throw new BadRequestException(
+        `Broj stana se ponavlja: ${[...new Set(ponovljeni)].join(', ')}.`,
+      );
+    }
+    const postojeci = await this.stanRepository.find({
+      where: { zgrada: { id: zgradaId }, broj: In(brojevi) },
+      select: { id: true, broj: true },
+    });
+    if (postojeci.length > 0) {
+      throw new ConflictException(
+        `U ovoj zgradi već postoji stan broj: ${postojeci
+          .map((p) => p.broj)
+          .join(', ')}.`,
+      );
+    }
+
+    const stanovi = podaci.map(({ broj, sprat, kvadratura }) =>
+      this.stanRepository.create({
+        broj,
+        sprat,
+        kvadratura,
+        zgrada: { id: zgradaId },
+      }),
+    );
+    try {
+      return await this.stanRepository.save(stanovi);
+    } catch (greska) {
+      if (jeDupliUnos(greska)) {
+        throw new ConflictException(
+          'Neko je u međuvremenu dodao stan sa istim brojem. Osveži stranicu.',
+        );
+      }
+      throw greska;
+    }
   }
 
   private async proveriZgradu(

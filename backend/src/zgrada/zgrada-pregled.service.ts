@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository } from 'typeorm';
+import { brojPoZgradi } from './broj-po-zgradi.js';
 import { Zgrada } from './zgrada.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
@@ -50,7 +51,7 @@ export class ZgradaPregledService {
     const ids = zgrade.map((z) => z.id);
 
     const [zahtevi, novi, hitni, odluke, sastanci] = await Promise.all([
-      this.brojPoZgradi(
+      brojPoZgradi(
         this.zahtevRepository
           .createQueryBuilder('zahtev')
           .innerJoin('zahtev.stan', 'stan')
@@ -60,7 +61,7 @@ export class ZgradaPregledService {
         'stan.zgradaId',
         ids,
       ),
-      this.brojPoZgradi(
+      brojPoZgradi(
         this.kvarRepository
           .createQueryBuilder('kvar')
           .where('kvar.status = :status', { status: StatusKvara.PRIJAVLJEN })
@@ -70,7 +71,7 @@ export class ZgradaPregledService {
         'kvar.zgradaId',
         ids,
       ),
-      this.brojPoZgradi(
+      brojPoZgradi(
         this.kvarRepository
           .createQueryBuilder('kvar')
           .where('kvar.prioritet = :prioritet', { prioritet: Prioritet.HITNO })
@@ -80,7 +81,7 @@ export class ZgradaPregledService {
         'kvar.zgradaId',
         ids,
       ),
-      this.brojPoZgradi(
+      brojPoZgradi(
         this.glasanjeRepository
           .createQueryBuilder('glasanje')
           .where('glasanje.vrsta = :vrsta', { vrsta: VrstaGlasanja.ODLUKA })
@@ -119,21 +120,6 @@ export class ZgradaPregledService {
       select: { id: true, naziv: true },
       where: { id: zgradaId },
     });
-  }
-
-  private async brojPoZgradi<T extends object>(
-    upit: SelectQueryBuilder<T>,
-    kolona: string,
-    ids: number[],
-  ) {
-    const redovi = await upit
-      .select(kolona, 'zgradaId')
-      .addSelect('COUNT(*)', 'broj')
-      .andWhere(`${kolona} IN (:...ids)`, { ids })
-      .groupBy(kolona)
-      .getRawMany<{ zgradaId: number; broj: string }>();
-    // COUNT u PostgreSQL-u je bigint, pa stiže kao tekst
-    return new Map(redovi.map((r) => [r.zgradaId, Number(r.broj)]));
   }
 
   private async sledeciSastanci(ids: number[]) {

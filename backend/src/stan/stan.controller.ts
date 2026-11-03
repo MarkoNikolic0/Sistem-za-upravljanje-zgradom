@@ -19,6 +19,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { CreateStanDto } from './dto/create-stan.dto.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { UpdateStanDto } from './dto/update-stan.dto.js';
+import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -34,6 +35,16 @@ export class StanController {
     @Body() dto: CreateStanDto,
   ) {
     return this.stanService.create(korisnik.id, korisnik.uloga, dto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
+  @Post('grupno')
+  createGrupno(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: CreateStanoviDto,
+  ) {
+    return this.stanService.createGrupno(korisnik.id, korisnik.uloga, dto);
   }
 
   @Get()

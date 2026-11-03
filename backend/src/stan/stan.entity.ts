@@ -1,6 +1,13 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import type { Zgrada } from '../zgrada/zgrada.entity.js';
 
+@Unique(['zgrada', 'broj'])
 @Entity()
 export class Stan {
   @PrimaryGeneratedColumn()

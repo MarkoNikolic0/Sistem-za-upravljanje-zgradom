@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -9,6 +10,7 @@ import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { Exclude, Expose } from 'class-transformer';
 
+@Index(['zgrada'], { unique: true })
 @Entity()
 export class Korisnik {
   @PrimaryGeneratedColumn()
@@ -40,7 +42,7 @@ export class Korisnik {
   uloga: Uloga;
 
   @ManyToOne(() => Zgrada, { nullable: true })
-  zgrada: Zgrada;
+  zgrada: Zgrada | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   kreiranDatum: Date;

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Zgrada } from './zgrada.entity.js';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Stan } from '../stan/stan.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -14,6 +14,9 @@ import { UpdateZgradaDto } from './dto/update-zgrada.dto.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
 import { Sastanak } from '../sastanak/sastanak.entity.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import { Uloga } from '../shared/enums/uloga.enum.js';
+import { brojPoZgradi } from './broj-po-zgradi.js';
 
 @Injectable()
 export class ZgradaService {
@@ -28,6 +31,8 @@ export class ZgradaService {
     private glasanjeRepository: Repository<Glasanje>,
     @InjectRepository(Sastanak)
     private sastanakRepository: Repository<Sastanak>,
+    @InjectRepository(StanarStana)
+    private stanarStanaRepository: Repository<StanarStana>,
   ) {}
 
   async create(dto: CreateZgradaDto) {
@@ -37,6 +42,53 @@ export class ZgradaService {
 
   async findAll() {
     return await this.zgradaRepository.find();
+  }
+
+  async findSaBrojevima() {
+    const zgrade = await this.zgradaRepository.find({
+      select: { id: true, naziv: true, adresa: true },
+      order: { naziv: 'ASC' },
+    });
+    if (zgrade.length === 0) {
+      return [];
+    }
+    const ids = zgrade.map((z) => z.id);
+
+    const [stanovi, stanari, upravnici] = await Promise.all([
+      brojPoZgradi(
+        this.stanRepository.createQueryBuilder('stan'),
+        'stan.zgradaId',
+        ids,
+      ),
+      brojPoZgradi(
+        this.stanarStanaRepository
+          .createQueryBuilder('veza')
+          .innerJoin('veza.stan', 'stan'),
+        'stan.zgradaId',
+        ids,
+        'COUNT(DISTINCT veza.korisnikId)',
+      ),
+      this.korisnikRepository.find({
+        where: { uloga: Uloga.UPRAVNIK, zgrada: { id: Not(IsNull()) } },
+        relations: { zgrada: true },
+        select: { id: true, ime: true, prezime: true, zgrada: { id: true } },
+      }),
+    ]);
+    const upravnikZgrade = new Map(
+      upravnici.map(({ id, ime, prezime, zgrada }) => [
+        zgrada?.id,
+        { id, ime, prezime },
+      ]),
+    );
+
+    return zgrade.map(({ id, naziv, adresa }) => ({
+      id,
+      naziv,
+      adresa,
+      brojStanova: stanovi.get(id) ?? 0,
+      brojStanara: stanari.get(id) ?? 0,
+      upravnik: upravnikZgrade.get(id) ?? null,
+    }));
   }
 
   async findOne(id: number) {

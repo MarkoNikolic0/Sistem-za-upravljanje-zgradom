@@ -13,6 +13,8 @@ import { Sastanak } from '../sastanak/sastanak.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
 import { ZgradaPregledService } from './zgrada-pregled.service.js';
+import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 
 @Module({
   imports: [
@@ -25,11 +27,12 @@ import { ZgradaPregledService } from './zgrada-pregled.service.js';
       Glasanje,
       Sastanak,
       ZahtevPovezivanje,
+      StanarStana,
     ]),
     AuthModule,
     KorisnikModule,
   ],
   controllers: [ZgradaController],
-  providers: [ZgradaService, ZgradaPregledService],
+  providers: [ZgradaService, ZgradaPregledService, UpravnikZgradeService],
 })
 export class ZgradaModule {}

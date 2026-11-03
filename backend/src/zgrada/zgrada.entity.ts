@@ -12,12 +12,6 @@ export class Zgrada {
   @Column()
   adresa: string;
 
-  @Column({ nullable: true })
-  brojSpratova: number;
-
-  @Column({ nullable: true })
-  brojStanova: number;
-
   @OneToMany('Stan', 'zgrada')
   stanovi: Stan[];
 }
