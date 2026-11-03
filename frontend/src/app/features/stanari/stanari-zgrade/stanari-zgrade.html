@@ -1,16 +1,18 @@
 <div class="stranica">
   <a routerLink="/" class="nazad"><i class="pi pi-arrow-left" aria-hidden="true"></i>Početna</a>
-  <p class="oznaka mt-6">Zgrada</p>
-  <h1 class="naslov-stranice mt-3">Stanari</h1>
+  <p class="oznaka mt-6">{{ sviKorisnici() ? 'Sistem' : 'Zgrada' }}</p>
+  <h1 class="naslov-stranice mt-3">{{ sviKorisnici() ? 'Korisnici' : 'Stanari' }}</h1>
 
   @if (greska()) {
     <p-message severity="error" styleClass="mt-6">Zgrade trenutno nije moguće učitati.</p-message>
   } @else if (!ucitano()) {
     <div class="ucitavanje mt-6" aria-hidden="true"><p-skeleton height="3rem" /></div>
     <span class="sr-only">Učitavanje…</span>
-  } @else if (zgradaId() !== null) {
+  } @else if (izabrano() !== null) {
     <p class="mt-2 text-priguseno">
-      @if (zbir(); as zbir) {
+      @if (sviKorisnici()) {
+        Svi nalozi u sistemu: uloge, struke servisera i deaktivacija.
+      } @else if (zbir(); as zbir) {
         {{ zbir }}
       } @else {
         Ko živi u kom stanu i kako da ga dobiješ.
@@ -18,145 +20,151 @@
     </p>
 
     <div class="alati">
-      @if (zgrade().length > 1) {
+      @if (opcije().length > 1) {
         <div class="flex flex-col gap-1.5 sm:w-72">
           <span id="stanari-zgrada" class="text-sm font-medium">Zgrada</span>
           <p-select
             ariaLabelledBy="stanari-zgrada"
-            [options]="zgrade()"
+            [options]="opcije()"
             optionLabel="naziv"
             optionValue="id"
-            [ngModel]="zgradaId()"
+            [ngModel]="izabrano()"
             (ngModelChange)="promeniZgradu($event)"
             [fluid]="true"
           />
         </div>
       }
-      <div class="flex flex-1 flex-col gap-1.5">
-        <label for="pretraga-stanara" class="text-sm font-medium">Pretraga</label>
-        <input
-          pInputText
-          id="pretraga-stanara"
-          type="search"
-          placeholder="Ime, prezime ili broj stana"
-          autocomplete="off"
-          [ngModel]="upit()"
-          (ngModelChange)="upit.set($event)"
-          [disabled]="!stanovi.hasValue()"
-          [fluid]="true"
-        />
+      @if (!sviKorisnici()) {
+        <div class="flex flex-1 flex-col gap-1.5">
+          <label for="pretraga-stanara" class="text-sm font-medium">Pretraga</label>
+          <input
+            pInputText
+            id="pretraga-stanara"
+            type="search"
+            placeholder="Ime, prezime ili broj stana"
+            autocomplete="off"
+            [ngModel]="upit()"
+            (ngModelChange)="upit.set($event)"
+            [disabled]="!stanovi.hasValue()"
+            [fluid]="true"
+          />
+        </div>
+      }
+    </div>
+    @if (sviKorisnici()) {
+      <app-korisnici-sistema />
+    } @else {
+      <p class="sr-only" aria-live="polite">{{ rezultat() }}</p>
+      <div id="poruka-stanara" tabindex="-1" class="mt-6 outline-none empty:hidden">
+        @if (akcije.poruka(); as p) {
+          <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+        }
       </div>
-    </div>
-    <p class="sr-only" aria-live="polite">{{ rezultat() }}</p>
-    <div id="poruka-stanara" tabindex="-1" class="mt-6 outline-none empty:hidden">
-      @if (akcije.poruka(); as p) {
-        <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
-      }
-    </div>
 
-    <section class="odeljak" aria-label="Stanovi" [attr.aria-busy]="stanovi.isLoading()">
-      @if (stanovi.error()) {
-        <p class="text-sm text-priguseno">
-          Stanare trenutno nije moguće učitati.
-          <button type="button" class="ponovo" (click)="stanovi.reload()">Pokušaj ponovo</button>
-        </p>
-      } @else if (!stanovi.hasValue()) {
-        <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
-          <p-skeleton height="5rem" />
-          <p-skeleton height="5rem" />
-          <p-skeleton height="5rem" />
-        </div>
-        <span class="sr-only">Učitavanje…</span>
-      } @else if (stanovi.value().length === 0) {
-        <div class="prazno">
-          <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-building"></i></span>
-          <p class="text-naslov">Zgrada još nema stanova</p>
-          <p class="mt-1 text-sm text-priguseno">Stanove dodaje administrator.</p>
-        </div>
-      } @else if (pronadjeni().length === 0) {
-        <div class="prazno">
-          <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-search"></i></span>
-          <p class="text-naslov">Nema poklapanja za „{{ upit().trim() }}“</p>
-          <p class="mt-1 text-sm text-priguseno">Proveri ime ili unesi tačan broj stana.</p>
-        </div>
-      } @else {
-        <ol class="fasada">
-          @for (sprat of spratovi(); track sprat.sprat) {
-            <li class="sprat-fasade">
-              <h2 class="naziv-sprata">{{ sprat.sprat | sprat }}</h2>
-              <ul class="stanovi-sprata">
-                @for (stan of sprat.stanovi; track stan.id) {
-                  <li class="stan" [class.prazan]="stan.stanari.length === 0">
-                    <p class="naslov-stana">
-                      <span class="sr-only">Stan {{ stan.broj }}</span>
-                      <span class="broj" aria-hidden="true">{{ stan.broj }}</span>
-                    </p>
-                    @if (stan.stanari.length === 0) {
-                      <p class="niko">Prazan stan</p>
-                    } @else {
-                      <ul class="ljudi">
-                        @for (stanar of stan.stanari; track stanar.id) {
-                          <li class="osoba">
-                            <span class="inicijali" aria-hidden="true"
-                              >{{ stanar.korisnik.ime[0] }}{{ stanar.korisnik.prezime[0] }}</span
-                            >
-                            <div class="min-w-0 flex-1">
-                              <p class="ime">
-                                {{ stanar.korisnik.ime }} {{ stanar.korisnik.prezime }}
-                                <span class="znacka" [class.vlasnik]="stanar.vlasnik">{{
-                                  stanar.vlasnik ? 'Vlasnik' : 'Ukućanin'
-                                }}</span>
-                              </p>
-                              <p class="veze">
-                                <a [href]="'tel:' + stanar.korisnik.telefon">{{
-                                  telefon(stanar.korisnik.telefon)
-                                }}</a>
-                                <a [href]="'mailto:' + stanar.korisnik.email">{{
-                                  stanar.korisnik.email
-                                }}</a>
-                              </p>
-                            </div>
-                            <button
-                              pButton
-                              type="button"
-                              size="small"
-                              severity="secondary"
-                              text
-                              iconOnly
-                              class="-mt-1 shrink-0"
-                              aria-haspopup="true"
-                              [attr.aria-expanded]="
-                                meniOtvoren() && izabran()?.stanar?.id === stanar.id
-                              "
-                              [attr.aria-label]="'Radnje: ' + ime(stanar)"
-                              (click)="otvoriMeni($event, meni, stan, stanar)"
-                            >
-                              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
-                            </button>
-                          </li>
-                        }
-                      </ul>
-                    }
-                  </li>
-                }
-              </ul>
-            </li>
-          }
-        </ol>
-      }
-    </section>
-    <p-menu
-      #meni
-      [model]="radnje()"
-      [popup]="true"
-      ariaLabel="Radnje sa stanarom"
-      (onShow)="meniOtvoren.set(true)"
-      (onHide)="meniOtvoren.set(false)"
-    />
-    <p-confirmdialog
-      [closable]="false"
-      [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
-    />
+      <section class="odeljak" aria-label="Stanovi" [attr.aria-busy]="stanovi.isLoading()">
+        @if (stanovi.error()) {
+          <p class="text-sm text-priguseno">
+            Stanare trenutno nije moguće učitati.
+            <button type="button" class="ponovo" (click)="stanovi.reload()">Pokušaj ponovo</button>
+          </p>
+        } @else if (!stanovi.hasValue()) {
+          <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+            <p-skeleton height="5rem" />
+            <p-skeleton height="5rem" />
+            <p-skeleton height="5rem" />
+          </div>
+          <span class="sr-only">Učitavanje…</span>
+        } @else if (stanovi.value().length === 0) {
+          <div class="prazno">
+            <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-building"></i></span>
+            <p class="text-naslov">Zgrada još nema stanova</p>
+            <p class="mt-1 text-sm text-priguseno">Stanove dodaje administrator.</p>
+          </div>
+        } @else if (pronadjeni().length === 0) {
+          <div class="prazno">
+            <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-search"></i></span>
+            <p class="text-naslov">Nema poklapanja za „{{ upit().trim() }}“</p>
+            <p class="mt-1 text-sm text-priguseno">Proveri ime ili unesi tačan broj stana.</p>
+          </div>
+        } @else {
+          <ol class="fasada">
+            @for (sprat of spratovi(); track sprat.sprat) {
+              <li class="sprat-fasade">
+                <h2 class="naziv-sprata">{{ sprat.sprat | sprat }}</h2>
+                <ul class="stanovi-sprata">
+                  @for (stan of sprat.stanovi; track stan.id) {
+                    <li class="stan" [class.prazan]="stan.stanari.length === 0">
+                      <p class="naslov-stana">
+                        <span class="sr-only">Stan {{ stan.broj }}</span>
+                        <span class="broj" aria-hidden="true">{{ stan.broj }}</span>
+                      </p>
+                      @if (stan.stanari.length === 0) {
+                        <p class="niko">Prazan stan</p>
+                      } @else {
+                        <ul class="ljudi">
+                          @for (stanar of stan.stanari; track stanar.id) {
+                            <li class="osoba">
+                              <span class="inicijali" aria-hidden="true"
+                                >{{ stanar.korisnik.ime[0] }}{{ stanar.korisnik.prezime[0] }}</span
+                              >
+                              <div class="min-w-0 flex-1">
+                                <p class="ime">
+                                  {{ stanar.korisnik.ime }} {{ stanar.korisnik.prezime }}
+                                  <span class="znacka" [class.vlasnik]="stanar.vlasnik">{{
+                                    stanar.vlasnik ? 'Vlasnik' : 'Ukućanin'
+                                  }}</span>
+                                </p>
+                                <p class="veze">
+                                  <a [href]="'tel:' + stanar.korisnik.telefon">{{
+                                    telefon(stanar.korisnik.telefon)
+                                  }}</a>
+                                  <a [href]="'mailto:' + stanar.korisnik.email">{{
+                                    stanar.korisnik.email
+                                  }}</a>
+                                </p>
+                              </div>
+                              <button
+                                pButton
+                                type="button"
+                                size="small"
+                                severity="secondary"
+                                text
+                                iconOnly
+                                class="-mt-1 shrink-0"
+                                aria-haspopup="true"
+                                [attr.aria-expanded]="
+                                  meniOtvoren() && izabran()?.stanar?.id === stanar.id
+                                "
+                                [attr.aria-label]="'Radnje: ' + ime(stanar)"
+                                (click)="otvoriMeni($event, meni, stan, stanar)"
+                              >
+                                <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+      <p-menu
+        #meni
+        [model]="radnje()"
+        [popup]="true"
+        ariaLabel="Radnje sa stanarom"
+        (onShow)="meniOtvoren.set(true)"
+        (onHide)="meniOtvoren.set(false)"
+      />
+      <p-confirmdialog
+        [closable]="false"
+        [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
+      />
+    }
   } @else {
     <p class="mt-6 text-sm text-priguseno">
       {{

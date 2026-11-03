@@ -43,7 +43,7 @@ export class UpravnikZgradeService {
         relations: { zgrada: true },
         lock: { mode: 'pessimistic_write', tables: ['korisnik'] },
       });
-      if (!korisnik) {
+      if (!korisnik || korisnik.deaktiviran) {
         throw new NotFoundException('Korisnik ne postoji.');
       }
       if (

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -15,6 +16,9 @@ import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+
+const PORUKA_DEAKTIVIRAN =
+  'Nalog je deaktiviran. Za pomoć se javi administratoru.';
 
 @Injectable()
 export class AuthService {
@@ -61,6 +65,9 @@ export class AuthService {
     const lozinkaValidna = await bcrypt.compare(dto.lozinka, korisnik.lozinka);
     if (!lozinkaValidna) {
       throw new UnauthorizedException('Neispravan email ili lozinka.');
+    }
+    if (korisnik.deaktiviran) {
+      throw new ForbiddenException(PORUKA_DEAKTIVIRAN);
     }
 
     const payload = {

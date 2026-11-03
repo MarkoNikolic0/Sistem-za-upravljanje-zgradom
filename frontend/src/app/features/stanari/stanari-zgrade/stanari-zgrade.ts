@@ -29,6 +29,11 @@ import { StanariService } from '../stanari-service';
 import { pretraziStanove } from '../pretraga-stanara';
 import { poSpratovima } from '../../../shared/spratovi';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
+import { KorisniciSistema } from '../../korisnici/korisnici-sistema/korisnici-sistema';
+
+// Admin u izboru zgrade ima i sve korisnike sistema
+const SVI = 'svi';
+type Izbor = number | typeof SVI;
 
 interface Izabran {
   stan: StanSaStanarima;
@@ -48,6 +53,7 @@ interface Izabran {
     SelectModule,
     SkeletonModule,
     SpratPipe,
+    KorisniciSistema,
   ],
   providers: [ConfirmationService, AkcijeStore],
   selector: 'app-stanari-zgrade',
@@ -67,10 +73,22 @@ export class StanariZgrade {
   protected readonly ucitano = this.izbor.ucitano;
   protected readonly greska = this.izbor.greska;
 
-  protected readonly zgradaId = linkedSignal<number | null>(() => {
+  protected readonly izabrano = linkedSignal<Izbor | null>(() => {
     const zgrade = this.zgrade();
-    return (zgrade.find((z) => z.id === this.zgrada()) ?? zgrade[0])?.id ?? null;
+    const zgrada = zgrade.find((z) => z.id === this.zgrada());
+    if (zgrada) {
+      return zgrada.id;
+    }
+    return this.admin() ? SVI : (zgrade[0]?.id ?? null);
   });
+  protected readonly sviKorisnici = computed(() => this.izabrano() === SVI);
+  protected readonly zgradaId = computed(() => {
+    const izbor = this.izabrano();
+    return izbor === SVI ? null : izbor;
+  });
+  protected readonly opcije = computed(() =>
+    this.admin() ? [{ id: SVI, naziv: 'Svi korisnici' }, ...this.zgrade()] : this.zgrade(),
+  );
   protected readonly stanovi = this.stanariService.stanovi(this.zgradaId);
 
   protected readonly upit = linkedSignal({ source: this.zgradaId, computation: () => '' });
@@ -127,8 +145,8 @@ export class StanariZgrade {
     return `${stanar.korisnik.ime} ${stanar.korisnik.prezime}`;
   }
 
-  protected promeniZgradu(id: number): void {
-    this.zgradaId.set(id);
+  protected promeniZgradu(izbor: Izbor): void {
+    this.izabrano.set(izbor);
     this.akcije.ponisti();
   }
 

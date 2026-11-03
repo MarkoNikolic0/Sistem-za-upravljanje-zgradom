@@ -2,11 +2,9 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
-  Delete,
-  Get,
   Param,
   ParseIntPipe,
-  Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ServiserSpecijalnostService } from './serviser-specijalnost.service.js';
@@ -14,32 +12,22 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
-import { DodajSpecijalnostDto } from './dto/dodaj-specijalnost.dto.js';
+import { PostaviSpecijalnostiDto } from './dto/postavi-specijalnosti.dto.js';
 
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
-@Controller('serviser-specijalnost')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Uloga.ADMIN)
+@Controller('korisnik/:korisnikId/specijalnosti')
 export class ServiserSpecijalnostController {
   constructor(
     private readonly specijalnostService: ServiserSpecijalnostService,
   ) {}
 
-  @UseGuards(RolesGuard)
-  @Roles(Uloga.ADMIN)
-  @Post()
-  dodaj(@Body() dto: DodajSpecijalnostDto) {
-    return this.specijalnostService.dodaj(dto);
-  }
-
-  @Get('serviser/:korisnikId')
-  findZaServisera(@Param('korisnikId', ParseIntPipe) korisnikId: number) {
-    return this.specijalnostService.findZaServisera(korisnikId);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(Uloga.ADMIN)
-  @Delete(':id')
-  ukloni(@Param('id', ParseIntPipe) id: number) {
-    return this.specijalnostService.ukloni(id);
+  @Put()
+  postavi(
+    @Param('korisnikId', ParseIntPipe) korisnikId: number,
+    @Body() dto: PostaviSpecijalnostiDto,
+  ) {
+    return this.specijalnostService.postavi(korisnikId, dto);
   }
 }

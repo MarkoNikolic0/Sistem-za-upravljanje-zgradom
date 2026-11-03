@@ -1,5 +1,5 @@
 -- Test podaci za razvoj i demonstraciju: tri zgrade u Nisu i jedna arhivirana, stanovi, upravnici, serviseri,
--- stanari, zahtevi za povezivanje, kvarovi u razlicitim statusima, oglasi, ankete i odluke.
+-- stanari, dva deaktivirana naloga, zahtevi za povezivanje, kvarovi u razlicitim statusima, oglasi, ankete i odluke.
 --
 -- Pokretanje (u terminalu iz foldera backend, dok radi Docker kontejner; radi i u PowerShell-u):
 --   docker cp seed/seed.sql zgrada_container:/tmp/seed.sql
@@ -162,6 +162,21 @@ FROM (VALUES
   ('Milena', 'Jovanović', 'milena.jovanovic@example.com', '+381661234523', 'stanar', NULL),
   ('Đorđe', 'Ranđelović', 'djordje.randjelovic@example.com', '+381601234524', 'stanar', NULL)
 ) AS v(ime, prezime, email, telefon, uloga, zgrada)
+ON CONFLICT (email) DO NOTHING;
+
+-- DEAKTIVIRANI NALOZI (filter Deaktivirani na stranici Korisnici; ne mogu da se prijave) ----
+-- Datum deaktivacije se upisuje samo kad skripta pravi nalog, pa rucna aktivacija ostaje
+INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, deaktiviran)
+SELECT v.ime, v.prezime, v.email, v.telefon,
+       '$2b$10$vA3jA/dFn0F49Jati8I25etyp5KMizffmKsZr3odS8BDAhmdnk44i',
+       v.uloga::korisnik_uloga_enum,
+       now() - v.pre::interval
+FROM (VALUES
+  -- bivsi stanar koji se odselio
+  ('Lazar', 'Petković', 'lazar.petkovic@example.com', '+381641234531', 'stanar', '3 weeks'),
+  -- serviser koji vise ne radi za zgrade
+  ('Bratislav', 'Stanojević', 'bratislav.stanojevic@example.com', '+381651234532', 'serviser', '2 months')
+) AS v(ime, prezime, email, telefon, uloga, pre)
 ON CONFLICT (email) DO NOTHING;
 
 -- SPECIJALNOSTI SERVISERA -------------------------------------------------------------------

@@ -4,18 +4,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Korisnik } from './korisnik.entity.js';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { UpdateProfilDto } from './dto/update-profil.dto.js';
-import { Uloga } from '../shared/enums/uloga.enum.js';
+import { StanjeNaloga, Uloga } from '../shared/enums/uloga.enum.js';
 import { sadrzi, type PristupZgradama } from './pristup-zgradama.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { AKTIVNA_ZGRADA, proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { KorisnikUpitDto } from './dto/korisnik-upit.dto.js';
-
-const MAKS_REZULTATA_PRETRAGE = 20;
+import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
+import { type Stranica, stranicenje } from '../shared/stranicenje.js';
 
 @Injectable()
 export class KorisnikService {
@@ -26,6 +26,8 @@ export class KorisnikService {
     private readonly stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Zgrada)
     private readonly zgradaRepository: Repository<Zgrada>,
+    @InjectRepository(ServiserSpecijalnost)
+    private readonly specijalnostRepository: Repository<ServiserSpecijalnost>,
   ) {}
 
   async zgradaUpravnika(korisnikId: number): Promise<number | null> {
@@ -89,8 +91,7 @@ export class KorisnikService {
     }
   }
 
-  async pretrazi({ pretraga, uloga }: KorisnikUpitDto) {
-    const tekst = `%${pretraga.replace(/[\\%_]/g, '\\$&')}%`;
+  async findAll({ pretraga, uloga, stanje, ...strana }: KorisnikUpitDto) {
     const upit = this.korisnikRepository
       .createQueryBuilder('korisnik')
       .leftJoin('korisnik.zgrada', 'zgrada')
@@ -99,11 +100,23 @@ export class KorisnikService {
         'korisnik.ime',
         'korisnik.prezime',
         'korisnik.email',
+        'korisnik.telefon',
         'korisnik.uloga',
+        'korisnik.deaktiviran',
         'zgrada.id',
         'zgrada.naziv',
       ])
       .where(
+        stanje === StanjeNaloga.AKTIVNI
+          ? 'korisnik.deaktiviran IS NULL'
+          : 'korisnik.deaktiviran IS NOT NULL',
+      )
+      .orderBy('korisnik.prezime')
+      .addOrderBy('korisnik.ime')
+      .addOrderBy('korisnik.id');
+    if (pretraga) {
+      const tekst = `%${pretraga.replace(/[\\%_]/g, '\\$&')}%`;
+      upit.andWhere(
         new Brackets((qb) =>
           qb
             .where("korisnik.ime || ' ' || korisnik.prezime ILIKE :tekst")
@@ -111,14 +124,62 @@ export class KorisnikService {
             .orWhere('korisnik.email ILIKE :tekst'),
         ),
         { tekst },
-      )
-      .orderBy('korisnik.prezime')
-      .addOrderBy('korisnik.ime')
-      .take(MAKS_REZULTATA_PRETRAGE);
+      );
+    }
     if (uloga?.length) {
       upit.andWhere('korisnik.uloga IN (:...uloga)', { uloga });
     }
-    return await upit.getMany();
+    const { skip, take } = stranicenje(strana);
+    const [korisnici, ukupno] = await upit
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
+
+    const ids = korisnici.map((k) => k.id);
+    const [veze, specijalnosti] = ids.length
+      ? await Promise.all([
+          this.stanarStanaRepository.find({
+            where: { korisnik: { id: In(ids) } },
+            relations: { korisnik: true, stan: { zgrada: true } },
+            select: {
+              id: true,
+              vlasnik: true,
+              korisnik: { id: true },
+              stan: { id: true, broj: true, zgrada: { id: true, naziv: true } },
+            },
+            order: { stan: { zgrada: { naziv: 'ASC' }, broj: 'ASC' } },
+          }),
+          this.specijalnostRepository.find({
+            where: { korisnik: { id: In(ids) } },
+            relations: { korisnik: true },
+            select: { id: true, kategorija: true, korisnik: { id: true } },
+            order: { kategorija: 'ASC' },
+          }),
+        ])
+      : [[], []];
+
+    const stavke = korisnici.map((k) => ({
+      id: k.id,
+      ime: k.ime,
+      prezime: k.prezime,
+      email: k.email,
+      telefon: k.telefon,
+      uloga: k.uloga,
+      deaktiviran: k.deaktiviran,
+      zgrada: k.zgrada,
+      stanovi: veze
+        .filter((v) => v.korisnik.id === k.id)
+        .map((v) => ({
+          id: v.stan.id,
+          broj: v.stan.broj,
+          vlasnik: v.vlasnik,
+          zgrada: v.stan.zgrada,
+        })),
+      specijalnosti: specijalnosti
+        .filter((sp) => sp.korisnik.id === k.id)
+        .map((sp) => sp.kategorija),
+    }));
+    return { stavke, ukupno } satisfies Stranica<(typeof stavke)[number]>;
   }
 
   async mojProfil(korisnikId: number) {

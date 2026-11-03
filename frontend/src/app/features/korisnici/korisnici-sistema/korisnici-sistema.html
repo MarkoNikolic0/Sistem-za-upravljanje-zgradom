@@ -1,0 +1,242 @@
+<div class="alati">
+  <div class="flex flex-1 flex-col gap-1.5">
+    <label for="pretraga-korisnika" class="text-sm font-medium">Pretraga</label>
+    <input
+      pInputText
+      id="pretraga-korisnika"
+      type="search"
+      placeholder="Ime, prezime ili email"
+      autocomplete="off"
+      [ngModel]="upit()"
+      (ngModelChange)="pretrazi($event)"
+      [fluid]="true"
+    />
+  </div>
+  <div class="flex flex-col gap-1.5 sm:w-48">
+    <span id="filter-uloge" class="text-sm font-medium">Uloga</span>
+    <p-select
+      ariaLabelledBy="filter-uloge"
+      [options]="uloge"
+      optionLabel="naziv"
+      optionValue="value"
+      placeholder="Sve uloge"
+      [showClear]="true"
+      [ngModel]="store.uloga()"
+      (ngModelChange)="store.promeniUlogu($event ?? null)"
+      [fluid]="true"
+    />
+  </div>
+</div>
+<p-selectbutton
+  class="mt-4"
+  ariaLabelledBy="stanje-naloga"
+  [options]="stanja"
+  optionLabel="naziv"
+  optionValue="value"
+  [allowEmpty]="false"
+  [ngModel]="store.stanje()"
+  (ngModelChange)="store.promeniStanje($event)"
+/>
+<span id="stanje-naloga" class="sr-only">Stanje naloga</span>
+
+<p class="sr-only" aria-live="polite">
+  @if (store.isFulfilled()) {
+    Pronađeno korisnika: {{ store.ukupno() }}
+  }
+</p>
+<div id="poruka-korisnika" tabindex="-1" class="mt-6 outline-none empty:hidden">
+  @if (store.poruka(); as p) {
+    <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+  }
+</div>
+
+<section class="odeljak" aria-label="Korisnici" [attr.aria-busy]="store.isPending()">
+  @if (store.error(); as greska) {
+    <p class="text-sm text-priguseno">
+      {{ greska }}
+      <button type="button" class="ponovo" (click)="store.ucitaj()">Pokušaj ponovo</button>
+    </p>
+  } @else if (store.isPending() && store.korisnici().length === 0) {
+    <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+      <p-skeleton height="4rem" />
+      <p-skeleton height="4rem" />
+      <p-skeleton height="4rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (store.korisnici().length === 0) {
+    <div class="prazno">
+      <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-users"></i></span>
+      <p class="text-naslov">
+        {{ store.stanje() === 'deaktivirani' ? 'Nema deaktiviranih naloga' : 'Nema korisnika' }}
+      </p>
+      @if (store.pretraga() || store.uloga()) {
+        <p class="mt-1 text-sm text-priguseno">Proveri pretragu ili ukloni filter uloge.</p>
+      }
+    </div>
+  } @else {
+    <ul>
+      @for (k of store.korisnici(); track k.id) {
+        <li class="red korisnik" [class.deaktiviran]="k.deaktiviran">
+          <span class="inicijali" aria-hidden="true">{{ k.ime[0] }}{{ k.prezime[0] }}</span>
+          <div class="min-w-0 flex-1">
+            <p class="ime">
+              {{ k.ime }} {{ k.prezime }}
+              <span class="znacka" [class.serviser]="k.uloga === 'serviser'">{{
+                nazivUloge[k.uloga]
+              }}</span>
+              @if (k.deaktiviran) {
+                <span class="znacka otkazan">Deaktiviran</span>
+              }
+            </p>
+            <p class="veze">
+              <a [href]="'tel:' + k.telefon">{{ telefon(k.telefon) }}</a>
+              <a [href]="'mailto:' + k.email">{{ k.email }}</a>
+            </p>
+            @if (k.zgrada) {
+              <p class="opis">Upravlja zgradom {{ k.zgrada.naziv }}</p>
+            }
+            @if (k.uloga === 'serviser') {
+              <p class="opis">{{ opisStruka(k) }}</p>
+            } @else if (k.stanovi.length > 0) {
+              <p class="opis">{{ opisStanova(k) }}</p>
+            } @else if (k.uloga === 'stanar' && !k.deaktiviran) {
+              <p class="opis">Nema stan</p>
+            }
+          </div>
+          @if (k.uloga !== 'admin') {
+            <button
+              pButton
+              type="button"
+              size="small"
+              severity="secondary"
+              text
+              iconOnly
+              class="shrink-0 self-start"
+              aria-haspopup="true"
+              [attr.aria-expanded]="meniOtvoren() && izabran()?.korisnik?.id === k.id"
+              [attr.aria-label]="'Radnje: ' + ime(k)"
+              (click)="otvoriMeni($event, meni, k)"
+            >
+              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+            </button>
+          }
+        </li>
+      }
+    </ul>
+    <app-paginacija
+      [strana]="store.strana()"
+      [ukupno]="store.ukupno()"
+      [poStrani]="store.poStrani"
+      (promena)="store.promeniStranu($event)"
+    />
+  }
+</section>
+
+<p-menu
+  #meni
+  [model]="radnje()"
+  [popup]="true"
+  ariaLabel="Radnje sa korisnikom"
+  (onShow)="meniOtvoren.set(true)"
+  (onHide)="meniOtvoren.set(false)"
+/>
+<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
+
+<p-dialog
+  [header]="'Uloga: ' + imeIzabranog()"
+  [modal]="true"
+  [visible]="dijalogUloge()"
+  (visibleChange)="dijalogUloge.set($event)"
+  (onHide)="vratiFokus()"
+  [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  @if (izabran()?.korisnik; as k) {
+    @if (k.zgrada) {
+      <p class="text-sm">
+        {{ ime(k) }} upravlja zgradom „{{ k.zgrada.naziv }}“. Upravnik se menja i razrešava na
+        stranici zgrade.
+      </p>
+      <a class="uputstvo-link" [routerLink]="['/zgrade', k.zgrada.id]"
+        >Otvori zgradu {{ k.zgrada.naziv }}</a
+      >
+    } @else {
+      <fieldset>
+        <legend class="sr-only">Uloga</legend>
+        <div class="grid gap-3">
+          @for (u of dodeljiveUloge; track u.value) {
+            <label class="plocica">
+              <input
+                type="radio"
+                class="sr-only"
+                name="uloga"
+                [value]="u.value"
+                [ngModel]="novaUloga()"
+                (ngModelChange)="novaUloga.set($event)"
+              />
+              <span class="min-w-0">
+                <span class="block font-medium text-naslov">{{ u.naziv }}</span>
+                <span class="mt-0.5 block text-sm text-priguseno">{{ u.opis }}</span>
+              </span>
+            </label>
+          }
+        </div>
+      </fieldset>
+      <p class="uputstvo">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <span>
+          Upravnik se dodeljuje na stranici zgrade:
+          <a routerLink="/zgrade">Zgrade</a> → zgrada → Upravnik.
+        </span>
+      </p>
+    }
+  }
+  <ng-template #footer>
+    <p-button
+      label="Odustani"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="dijalogUloge.set(false)"
+    />
+    @if (!izabran()?.korisnik?.zgrada) {
+      <p-button label="Sačuvaj" (onClick)="sacuvajUlogu()" />
+    }
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [header]="'Struke: ' + imeIzabranog()"
+  [modal]="true"
+  [visible]="dijalogStruka()"
+  (visibleChange)="dijalogStruka.set($event)"
+  (onHide)="vratiFokus()"
+  [style]="{ width: '32rem', maxWidth: 'calc(100vw - 2rem)' }"
+>
+  <fieldset>
+    <legend class="text-sm text-priguseno">
+      Serviser dobija kvarove samo iz izabranih struka.
+    </legend>
+    <div class="mt-3 grid grid-cols-2 gap-2">
+      @for (s of struke; track s.value) {
+        <label class="plocica struka">
+          <input
+            type="checkbox"
+            class="sr-only"
+            [ngModel]="noveStruke().includes(s.value)"
+            (ngModelChange)="promeniStruku(s.value, $event)"
+          />
+          <i class="pi pi-check" aria-hidden="true"></i>
+          <span class="text-naslov">{{ s.naziv }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+  <ng-template #footer>
+    <p-button
+      label="Odustani"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="dijalogStruka.set(false)"
+    />
+    <p-button label="Sačuvaj" (onClick)="sacuvajStruke()" />
+  </ng-template>
+</p-dialog>

@@ -58,6 +58,10 @@ export class RefreshTokenService {
       where: { tokenHash },
       relations: { korisnik: true },
     });
+    if (zapis.korisnik.deaktiviran) {
+      await this.opozoviPorodicu(zapis.porodicaId);
+      throw new UnauthorizedException('Nevažeća sesija.');
+    }
 
     const { token: noviToken, datumIsteka } = await this.kreiraj(
       zapis.korisnik,

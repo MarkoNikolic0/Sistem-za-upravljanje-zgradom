@@ -32,6 +32,7 @@ import { MS_PO_DANU } from '../shared/vreme.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
+import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 
 @Injectable()
 export class KvarService {
@@ -222,7 +223,10 @@ export class KvarService {
 
   async findDostupneServisere(kategorija: KategorijaKvara) {
     const specijalnosti = await this.serviserSpecijalnostRepository.find({
-      where: { kategorija, korisnik: { uloga: Uloga.SERVISER } },
+      where: {
+        kategorija,
+        korisnik: { uloga: Uloga.SERVISER, ...AKTIVAN_KORISNIK },
+      },
       relations: { korisnik: true },
       order: { korisnik: { prezime: 'ASC', ime: 'ASC' } },
     });

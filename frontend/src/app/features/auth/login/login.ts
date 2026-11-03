@@ -10,7 +10,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../sesija/auth-store';
-import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/greske-servera';
+import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/greske-servera';
 
 @Component({
   imports: [
@@ -91,6 +91,11 @@ export class Login {
 
     if (err.status === 429) {
       this.greska.set(PREVISE_POKUSAJA);
+      return;
+    }
+
+    if (err.status === 403) {
+      this.greska.set(porukaServera(err) ?? 'Nalog je deaktiviran.');
       return;
     }
 

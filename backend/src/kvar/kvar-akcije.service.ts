@@ -40,6 +40,7 @@ import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
+import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
@@ -152,7 +153,11 @@ export class KvarAkcijeService {
     }
     const imaStruku = await this.serviserSpecijalnostRepository.exists({
       where: {
-        korisnik: { id: dto.serviserId, uloga: Uloga.SERVISER },
+        korisnik: {
+          id: dto.serviserId,
+          uloga: Uloga.SERVISER,
+          ...AKTIVAN_KORISNIK,
+        },
         kategorija: kvar.kategorija,
       },
     });

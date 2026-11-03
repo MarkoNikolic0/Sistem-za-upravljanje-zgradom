@@ -4,3 +4,8 @@ export enum Uloga {
   SERVISER = 'serviser',
   ADMIN = 'admin',
 }
+
+export enum StanjeNaloga {
+  AKTIVNI = 'aktivni',
+  DEAKTIVIRANI = 'deaktivirani',
+}

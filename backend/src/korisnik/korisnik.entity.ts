@@ -46,4 +46,7 @@ export class Korisnik {
 
   @CreateDateColumn({ type: 'timestamptz' })
   kreiranDatum: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deaktiviran: Date | null;
 }
