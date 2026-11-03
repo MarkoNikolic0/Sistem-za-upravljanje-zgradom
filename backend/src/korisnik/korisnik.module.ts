@@ -7,7 +7,6 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
-import { NalogKorisnikaService } from './nalog-korisnika.service.js';
 
 @Module({
   imports: [
@@ -20,7 +19,7 @@ import { NalogKorisnikaService } from './nalog-korisnika.service.js';
     AuthModule,
   ],
   controllers: [KorisnikController],
-  providers: [KorisnikService, NalogKorisnikaService],
+  providers: [KorisnikService],
   exports: [KorisnikService],
 })
 export class KorisnikModule {}

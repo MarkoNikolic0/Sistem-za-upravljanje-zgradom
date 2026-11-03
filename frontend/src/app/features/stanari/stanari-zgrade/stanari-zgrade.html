@@ -132,11 +132,9 @@
                                 iconOnly
                                 class="-mt-1 shrink-0"
                                 aria-haspopup="true"
-                                [attr.aria-expanded]="
-                                  meniOtvoren() && izabran()?.stanar?.id === stanar.id
-                                "
+                                [attr.aria-expanded]="meniReda.otvorenZa({ stan, stanar })"
                                 [attr.aria-label]="'Radnje: ' + ime(stanar)"
-                                (click)="otvoriMeni($event, meni, stan, stanar)"
+                                (click)="meniReda.otvori($event, meni, { stan, stanar })"
                               >
                                 <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
                               </button>
@@ -157,8 +155,8 @@
         [model]="radnje()"
         [popup]="true"
         ariaLabel="Radnje sa stanarom"
-        (onShow)="meniOtvoren.set(true)"
-        (onHide)="meniOtvoren.set(false)"
+        (onShow)="meniReda.prikazan(true)"
+        (onHide)="meniReda.prikazan(false)"
       />
       <p-confirmdialog
         [closable]="false"

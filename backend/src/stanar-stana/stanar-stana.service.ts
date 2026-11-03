@@ -116,18 +116,53 @@ export class StanarStanaService {
         zgradaId,
         id,
       );
-      await manager.delete(StanarStana, id);
-      await this.glasoviService.ukloniGlasove(
-        manager,
-        stanarId,
-        zgradaId,
-        veza.stan.id,
-        !ostajeUZgradi,
-      );
-      if (!ostajeUZgradi) {
-        await this.pracenjaService.ukloniPracenja(manager, stanarId, zgradaId);
-      }
+      await this.odseli(manager, stanarId, zgradaId, veza, ostajeUZgradi);
     });
+  }
+
+  async odseliIzSvihStanova(manager: EntityManager, korisnikId: number) {
+    const veze = await manager.find(StanarStana, {
+      where: { korisnik: { id: korisnikId } },
+      relations: { stan: { zgrada: true } },
+      select: { id: true, stan: { id: true, zgrada: { id: true } } },
+    });
+    for (const zgradaId of new Set(veze.map((v) => v.stan.zgrada.id))) {
+      const uZgradi = await zakljucajVeze(
+        manager,
+        korisnikId,
+        zgradaId,
+        'pessimistic_write',
+      );
+      for (const [i, veza] of uZgradi.entries()) {
+        await this.odseli(
+          manager,
+          korisnikId,
+          zgradaId,
+          veza,
+          i < uZgradi.length - 1,
+        );
+      }
+    }
+  }
+
+  private async odseli(
+    manager: EntityManager,
+    korisnikId: number,
+    zgradaId: number,
+    veza: Pick<StanarStana, 'id' | 'stan'>,
+    ostajeUZgradi: boolean,
+  ) {
+    await manager.delete(StanarStana, veza.id);
+    await this.glasoviService.ukloniGlasove(
+      manager,
+      korisnikId,
+      zgradaId,
+      veza.stan.id,
+      !ostajeUZgradi,
+    );
+    if (!ostajeUZgradi) {
+      await this.pracenjaService.ukloniPracenja(manager, korisnikId, zgradaId);
+    }
   }
 
   private async proveriUpravnika(

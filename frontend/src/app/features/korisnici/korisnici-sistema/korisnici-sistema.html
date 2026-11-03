@@ -113,9 +113,9 @@
               iconOnly
               class="shrink-0 self-start"
               aria-haspopup="true"
-              [attr.aria-expanded]="meniOtvoren() && izabran()?.korisnik?.id === k.id"
+              [attr.aria-expanded]="meniReda.otvorenZa(k)"
               [attr.aria-label]="'Radnje: ' + ime(k)"
-              (click)="otvoriMeni($event, meni, k)"
+              (click)="meniReda.otvori($event, meni, k)"
             >
               <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
             </button>
@@ -137,8 +137,8 @@
   [model]="radnje()"
   [popup]="true"
   ariaLabel="Radnje sa korisnikom"
-  (onShow)="meniOtvoren.set(true)"
-  (onHide)="meniOtvoren.set(false)"
+  (onShow)="meniReda.prikazan(true)"
+  (onHide)="meniReda.prikazan(false)"
 />
 <p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
 
@@ -150,7 +150,7 @@
   (onHide)="vratiFokus()"
   [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
 >
-  @if (izabran()?.korisnik; as k) {
+  @if (meniReda.izabran(); as k) {
     @if (k.zgrada) {
       <p class="text-sm">
         {{ ime(k) }} upravlja zgradom „{{ k.zgrada.naziv }}“. Upravnik se menja i razrešava na
@@ -197,7 +197,7 @@
       [outlined]="true"
       (onClick)="dijalogUloge.set(false)"
     />
-    @if (!izabran()?.korisnik?.zgrada) {
+    @if (!meniReda.izabran()?.zgrada) {
       <p-button label="Sačuvaj" (onClick)="sacuvajUlogu()" />
     }
   </ng-template>

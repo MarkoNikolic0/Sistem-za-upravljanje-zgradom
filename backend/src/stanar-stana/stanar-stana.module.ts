@@ -19,5 +19,6 @@ import { PratilacKvaraModule } from '../pratilac-kvara/pratilac-kvara.module.js'
   ],
   controllers: [StanarStanaController],
   providers: [StanarStanaService],
+  exports: [StanarStanaService],
 })
 export class StanarStanaModule {}

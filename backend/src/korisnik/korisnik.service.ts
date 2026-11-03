@@ -17,6 +17,19 @@ import { KorisnikUpitDto } from './dto/korisnik-upit.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { type Stranica, stranicenje } from '../shared/stranicenje.js';
 
+function poKorisniku<T extends { korisnik: { id: number } }, R>(
+  redovi: T[],
+  oblik: (red: T) => R,
+): Map<number, R[]> {
+  const grupe = new Map<number, R[]>();
+  for (const red of redovi) {
+    const grupa = grupe.get(red.korisnik.id) ?? [];
+    grupa.push(oblik(red));
+    grupe.set(red.korisnik.id, grupa);
+  }
+  return grupe;
+}
+
 @Injectable()
 export class KorisnikService {
   constructor(
@@ -158,6 +171,13 @@ export class KorisnikService {
         ])
       : [[], []];
 
+    const stanovi = poKorisniku(veze, (v) => ({
+      id: v.stan.id,
+      broj: v.stan.broj,
+      vlasnik: v.vlasnik,
+      zgrada: v.stan.zgrada,
+    }));
+    const struke = poKorisniku(specijalnosti, (sp) => sp.kategorija);
     const stavke = korisnici.map((k) => ({
       id: k.id,
       ime: k.ime,
@@ -167,17 +187,8 @@ export class KorisnikService {
       uloga: k.uloga,
       deaktiviran: k.deaktiviran,
       zgrada: k.zgrada,
-      stanovi: veze
-        .filter((v) => v.korisnik.id === k.id)
-        .map((v) => ({
-          id: v.stan.id,
-          broj: v.stan.broj,
-          vlasnik: v.vlasnik,
-          zgrada: v.stan.zgrada,
-        })),
-      specijalnosti: specijalnosti
-        .filter((sp) => sp.korisnik.id === k.id)
-        .map((sp) => sp.kategorija),
+      stanovi: stanovi.get(k.id) ?? [],
+      specijalnosti: struke.get(k.id) ?? [],
     }));
     return { stavke, ukupno } satisfies Stranica<(typeof stavke)[number]>;
   }

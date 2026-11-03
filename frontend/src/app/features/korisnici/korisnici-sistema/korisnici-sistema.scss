@@ -2,18 +2,6 @@
   display: block;
 }
 
-.alati {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
-
-  @media (min-width: 40rem) {
-    flex-direction: row;
-    align-items: flex-end;
-  }
-}
-
 .korisnik {
   align-items: flex-start;
   justify-content: flex-start;
@@ -22,14 +10,6 @@
   &.deaktiviran .inicijali {
     opacity: 0.5;
   }
-}
-
-.ime {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.5rem;
-  color: var(--color-naslov);
 }
 
 .znacka.serviser {
@@ -43,7 +23,6 @@
   color: var(--color-priguseno);
 }
 
-// Kratko uputstvo ispod izbora uloge
 .uputstvo {
   display: flex;
   gap: 0.5rem;

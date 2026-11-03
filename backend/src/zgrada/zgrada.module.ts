@@ -40,5 +40,6 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
     UpravnikZgradeService,
     ArhivaZgradeService,
   ],
+  exports: [UpravnikZgradeService],
 })
 export class ZgradaModule {}

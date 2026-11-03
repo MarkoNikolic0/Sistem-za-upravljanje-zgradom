@@ -16,7 +16,6 @@ import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
 import { withAkcije } from '../../shared/with-akcije';
 
 const KORISNIKA_PO_STRANI = 20;
-// Server traži najmanje 2 slova; kraći upit znači „bez pretrage“
 const MIN_PRETRAGE = 2;
 
 interface ListaKorisnikaState {

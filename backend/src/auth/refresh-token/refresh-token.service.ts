@@ -2,7 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
-import { IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
+import {
+  EntityManager,
+  IsNull,
+  LessThan,
+  MoreThan,
+  Not,
+  Repository,
+} from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
 import { generisiToken, hesirajToken } from './refresh-token.util.js';
@@ -101,6 +108,14 @@ export class RefreshTokenService {
         datumOpoziva: IsNull(),
         ...(trenutna && { porodicaId: Not(trenutna.porodicaId) }),
       },
+      { datumOpoziva: new Date() },
+    );
+  }
+
+  async opozoviSveSesije(manager: EntityManager, korisnikId: number) {
+    await manager.update(
+      RefreshToken,
+      { korisnik: { id: korisnikId }, datumOpoziva: IsNull() },
       { datumOpoziva: new Date() },
     );
   }

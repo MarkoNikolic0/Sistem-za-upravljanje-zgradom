@@ -5,7 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, LessThanOrEqual, Repository, DataSource } from 'typeorm';
+import {
+  IsNull,
+  Not,
+  LessThanOrEqual,
+  Repository,
+  DataSource,
+  EntityManager,
+} from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -245,6 +252,21 @@ export class OglasService {
       throw new ConflictException('Oglas je već sakriven.');
     }
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
+  }
+
+  async sakrijOglaseAutora(manager: EntityManager, autorId: number) {
+    await manager.update(
+      Oglas,
+      {
+        autor: { id: autorId },
+        vrsta: Not(VrstaOglasa.OBAVESTENJE),
+        datumSakrivanja: IsNull(),
+      },
+      {
+        datumSakrivanja: new Date(),
+        razlogSakrivanja: 'Nalog autora je deaktiviran.',
+      },
+    );
   }
 
   async obnovi(id: number, korisnikId: number, uloga: Uloga) {

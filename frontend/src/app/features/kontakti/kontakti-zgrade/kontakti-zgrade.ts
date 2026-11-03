@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -124,11 +123,8 @@ export class KontaktiZgrade {
       acceptButtonProps: { label: 'Obriši', severity: 'danger' },
       accept: async () => {
         const osvezi = () => this.kontakti.reload();
-        await this.akcije.izvrsi(
-          async () => {
-            await firstValueFrom(this.kontaktService.obrisi(zgradaId, kontakt.id));
-            osvezi();
-          },
+        await this.akcije.izvrsiZahtev(
+          this.kontaktService.obrisi(zgradaId, kontakt.id),
           `Kontakt „${kontakt.naziv}“ je obrisan.`,
           'Kontakt nije obrisan. Pokušaj ponovo.',
           osvezi,

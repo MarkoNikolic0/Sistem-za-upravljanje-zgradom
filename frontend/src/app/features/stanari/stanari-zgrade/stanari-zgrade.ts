@@ -1,20 +1,12 @@
-import {
-  Component,
-  computed,
-  inject,
-  input,
-  linkedSignal,
-  numberAttribute,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, numberAttribute } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { Menu, MenuModule } from 'primeng/menu';
+import { MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -29,16 +21,15 @@ import { StanariService } from '../stanari-service';
 import { pretraziStanove } from '../pretraga-stanara';
 import { poSpratovima } from '../../../shared/spratovi';
 import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
+import { meniReda } from '../../../shared/meni-reda';
 import { KorisniciSistema } from '../../korisnici/korisnici-sistema/korisnici-sistema';
 
-// Admin u izboru zgrade ima i sve korisnike sistema
 const SVI = 'svi';
 type Izbor = number | typeof SVI;
 
 interface Izabran {
   stan: StanSaStanarima;
   stanar: Stanar;
-  dugme: HTMLElement;
 }
 
 @Component({
@@ -114,11 +105,10 @@ export class StanariZgrade {
       : `Pronađeno: ${uMnozini(this.pronadjeni().length, 'stan', 'stana', 'stanova')}`,
   );
 
-  protected readonly izabran = signal<Izabran | null>(null);
-  protected readonly meniOtvoren = signal(false);
+  protected readonly meniReda = meniReda<Izabran>((i) => i.stanar.id);
 
   protected readonly radnje = computed((): MenuItem[] => {
-    const izabran = this.izabran();
+    const izabran = this.meniReda.izabran();
     if (izabran === null) {
       return [];
     }
@@ -150,12 +140,7 @@ export class StanariZgrade {
     this.akcije.ponisti();
   }
 
-  protected otvoriMeni(event: MouseEvent, meni: Menu, stan: StanSaStanarima, stanar: Stanar) {
-    this.izabran.set({ stan, stanar, dugme: event.currentTarget as HTMLElement });
-    meni.toggle(event);
-  }
-
-  private promeniVlasnika({ stan, stanar, dugme }: Izabran): void {
+  private promeniVlasnika({ stan, stanar }: Izabran): void {
     const zgradaId = this.zgradaId();
     if (zgradaId === null) {
       return;
@@ -179,11 +164,11 @@ export class StanariZgrade {
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Postavi za ukućanina' },
       accept: promeni,
-      reject: () => dugme.focus(),
+      reject: () => this.meniReda.vratiFokus(),
     });
   }
 
-  private odseli({ stan, stanar, dugme }: Izabran): void {
+  private odseli({ stan, stanar }: Izabran): void {
     const zgradaId = this.zgradaId();
     if (zgradaId === null) {
       return;
@@ -201,17 +186,14 @@ export class StanariZgrade {
           `${ime} više nije stanar stana ${stan.broj}.`,
           { tip: 'uspeh', tekst: `${ime} već nije stanar stana ${stan.broj}.` },
         ),
-      reject: () => dugme.focus(),
+      reject: () => this.meniReda.vratiFokus(),
     });
   }
 
   private async izvrsi(zahtev: Observable<unknown>, uspeh: string, nema: Poruka): Promise<void> {
     const osvezi = () => this.stanovi.reload();
-    await this.akcije.izvrsi(
-      async () => {
-        await firstValueFrom(zahtev);
-        osvezi();
-      },
+    await this.akcije.izvrsiZahtev(
+      zahtev,
       uspeh,
       'Promena nije sačuvana. Pokušaj ponovo.',
       osvezi,

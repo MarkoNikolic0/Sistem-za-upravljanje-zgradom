@@ -4,27 +4,30 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, EntityManager, In, IsNull, Raw } from 'typeorm';
-import { Korisnik } from './korisnik.entity.js';
+import { DataSource, EntityManager } from 'typeorm';
+import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
-import { Glas } from '../glasanje/glas.entity.js';
-import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
-import { Kvar } from '../kvar/kvar.entity.js';
-import { PromenaStatusaKvara } from '../kvar/promena-statusa-kvara.entity.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
-import { RefreshToken } from '../auth/refresh-token/refresh-token.entity.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
-import { StatusKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { StanarStanaService } from '../stanar-stana/stanar-stana.service.js';
+import { UpravnikZgradeService } from '../zgrada/upravnik-zgrade.service.js';
+import { KvarAkcijeService } from '../kvar/kvar-akcije.service.js';
+import { OglasService } from '../oglas/oglas.service.js';
+import { RefreshTokenService } from '../auth/refresh-token/refresh-token.service.js';
 import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
-
-// Kvarovi na kojima serviser jos radi vracaju se upravniku na ponovnu dodelu
-const KVAROVI_U_RADU = [StatusKvara.DODELJEN, StatusKvara.U_TOKU];
 
 @Injectable()
 export class NalogKorisnikaService {
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    private dataSource: DataSource,
+    private stanariService: StanarStanaService,
+    private upravnikService: UpravnikZgradeService,
+    private kvarAkcijeService: KvarAkcijeService,
+    private oglasService: OglasService,
+    private refreshTokenService: RefreshTokenService,
+  ) {}
 
   async promeniUlogu(id: number, adminId: number, dto: PromeniUloguDto) {
     await this.dataSource.transaction(async (manager) => {
@@ -42,7 +45,6 @@ export class NalogKorisnikaService {
       }
 
       if (dto.uloga === Uloga.SERVISER) {
-        // Serviser ne salje zahteve za stan; odbijanje ceka zahtev koji se upravo prihvata
         await this.odbijZahteve(manager, id);
         if (
           await manager.exists(StanarStana, { where: { korisnik: { id } } })
@@ -52,7 +54,11 @@ export class NalogKorisnikaService {
           );
         }
       } else {
-        await this.vratiKvarove(manager, id, adminId);
+        await this.kvarAkcijeService.vratiKvaroveServisera(
+          manager,
+          id,
+          adminId,
+        );
         await manager.delete(ServiserSpecijalnost, { korisnik: { id } });
       }
       await manager.update(Korisnik, id, { uloga: dto.uloga });
@@ -66,31 +72,14 @@ export class NalogKorisnikaService {
         return;
       }
       await this.odbijZahteve(manager, id);
-      // Prvo veze sa stanom: glasanje i pracenje ih zakljucavaju, pa posle njih ne ostaje nov glas
-      await manager.delete(StanarStana, { korisnik: { id } });
-      await manager.delete(Glas, {
-        korisnik: { id },
-        glasanje: {
-          id: Raw(
-            (kolona) =>
-              `${kolona} IN (SELECT "id" FROM "glasanje" WHERE "rok" > now())`,
-          ),
-        },
-      });
-      await manager.delete(PratilacKvara, { korisnik: { id } });
-      await this.vratiKvarove(manager, id, adminId);
-      await manager.update(
-        RefreshToken,
-        { korisnik: { id }, datumOpoziva: IsNull() },
-        { datumOpoziva: new Date() },
-      );
-      await manager.update(Korisnik, id, {
-        deaktiviran: new Date(),
-        ...(korisnik.uloga === Uloga.UPRAVNIK && {
-          uloga: Uloga.STANAR,
-          zgrada: null,
-        }),
-      });
+      await this.stanariService.odseliIzSvihStanova(manager, id);
+      if (korisnik.zgrada) {
+        await this.upravnikService.vratiUStanara(manager, korisnik.zgrada.id);
+      }
+      await this.kvarAkcijeService.vratiKvaroveServisera(manager, id, adminId);
+      await this.oglasService.sakrijOglaseAutora(manager, id);
+      await this.refreshTokenService.opozoviSveSesije(manager, id);
+      await manager.update(Korisnik, id, { deaktiviran: new Date() });
     });
   }
 
@@ -125,34 +114,5 @@ export class NalogKorisnikaService {
       { korisnik: { id }, status: StatusZahteva.NA_CEKANJU },
       { status: StatusZahteva.ODBIJEN },
     );
-  }
-
-  private async vratiKvarove(
-    manager: EntityManager,
-    serviserId: number,
-    adminId: number,
-  ) {
-    const rezultat = await manager
-      .createQueryBuilder()
-      .update(Kvar)
-      .set({
-        status: StatusKvara.PRIHVACEN,
-        serviser: null,
-        dolazakServisera: null,
-      })
-      .where({ serviser: { id: serviserId }, status: In(KVAROVI_U_RADU) })
-      .returning('id')
-      .execute();
-    const kvarovi = rezultat.raw as { id: number }[];
-    if (kvarovi.length > 0) {
-      await manager.insert(
-        PromenaStatusaKvara,
-        kvarovi.map(({ id }) => ({
-          kvar: { id },
-          status: StatusKvara.PRIHVACEN,
-          korisnik: { id: adminId },
-        })),
-      );
-    }
   }
 }

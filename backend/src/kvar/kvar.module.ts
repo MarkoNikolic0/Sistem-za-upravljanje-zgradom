@@ -28,6 +28,6 @@ import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
   ],
   controllers: [KvarController],
   providers: [KvarService, KvarPravaService, KvarAkcijeService],
-  exports: [KvarService, KvarPravaService],
+  exports: [KvarService, KvarPravaService, KvarAkcijeService],
 })
 export class KvarModule {}

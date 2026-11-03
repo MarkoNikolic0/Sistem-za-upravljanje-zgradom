@@ -22,5 +22,6 @@ import { GlasanjeModule } from '../glasanje/glasanje.module.js';
   ],
   controllers: [OglasController],
   providers: [OglasService, PrilogOglasaService, OglasPravaService],
+  exports: [OglasService],
 })
 export class OglasModule {}

@@ -290,6 +290,38 @@ export class KvarAkcijeService {
     }
   }
 
+  async vratiKvaroveServisera(
+    manager: EntityManager,
+    serviserId: number,
+    korisnikId: number,
+  ) {
+    const rezultat = await manager
+      .createQueryBuilder()
+      .update(Kvar)
+      .set({
+        status: StatusKvara.PRIHVACEN,
+        serviser: null,
+        dolazakServisera: null,
+      })
+      .where({
+        serviser: { id: serviserId },
+        status: In([StatusKvara.DODELJEN, StatusKvara.U_TOKU]),
+      })
+      .returning('id')
+      .execute();
+    const kvarovi = rezultat.raw as { id: number }[];
+    if (kvarovi.length > 0) {
+      await manager.insert(
+        PromenaStatusaKvara,
+        kvarovi.map(({ id }) => ({
+          kvar: { id },
+          status: StatusKvara.PRIHVACEN,
+          korisnik: { id: korisnikId },
+        })),
+      );
+    }
+  }
+
   private async prelaz(
     id: number,
     izStatusa: StatusKvara[],

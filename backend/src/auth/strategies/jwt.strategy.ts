@@ -27,7 +27,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  // Uloga se cita iz baze, pa promena uloge i deaktivacija vaze odmah
   async validate(payload: JwtPayload): Promise<TrenutniKorisnikPodaci> {
     const korisnik = await this.korisnikRepository.findOne({
       where: { id: payload.sub, ...AKTIVAN_KORISNIK },

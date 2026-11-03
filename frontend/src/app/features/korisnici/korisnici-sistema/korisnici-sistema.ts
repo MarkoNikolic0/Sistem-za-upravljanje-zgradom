@@ -1,13 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { Menu, MenuModule } from 'primeng/menu';
+import { MenuModule } from 'primeng/menu';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
@@ -17,14 +17,10 @@ import { KategorijaKvara, NAZIVI_KATEGORIJA_KVARA } from '../../kvarovi/kvar-mod
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { Paginacija } from '../../../shared/paginacija/paginacija';
+import { meniReda } from '../../../shared/meni-reda';
 import { DodeljivaUloga, KorisnikSistema, StanjeNaloga } from '../korisnik-models';
 import { KorisnikService } from '../korisnik-service';
 import { ListaKorisnikaStore } from '../lista-korisnika-store';
-
-interface Izabran {
-  korisnik: KorisnikSistema;
-  dugme: HTMLElement;
-}
 
 @Component({
   imports: [
@@ -79,11 +75,10 @@ export class KorisniciSistema {
   protected readonly telefon = formatirajTelefon;
 
   protected readonly upit = signal('');
-  protected readonly izabran = signal<Izabran | null>(null);
-  protected readonly meniOtvoren = signal(false);
+  protected readonly meniReda = meniReda<KorisnikSistema>((k) => k.id);
   protected readonly imeIzabranog = computed(() => {
-    const izabran = this.izabran();
-    return izabran ? this.ime(izabran.korisnik) : '';
+    const k = this.meniReda.izabran();
+    return k ? this.ime(k) : '';
   });
 
   protected readonly dijalogUloge = signal(false);
@@ -92,11 +87,10 @@ export class KorisniciSistema {
   protected readonly noveStruke = signal<KategorijaKvara[]>([]);
 
   protected readonly radnje = computed((): MenuItem[] => {
-    const izabran = this.izabran();
-    if (izabran === null) {
+    const k = this.meniReda.izabran();
+    if (k === null) {
       return [];
     }
-    const k = izabran.korisnik;
     const disabled = this.store.akcijaUToku();
     if (k.deaktiviran) {
       return [
@@ -104,7 +98,7 @@ export class KorisniciSistema {
           label: 'Aktiviraj',
           icon: 'pi pi-replay',
           disabled,
-          command: () => this.aktiviraj(izabran),
+          command: () => this.aktiviraj(k),
         },
       ];
     }
@@ -129,7 +123,7 @@ export class KorisniciSistema {
         label: 'Deaktiviraj',
         icon: 'pi pi-ban',
         disabled,
-        command: () => this.deaktiviraj(izabran),
+        command: () => this.deaktiviraj(k),
       },
     ];
   });
@@ -155,12 +149,6 @@ export class KorisniciSistema {
     this.store.pretrazi(tekst);
   }
 
-  protected otvoriMeni(event: MouseEvent, meni: Menu, korisnik: KorisnikSistema): void {
-    this.izabran.set({ korisnik, dugme: event.currentTarget as HTMLElement });
-    meni.toggle(event);
-  }
-
-  // Dijalog se zatvara posle animacije; posle čuvanja fokus ide na poruku, ne na dugme
   private sacuvano = false;
 
   protected vratiFokus(): void {
@@ -168,7 +156,7 @@ export class KorisniciSistema {
       this.sacuvano = false;
       return;
     }
-    this.izabran()?.dugme.focus();
+    this.meniReda.vratiFokus();
   }
 
   private otvoriUlogu(k: KorisnikSistema): void {
@@ -177,11 +165,10 @@ export class KorisniciSistema {
   }
 
   protected sacuvajUlogu(): void {
-    const izabran = this.izabran();
-    if (izabran === null) {
+    const k = this.meniReda.izabran();
+    if (k === null) {
       return;
     }
-    const k = izabran.korisnik;
     const uloga = this.novaUloga();
     if (uloga === k.uloga) {
       this.dijalogUloge.set(false);
@@ -205,27 +192,32 @@ export class KorisniciSistema {
   }
 
   protected sacuvajStruke(): void {
-    const izabran = this.izabran();
-    if (izabran === null) {
+    const k = this.meniReda.izabran();
+    if (k === null) {
       return;
     }
     this.sacuvano = true;
     this.dijalogStruka.set(false);
     void this.izvrsi(
-      this.korisnikService.postaviSpecijalnosti(izabran.korisnik.id, this.noveStruke()),
-      `Struke su sačuvane: ${this.ime(izabran.korisnik)}.`,
+      this.korisnikService.postaviSpecijalnosti(k.id, this.noveStruke()),
+      `Struke su sačuvane: ${this.ime(k)}.`,
     );
   }
 
-  private deaktiviraj({ korisnik: k, dugme }: Izabran): void {
+  private deaktiviraj(k: KorisnikSistema): void {
     const posledice = [
-      'Odseliće se iz svih stanova, a glasovi u glasanjima koja traju i praćenja kvarova se brišu.',
+      ...(k.stanovi.length > 0
+        ? [
+            'Odseliće se iz svih stanova, a glasovi u glasanjima koja traju i praćenja kvarova se brišu.',
+          ]
+        : []),
       ...(k.zgrada ? [`Prestaje da upravlja zgradom „${k.zgrada.naziv}“.`] : []),
       ...(k.uloga === 'serviser' ? ['Kvarovi na kojima radi vraćaju se upravniku.'] : []),
+      'Oglasi ovog naloga se sakrivaju, a obaveštenja ostaju.',
     ];
     this.confirmationService.confirm({
       header: 'Deaktivacija naloga',
-      message: `${this.ime(k)} više neće moći da se prijavi. ${posledice.join(' ')} Nalog može ponovo da se aktivira, ali bez stanova.`,
+      message: `${this.ime(k)} više neće moći da se prijavi. ${posledice.join(' ')} Nalog može ponovo da se aktivira.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Deaktiviraj', severity: 'danger' },
@@ -234,11 +226,11 @@ export class KorisniciSistema {
           this.korisnikService.deaktiviraj(k.id),
           `Nalog je deaktiviran: ${this.ime(k)}.`,
         ),
-      reject: () => dugme.focus(),
+      reject: () => this.meniReda.vratiFokus(),
     });
   }
 
-  private aktiviraj({ korisnik: k }: Izabran): void {
+  private aktiviraj(k: KorisnikSistema): void {
     void this.izvrsi(
       this.korisnikService.aktiviraj(k.id),
       `Nalog je ponovo aktivan: ${this.ime(k)}.`,
@@ -246,11 +238,8 @@ export class KorisniciSistema {
   }
 
   private async izvrsi(zahtev: Observable<unknown>, uspeh: string): Promise<void> {
-    await this.store.izvrsi(
-      async () => {
-        await firstValueFrom(zahtev);
-        this.store.ucitaj();
-      },
+    await this.store.izvrsiZahtev(
+      zahtev,
       uspeh,
       'Promena nije sačuvana. Pokušaj ponovo.',
       () => this.store.ucitaj(),

@@ -15,7 +15,6 @@ import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
 export class ServiserSpecijalnostService {
   constructor(private dataSource: DataSource) {}
 
-  // Ceo spisak struka odjednom; dodeljeni kvarovi ostaju i kad se struka ukloni
   async postavi(korisnikId: number, { kategorije }: PostaviSpecijalnostiDto) {
     return await this.dataSource.transaction(async (manager) => {
       const korisnik = await manager.findOne(Korisnik, {

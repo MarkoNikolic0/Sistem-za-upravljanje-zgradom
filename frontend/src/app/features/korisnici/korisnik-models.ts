@@ -24,7 +24,6 @@ export interface KorisnikSistema extends KorisnikPretrage {
 
 export type StanjeNaloga = 'aktivni' | 'deaktivirani';
 
-// Upravnik se dodeljuje na stranici zgrade, administrator samo u bazi
 export type DodeljivaUloga = Extract<Uloga, 'stanar' | 'serviser'>;
 
 export interface UpitKorisnika extends UpitStrane {
