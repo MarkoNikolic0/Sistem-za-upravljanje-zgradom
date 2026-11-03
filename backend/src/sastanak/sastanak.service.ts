@@ -17,7 +17,6 @@ import {
 import { Sastanak } from './sastanak.entity.js';
 import { TackaDnevnogReda } from './tacka-dnevnog-reda.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
-import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { GlasanjeRezultatiService } from '../glasanje/glasanje-rezultati.service.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import {
@@ -27,7 +26,7 @@ import {
   uZgradama,
   zgradeVlasnika,
 } from '../korisnik/pristup-zgradama.js';
-import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import {
@@ -57,7 +56,6 @@ export class SastanakService {
     private sastanakRepository: Repository<Sastanak>,
     @InjectRepository(Glasanje)
     private glasanjeRepository: Repository<Glasanje>,
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private glasanjeRezultati: GlasanjeRezultatiService,
     private korisnikService: KorisnikService,
     private dataSource: DataSource,
@@ -81,7 +79,7 @@ export class SastanakService {
         vrsta,
         zgrade: samoZgrada(zgradeVrste(vrsta, p), upit.zgradaId),
       }))
-      .filter(({ zgrade }) => zgrade?.length !== 0)
+      .filter(({ zgrade }) => zgrade.length > 0)
       .map(({ vrsta, zgrade }): FindOptionsWhere<Sastanak> => ({
         vrsta,
         pocetak,
@@ -107,38 +105,31 @@ export class SastanakService {
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateSastanakDto) {
+    await proveriAktivnu(this.dataSource.manager, dto.zgradaId);
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.upravlja, dto.zgradaId)) {
       throw new ForbiddenException('Sastanak zakazuje upravnik zgrade.');
-    }
-    if (
-      p.upravlja === null &&
-      !(await this.zgradaRepository.existsBy({
-        id: dto.zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(
-        `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
-      );
     }
     const hitno = dto.hitno ?? false;
     this.proveriTermin(dto.vrsta, dto.pocetak, hitno);
     await this.proveriTacke(dto.vrsta, dto.tacke, dto.zgradaId);
 
-    const { id } = await this.sastanakRepository.save(
-      this.sastanakRepository.create({
-        vrsta: dto.vrsta,
-        naslov: dto.naslov,
-        opis: dto.opis || null,
-        pocetak: dto.pocetak,
-        lokacija: dto.lokacija,
-        hitno: this.hitno(dto.vrsta, hitno),
-        zgrada: { id: dto.zgradaId },
-        organizator: { id: korisnikId },
-        tacke: this.noveTacke(dto.tacke),
-      }),
-    );
+    const { id } = await this.dataSource.transaction(async (manager) => {
+      await proveriAktivnu(manager, dto.zgradaId, true);
+      return await manager.save(
+        this.sastanakRepository.create({
+          vrsta: dto.vrsta,
+          naslov: dto.naslov,
+          opis: dto.opis || null,
+          pocetak: dto.pocetak,
+          lokacija: dto.lokacija,
+          hitno: this.hitno(dto.vrsta, hitno),
+          zgrada: { id: dto.zgradaId },
+          organizator: { id: korisnikId },
+          tacke: this.noveTacke(dto.tacke),
+        }),
+      );
+    });
     return this.findOne(id, korisnikId, uloga);
   }
 
@@ -213,7 +204,7 @@ export class SastanakService {
         tacke: { odluka: true },
       },
     });
-    if (!sastanak || sastanak.zgrada.arhivirana) {
+    if (!sastanak) {
       throw new NotFoundException(`Sastanak sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);

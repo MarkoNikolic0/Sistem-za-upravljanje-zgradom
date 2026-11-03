@@ -7,28 +7,20 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
-import { AKTIVNA_ZGRADA } from './aktivna-zgrada.js';
+import { AKTIVNA_ZGRADA, proveriAktivnu } from './aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 
 @Injectable()
 export class UpravnikZgradeService {
   constructor(
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
     private dataSource: DataSource,
   ) {}
 
   async find(zgradaId: number) {
-    if (
-      !(await this.zgradaRepository.existsBy({
-        id: zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
-    }
+    await proveriAktivnu(this.dataSource.manager, zgradaId);
     const korisnik = await this.korisnikRepository.findOne({
       where: { uloga: Uloga.UPRAVNIK, zgrada: { id: zgradaId } },
       select: {

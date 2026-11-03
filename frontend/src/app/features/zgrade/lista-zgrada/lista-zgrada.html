@@ -52,7 +52,13 @@
         <p class="text-naslov">
           {{ arhivirane().length > 0 ? 'Nema aktivnih zgrada' : 'U sistemu još nema zgrada' }}
         </p>
-        <p class="mt-1 text-sm text-priguseno">Dodaj prvu zgradu, pa njene stanove i upravnika.</p>
+        <p class="mt-1 text-sm text-priguseno">
+          {{
+            arhivirane().length > 0
+              ? 'Dodaj novu zgradu ili vrati arhiviranu.'
+              : 'Dodaj prvu zgradu, pa njene stanove i upravnika.'
+          }}
+        </p>
       </div>
     } @else {
       <ul class="mreza">

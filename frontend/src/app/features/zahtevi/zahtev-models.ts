@@ -21,7 +21,8 @@ export interface ZahtevResponse {
   id: number;
   status: StatusZahteva;
   datumPodnosenjaZahteva: string;
-  stan: StanOsnovno & { zgrada: ZgradaOsnovno };
+  // Ako je zgrada arhivirana, zahtev je odbijen arhiviranjem, a ne odlukom upravnika
+  stan: StanOsnovno & { zgrada: ZgradaOsnovno & { arhivirana: string | null } };
 }
 
 export interface CreateZahtevRequest {

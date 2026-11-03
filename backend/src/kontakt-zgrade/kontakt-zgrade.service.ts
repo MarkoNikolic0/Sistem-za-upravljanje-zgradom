@@ -9,7 +9,7 @@ import { DataSource, Repository } from 'typeorm';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { KontaktZgrade } from './kontakt-zgrade.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
-import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+import { AKTIVNA_ZGRADA, proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -27,17 +27,16 @@ export class KontaktZgradeService {
   constructor(
     @InjectRepository(KontaktZgrade)
     private kontaktRepository: Repository<KontaktZgrade>,
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
     private dataSource: DataSource,
   ) {}
 
   async findAll(zgradaId: number, korisnikId: number, uloga: Uloga) {
+    await proveriAktivnu(this.dataSource.manager, zgradaId);
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.zgrade, zgradaId)) {
       throw new ForbiddenException('Nemate pristup ovoj zgradi!');
     }
-    await this.postojiZgrada(zgradaId);
 
     return await this.kontaktRepository.find({
       where: { zgrada: { id: zgradaId } },
@@ -116,17 +115,6 @@ export class KontaktZgradeService {
       zgradaId,
       'Kontakte uređuje samo upravnik ove zgrade!',
     );
-  }
-
-  private async postojiZgrada(zgradaId: number) {
-    if (
-      !(await this.zgradaRepository.existsBy({
-        id: zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
-    }
   }
 
   private async nadjiKontakt(zgradaId: number, id: number) {

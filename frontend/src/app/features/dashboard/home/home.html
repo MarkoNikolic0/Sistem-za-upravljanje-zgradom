@@ -36,9 +36,15 @@
           <section class="prvi-korak" aria-labelledby="prvi-korak-naslov">
             <h2 id="prvi-korak-naslov" class="naslov-odeljka">Zahtev nije prihvaćen</h2>
             <p class="mt-3 text-tekst">
-              Upravnik je odbio zahtev za
-              <span class="text-naslov">Stan {{ zahtev.stan.broj }}</span>
-              ({{ zahtev.stan.zgrada.naziv }}). Proveri izbor stana i pošalji novi zahtev.
+              @if (zahtev.stan.zgrada.arhivirana) {
+                {{ zahtev.stan.zgrada.naziv }} više nije u aplikaciji, pa zahtev za
+                <span class="text-naslov">Stan {{ zahtev.stan.broj }}</span> nije prihvaćen. Ako
+                živiš u drugoj zgradi, pošalji novi zahtev.
+              } @else {
+                Upravnik je odbio zahtev za
+                <span class="text-naslov">Stan {{ zahtev.stan.broj }}</span>
+                ({{ zahtev.stan.zgrada.naziv }}). Proveri izbor stana i pošalji novi zahtev.
+              }
             </p>
             <a pButton routerLink="/povezivanje" class="mt-5">Poveži se sa stanom</a>
           </section>

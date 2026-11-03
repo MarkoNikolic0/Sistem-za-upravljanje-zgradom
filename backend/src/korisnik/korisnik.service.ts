@@ -12,7 +12,7 @@ import { UpdateProfilDto } from './dto/update-profil.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { sadrzi, type PristupZgradama } from './pristup-zgradama.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
-import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+import { AKTIVNA_ZGRADA, proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { KorisnikUpitDto } from './dto/korisnik-upit.dto.js';
 
 const MAKS_REZULTATA_PRETRAGE = 20;
@@ -56,12 +56,17 @@ export class KorisnikService {
       .map((v) => ({ id: v.stan.id, zgradaId: v.stan.zgrada.id }));
     const poseduje = [...new Set(vlasnickiStanovi.map((s) => s.zgradaId))];
     if (uloga === Uloga.ADMIN) {
+      const aktivne = await this.zgradaRepository.find({
+        where: AKTIVNA_ZGRADA,
+        select: { id: true },
+      });
+      const sve = aktivne.map((z) => z.id);
       return {
         stanuje,
         poseduje,
         vlasnickiStanovi,
-        zgrade: null,
-        upravlja: null,
+        zgrade: sve,
+        upravlja: sve,
       };
     }
     const zgradaUpravnika =
@@ -77,17 +82,10 @@ export class KorisnikService {
     zgradaId: number,
     poruka: string,
   ) {
+    await proveriAktivnu(this.zgradaRepository.manager, zgradaId);
     const p = await this.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.upravlja, zgradaId)) {
       throw new ForbiddenException(poruka);
-    }
-    if (
-      !(await this.zgradaRepository.existsBy({
-        id: zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
   }
 

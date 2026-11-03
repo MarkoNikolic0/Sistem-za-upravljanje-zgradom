@@ -36,26 +36,24 @@ export class OglasPravaService {
   ): FindOptionsWhere<Oglas>[] {
     const zgrade = samoZgrada(p.zgrade, upit.zgradaId);
     const upravlja = samoZgrada(p.upravlja, upit.zgradaId);
-    if (zgrade?.length === 0) {
+    if (zgrade.length === 0) {
       return [];
     }
 
-    const uslov = (ids: number[] | null): FindOptionsWhere<Oglas> => ({
+    const uslov = (ids: number[]): FindOptionsWhere<Oglas> => ({
       ...uZgradama(ids),
       ...(upit.vrsta ? { vrsta: upit.vrsta } : {}),
     });
-    // Admin vidi sve; sakriven i istekao oglas od ostalih vide samo autor i upravnik zgrade.
-    return upravlja === null
-      ? [uslov(zgrade)]
-      : [
-          {
-            ...uslov(zgrade),
-            datumSakrivanja: IsNull(),
-            vaziDo: Or(IsNull(), MoreThan(new Date())),
-          },
-          { ...uslov(zgrade), autor: { id: korisnikId } },
-          ...(upravlja.length > 0 ? [uslov(upravlja)] : []),
-        ];
+    // Sakriven i istekao oglas vide samo autor i upravnik zgrade (admin upravlja svim zgradama)
+    return [
+      {
+        ...uslov(zgrade),
+        datumSakrivanja: IsNull(),
+        vaziDo: Or(IsNull(), MoreThan(new Date())),
+      },
+      { ...uslov(zgrade), autor: { id: korisnikId } },
+      ...(upravlja.length > 0 ? [uslov(upravlja)] : []),
+    ];
   }
 
   async findDostupan(id: number, korisnikId: number, uloga: Uloga) {
@@ -63,7 +61,7 @@ export class OglasPravaService {
       where: { id },
       relations: { zgrada: true, autor: true, prilozi: true },
     });
-    if (!oglas || oglas.zgrada.arhivirana) {
+    if (!oglas) {
       throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);

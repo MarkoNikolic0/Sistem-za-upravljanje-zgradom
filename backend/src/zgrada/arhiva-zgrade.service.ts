@@ -1,15 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager, In, MoreThan } from 'typeorm';
+import { DataSource, EntityManager, Raw } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
-import { Stan } from '../stan/stan.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
-import { Glasanje } from '../glasanje/glasanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
-import { Kvar } from '../kvar/kvar.entity.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
+
+// Red pokazuje na stan, kvar ili glasanje ove zgrade; podupit u bazi, bez učitavanja id-jeva
+function uZgradi(
+  tabela: 'stan' | 'kvar' | 'glasanje',
+  zgradaId: number,
+  uslov = '',
+) {
+  return Raw(
+    (kolona) =>
+      `${kolona} IN (SELECT "id" FROM "${tabela}" WHERE "zgradaId" = :zgradaId ${uslov})`,
+    { zgradaId },
+  );
+}
 
 @Injectable()
 export class ArhivaZgradeService {
@@ -18,35 +28,31 @@ export class ArhivaZgradeService {
     private upravnikService: UpravnikZgradeService,
   ) {}
 
+  // Podaci zgrade ostaju, a ljudi se iz nje uklanjaju kao pri odseljenju
   async arhiviraj(zgradaId: number) {
     await this.dataSource.transaction(async (manager) => {
       const zgrada = await this.zakljucaj(manager, zgradaId);
       if (zgrada.arhivirana) {
         return;
       }
-      const stanovi = await this.idjevi(manager, Stan, zgradaId);
-      if (stanovi.length > 0) {
-        await manager.update(
-          ZahtevPovezivanje,
-          { stan: { id: In(stanovi) }, status: StatusZahteva.NA_CEKANJU },
-          { status: StatusZahteva.ODBIJEN },
-        );
-        await manager.delete(StanarStana, { stan: { id: In(stanovi) } });
-      }
-
-      const glasanja = await manager.find(Glasanje, {
-        where: { zgrada: { id: zgradaId }, rok: MoreThan(new Date()) },
-        select: { id: true },
+      // Prvo zahtevi: prihvatanje u toku se završi pre, pa se i taj stanar odseli ispod
+      await manager.update(
+        ZahtevPovezivanje,
+        {
+          stan: { id: uZgradi('stan', zgradaId) },
+          status: StatusZahteva.NA_CEKANJU,
+        },
+        { status: StatusZahteva.ODBIJEN },
+      );
+      await manager.delete(StanarStana, {
+        stan: { id: uZgradi('stan', zgradaId) },
       });
-      if (glasanja.length > 0) {
-        await manager.delete(Glas, {
-          glasanje: { id: In(glasanja.map((g) => g.id)) },
-        });
-      }
-      const kvarovi = await this.idjevi(manager, Kvar, zgradaId);
-      if (kvarovi.length > 0) {
-        await manager.delete(PratilacKvara, { kvar: { id: In(kvarovi) } });
-      }
+      await manager.delete(Glas, {
+        glasanje: { id: uZgradi('glasanje', zgradaId, 'AND "rok" > now()') },
+      });
+      await manager.delete(PratilacKvara, {
+        kvar: { id: uZgradi('kvar', zgradaId) },
+      });
 
       await this.upravnikService.vratiUStanara(manager, zgradaId);
       await manager.update(Zgrada, zgradaId, { arhivirana: new Date() });
@@ -70,17 +76,5 @@ export class ArhivaZgradeService {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
     return zgrada;
-  }
-
-  private async idjevi(
-    manager: EntityManager,
-    entitet: typeof Stan | typeof Kvar,
-    zgradaId: number,
-  ) {
-    const redovi = await manager.find(entitet, {
-      where: { zgrada: { id: zgradaId } },
-      select: { id: true },
-    });
-    return redovi.map((r) => r.id);
   }
 }

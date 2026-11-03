@@ -7,7 +7,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, LessThanOrEqual, Repository, DataSource } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
-import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
@@ -21,7 +20,7 @@ import { VREMENSKA_ZONA } from '../shared/vreme.js';
 import { PrilogOglasaService } from './prilog-oglasa.service.js';
 import { PrilogOglasa } from './prilog-oglasa.entity.js';
 import { type PristupZgradama, sadrzi } from '../korisnik/pristup-zgradama.js';
-import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { OglasPravaService } from './oglas-prava.service.js';
 import { GlasanjeService } from '../glasanje/glasanje.service.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
@@ -34,7 +33,6 @@ const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA
 export class OglasService {
   constructor(
     @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     private korisnikService: KorisnikService,
     private prilogService: PrilogOglasaService,
     private glasanjeService: GlasanjeService,
@@ -78,21 +76,11 @@ export class OglasService {
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateOglasDto) {
+    await proveriAktivnu(this.dataSource.manager, dto.zgradaId);
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.zgrade, dto.zgradaId)) {
       throw new ForbiddenException(
         'Oglas možeš da objaviš samo u zgradi u kojoj stanuješ.',
-      );
-    }
-    if (
-      p.zgrade === null &&
-      !(await this.zgradaRepository.existsBy({
-        id: dto.zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(
-        `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
       );
     }
     this.prava.proveriVrstu(dto.vrsta, p, dto.zgradaId);
@@ -104,19 +92,22 @@ export class OglasService {
     }
 
     try {
-      return await this.oglasRepository.save(
-        this.oglasRepository.create({
-          naslov: dto.naslov,
-          tekst: dto.tekst,
-          vrsta: dto.vrsta,
-          vazno: dto.vazno,
-          vaziDo: dto.vaziDo,
-          zgrada: { id: dto.zgradaId },
-          autor: { id: korisnikId },
-          glasanje:
-            dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
-        }),
-      );
+      return await this.dataSource.transaction(async (manager) => {
+        await proveriAktivnu(manager, dto.zgradaId, true);
+        return await manager.save(
+          this.oglasRepository.create({
+            naslov: dto.naslov,
+            tekst: dto.tekst,
+            vrsta: dto.vrsta,
+            vazno: dto.vazno,
+            vaziDo: dto.vaziDo,
+            zgrada: { id: dto.zgradaId },
+            autor: { id: korisnikId },
+            glasanje:
+              dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
+          }),
+        );
+      });
     } catch (greska) {
       if (jeDupliUnos(greska)) {
         throw new ConflictException('Odluka je već objavljena.');

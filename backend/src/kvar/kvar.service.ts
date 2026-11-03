@@ -30,6 +30,7 @@ import {
 } from './kvar.constants.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
+import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 
 @Injectable()
@@ -66,6 +67,7 @@ export class KvarService {
     });
 
     return await this.dataSource.transaction(async (manager) => {
+      await proveriAktivnu(manager, kvar.zgrada.id, true);
       const sacuvan = await manager.save(kvar);
       await manager.insert(PromenaStatusaKvara, {
         kvar: { id: sacuvan.id },

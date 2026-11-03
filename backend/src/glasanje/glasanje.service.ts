@@ -8,11 +8,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, MoreThan, Repository } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
-import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { sadrzi } from '../korisnik/pristup-zgradama.js';
-import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import {
   StanjeGlasanja,
@@ -32,8 +31,6 @@ export class GlasanjeService {
   constructor(
     @InjectRepository(Glasanje)
     private glasanjeRepository: Repository<Glasanje>,
-    @InjectRepository(Stan) private stanRepository: Repository<Stan>,
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
     private korisnikService: KorisnikService,
     private prava: GlasanjePravaService,
@@ -101,20 +98,10 @@ export class GlasanjeService {
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateGlasanjeDto) {
+    await proveriAktivnu(this.glasanjeRepository.manager, dto.zgradaId);
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.upravlja, dto.zgradaId)) {
       throw new ForbiddenException('Glasanje pravi upravnik zgrade.');
-    }
-    if (
-      p.upravlja === null &&
-      !(await this.zgradaRepository.existsBy({
-        id: dto.zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(
-        `Zgrada sa id-jem ${dto.zgradaId} ne postoji!`,
-      );
     }
     const odluka = dto.vrsta === VrstaGlasanja.ODLUKA;
     if (odluka && dto.opcije !== undefined) {
@@ -124,20 +111,25 @@ export class GlasanjeService {
       throw greskaPolja('vecina', 'Većina se bira samo za odluku.');
     }
 
-    const { id } = await this.glasanjeRepository.save(
-      this.glasanjeRepository.create({
-        vrsta: dto.vrsta,
-        vecina: dto.vecina ?? null,
-        ukupnoStanova: odluka
-          ? await this.stanRepository.countBy({ zgrada: { id: dto.zgradaId } })
-          : null,
-        pitanje: dto.pitanje,
-        opis: dto.opis || null,
-        rok: dto.rok,
-        zgrada: { id: dto.zgradaId },
-        kreirao: { id: korisnikId },
-        opcije: (dto.opcije ?? ODGOVORI_ODLUKE).map((tekst) => ({ tekst })),
-      }),
+    const { id } = await this.glasanjeRepository.manager.transaction(
+      async (manager) => {
+        await proveriAktivnu(manager, dto.zgradaId, true);
+        return await manager.save(
+          this.glasanjeRepository.create({
+            vrsta: dto.vrsta,
+            vecina: dto.vecina ?? null,
+            ukupnoStanova: odluka
+              ? await manager.countBy(Stan, { zgrada: { id: dto.zgradaId } })
+              : null,
+            pitanje: dto.pitanje,
+            opis: dto.opis || null,
+            rok: dto.rok,
+            zgrada: { id: dto.zgradaId },
+            kreirao: { id: korisnikId },
+            opcije: (dto.opcije ?? ODGOVORI_ODLUKE).map((tekst) => ({ tekst })),
+          }),
+        );
+      },
     );
     return this.rezultati.jedno(id, korisnikId, p);
   }

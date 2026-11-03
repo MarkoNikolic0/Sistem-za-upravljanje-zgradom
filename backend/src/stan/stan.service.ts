@@ -8,8 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stan } from './stan.entity.js';
 import { In, Repository } from 'typeorm';
-import { Zgrada } from '../zgrada/zgrada.entity.js';
-import { AKTIVNA_ZGRADA } from '../zgrada/aktivna-zgrada.js';
+import { AKTIVNA_ZGRADA, proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { CreateStanDto, PodaciStanaDto } from './dto/create-stan.dto.js';
 import { UpdateStanDto } from './dto/update-stan.dto.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
@@ -20,13 +19,12 @@ import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.enti
 import { Glas } from '../glasanje/glas.entity.js';
 import { poRedosleduStanova } from './redosled-stanova.js';
 import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
-import { jeDupliUnos, jeNepostojecaVeza } from '../shared/greske-baze.js';
+import { jeDupliUnos } from '../shared/greske-baze.js';
 
 @Injectable()
 export class StanService {
   constructor(
     @InjectRepository(Stan) private stanRepository: Repository<Stan>,
-    @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
@@ -125,14 +123,7 @@ export class StanService {
     podaci: PodaciStanaDto[],
   ) {
     await this.proveriZgradu(korisnikId, uloga, zgradaId);
-    if (
-      !(await this.zgradaRepository.existsBy({
-        id: zgradaId,
-        ...AKTIVNA_ZGRADA,
-      }))
-    ) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
-    }
+    await proveriAktivnu(this.stanRepository.manager, zgradaId);
 
     const brojevi = podaci.map((p) => p.broj);
     const ponovljeni = brojevi.filter((b, i) => brojevi.indexOf(b) !== i);
@@ -162,15 +153,15 @@ export class StanService {
       }),
     );
     try {
-      return await this.stanRepository.save(stanovi);
+      return await this.stanRepository.manager.transaction(async (manager) => {
+        await proveriAktivnu(manager, zgradaId, true);
+        return await manager.save(stanovi);
+      });
     } catch (greska) {
       if (jeDupliUnos(greska)) {
         throw new ConflictException(
           'Neko je u međuvremenu dodao stan sa istim brojem. Osveži stranicu.',
         );
-      }
-      if (jeNepostojecaVeza(greska)) {
-        throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
       }
       throw greska;
     }

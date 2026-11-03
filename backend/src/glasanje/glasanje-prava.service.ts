@@ -38,7 +38,7 @@ export class GlasanjePravaService {
         vrsta,
         zgrade: samoZgrada(zgrade, zgradaId),
       }))
-      .filter(({ zgrade }) => zgrade?.length !== 0)
+      .filter(({ zgrade }) => zgrade.length > 0)
       .map(({ vrsta, zgrade }) => ({
         vrsta,
         ...uZgradama(zgrade),
@@ -50,7 +50,7 @@ export class GlasanjePravaService {
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
     });
-    if (!glasanje || glasanje.zgrada.arhivirana) {
+    if (!glasanje) {
       throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
     }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
