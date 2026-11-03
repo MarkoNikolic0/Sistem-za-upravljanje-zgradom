@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { formatirajTelefon } from '../../../shared/telefon';
+import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { KontaktZgrade } from '../kontakt-models';
 
 @Component({

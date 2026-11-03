@@ -9,10 +9,10 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../shared/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
-import { withAkcije } from '../../shared/with-akcije';
-import { porukaServera } from '../../shared/greske-servera';
+} from '../../shared/stanje/with-request-status';
+import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { withAkcije } from '../../shared/stanje/with-akcije';
+import { porukaServera } from '../../shared/forme/greske-servera';
 import { Glasanje, StanjeGlasanja } from './glasanje-models';
 import { GlasanjeService } from './glasanje-service';
 

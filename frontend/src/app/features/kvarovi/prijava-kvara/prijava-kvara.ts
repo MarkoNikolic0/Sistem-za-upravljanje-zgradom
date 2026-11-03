@@ -9,8 +9,8 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
-import { greskaPolja } from '../../../shared/greske-servera';
-import { nazivSprata } from '../../../shared/pipes/sprat-pipe';
+import { greskaPolja } from '../../../shared/forme/greske-servera';
+import { nazivSprata } from '../../../shared/spratovi/sprat-pipe';
 import { ProfileService } from '../../profile/profile-service';
 import { injectDispatch } from '@ngrx/signals/events';
 import { firstValueFrom } from 'rxjs';
@@ -28,10 +28,10 @@ import {
   PorukaAkcije,
   StanjeNavigacijeKvara,
 } from '../kvar-models';
-import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { NIJE_PRAZNO } from '../../../shared/forme/nije-prazno';
 import { IKONICE_KATEGORIJA } from '../izgled-kvara';
 import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
-import { IzabraniFajlovi } from '../../../shared/izabrani-fajlovi/izabrani-fajlovi';
+import { IzabraniFajlovi } from '../../../shared/fajlovi/izabrani-fajlovi/izabrani-fajlovi';
 
 type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
 

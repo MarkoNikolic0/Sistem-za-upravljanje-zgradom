@@ -8,7 +8,7 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../../shared/with-request-status';
+} from '../../../shared/stanje/with-request-status';
 import { SlikaKvara } from '../kvar-models';
 import { SlikaKvaraService } from './slike-kvara-service';
 

@@ -1,7 +1,7 @@
 import { KorisnikOsnovno } from '../auth/auth-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { Glasanje } from '../glasanje/glasanje-models';
-import { UpitStrane } from '../../shared/stranica';
+import { UpitStrane } from '../../shared/liste/stranica';
 
 export type VrstaSastanka = 'skupstina' | 'zbor';
 export type StanjeSastanka = 'predstojeci' | 'odrzani';

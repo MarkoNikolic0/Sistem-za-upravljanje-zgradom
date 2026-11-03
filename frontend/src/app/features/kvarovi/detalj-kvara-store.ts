@@ -11,7 +11,7 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../shared/with-request-status';
+} from '../../shared/stanje/with-request-status';
 import { kvarEvents } from './kvar-events';
 import {
   KvarDetalj,
@@ -21,7 +21,7 @@ import {
   StatusRadaServisera,
 } from './kvar-models';
 import { KvarService } from './kvar-service';
-import { porukaServera, prvaGreskaPolja } from '../../shared/greske-servera';
+import { porukaServera, prvaGreskaPolja } from '../../shared/forme/greske-servera';
 import { jeIspravanId } from '../../shared/ispravan-id';
 
 interface Akcija {

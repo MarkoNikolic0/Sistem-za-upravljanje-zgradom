@@ -7,12 +7,12 @@ import { ImageModule } from 'primeng/image';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
-import { greskaPolja } from '../../../../shared/greske-servera';
+import { greskaPolja } from '../../../../shared/forme/greske-servera';
 import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KvarDetalj, SlikaKvara } from '../../kvar-models';
 import { SlikeKvaraStore } from '../slike-kvara-store';
 import { jeZavrsen, PRAVILA_SLIKA_KVARA } from '../../pravila-kvara';
-import { IzborFajlova } from '../../../../shared/izbor-fajlova/izbor-fajlova';
+import { IzborFajlova } from '../../../../shared/fajlovi/izbor-fajlova/izbor-fajlova';
 
 interface Poruka {
   tip: 'uspeh' | 'greska';

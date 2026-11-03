@@ -1,6 +1,6 @@
 import { KorisnikOsnovno } from '../auth/auth-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
-import { UpitStrane } from '../../shared/stranica';
+import { UpitStrane } from '../../shared/liste/stranica';
 
 export type VrstaOglasa =
   'obavestenje' | 'radovi' | 'prodaja' | 'trazim' | 'izgubljeno' | 'upozorenje' | 'ostalo';

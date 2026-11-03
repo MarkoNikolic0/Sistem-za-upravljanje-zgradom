@@ -3,7 +3,7 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { NAZIVI_ULOGA } from '../../auth/auth-models';
-import { formatRoka } from '../../../shared/datum';
+import { formatRoka } from '../../../shared/tekst/datum';
 import { Glasanje, OpcijaGlasanja, VECINE_ODLUKE } from '../glasanje-models';
 import {
   glasaliSuvlasnici,

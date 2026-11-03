@@ -2,8 +2,8 @@ import { Glasanje } from '../../glasanje/glasanje-models';
 import { Oglas } from '../../oglasi/oglas-models';
 import { Sastanak, VRSTE_SASTANKA } from '../../sastanci/sastanak-models';
 import { PregledZgrade } from '../../zgrade/zgrada-models';
-import { danaDo } from '../../../shared/datum';
-import { uMnozini } from '../../../shared/mnozina';
+import { danaDo } from '../../../shared/tekst/datum';
+import { uMnozini } from '../../../shared/tekst/mnozina';
 
 // Jedna stvar koja čeka korisnika danas, od najvažnije ka manje važnoj
 export interface StavkaDanas {

@@ -10,11 +10,11 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TextareaModule } from 'primeng/textarea';
-import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
-import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
-import { krajDana, rokNijeProsao, zaDana } from '../../../shared/datum';
+import { greskaPolja, porukaServera } from '../../../shared/forme/greske-servera';
+import { NIJE_PRAZNO } from '../../../shared/forme/nije-prazno';
+import { krajDana, rokNijeProsao, zaDana } from '../../../shared/tekst/datum';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { StanjeNavigacije } from '../../../shared/poruka';
+import { StanjeNavigacije } from '../../../shared/stanje/poruka';
 import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
 import {
   MAKS_OPCIJA_TEKST,

@@ -10,7 +10,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../sesija/auth-store';
-import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/greske-servera';
+import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 
 @Component({
   imports: [

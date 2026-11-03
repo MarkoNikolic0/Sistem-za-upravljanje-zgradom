@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, inject, input, model, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { fokusPosleCrtanja } from '../fokus';
+import { fokusPosleCrtanja } from '../../fokus';
 import { jeSlika, PravilaFajlova } from '../fajlovi';
 import { IzborFajlova } from '../izbor-fajlova/izbor-fajlova';
 

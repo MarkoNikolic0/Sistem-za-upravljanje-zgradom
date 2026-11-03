@@ -6,8 +6,8 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { oznaciGreskuPolja, porukaServera } from '../../../shared/greske-servera';
-import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
+import { oznaciGreskuPolja, porukaServera } from '../../../shared/forme/greske-servera';
+import { NIJE_PRAZNO } from '../../../shared/forme/nije-prazno';
 import { ZgradaOsnovno } from '../zgrada-models';
 import { ZgradaService } from '../zgrada-service';
 

@@ -10,7 +10,7 @@ import { KvarService } from '../../kvarovi/kvar-service';
 import { GlasanjeService } from '../../glasanje/glasanje-service';
 import { SastanakService } from '../../sastanci/sastanak-service';
 import { OglasService } from '../../oglasi/oglas-service';
-import { uMnozini } from '../../../shared/mnozina';
+import { uMnozini } from '../../../shared/tekst/mnozina';
 import { cekaMojGlas, predstoji, zaDanas } from './za-danas';
 
 const NAJVISE_AKTIVNIH = 50;

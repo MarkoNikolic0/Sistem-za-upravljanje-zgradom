@@ -8,12 +8,12 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../shared/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
+} from '../../shared/stanje/with-request-status';
+import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
 import { Oglas, VrstaOglasa } from './oglas-models';
 import { OglasService } from './oglas-service';
 import { OGLASA_PO_STRANI } from './pravila-oglasa';
-import { withAkcije } from '../../shared/with-akcije';
+import { withAkcije } from '../../shared/stanje/with-akcije';
 
 interface ListaOglasaState {
   oglasi: Oglas[];

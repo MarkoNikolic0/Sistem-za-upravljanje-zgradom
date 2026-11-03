@@ -7,8 +7,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { formatirajTelefon } from '../../../shared/telefon';
-import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
+import { formatirajTelefon } from '../../../shared/tekst/telefon';
+import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import {
   BOJE_STATUSA_ZAHTEVA,
   FilterZahteva,
@@ -17,7 +17,7 @@ import {
 } from '../zahtev-models';
 import { ZahteviStore } from '../zahtev-store';
 import { TagModule } from 'primeng/tag';
-import { Paginacija } from '../../../shared/paginacija/paginacija';
+import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 
 @Component({
   imports: [

@@ -10,15 +10,15 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { FormaRazloga } from '../../../shared/forma-razloga/forma-razloga';
-import { Paginacija } from '../../../shared/paginacija/paginacija';
+import { FormaRazloga } from '../../../shared/forme/forma-razloga/forma-razloga';
+import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { ListaOglasaStore } from '../lista-oglasa-store';
 import { Oglas, VRSTE_OGLASA, VrstaOglasa } from '../oglas-models';
-import { formatRoka } from '../../../shared/datum';
+import { formatRoka } from '../../../shared/tekst/datum';
 import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
 import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
-import { StanjeNavigacije } from '../../../shared/poruka';
+import { StanjeNavigacije } from '../../../shared/stanje/poruka';
 
 @Component({
   imports: [

@@ -1,7 +1,7 @@
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
-import { UpitStrane } from '../../shared/stranica';
+import { UpitStrane } from '../../shared/liste/stranica';
 import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
-import { Poruka } from '../../shared/poruka';
+import { Poruka } from '../../shared/stanje/poruka';
 
 export type StatusKvara =
   'prijavljen' | 'prihvacen' | 'dodeljen' | 'u_toku' | 'resen' | 'zatvoren' | 'odbijen' | 'povucen';

@@ -11,8 +11,8 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../shared/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
+} from '../../shared/stanje/with-request-status';
+import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
 
 const ZAHTEVA_PO_STRANI = 10;
 

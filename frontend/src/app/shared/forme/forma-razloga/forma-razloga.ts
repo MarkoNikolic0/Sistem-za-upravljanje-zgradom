@@ -2,7 +2,7 @@ import { Component, inject, input, OnInit, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { fokusPosleCrtanja } from '../fokus';
+import { fokusPosleCrtanja } from '../../fokus';
 import { NIJE_PRAZNO } from '../nije-prazno';
 
 export const MAKS_RAZLOGA = 1000;

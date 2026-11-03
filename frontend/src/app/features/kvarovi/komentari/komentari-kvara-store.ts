@@ -9,7 +9,7 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../../shared/with-request-status';
+} from '../../../shared/stanje/with-request-status';
 import { kvarEvents } from '../kvar-events';
 import { KomentarKvara } from '../kvar-models';
 import { KOMENTARA_PO_STRANI } from '../pravila-kvara';

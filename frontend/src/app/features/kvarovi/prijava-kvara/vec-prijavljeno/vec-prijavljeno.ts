@@ -6,7 +6,7 @@ import { MessageModule } from 'primeng/message';
 import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KvarService } from '../../kvar-service';
 import { KategorijaKvara, NAZIVI_STATUSA_KVARA, StanjeNavigacijeKvara } from '../../kvar-models';
-import { BrojStanaraPipe } from '../../../../shared/pipes/broj-stanara-pipe';
+import { BrojStanaraPipe } from '../../broj-stanara-pipe';
 import { firstValueFrom } from 'rxjs';
 
 @Component({

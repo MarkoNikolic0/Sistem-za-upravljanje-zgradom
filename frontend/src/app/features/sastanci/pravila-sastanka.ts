@@ -1,7 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { danaDo, zaDana } from '../../shared/datum';
-import { uMnozini } from '../../shared/mnozina';
-import { imaPonavljanja } from '../../shared/ponavljanje';
+import { danaDo, zaDana } from '../../shared/tekst/datum';
+import { uMnozini } from '../../shared/tekst/mnozina';
+import { imaPonavljanja } from '../../shared/forme/ponavljanje';
 import { Sastanak, VrstaSastanka } from './sastanak-models';
 
 // Zakon: poziv za sednicu skupštine najmanje tri dana pre, osim u hitnim slučajevima

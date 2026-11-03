@@ -1,5 +1,5 @@
 import { TagSeverity } from 'primeng/tag';
-import { UpitStrane } from '../../shared/stranica';
+import { UpitStrane } from '../../shared/liste/stranica';
 import { Kontakt, KorisnikOsnovno } from '../auth/auth-models';
 import { StanOsnovno, ZgradaOsnovno } from '../zgrade/zgrada-models';
 

@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { KvarDetalj } from '../../kvar-models';
 import { DetaljKvaraStore } from '../../detalj-kvara-store';
-import { BrojStanaraPipe } from '../../../../shared/pipes/broj-stanara-pipe';
+import { BrojStanaraPipe } from '../../broj-stanara-pipe';
 
 @Component({
   imports: [ButtonModule, BrojStanaraPipe],

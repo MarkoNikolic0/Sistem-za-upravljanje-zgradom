@@ -9,10 +9,10 @@ import { SelectModule } from 'primeng/select';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { ZahtevService } from '../zahtev-service';
 import { BOJE_STATUSA_ZAHTEVA, NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
-import { nazivSprata, SpratPipe } from '../../../shared/pipes/sprat-pipe';
+import { nazivSprata, SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TagModule } from 'primeng/tag';
-import { porukaServera } from '../../../shared/greske-servera';
+import { porukaServera } from '../../../shared/forme/greske-servera';
 
 @Component({
   imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, TagModule, SpratPipe],

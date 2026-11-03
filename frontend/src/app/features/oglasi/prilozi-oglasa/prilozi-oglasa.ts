@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ImageModule } from 'primeng/image';
-import { velicinaFajla } from '../../../shared/fajlovi';
+import { velicinaFajla } from '../../../shared/fajlovi/fajlovi';
 import { PrilogOglasa } from '../oglas-models';
 
 @Component({

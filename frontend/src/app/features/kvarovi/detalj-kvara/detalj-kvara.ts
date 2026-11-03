@@ -13,8 +13,8 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
-import { formatirajTelefon } from '../../../shared/telefon';
+import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
+import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import {
   NAZIVI_KATEGORIJA_KVARA,
@@ -29,7 +29,7 @@ import { TokKvara } from '../status/tok-kvara/tok-kvara';
 import { UpravljanjeKvarom } from '../akcije/upravljanje-kvarom/upravljanje-kvarom';
 import { SlikeKvara } from '../slike/slike-kvara/slike-kvara';
 import { PracenjeKvara } from '../akcije/pracenje-kvara/pracenje-kvara';
-import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
+import { BrojStanaraPipe } from '../broj-stanara-pipe';
 import { jeHitan, jeZavrsen, pratiRok, stanjeRoka } from '../pravila-kvara';
 import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
 import { RazlogPromene } from '../status/razlog-promene/razlog-promene';

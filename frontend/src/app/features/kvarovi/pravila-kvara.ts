@@ -1,7 +1,7 @@
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
-import { NIJE_PRAZNO } from '../../shared/nije-prazno';
+import { NIJE_PRAZNO } from '../../shared/forme/nije-prazno';
 import { DANA_ZA_RESAVANJE, Kvar, MAKS_KOMENTAR_KVARA, StatusKvara } from './kvar-models';
-import { PravilaFajlova } from '../../shared/fajlovi';
+import { PravilaFajlova } from '../../shared/fajlovi/fajlovi';
 
 export const KVAROVA_PO_STRANI = 10;
 export const KOMENTARA_PO_STRANI = 20;

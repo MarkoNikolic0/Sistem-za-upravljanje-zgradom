@@ -9,12 +9,12 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../shared/with-request-status';
+} from '../../shared/stanje/with-request-status';
 import { kvarEvents } from './kvar-events';
 import { KategorijaKvara, Kvar, PrioritetKvara, StanjeKvara } from './kvar-models';
 import { KvarService } from './kvar-service';
 import { jeZavrsen, KVAROVA_PO_STRANI } from './pravila-kvara';
-import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
+import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
 
 interface ListaKvarovaState {
   kvarovi: Kvar[];

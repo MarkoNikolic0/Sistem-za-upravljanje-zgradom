@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
+import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import {
   NAZIVI_KATEGORIJA_KVARA,
@@ -26,8 +26,8 @@ import { RouterLink } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { KvarService } from '../kvar-service';
 import { ListaKvarovaStore } from '../lista-kvarova-store';
-import { Paginacija } from '../../../shared/paginacija/paginacija';
-import { BrojStanaraPipe } from '../../../shared/pipes/broj-stanara-pipe';
+import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
+import { BrojStanaraPipe } from '../broj-stanara-pipe';
 
 @Component({
   imports: [

@@ -7,7 +7,7 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Paginacija } from '../../../shared/paginacija/paginacija';
+import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
 import { StanjeSastanka } from '../sastanak-models';
 import { OznakeSastanka } from '../oznake-sastanka/oznake-sastanka';

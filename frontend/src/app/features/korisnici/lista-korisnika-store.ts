@@ -11,9 +11,9 @@ import {
   setFulfilled,
   setPending,
   withRequestStatus,
-} from '../../shared/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/with-paginacija';
-import { withAkcije } from '../../shared/with-akcije';
+} from '../../shared/stanje/with-request-status';
+import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { withAkcije } from '../../shared/stanje/with-akcije';
 
 const KORISNIKA_PO_STRANI = 20;
 const MIN_PRETRAGE = 2;

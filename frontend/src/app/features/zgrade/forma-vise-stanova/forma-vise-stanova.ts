@@ -7,9 +7,9 @@ import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { porukaServera, prvaGreskaPolja } from '../../../shared/greske-servera';
-import { uMnozini } from '../../../shared/mnozina';
-import { nazivSprata } from '../../../shared/pipes/sprat-pipe';
+import { porukaServera, prvaGreskaPolja } from '../../../shared/forme/greske-servera';
+import { uMnozini } from '../../../shared/tekst/mnozina';
+import { nazivSprata } from '../../../shared/spratovi/sprat-pipe';
 import { StanService } from '../stan-service';
 import { GRANICE_STANA, StanRequest } from '../zgrada-models';
 

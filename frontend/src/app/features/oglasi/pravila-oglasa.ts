@@ -1,6 +1,6 @@
 import { VrstaOglasa } from './oglas-models';
-import { PravilaFajlova } from '../../shared/fajlovi';
-import { zaDana } from '../../shared/datum';
+import { PravilaFajlova } from '../../shared/fajlovi/fajlovi';
+import { zaDana } from '../../shared/tekst/datum';
 
 export const OGLASA_PO_STRANI = 10;
 

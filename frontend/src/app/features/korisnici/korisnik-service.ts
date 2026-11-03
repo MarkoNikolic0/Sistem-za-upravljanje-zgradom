@@ -4,7 +4,7 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Uloga } from '../auth/auth-models';
 import { KategorijaKvara } from '../kvarovi/kvar-models';
-import { Stranica } from '../../shared/stranica';
+import { Stranica } from '../../shared/liste/stranica';
 import {
   DodeljivaUloga,
   KorisnikPretrage,

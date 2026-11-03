@@ -1,7 +1,7 @@
 import type { KorisnikOsnovno, Uloga } from '../auth/auth-models';
 import type { KategorijaKvara } from '../kvarovi/kvar-models';
 import type { ZgradaOsnovno } from '../zgrade/zgrada-models';
-import type { UpitStrane } from '../../shared/stranica';
+import type { UpitStrane } from '../../shared/liste/stranica';
 
 export interface KorisnikPretrage extends KorisnikOsnovno {
   email: string;

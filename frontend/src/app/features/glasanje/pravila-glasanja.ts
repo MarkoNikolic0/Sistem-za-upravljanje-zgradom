@@ -1,7 +1,7 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { danaDo } from '../../shared/datum';
-import { uMnozini } from '../../shared/mnozina';
-import { imaPonavljanja } from '../../shared/ponavljanje';
+import { danaDo } from '../../shared/tekst/datum';
+import { uMnozini } from '../../shared/tekst/mnozina';
+import { imaPonavljanja } from '../../shared/forme/ponavljanje';
 import { Glasanje, IshodOdluke } from './glasanje-models';
 
 const nabrajanje = new Intl.ListFormat('sr-Latn', { type: 'conjunction' });

@@ -1,5 +1,5 @@
 import { Validators } from '@angular/forms';
-import { NIJE_PRAZNO } from '../../shared/nije-prazno';
+import { NIJE_PRAZNO } from '../../shared/forme/nije-prazno';
 
 export const MIN_DUZINA_LOZINKE = 8;
 export const MAX_DUZINA_LOZINKE = 64;

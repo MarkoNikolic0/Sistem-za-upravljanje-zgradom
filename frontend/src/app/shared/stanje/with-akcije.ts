@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { patchState, signalStore, signalStoreFeature, withMethods, withState } from '@ngrx/signals';
-import { porukaServera, prvaGreskaPolja } from './greske-servera';
+import { porukaServera, prvaGreskaPolja } from '../forme/greske-servera';
 import { Poruka } from './poruka';
 
 interface AkcijeState {

@@ -11,7 +11,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { MessageModule } from 'primeng/message';
 import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
-import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/greske-servera';
+import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import {
   MAX_DUZINA_IMENA,

@@ -2,7 +2,7 @@ import { inject, Service, Signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Stranica } from '../../shared/stranica';
+import { Stranica } from '../../shared/liste/stranica';
 import { NoviSastanakRequest, Sastanak, SastanakRequest, UpitSastanaka } from './sastanak-models';
 
 @Service()

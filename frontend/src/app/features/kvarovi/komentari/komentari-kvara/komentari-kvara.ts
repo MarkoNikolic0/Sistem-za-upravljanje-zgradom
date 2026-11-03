@@ -8,7 +8,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule, TagSeverity } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
-import { greskaPolja } from '../../../../shared/greske-servera';
+import { greskaPolja } from '../../../../shared/forme/greske-servera';
 import { NAZIVI_ULOGA } from '../../../auth/auth-models';
 import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KomentarKvara, KvarDetalj, MAKS_KOMENTAR_KVARA, StatusKvara } from '../../kvar-models';

@@ -6,9 +6,9 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { oznaciGreskuPolja, porukaServera } from '../../../shared/greske-servera';
-import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
-import { formatirajTelefon } from '../../../shared/telefon';
+import { oznaciGreskuPolja, porukaServera } from '../../../shared/forme/greske-servera';
+import { NIJE_PRAZNO } from '../../../shared/forme/nije-prazno';
+import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { KontaktRequest, KontaktZgrade, PREDLOZI_ULOGA } from '../kontakt-models';
 import { KontaktService } from '../kontakt-service';
 
