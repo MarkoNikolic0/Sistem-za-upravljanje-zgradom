@@ -1,0 +1,75 @@
+:host {
+  display: block;
+}
+
+.stranica {
+  max-width: 64rem;
+}
+
+.mreza {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.75rem;
+}
+
+// Kartica zgrade: broj stanova kao veliki tanki broj, upravnik u podnožju
+.zgrada {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.25rem;
+  border: 1px solid var(--color-linija);
+  border-radius: 12px;
+  background: var(--color-povrsina);
+  transition: border-color 150ms;
+
+  &:hover {
+    border-color: var(--color-ivica);
+
+    .naziv {
+      color: var(--color-svetlo);
+    }
+  }
+}
+
+.stanovi {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+
+  .broj {
+    font-size: 2.5rem;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--color-naslov);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.naziv {
+  margin-top: 1.25rem;
+  font-size: 1.0625rem;
+  color: var(--color-naslov);
+  transition: color 150ms;
+}
+
+.adresa {
+  margin: 0.125rem 0 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+}
+
+.podnozje {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-linija);
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+}

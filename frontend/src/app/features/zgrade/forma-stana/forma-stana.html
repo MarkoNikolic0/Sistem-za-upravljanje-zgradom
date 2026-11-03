@@ -1,0 +1,105 @@
+<form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="flex flex-col gap-5" novalidate>
+  <div class="grid gap-5 sm:grid-cols-3">
+    <div class="flex flex-col gap-1.5">
+      <label for="stan-broj" class="text-sm font-medium">Broj stana</label>
+      <input
+        pInputText
+        id="stan-broj"
+        formControlName="broj"
+        autocomplete="off"
+        [attr.maxlength]="granice.maksBroja"
+        aria-describedby="stan-broj-pomoc"
+        [fluid]="true"
+        [invalid]="nevazece('broj')"
+        [attr.aria-invalid]="nevazece('broj')"
+      />
+      <small
+        id="stan-broj-pomoc"
+        class="text-sm"
+        [class]="nevazece('broj') ? 'text-greska' : 'text-priguseno'"
+      >
+        @if (forma.controls.broj.hasError('server')) {
+          {{ forma.controls.broj.getError('server') }}
+        } @else if (nevazece('broj')) {
+          Unesi broj stana.
+        } @else {
+          Npr. 14 ili 14a
+        }
+      </small>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="stan-sprat" class="text-sm font-medium">Sprat</label>
+      <p-inputnumber
+        inputId="stan-sprat"
+        formControlName="sprat"
+        [min]="granice.minSprat"
+        [max]="granice.maksSprat"
+        [useGrouping]="false"
+        [showButtons]="true"
+        ariaDescribedBy="stan-sprat-pomoc"
+        [fluid]="true"
+        [invalid]="nevazece('sprat')"
+      />
+      <small
+        id="stan-sprat-pomoc"
+        class="text-sm"
+        [class]="nevazece('sprat') ? 'text-greska' : 'text-priguseno'"
+      >
+        @if (forma.controls.sprat.hasError('server')) {
+          {{ forma.controls.sprat.getError('server') }}
+        } @else if (nevazece('sprat')) {
+          Unesi sprat.
+        } @else {
+          0 je prizemlje
+        }
+      </small>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label for="stan-kvadratura" class="text-sm font-medium">Kvadratura</label>
+      <p-inputnumber
+        inputId="stan-kvadratura"
+        formControlName="kvadratura"
+        [min]="granice.minKvadratura"
+        [max]="granice.maksKvadratura"
+        [useGrouping]="false"
+        suffix=" m²"
+        ariaDescribedBy="stan-kvadratura-pomoc"
+        [fluid]="true"
+        [invalid]="nevazece('kvadratura')"
+      />
+      <small
+        id="stan-kvadratura-pomoc"
+        class="text-sm"
+        [class]="nevazece('kvadratura') ? 'text-greska' : 'text-priguseno'"
+      >
+        @if (forma.controls.kvadratura.hasError('server')) {
+          {{ forma.controls.kvadratura.getError('server') }}
+        } @else if (nevazece('kvadratura')) {
+          Unesi kvadraturu.
+        } @else {
+          Ceo broj kvadrata
+        }
+      </small>
+    </div>
+  </div>
+
+  <div id="greska-stana" tabindex="-1" class="outline-none empty:hidden">
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <button pButton type="submit" [disabled]="slanje()">
+      @if (slanje()) {
+        <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+      }
+      {{ stan() ? 'Sačuvaj izmene' : 'Dodaj stan' }}
+    </button>
+    <button pButton type="button" severity="secondary" text (click)="odustani.emit()">
+      Odustani
+    </button>
+  </div>
+</form>

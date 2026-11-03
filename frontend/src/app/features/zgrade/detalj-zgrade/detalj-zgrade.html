@@ -1,0 +1,94 @@
+<div class="stranica">
+  <a routerLink="/zgrade" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>Zgrade</a
+  >
+
+  @if (zgradaId() === undefined || zgrada.error()) {
+    <section class="odeljak">
+      <h1 class="naslov-stranice">Zgrada</h1>
+      <p-message severity="error" styleClass="mt-6">
+        @if (nePostoji()) {
+          Zgrada ne postoji.
+        } @else {
+          Zgradu trenutno nije moguće učitati.
+        }
+      </p-message>
+      <a pButton routerLink="/zgrade" outlined class="mt-4">Nazad na zgrade</a>
+    </section>
+  } @else if (!zgrada.hasValue()) {
+    <div class="odeljak ucitavanje" aria-hidden="true">
+      <p-skeleton height="6rem" />
+      <p-skeleton height="8rem" styleClass="mt-6" />
+    </div>
+    <span class="sr-only">Učitavanje zgrade…</span>
+  } @else {
+    @let z = zgrada.value();
+    <p class="oznaka mt-6">Zgrada</p>
+    @if (izmena()) {
+      <div class="panel mt-4 max-w-xl">
+        <h1 class="naslov-forme">Izmena zgrade</h1>
+        <app-forma-zgrade
+          [zgrada]="z"
+          (sacuvana)="sacuvana($event)"
+          (obrisana)="obrisana()"
+          (odustani)="zatvoriIzmenu()"
+        />
+      </div>
+    } @else {
+      <div class="zaglavlje">
+        <div class="min-w-0">
+          <h1 class="naslov-stranice mt-3">{{ z.naziv }}</h1>
+          <p class="mt-2 text-priguseno">{{ z.adresa }}</p>
+          <p class="precice">
+            <a routerLink="/stanari" [queryParams]="{ zgrada: z.id }">
+              <i class="pi pi-users" aria-hidden="true"></i>Stanari
+            </a>
+            <a routerLink="/kontakti" [queryParams]="{ zgrada: z.id }">
+              <i class="pi pi-phone" aria-hidden="true"></i>Važni kontakti
+            </a>
+          </p>
+        </div>
+        <div class="flex shrink-0 gap-2">
+          <button
+            pButton
+            id="izmeni-zgradu"
+            type="button"
+            size="small"
+            outlined
+            (click)="otvoriIzmenu()"
+          >
+            <i class="pi pi-pencil" aria-hidden="true"></i>
+            Izmeni
+          </button>
+          <button
+            pButton
+            type="button"
+            size="small"
+            severity="danger"
+            text
+            [disabled]="brisanje()"
+            (click)="obrisi($event, z)"
+          >
+            <i
+              class="pi"
+              [class]="brisanje() ? 'pi-spinner pi-spin' : 'pi-trash'"
+              aria-hidden="true"
+            ></i>
+            Obriši
+          </button>
+        </div>
+      </div>
+    }
+
+    <div id="poruka-zgrade" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (poruka(); as p) {
+        <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+      }
+    </div>
+
+    <app-upravnik-zgrade [zgradaId]="z.id" />
+    <app-stanovi-zgrade [zgradaId]="z.id" />
+  }
+</div>
+
+<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

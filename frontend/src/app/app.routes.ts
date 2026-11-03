@@ -86,6 +86,11 @@ export const routes: Routes = [
           import('./features/stanari/stanari-zgrade/stanari-zgrade').then((m) => m.StanariZgrade),
         title: 'Stanari | Upravljanje zgradom',
       },
+      {
+        path: 'zgrade',
+        canActivate: [ulogaGuard('admin')],
+        loadChildren: () => import('./features/zgrade/zgrade.routes'),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

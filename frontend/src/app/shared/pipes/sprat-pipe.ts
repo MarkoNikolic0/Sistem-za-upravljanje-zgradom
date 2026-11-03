@@ -1,6 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 export function nazivSprata(sprat: number): string {
+  if (sprat < 0) {
+    return `${-sprat}. podzemni sprat`;
+  }
   return sprat === 0 ? 'prizemlje' : `${sprat}. sprat`;
 }
 

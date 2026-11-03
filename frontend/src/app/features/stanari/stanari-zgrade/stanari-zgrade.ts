@@ -27,11 +27,8 @@ import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
 import { StanSaStanarima, Stanar } from '../stanari-models';
 import { StanariService } from '../stanari-service';
 import { pretraziStanove } from '../pretraga-stanara';
-
-interface Sprat {
-  sprat: number;
-  stanovi: StanSaStanarima[];
-}
+import { poSpratovima } from '../../../shared/spratovi';
+import { SpratPipe } from '../../../shared/pipes/sprat-pipe';
 
 interface Izabran {
   stan: StanSaStanarima;
@@ -50,6 +47,7 @@ interface Izabran {
     MessageModule,
     SelectModule,
     SkeletonModule,
+    SpratPipe,
   ],
   providers: [ConfirmationService, AkcijeStore],
   selector: 'app-stanari-zgrade',
@@ -80,17 +78,7 @@ export class StanariZgrade {
     this.stanovi.hasValue() ? pretraziStanove(this.stanovi.value(), this.upit()) : [],
   );
 
-  protected readonly spratovi = computed(() => {
-    const spratovi = new Map<number, StanSaStanarima[]>();
-    for (const stan of this.pronadjeni()) {
-      const naSpratu = spratovi.get(stan.sprat) ?? [];
-      naSpratu.push(stan);
-      spratovi.set(stan.sprat, naSpratu);
-    }
-    return [...spratovi.entries()]
-      .map(([sprat, stanovi]): Sprat => ({ sprat, stanovi }))
-      .sort((a, b) => b.sprat - a.sprat);
-  });
+  protected readonly spratovi = computed(() => poSpratovima(this.pronadjeni()));
 
   protected readonly zbir = computed(() => {
     if (!this.stanovi.hasValue() || this.stanovi.value().length === 0) {
@@ -137,10 +125,6 @@ export class StanariZgrade {
 
   protected ime(stanar: Stanar): string {
     return `${stanar.korisnik.ime} ${stanar.korisnik.prezime}`;
-  }
-
-  protected nazivSprata(sprat: number): string {
-    return sprat === 0 ? 'Prizemlje' : `${sprat}. sprat`;
   }
 
   protected promeniZgradu(id: number): void {

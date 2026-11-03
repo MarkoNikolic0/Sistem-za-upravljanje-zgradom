@@ -83,7 +83,7 @@
         <ol class="fasada">
           @for (sprat of spratovi(); track sprat.sprat) {
             <li class="sprat-fasade">
-              <h2 class="naziv-sprata">{{ nazivSprata(sprat.sprat) }}</h2>
+              <h2 class="naziv-sprata">{{ sprat.sprat | sprat }}</h2>
               <ul class="stanovi-sprata">
                 @for (stan of sprat.stanovi; track stan.id) {
                   <li class="stan" [class.prazan]="stan.stanari.length === 0">

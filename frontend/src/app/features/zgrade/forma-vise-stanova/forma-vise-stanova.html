@@ -1,0 +1,103 @@
+<form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="flex flex-col gap-5" novalidate>
+  <div class="grid grid-cols-2 gap-5 sm:grid-cols-3">
+    <div class="flex flex-col gap-1.5">
+      <label for="vise-od-sprata" class="text-sm font-medium">Od sprata</label>
+      <p-inputnumber
+        inputId="vise-od-sprata"
+        formControlName="odSprata"
+        [min]="granice.minSprat"
+        [max]="granice.maksSprat"
+        [useGrouping]="false"
+        [showButtons]="true"
+        [fluid]="true"
+        [invalid]="nevazece('odSprata')"
+      />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="vise-do-sprata" class="text-sm font-medium">Do sprata</label>
+      <p-inputnumber
+        inputId="vise-do-sprata"
+        formControlName="doSprata"
+        [min]="granice.minSprat"
+        [max]="granice.maksSprat"
+        [useGrouping]="false"
+        [showButtons]="true"
+        [fluid]="true"
+        [invalid]="nevazece('doSprata')"
+      />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="vise-po-spratu" class="text-sm font-medium">Stanova po spratu</label>
+      <p-inputnumber
+        inputId="vise-po-spratu"
+        formControlName="poSpratu"
+        [min]="1"
+        [max]="maksPoSpratu"
+        [useGrouping]="false"
+        [showButtons]="true"
+        [fluid]="true"
+        [invalid]="nevazece('poSpratu')"
+      />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="vise-prvi-broj" class="text-sm font-medium">Prvi broj stana</label>
+      <p-inputnumber
+        inputId="vise-prvi-broj"
+        formControlName="prviBroj"
+        [min]="1"
+        [max]="9999"
+        [useGrouping]="false"
+        [fluid]="true"
+        [invalid]="nevazece('prviBroj')"
+      />
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label for="vise-kvadratura" class="text-sm font-medium">Kvadratura</label>
+      <p-inputnumber
+        inputId="vise-kvadratura"
+        formControlName="kvadratura"
+        [min]="granice.minKvadratura"
+        [max]="granice.maksKvadratura"
+        [useGrouping]="false"
+        suffix=" m²"
+        [fluid]="true"
+        [invalid]="nevazece('kvadratura')"
+      />
+    </div>
+  </div>
+
+  <p id="plan-stanova" tabindex="-1" class="text-sm outline-none" aria-live="polite">
+    @if (plan()?.problem; as problem) {
+      <span class="text-greska">{{ problem }}</span>
+    } @else if (opis(); as opis) {
+      <span class="text-naslov">{{ opis }}</span>
+      <span class="text-priguseno">
+        Svi dobijaju istu kvadraturu; pojedinačni stan menjaš posle.</span
+      >
+    } @else if (forma.touched && forma.invalid) {
+      <span class="text-greska">Popuni sva polja.</span>
+    } @else {
+      <span class="text-priguseno">
+        Popuni polja i videćeš koji stanovi će biti dodati. 0 je prizemlje.
+      </span>
+    }
+  </p>
+
+  <div id="greska-stanova" tabindex="-1" class="outline-none empty:hidden">
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <button pButton type="submit" [disabled]="slanje()">
+      @if (slanje()) {
+        <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+      }
+      Dodaj stanove
+    </button>
+    <button pButton type="button" severity="secondary" text (click)="odustani.emit()">
+      Odustani
+    </button>
+  </div>
+</form>

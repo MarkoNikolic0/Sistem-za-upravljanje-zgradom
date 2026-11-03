@@ -1,9 +1,24 @@
+import type { KorisnikResponse } from '../auth/auth-models';
 import type { Sastanak } from '../sastanci/sastanak-models';
 
 export interface ZgradaOsnovno {
   id: number;
   naziv: string;
   adresa: string;
+}
+
+export type ZgradaRequest = Pick<ZgradaOsnovno, 'naziv' | 'adresa'>;
+
+export type Upravnik = Pick<KorisnikResponse, 'id' | 'ime' | 'prezime' | 'email' | 'telefon'>;
+
+export interface ZgradaSaBrojevima extends ZgradaOsnovno {
+  brojStanova: number;
+  brojStanara: number;
+  upravnik: Pick<Upravnik, 'id' | 'ime' | 'prezime'> | null;
+}
+
+export interface UpravnikZgrade {
+  korisnik: Upravnik | null;
 }
 
 export interface PregledZgrade {
@@ -20,3 +35,19 @@ export interface StanOsnovno {
   broj: string;
   sprat: number;
 }
+
+export interface StanRequest {
+  broj: string;
+  sprat: number;
+  kvadratura: number;
+}
+
+// Iste granice kao CreateStanDto i CreateStanoviDto na serveru
+export const GRANICE_STANA = {
+  maksBroja: 10,
+  minSprat: -5,
+  maksSprat: 99,
+  minKvadratura: 1,
+  maksKvadratura: 10000,
+  maksOdjednom: 200,
+} as const;

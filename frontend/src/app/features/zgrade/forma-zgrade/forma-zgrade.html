@@ -1,0 +1,76 @@
+<form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="flex flex-col gap-5" novalidate>
+  <div class="flex flex-col gap-1.5">
+    <label for="zgrada-naziv" class="text-sm font-medium">Naziv</label>
+    <input
+      pInputText
+      id="zgrada-naziv"
+      formControlName="naziv"
+      autocomplete="off"
+      [attr.maxlength]="maksNaziva"
+      aria-describedby="zgrada-naziv-pomoc"
+      [fluid]="true"
+      [invalid]="nevazece('naziv')"
+      [attr.aria-invalid]="nevazece('naziv')"
+    />
+    <small
+      id="zgrada-naziv-pomoc"
+      class="text-sm"
+      [class]="nevazece('naziv') ? 'text-greska' : 'text-priguseno'"
+    >
+      @if (forma.controls.naziv.hasError('server')) {
+        {{ forma.controls.naziv.getError('server') }}
+      } @else if (nevazece('naziv')) {
+        Unesi naziv zgrade.
+      } @else {
+        Kako je stanari zovu, npr. Lamela Vizantijski
+      }
+    </small>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label for="zgrada-adresa" class="text-sm font-medium">Adresa</label>
+    <input
+      pInputText
+      id="zgrada-adresa"
+      formControlName="adresa"
+      autocomplete="off"
+      enterkeyhint="done"
+      [attr.maxlength]="maksAdrese"
+      aria-describedby="zgrada-adresa-pomoc"
+      [fluid]="true"
+      [invalid]="nevazece('adresa')"
+      [attr.aria-invalid]="nevazece('adresa')"
+    />
+    <small
+      id="zgrada-adresa-pomoc"
+      class="text-sm"
+      [class]="nevazece('adresa') ? 'text-greska' : 'text-priguseno'"
+    >
+      @if (forma.controls.adresa.hasError('server')) {
+        {{ forma.controls.adresa.getError('server') }}
+      } @else if (nevazece('adresa')) {
+        Unesi adresu.
+      } @else {
+        Ulica, broj i mesto, npr. Vizantijski bulevar 12, Niš
+      }
+    </small>
+  </div>
+
+  <div id="greska-zgrade" tabindex="-1" class="outline-none empty:hidden">
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    <button pButton type="submit" [disabled]="slanje()">
+      @if (slanje()) {
+        <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+      }
+      {{ zgrada() ? 'Sačuvaj izmene' : 'Dodaj zgradu' }}
+    </button>
+    <button pButton type="button" severity="secondary" text (click)="odustani.emit()">
+      Odustani
+    </button>
+  </div>
+</form>

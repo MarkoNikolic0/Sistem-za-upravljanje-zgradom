@@ -282,6 +282,57 @@ a.plocica-fajla:hover {
   outline: none;
 }
 
+// Telefon i email osobe (stanari, upravnik zgrade)
+.veze {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+
+  a {
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+
+    &:hover {
+      color: var(--color-naslov);
+    }
+  }
+}
+
+// Linkovi na srodne stranice zgrade (pregled zgrada, detalj zgrade)
+.precice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+
+  a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5rem;
+
+    &:hover {
+      color: var(--color-naslov);
+    }
+  }
+
+  .pi {
+    font-size: 0.75rem;
+  }
+}
+
+// Naslov forme otvorene u panelu (novi kontakt, nova zgrada, stanovi)
+.naslov-forme {
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-naslov);
+}
+
 // Površina odeljka (predlog redizajna kvarova)
 .panel {
   display: block;

@@ -44,24 +44,6 @@
   border-color: color-mix(in srgb, var(--color-svetlo) 40%, transparent);
 }
 
-.veze {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1rem;
-  margin-top: 0.125rem;
-  font-size: 0.875rem;
-  color: var(--color-priguseno);
-
-  a {
-    overflow-wrap: anywhere;
-    font-variant-numeric: tabular-nums;
-
-    &:hover {
-      color: var(--color-naslov);
-    }
-  }
-}
-
 .niko {
   font-size: 0.875rem;
   color: var(--color-utisano);

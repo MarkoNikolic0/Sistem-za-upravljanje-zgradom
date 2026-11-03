@@ -1,0 +1,82 @@
+<div class="stranica">
+  <p class="oznaka">Administracija</p>
+  <h1 class="naslov-stranice mt-3">Zgrade</h1>
+  <p class="mt-2 text-priguseno">
+    @if (zbir(); as zbir) {
+      {{ zbir }}
+    } @else {
+      Zgrade u sistemu, njihovi stanovi i upravnici.
+    }
+  </p>
+
+  <div id="poruka-zgrada" tabindex="-1" class="mt-6 outline-none empty:hidden">
+    @if (poruka(); as p) {
+      <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+    }
+  </div>
+
+  <section class="odeljak" aria-labelledby="sve-zgrade" [attr.aria-busy]="zgrade.isLoading()">
+    <div class="zaglavlje-odeljka">
+      <h2 id="sve-zgrade" class="naslov-odeljka">Sve zgrade</h2>
+      @if (zgrade.hasValue() && !nova()) {
+        <button pButton id="nova-zgrada" type="button" size="small" (click)="otvori()">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          Nova zgrada
+        </button>
+      }
+    </div>
+
+    @if (nova()) {
+      <div class="panel mb-4 max-w-xl">
+        <h3 class="naslov-forme">Nova zgrada</h3>
+        <app-forma-zgrade (sacuvana)="dodata($event)" (odustani)="zatvori()" />
+      </div>
+    }
+
+    @if (zgrade.error()) {
+      <p class="text-sm text-priguseno">
+        Zgrade trenutno nije moguće učitati.
+        <button type="button" class="ponovo" (click)="zgrade.reload()">Pokušaj ponovo</button>
+      </p>
+    } @else if (!zgrade.hasValue()) {
+      <div class="ucitavanje mreza" aria-hidden="true">
+        <p-skeleton height="11rem" />
+        <p-skeleton height="11rem" />
+      </div>
+      <span class="sr-only">Učitavanje…</span>
+    } @else if (zgrade.value().length === 0 && !nova()) {
+      <div class="prazno">
+        <span class="prazno-ikonica neutralno" aria-hidden="true"
+          ><i class="pi pi-building"></i
+        ></span>
+        <p class="text-naslov">U sistemu još nema zgrada</p>
+        <p class="mt-1 text-sm text-priguseno">Dodaj prvu zgradu, pa njene stanove i upravnika.</p>
+      </div>
+    } @else {
+      <ul class="mreza">
+        @for (z of zgrade.value(); track z.id) {
+          <li>
+            <a class="zgrada" [routerLink]="['/zgrade', z.id]">
+              <span class="stanovi">
+                <span class="broj">{{ z.brojStanova }}</span>
+                {{ oblik(z.brojStanova, 'stan', 'stana', 'stanova') }}
+              </span>
+              <span class="naziv">{{ z.naziv }}</span>
+              <span class="adresa">{{ z.adresa }}</span>
+              <span class="podnozje">
+                @if (z.upravnik; as u) {
+                  <span class="truncate">Upravnik {{ u.ime }} {{ u.prezime }}</span>
+                } @else {
+                  <span class="znacka hitno">Bez upravnika</span>
+                }
+                <span class="shrink-0">{{
+                  uMnozini(z.brojStanara, 'stanar', 'stanara', 'stanara')
+                }}</span>
+              </span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

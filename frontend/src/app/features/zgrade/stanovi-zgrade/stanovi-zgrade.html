@@ -1,0 +1,149 @@
+<section class="odeljak" aria-labelledby="naslov-stanova" [attr.aria-busy]="stanovi.isLoading()">
+  <div class="zaglavlje-odeljka">
+    <h2 id="naslov-stanova" class="naslov-odeljka">
+      Stanovi
+      @if (stanovi.hasValue() && stanovi.value().length > 0) {
+        <span class="ml-1 normal-case tracking-normal">· {{ stanovi.value().length }}</span>
+      }
+    </h2>
+    @if (stanovi.hasValue() && forma() === null) {
+      <div class="flex flex-wrap justify-end gap-2">
+        <button
+          pButton
+          id="dodaj-vise"
+          type="button"
+          size="small"
+          outlined
+          (click)="otvori('vise')"
+        >
+          <i class="pi pi-th-large" aria-hidden="true"></i>
+          Dodaj više
+        </button>
+        <button pButton id="dodaj-stan" type="button" size="small" (click)="otvori('jedan')">
+          <i class="pi pi-plus" aria-hidden="true"></i>
+          Dodaj stan
+        </button>
+      </div>
+    }
+  </div>
+
+  <div id="poruka-stanova" tabindex="-1" class="mb-4 outline-none empty:hidden">
+    @if (akcije.poruka(); as p) {
+      <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+    }
+  </div>
+
+  @if (forma() === 'jedan') {
+    <div class="panel mb-6 max-w-2xl">
+      <h3 class="naslov-forme">Novi stan</h3>
+      <app-forma-stana
+        [zgradaId]="zgradaId()"
+        (sacuvan)="sacuvan($event)"
+        (zastarelo)="zastarelo($event)"
+        (odustani)="zatvori()"
+      />
+    </div>
+  } @else if (forma() === 'vise') {
+    <div class="panel mb-6 max-w-2xl">
+      <h3 class="naslov-forme">Više stanova odjednom</h3>
+      <app-forma-vise-stanova
+        [zgradaId]="zgradaId()"
+        [postojeci]="brojevi()"
+        (sacuvani)="sacuvani($event)"
+        (odustani)="zatvori()"
+      />
+    </div>
+  } @else if (izmena(); as stan) {
+    <div class="panel mb-6 max-w-2xl">
+      <h3 class="naslov-forme">Izmena stana {{ stan.broj }}</h3>
+      <app-forma-stana
+        [zgradaId]="zgradaId()"
+        [stan]="stan"
+        (sacuvan)="sacuvan($event)"
+        (zastarelo)="zastarelo($event)"
+        (odustani)="zatvori()"
+      />
+    </div>
+  }
+
+  @if (stanovi.error()) {
+    <p class="text-sm text-priguseno">
+      Stanove trenutno nije moguće učitati.
+      <button type="button" class="ponovo" (click)="stanovi.reload()">Pokušaj ponovo</button>
+    </p>
+  } @else if (!stanovi.hasValue()) {
+    <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+      <p-skeleton height="4rem" />
+      <p-skeleton height="4rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (stanovi.value().length === 0) {
+    @if (forma() === null) {
+      <div class="prazno">
+        <span class="prazno-ikonica neutralno" aria-hidden="true"
+          ><i class="pi pi-th-large"></i
+        ></span>
+        <p class="text-naslov">Zgrada još nema stanova</p>
+        <p class="mt-1 text-sm text-priguseno">
+          Dodaj sve odjednom (npr. 4 stana po spratu od 1. do 5. sprata) ili jedan po jedan.
+        </p>
+      </div>
+    }
+  } @else {
+    <ol class="spratovi">
+      @for (sprat of spratovi(); track sprat.sprat) {
+        <li class="sprat">
+          <h3 class="naziv-sprata">{{ sprat.sprat | sprat }}</h3>
+          <ul class="stanovi">
+            @for (stan of sprat.stanovi; track stan.id) {
+              <li class="stan" [class.izabran]="izmena()?.id === stan.id">
+                <p>
+                  <span class="sr-only">Stan </span>
+                  <span class="broj">{{ stan.broj }}</span>
+                </p>
+                <p class="opis">
+                  {{ stan.kvadratura }} m² ·
+                  @if (stan.stanari.length === 0) {
+                    prazan
+                  } @else {
+                    {{ uMnozini(stan.stanari.length, 'stanar', 'stanara', 'stanara') }}
+                  }
+                </p>
+                <span class="akcije">
+                  <button
+                    pButton
+                    [id]="'izmeni-stan-' + stan.id"
+                    type="button"
+                    size="small"
+                    text
+                    severity="secondary"
+                    iconOnly
+                    [attr.aria-label]="'Izmeni stan ' + stan.broj"
+                    (click)="otvori(stan)"
+                  >
+                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                  </button>
+                  @if (stan.stanari.length === 0) {
+                    <button
+                      pButton
+                      type="button"
+                      size="small"
+                      text
+                      severity="danger"
+                      iconOnly
+                      [attr.aria-label]="'Obriši stan ' + stan.broj"
+                      [disabled]="akcije.akcijaUToku()"
+                      (click)="obrisi($event, stan)"
+                    >
+                      <i class="pi pi-trash" aria-hidden="true"></i>
+                    </button>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    </ol>
+  }
+</section>

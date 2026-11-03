@@ -1,0 +1,128 @@
+<section class="odeljak" aria-labelledby="naslov-upravnika" [attr.aria-busy]="upravnik.isLoading()">
+  <div class="zaglavlje-odeljka">
+    <h2 id="naslov-upravnika" class="naslov-odeljka">Upravnik</h2>
+  </div>
+
+  <div id="poruka-upravnika" tabindex="-1" class="mb-4 outline-none empty:hidden">
+    @if (akcije.poruka(); as p) {
+      <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+    }
+  </div>
+
+  @if (upravnik.error()) {
+    <p class="text-sm text-priguseno">
+      Upravnika trenutno nije moguće učitati.
+      <button type="button" class="ponovo" (click)="upravnik.reload()">Pokušaj ponovo</button>
+    </p>
+  } @else if (!upravnik.hasValue()) {
+    <div class="ucitavanje" aria-hidden="true"><p-skeleton height="5rem" /></div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else {
+    <div class="panel">
+      @if (trenutni(); as u) {
+        <div class="osoba">
+          <span class="inicijali" aria-hidden="true">{{ u.ime[0] }}{{ u.prezime[0] }}</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-naslov">{{ ime(u) }}</p>
+            <p class="veze">
+              <a [href]="'tel:' + u.telefon">{{ telefon(u.telefon) }}</a>
+              <a [href]="'mailto:' + u.email">{{ u.email }}</a>
+            </p>
+          </div>
+        </div>
+      } @else {
+        <p class="text-naslov">Zgrada nema upravnika</p>
+        <p class="mt-1 text-sm text-priguseno">
+          Bez upravnika niko ne odobrava zahteve za stan i ne zakazuje sastanke.
+        </p>
+      }
+
+      @if (izbor()) {
+        <div class="izbor">
+          <label for="upravnik-pretraga" class="text-sm font-medium">
+            {{ trenutni() ? 'Novi upravnik' : 'Upravnik' }}
+          </label>
+          <p-autocomplete
+            inputId="upravnik-pretraga"
+            [ngModel]="izabran()"
+            (ngModelChange)="promeniIzbor($event)"
+            [suggestions]="predlozi()"
+            (completeMethod)="pretrazi($event)"
+            [optionLabel]="ime"
+            [optionDisabled]="upravljaDrugom"
+            [minQueryLength]="2"
+            [delay]="300"
+            [forceSelection]="true"
+            [fluid]="true"
+          >
+            <ng-template #item let-k>
+              <div class="predlog">
+                <span>{{ ime(k) }}</span>
+                <span class="opis">
+                  {{ k.email }}
+                  @if (k.zgrada) {
+                    · upravnik zgrade {{ k.zgrada.naziv }}
+                  }
+                </span>
+              </div>
+            </ng-template>
+          </p-autocomplete>
+          <small
+            id="upravnik-pomoc"
+            class="text-sm"
+            [class]="greskaPretrage() ? 'text-greska' : 'text-priguseno'"
+          >
+            @if (greskaPretrage()) {
+              Pretraga trenutno ne radi. Pokušaj ponovo.
+            } @else {
+              Upiši ime, prezime ili email stanara. Upravnik druge zgrade se prvo razrešava tamo.
+            }
+          </small>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <button
+              pButton
+              type="button"
+              [disabled]="izabran() === null || akcije.akcijaUToku()"
+              (click)="postavi($event)"
+            >
+              @if (akcije.akcijaUToku()) {
+                <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+              }
+              Postavi za upravnika
+            </button>
+            <button pButton type="button" severity="secondary" text (click)="zatvoriIzbor()">
+              Odustani
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button
+            pButton
+            id="promeni-upravnika"
+            type="button"
+            size="small"
+            [outlined]="trenutni() !== null"
+            (click)="otvoriIzbor()"
+          >
+            <i class="pi" [class]="trenutni() ? 'pi-sync' : 'pi-user-plus'" aria-hidden="true"></i>
+            {{ trenutni() ? 'Promeni upravnika' : 'Postavi upravnika' }}
+          </button>
+          @if (trenutni()) {
+            <button
+              pButton
+              type="button"
+              size="small"
+              severity="danger"
+              text
+              [disabled]="akcije.akcijaUToku()"
+              (click)="razresi($event)"
+            >
+              Razreši
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

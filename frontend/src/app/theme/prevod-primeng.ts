@@ -48,6 +48,11 @@ export const PREVOD_PRIMENG: Translation = {
   nextHour: 'Sat više',
   prevMinute: 'Minut manje',
   nextMinute: 'Minut više',
+  emptyMessage: 'Nema rezultata',
+  emptySearchMessage: 'Nema rezultata',
+  searchMessage: 'Broj rezultata: {0}',
+  selectionMessage: 'Izabrano: {0}',
+  emptySelectionMessage: 'Ništa nije izabrano',
   aria: {
     listLabel: 'Lista opcija',
     pageLabel: 'Strana {page}',

@@ -14,5 +14,6 @@ export interface StanSaStanarima {
   id: number;
   broj: string;
   sprat: number;
+  kvadratura: number;
   stanari: Stanar[];
 }
