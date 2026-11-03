@@ -19,7 +19,7 @@ import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.enti
 import { Glas } from '../glasanje/glas.entity.js';
 import { poRedosleduStanova } from './redosled-stanova.js';
 import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
-import { jeDupliUnos } from '../shared/greske-baze.js';
+import { jeDupliUnos, jeNepostojecaVeza } from '../shared/greske-baze.js';
 
 @Injectable()
 export class StanService {
@@ -159,6 +159,9 @@ export class StanService {
         throw new ConflictException(
           'Neko je u međuvremenu dodao stan sa istim brojem. Osveži stranicu.',
         );
+      }
+      if (jeNepostojecaVeza(greska)) {
+        throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
       }
       throw greska;
     }

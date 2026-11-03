@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
+import { oznaciGreskuPolja, porukaServera } from '../../../shared/greske-servera';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { formatirajTelefon } from '../../../shared/telefon';
 import { KontaktRequest, KontaktZgrade, PREDLOZI_ULOGA } from '../kontakt-models';
@@ -118,14 +118,10 @@ export class FormaKontakta implements OnInit {
       this.greska.set(neuspeh);
       return;
     }
-    for (const polje of POLJA) {
-      const poruka = greskaPolja(err, polje);
-      if (poruka) {
-        this.forma.controls[polje].setErrors({ server: poruka });
-        this.forma.controls[polje].markAsTouched();
-        this.fokusiraj(`#kontakt-${polje}`);
-        return;
-      }
+    const polje = oznaciGreskuPolja(err, this.forma.controls, POLJA);
+    if (polje) {
+      this.fokusiraj(`#kontakt-${polje}`);
+      return;
     }
     if (err.status === 404 && this.kontakt()) {
       this.zastarelo.emit('Kontakt je u međuvremenu obrisan.');

@@ -14,6 +14,8 @@ import { KorisnikPretrage } from '../../korisnici/korisnik-models';
 import { KorisnikService } from '../../korisnici/korisnik-service';
 import { ZgradaService } from '../zgrada-service';
 
+const MIN_PRETRAGE = 2;
+
 @Component({
   selector: 'app-upravnik-zgrade',
   imports: [FormsModule, AutoCompleteModule, ButtonModule, MessageModule, SkeletonModule],
@@ -38,11 +40,14 @@ export class UpravnikZgrade {
   protected readonly predlozi = signal<KorisnikPretrage[]>([]);
   protected readonly izabran = signal<KorisnikPretrage | null>(null);
   protected readonly greskaPretrage = signal(false);
+  protected readonly minPretrage = MIN_PRETRAGE;
+  // Raste sa svakom pretragom, da sporiji stariji odgovor ne prepiše noviji
+  private pretraga = 0;
 
   protected readonly telefon = formatirajTelefon;
 
-  protected readonly upravljaDrugom = (k: KorisnikPretrage) =>
-    k.zgrada !== null && k.zgrada.id !== this.zgradaId();
+  // Trenutni upravnik je već postavljen, a upravnik druge zgrade se prvo razrešava tamo
+  protected readonly upravljaZgradom = (k: KorisnikPretrage) => k.zgrada !== null;
 
   protected readonly ime = (k: { ime: string; prezime: string }) => `${k.ime} ${k.prezime}`;
 
@@ -64,16 +69,25 @@ export class UpravnikZgrade {
   }
 
   protected async pretrazi(event: AutoCompleteCompleteEvent): Promise<void> {
+    const pretraga = ++this.pretraga;
+    const upit = event.query.trim();
     this.greskaPretrage.set(false);
-    try {
-      this.predlozi.set(
-        await firstValueFrom(
-          this.korisnikService.pretrazi(event.query.trim(), ['stanar', 'upravnik']),
-        ),
-      );
-    } catch {
+    if (upit.length < MIN_PRETRAGE) {
       this.predlozi.set([]);
-      this.greskaPretrage.set(true);
+      return;
+    }
+    try {
+      const predlozi = await firstValueFrom(
+        this.korisnikService.pretrazi(upit, ['stanar', 'upravnik']),
+      );
+      if (pretraga === this.pretraga) {
+        this.predlozi.set(predlozi);
+      }
+    } catch {
+      if (pretraga === this.pretraga) {
+        this.predlozi.set([]);
+        this.greskaPretrage.set(true);
+      }
     }
   }
 

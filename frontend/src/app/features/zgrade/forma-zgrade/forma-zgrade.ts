@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
+import { oznaciGreskuPolja, porukaServera } from '../../../shared/greske-servera';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { ZgradaOsnovno } from '../zgrada-models';
 import { ZgradaService } from '../zgrada-service';
@@ -90,14 +90,10 @@ export class FormaZgrade implements OnInit {
       this.greska.set(neuspeh);
       return;
     }
-    for (const polje of POLJA) {
-      const poruka = greskaPolja(err, polje);
-      if (poruka) {
-        this.forma.controls[polje].setErrors({ server: poruka });
-        this.forma.controls[polje].markAsTouched();
-        this.fokusiraj(`#zgrada-${polje}`);
-        return;
-      }
+    const polje = oznaciGreskuPolja(err, this.forma.controls, POLJA);
+    if (polje) {
+      this.fokusiraj(`#zgrada-${polje}`);
+      return;
     }
     if (err.status === 404 && this.zgrada()) {
       this.obrisana.emit();

@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { AbstractControl } from '@angular/forms';
 
 interface TeloGreske {
   greske?: Record<string, string>;
@@ -26,4 +27,21 @@ export function prvaGreskaPolja(err: HttpErrorResponse): string | undefined {
 export function porukaServera(err: HttpErrorResponse): string | undefined {
   const poruka = (err.error as TeloGreske | null)?.message;
   return typeof poruka === 'string' ? poruka : undefined;
+}
+
+// Greška servera za polje ide ispod tog polja; vraća to polje da se na njega prebaci fokus
+export function oznaciGreskuPolja<P extends string>(
+  err: HttpErrorResponse,
+  kontrole: Record<P, AbstractControl>,
+  polja: readonly P[],
+): P | undefined {
+  for (const polje of polja) {
+    const poruka = greskaPolja(err, polje);
+    if (poruka) {
+      kontrole[polje].setErrors({ server: poruka });
+      kontrole[polje].markAsTouched();
+      return polje;
+    }
+  }
+  return undefined;
 }

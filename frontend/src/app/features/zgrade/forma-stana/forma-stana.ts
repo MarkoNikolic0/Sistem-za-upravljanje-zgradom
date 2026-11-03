@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, output, signal } from '@angular/core';
+import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -7,7 +7,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { greskaPolja, porukaServera } from '../../../shared/greske-servera';
+import { oznaciGreskuPolja, porukaServera } from '../../../shared/greske-servera';
 import { NIJE_PRAZNO } from '../../../shared/nije-prazno';
 import { StanSaStanarima } from '../../stanari/stanari-models';
 import { StanService } from '../stan-service';
@@ -21,7 +21,7 @@ type Polje = (typeof POLJA)[number];
   imports: [ReactiveFormsModule, ButtonModule, InputNumberModule, InputTextModule, MessageModule],
   templateUrl: './forma-stana.html',
 })
-export class FormaStana implements OnInit {
+export class FormaStana {
   private fb = inject(FormBuilder);
   private stanService = inject(StanService);
   private readonly fokusiraj = fokusPosleCrtanja();
@@ -49,12 +49,18 @@ export class FormaStana implements OnInit {
     kvadratura: [null as number | null, Validators.required],
   });
 
-  ngOnInit(): void {
-    const stan = this.stan();
-    if (stan) {
-      this.forma.setValue({ broj: stan.broj, sprat: stan.sprat, kvadratura: stan.kvadratura });
-    }
-    this.fokusiraj('#stan-broj');
+  constructor() {
+    // Forma ostaje ista kad se iz izmene jednog stana pređe na drugi, pa se popunjava iznova
+    effect(() => {
+      const stan = this.stan();
+      untracked(() => {
+        this.greska.set('');
+        this.forma.reset(
+          stan ? { broj: stan.broj, sprat: stan.sprat, kvadratura: stan.kvadratura } : undefined,
+        );
+        this.fokusiraj('#stan-broj');
+      });
+    });
   }
 
   protected nevazece(polje: Polje): boolean {
@@ -96,14 +102,10 @@ export class FormaStana implements OnInit {
       this.greska.set(neuspeh);
       return;
     }
-    for (const polje of POLJA) {
-      const poruka = greskaPolja(err, polje);
-      if (poruka) {
-        this.forma.controls[polje].setErrors({ server: poruka });
-        this.forma.controls[polje].markAsTouched();
-        this.fokusiraj(`#stan-${polje}`);
-        return;
-      }
+    const polje = oznaciGreskuPolja(err, this.forma.controls, POLJA);
+    if (polje) {
+      this.fokusiraj(`#stan-${polje}`);
+      return;
     }
     if (err.status === 409) {
       this.forma.controls.broj.setErrors({ server: porukaServera(err) ?? neuspeh });

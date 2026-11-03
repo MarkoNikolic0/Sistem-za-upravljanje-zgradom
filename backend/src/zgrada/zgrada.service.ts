@@ -23,14 +23,8 @@ export class ZgradaService {
   constructor(
     @InjectRepository(Zgrada) private zgradaRepository: Repository<Zgrada>,
     @InjectRepository(Stan) private stanRepository: Repository<Stan>,
-    @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
-    @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
-    @InjectRepository(Glasanje)
-    private glasanjeRepository: Repository<Glasanje>,
-    @InjectRepository(Sastanak)
-    private sastanakRepository: Repository<Sastanak>,
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
   ) {}
@@ -106,23 +100,40 @@ export class ZgradaService {
   }
 
   async remove(id: number) {
-    const zgrada = await this.findOne(id);
+    // Zaključana zgrada: novi stan, kvar i ostalo čekaju kraj brisanja (strani ključ)
+    await this.zgradaRepository.manager.transaction(async (manager) => {
+      const zgrada = await manager.findOne(Zgrada, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!zgrada) {
+        throw new NotFoundException(`Zgrada sa id-jem ${id} ne postoji!`);
+      }
 
-    const [stanovi, kvarovi, upravnici, oglasi, glasanja, sastanci] =
-      await Promise.all([
-        this.stanRepository.count({ where: { zgrada: { id } } }),
-        this.kvarRepository.count({ where: { zgrada: { id } } }),
-        this.korisnikRepository.count({ where: { zgrada: { id } } }),
-        this.oglasRepository.count({ where: { zgrada: { id } } }),
-        this.glasanjeRepository.count({ where: { zgrada: { id } } }),
-        this.sastanakRepository.count({ where: { zgrada: { id } } }),
-      ]);
-    if (stanovi + kvarovi + upravnici + oglasi + glasanja + sastanci > 0) {
-      throw new ConflictException(
-        `Zgrada se ne može obrisati jer ima: stanova ${stanovi}, kvarova ${kvarovi}, upravnika ${upravnici}, oglasa ${oglasi}, glasanja ${glasanja}, sastanaka ${sastanci}.`,
-      );
-    }
+      const veze = {
+        stanova: Stan,
+        kvarova: Kvar,
+        upravnika: Korisnik,
+        oglasa: Oglas,
+        glasanja: Glasanje,
+        sastanaka: Sastanak,
+      };
+      const ima: string[] = [];
+      for (const [naziv, entitet] of Object.entries(veze)) {
+        const broj = await manager.count(entitet, {
+          where: { zgrada: { id } },
+        });
+        if (broj > 0) {
+          ima.push(`${naziv} ${broj}`);
+        }
+      }
+      if (ima.length > 0) {
+        throw new ConflictException(
+          `Zgrada se ne može obrisati jer ima: ${ima.join(', ')}.`,
+        );
+      }
 
-    return await this.zgradaRepository.remove(zgrada);
+      await manager.remove(zgrada);
+    });
   }
 }
