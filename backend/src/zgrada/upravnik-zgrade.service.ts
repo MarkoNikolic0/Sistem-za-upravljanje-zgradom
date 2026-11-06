@@ -10,6 +10,7 @@ import { Zgrada } from './zgrada.entity.js';
 import { AKTIVNA_ZGRADA, proveriAktivnu } from './aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { OglasService } from '../oglas/oglas.service.js';
 
 @Injectable()
 export class UpravnikZgradeService {
@@ -17,6 +18,7 @@ export class UpravnikZgradeService {
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
     private dataSource: DataSource,
+    private oglasService: OglasService,
   ) {}
 
   async find(zgradaId: number) {
@@ -63,7 +65,7 @@ export class UpravnikZgradeService {
         );
       }
 
-      await this.vratiUStanara(manager, zgradaId);
+      await this.smeni(manager, zgradaId);
       await manager.update(Korisnik, korisnikId, {
         uloga: Uloga.UPRAVNIK,
         zgrada: { id: zgradaId },
@@ -75,7 +77,7 @@ export class UpravnikZgradeService {
   async razresi(zgradaId: number) {
     await this.dataSource.transaction(async (manager) => {
       await this.zakljucajZgradu(manager, zgradaId);
-      if (!(await this.vratiUStanara(manager, zgradaId))) {
+      if (!(await this.smeni(manager, zgradaId))) {
         throw new NotFoundException('Zgrada nema upravnika.');
       }
     });
@@ -92,18 +94,32 @@ export class UpravnikZgradeService {
     }
   }
 
+  private async smeni(manager: EntityManager, zgradaId: number) {
+    const bivsi = await this.vratiUStanara(manager, zgradaId);
+    if (bivsi === null) {
+      return false;
+    }
+    await this.oglasService.sakrijAkoNemaPristup(
+      manager,
+      bivsi,
+      zgradaId,
+      'Autor više ne upravlja zgradom.',
+    );
+    return true;
+  }
+
   async vratiUStanara(manager: EntityManager, zgradaId: number) {
     const upravnik = await manager.findOne(Korisnik, {
       where: { zgrada: { id: zgradaId } },
       select: { id: true },
     });
     if (!upravnik) {
-      return false;
+      return null;
     }
     await manager.update(Korisnik, upravnik.id, {
       uloga: Uloga.STANAR,
       zgrada: null,
     });
-    return true;
+    return upravnik.id;
   }
 }

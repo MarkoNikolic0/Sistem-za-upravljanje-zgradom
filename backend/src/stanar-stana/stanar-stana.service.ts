@@ -10,6 +10,7 @@ import { GlasanjeGlasoviService } from '../glasanje/glasanje-glasovi.service.js'
 import { PratilacKvaraService } from '../pratilac-kvara/pratilac-kvara.service.js';
 import { zakljucajVeze } from './veze-u-zgradi.js';
 import { UpdateStanarStanaDto } from './dto/update-stanar-stana.dto.js';
+import { OglasService } from '../oglas/oglas.service.js';
 
 @Injectable()
 export class StanarStanaService {
@@ -20,6 +21,7 @@ export class StanarStanaService {
     private korisnikService: KorisnikService,
     private glasoviService: GlasanjeGlasoviService,
     private pracenjaService: PratilacKvaraService,
+    private oglasService: OglasService,
     private dataSource: DataSource,
   ) {}
 
@@ -162,6 +164,12 @@ export class StanarStanaService {
     );
     if (!ostajeUZgradi) {
       await this.pracenjaService.ukloniPracenja(manager, korisnikId, zgradaId);
+      await this.oglasService.sakrijAkoNemaPristup(
+        manager,
+        korisnikId,
+        zgradaId,
+        'Autor se odselio iz zgrade.',
+      );
     }
   }
 

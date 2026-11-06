@@ -72,12 +72,16 @@ export class NalogKorisnikaService {
         return;
       }
       await this.odbijZahteve(manager, id);
+      await this.oglasService.sakrijOglaseAutora(
+        manager,
+        id,
+        'Nalog autora je deaktiviran.',
+      );
       await this.stanariService.odseliIzSvihStanova(manager, id);
       if (korisnik.zgrada) {
         await this.upravnikService.vratiUStanara(manager, korisnik.zgrada.id);
       }
       await this.kvarAkcijeService.vratiKvaroveServisera(manager, id, adminId);
-      await this.oglasService.sakrijOglaseAutora(manager, id);
       await this.refreshTokenService.opozoviSveSesije(manager, id);
       await manager.update(Korisnik, id, { deaktiviran: new Date() });
     });

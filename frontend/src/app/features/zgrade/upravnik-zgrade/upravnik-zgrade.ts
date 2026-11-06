@@ -102,7 +102,7 @@ export class UpravnikZgrade {
     const dugme = event.currentTarget as HTMLElement;
     this.confirmationService.confirm({
       header: 'Promena upravnika',
-      message: `${this.ime(novi)} postaje upravnik zgrade, a ${this.ime(stari)} se vraća u stanara i gubi prava upravnika.`,
+      message: `${this.ime(novi)} postaje upravnik zgrade, a ${this.ime(stari)} se vraća u stanara i gubi prava upravnika. Ako ne stanuje u zgradi, oglasi koje je objavio se sakrivaju, a obaveštenja ostaju.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Promeni upravnika' },
@@ -120,7 +120,7 @@ export class UpravnikZgrade {
     this.akcije.ponisti();
     this.confirmationService.confirm({
       header: 'Razrešenje upravnika',
-      message: `${this.ime(stari)} više neće upravljati zgradom i vraća se u stanara. Zgrada ostaje bez upravnika dok ne postaviš novog.`,
+      message: `${this.ime(stari)} više neće upravljati zgradom i vraća se u stanara. Zgrada ostaje bez upravnika dok ne postaviš novog. Ako ne stanuje u zgradi, oglasi koje je objavio se sakrivaju, a obaveštenja ostaju.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Razreši', severity: 'danger' },

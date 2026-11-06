@@ -16,6 +16,7 @@ import { ZgradaPregledService } from './zgrada-pregled.service.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
 import { ArhivaZgradeService } from './arhiva-zgrade.service.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import { OglasModule } from '../oglas/oglas.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
     ]),
     AuthModule,
     KorisnikModule,
+    OglasModule,
   ],
   controllers: [ZgradaController],
   providers: [

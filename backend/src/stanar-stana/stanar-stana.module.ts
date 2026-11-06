@@ -8,6 +8,7 @@ import { StanarStanaController } from './stanar-stana.controller.js';
 import { StanarStanaService } from './stanar-stana.service.js';
 import { GlasanjeModule } from '../glasanje/glasanje.module.js';
 import { PratilacKvaraModule } from '../pratilac-kvara/pratilac-kvara.module.js';
+import { OglasModule } from '../oglas/oglas.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PratilacKvaraModule } from '../pratilac-kvara/pratilac-kvara.module.js'
     KorisnikModule,
     GlasanjeModule,
     PratilacKvaraModule,
+    OglasModule,
   ],
   controllers: [StanarStanaController],
   providers: [StanarStanaService],
