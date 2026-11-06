@@ -56,11 +56,16 @@
         <app-pregled-zgrada class="panel mt-8" />
       } @else {
         <app-danas [profil]="profil.value()" [zgrade]="zgrade()" />
-        <app-vazni-kontakti
-          class="kontakti"
-          [zgrade]="zgrade()"
-          [zgradaUpravnika]="profil.value().zgrada?.id ?? null"
-        />
+        <aside #kolona class="kolona" [style.--visina-kolone.px]="visinaKolone()">
+          <app-dokumenti-ukratko
+            [zgrade]="zgrade()"
+            [zgradaUpravnika]="profil.value().zgrada?.id ?? null"
+          />
+          <app-vazni-kontakti
+            [zgrade]="zgrade()"
+            [zgradaUpravnika]="profil.value().zgrada?.id ?? null"
+          />
+        </aside>
       }
     }
   } @else if (profil.error() || zahtevi.error()) {

@@ -1,0 +1,207 @@
+<div class="stranica">
+  <a routerLink="/" class="nazad"><i class="pi pi-arrow-left" aria-hidden="true"></i>Početna</a>
+  <p class="oznaka mt-6">Zgrada</p>
+  <h1 class="naslov-stranice mt-3">Dokumenti</h1>
+  <p class="mt-2 text-priguseno">
+    Pravila, zapisnici, odluke i ugovori zgrade na jednom mestu. Dodir otvara fajl.
+  </p>
+
+  @if (greska()) {
+    <p-message severity="error" styleClass="mt-6">Zgrade trenutno nije moguće učitati.</p-message>
+  } @else if (!ucitano()) {
+    <div class="ucitavanje mt-6" aria-hidden="true"><p-skeleton height="3rem" /></div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (zgradaId(); as izabrana) {
+    @if (zgrade().length > 1) {
+      <div class="mt-6 flex flex-col gap-1.5 sm:w-72">
+        <span id="dokumenti-zgrada" class="text-sm font-medium">Zgrada</span>
+        <p-select
+          ariaLabelledBy="dokumenti-zgrada"
+          [options]="zgrade()"
+          optionLabel="naziv"
+          optionValue="id"
+          [ngModel]="zgradaId()"
+          (ngModelChange)="promeniZgradu($event)"
+          [fluid]="true"
+        />
+      </div>
+    }
+
+    <div class="kategorije mt-6" role="group" aria-label="Kategorija">
+      <button
+        type="button"
+        class="kategorija"
+        [attr.aria-pressed]="kategorija() === null"
+        (click)="promeniKategoriju(null)"
+      >
+        Sve
+      </button>
+      @for (k of kategorije; track k.kategorija) {
+        <button
+          type="button"
+          class="kategorija"
+          [attr.aria-pressed]="kategorija() === k.kategorija"
+          (click)="promeniKategoriju(k.kategorija)"
+        >
+          {{ k.naziv }}
+        </button>
+      }
+    </div>
+
+    <div id="poruka-dokumenata" tabindex="-1" class="mt-6 outline-none empty:hidden">
+      @if (akcije.poruka(); as p) {
+        <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+      }
+    </div>
+
+    <section
+      class="odeljak"
+      aria-labelledby="lista-dokumenata"
+      [attr.aria-busy]="dokumenti.isLoading()"
+    >
+      <div class="zaglavlje-odeljka">
+        <h2 id="lista-dokumenata" class="naslov-odeljka">
+          {{ naslovListe() }}
+        </h2>
+        @if (upravlja() && forma() !== 'novi') {
+          <button pButton id="dodaj-dokument" type="button" size="small" (click)="otvori('novi')">
+            <i class="pi pi-upload" aria-hidden="true"></i>
+            Okači dokument
+          </button>
+        }
+      </div>
+
+      @if (forma() === 'novi') {
+        <div class="panel mb-6">
+          <h3 class="naslov-forme">Novi dokument</h3>
+          <app-forma-dokumenta
+            [zgradaId]="izabrana"
+            (sacuvan)="sacuvan($event)"
+            (zastarelo)="zastarelo($event)"
+            (odustani)="zatvori()"
+          />
+        </div>
+      }
+
+      @if (dokumenti.error()) {
+        <p class="text-sm text-priguseno">
+          Dokumente trenutno nije moguće učitati.
+          <button type="button" class="ponovo" (click)="dokumenti.reload()">Pokušaj ponovo</button>
+        </p>
+      } @else if (!dokumenti.hasValue()) {
+        <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+          <p-skeleton height="3.5rem" />
+          <p-skeleton height="3.5rem" />
+          <p-skeleton height="3.5rem" />
+        </div>
+        <span class="sr-only">Učitavanje…</span>
+      } @else if (grupe().length === 0) {
+        @if (forma() !== 'novi') {
+          <div class="prazno">
+            <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-folder-open"></i></span>
+            <p class="text-naslov">
+              {{
+                kategorija() === null ? 'Još nema dokumenata' : 'Nema dokumenata u ovoj kategoriji'
+              }}
+            </p>
+            <p class="mt-1 text-sm text-priguseno">
+              @if (upravlja()) {
+                Okači pravila vlasnika, kućni red, zapisnike sa skupštine ili ugovore.
+              } @else {
+                Upravnik još nije okačio dokumente.
+              }
+            </p>
+          </div>
+        }
+      } @else {
+        @for (g of grupe(); track g.kategorija) {
+          <section class="grupa" [attr.aria-labelledby]="'grupa-' + g.kategorija">
+            @if (kategorija() === null) {
+              <h3 class="naslov-grupe" [id]="'grupa-' + g.kategorija">
+                <i [class]="g.ikonica" aria-hidden="true"></i>
+                {{ g.naziv }}
+                <span class="broj-grupe">{{ g.dokumenti.length }}</span>
+              </h3>
+            } @else {
+              <h3 class="sr-only" [id]="'grupa-' + g.kategorija">{{ g.naziv }}</h3>
+            }
+            <ul class="lista">
+              @for (d of g.dokumenti; track d.id) {
+                <li>
+                  @if (forma() === d.id) {
+                    <div class="panel my-3">
+                      <h4 class="naslov-forme">Izmena dokumenta</h4>
+                      <app-forma-dokumenta
+                        [zgradaId]="izabrana"
+                        [dokument]="d"
+                        (sacuvan)="sacuvan($event)"
+                        (zastarelo)="zastarelo($event)"
+                        (odustani)="zatvori()"
+                      />
+                    </div>
+                  } @else {
+                    <app-red-dokumenta [dokument]="d">
+                      @if (upravlja()) {
+                        <span class="akcije">
+                          <button
+                            pButton
+                            [id]="'izmeni-' + d.id"
+                            type="button"
+                            size="small"
+                            text
+                            iconOnly
+                            [attr.aria-label]="'Izmeni ' + d.naziv"
+                            (click)="otvori(d.id)"
+                          >
+                            <i class="pi pi-pencil" aria-hidden="true"></i>
+                          </button>
+                          <button
+                            pButton
+                            type="button"
+                            size="small"
+                            text
+                            severity="danger"
+                            iconOnly
+                            [attr.aria-label]="'Obriši ' + d.naziv"
+                            [disabled]="akcije.akcijaUToku()"
+                            (click)="obrisi($event, d)"
+                          >
+                            <i class="pi pi-trash" aria-hidden="true"></i>
+                          </button>
+                        </span>
+                      }
+                    </app-red-dokumenta>
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        @if (dokumenti.value().ukupno > poStrani) {
+          <app-paginacija
+            class="mt-6"
+            [strana]="strana()"
+            [ukupno]="dokumenti.value().ukupno"
+            [poStrani]="poStrani"
+            (promena)="strana.set($event)"
+          />
+        }
+      }
+    </section>
+  } @else if (bezStana()) {
+    <p class="mt-6 text-sm text-priguseno">
+      Da bi video dokumente svoje zgrade,
+      <a
+        routerLink="/povezivanje"
+        class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+        >poveži nalog sa stanom</a
+      >.
+    </p>
+  } @else {
+    <p class="mt-6 text-sm text-priguseno">
+      {{ admin() ? 'U sistemu još nema zgrada.' : 'Još nemaš zgradu u aplikaciji.' }}
+    </p>
+  }
+</div>
+
+<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

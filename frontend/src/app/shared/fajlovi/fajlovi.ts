@@ -8,7 +8,10 @@ export interface PravilaFajlova {
 }
 
 export function pomocZaFajlove(pravila: PravilaFajlova): string {
-  return `${pravila.opisTipova}, do ${pravila.maksMb} MB. Najviše ${pravila.maksBroj} ${pravila.mnozina}.`;
+  const osnovno = `${pravila.opisTipova}, do ${pravila.maksMb} MB.`;
+  return pravila.maksBroj > 1
+    ? `${osnovno} Najviše ${pravila.maksBroj} ${pravila.mnozina}.`
+    : osnovno;
 }
 
 export function greskaIzbora(

@@ -1,0 +1,52 @@
+<section aria-labelledby="dokumenti-naslov" [attr.aria-busy]="dokumenti.isLoading()">
+  <div class="zaglavlje-odeljka">
+    <h2 id="dokumenti-naslov" class="naslov-odeljka">Dokumenti zgrade</h2>
+    <a pButton routerLink="/dokumenti" size="small" text>Svi</a>
+  </div>
+
+  @if (dokumenti.isLoading()) {
+    <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
+      <p-skeleton height="3rem" />
+      <p-skeleton height="3rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (dokumenti.hasValue()) {
+    @for (zgrada of zgrade(); track zgrada.id; let i = $index) {
+      <div class="zgrada">
+        @if (zgrade().length > 1) {
+          <h3 class="naziv-zgrade">{{ zgrada.naziv }}</h3>
+        }
+        @let stranica = dokumenti.value()[i];
+        @if (stranica === null) {
+          <p class="prazna-zgrada">
+            Dokumente ove zgrade trenutno nije moguće učitati.
+            <button type="button" class="ponovo" (click)="dokumenti.reload()">
+              Pokušaj ponovo
+            </button>
+          </p>
+        } @else if (stranica) {
+          @if (stranica.stavke.length > 0) {
+            <ul>
+              @for (d of stranica.stavke; track d.id) {
+                <li><app-red-dokumenta [dokument]="d" [saKategorijom]="true" /></li>
+              }
+            </ul>
+            @if (stranica.ukupno > stranica.stavke.length) {
+              <a class="jos" routerLink="/dokumenti" [queryParams]="{ zgrada: zgrada.id }">
+                {{ jos(stranica.ukupno, stranica.stavke.length) }}
+              </a>
+            }
+          } @else {
+            <p class="prazna-zgrada">
+              @if (zgrada.id === zgradaUpravnika()) {
+                Još nema dokumenata. Okači pravila i kućni red da bi ih stanari videli.
+              } @else {
+                Upravnik još nije okačio dokumente.
+              }
+            </p>
+          }
+        }
+      </div>
+    }
+  }
+</section>

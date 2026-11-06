@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.izabran {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+
+  .pi {
+    font-size: 1.25rem;
+    color: var(--color-svetlo);
+  }
+}

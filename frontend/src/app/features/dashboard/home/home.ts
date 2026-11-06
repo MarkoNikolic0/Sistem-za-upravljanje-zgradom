@@ -1,4 +1,13 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -9,6 +18,7 @@ import { DatePipe } from '@angular/common';
 import { PregledZgrada } from '../pregled-zgrada/pregled-zgrada';
 import { Danas } from '../danas/danas';
 import { VazniKontakti } from '../../kontakti/vazni-kontakti/vazni-kontakti';
+import { DokumentiUkratko } from '../../dokumenti/dokumenti-ukratko/dokumenti-ukratko';
 import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
 
 // Prvi korak za stanara koji jos nema stan
@@ -24,6 +34,7 @@ type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
     PregledZgrada,
     Danas,
     VazniKontakti,
+    DokumentiUkratko,
   ],
   selector: 'app-home',
   styleUrl: './home.scss',
@@ -36,6 +47,23 @@ export class Home {
   protected readonly profil = this.profileService.profile();
   protected readonly zahtevi = this.zahtevService.mojiZahtevi();
   protected readonly danas = new Date();
+
+  private readonly kolona = viewChild<ElementRef<HTMLElement>>('kolona');
+  protected readonly visinaKolone = signal(0);
+
+  constructor() {
+    const posmatrac = new ResizeObserver(([unos]) =>
+      this.visinaKolone.set(unos.borderBoxSize[0].blockSize),
+    );
+    effect(() => {
+      const kolona = this.kolona();
+      posmatrac.disconnect();
+      if (kolona) {
+        posmatrac.observe(kolona.nativeElement);
+      }
+    });
+    inject(DestroyRef).onDestroy(() => posmatrac.disconnect());
+  }
 
   protected readonly zgrade = computed(() =>
     this.profil.hasValue() ? zgradeIzProfila(this.profil.value()) : [],

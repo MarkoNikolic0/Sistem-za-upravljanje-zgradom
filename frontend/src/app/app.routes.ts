@@ -71,6 +71,15 @@ export const routes: Routes = [
         title: 'Zahtevi | Upravljanje zgradom',
       },
       {
+        path: 'dokumenti',
+        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
+        loadComponent: () =>
+          import('./features/dokumenti/dokumenti-zgrade/dokumenti-zgrade').then(
+            (m) => m.DokumentiZgrade,
+          ),
+        title: 'Dokumenti | Upravljanje zgradom',
+      },
+      {
         path: 'kontakti',
         canActivate: [ulogaGuard('upravnik', 'admin')],
         loadComponent: () =>

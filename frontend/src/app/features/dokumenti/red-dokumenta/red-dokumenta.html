@@ -1,0 +1,21 @@
+<span class="ikonica-dokumenta" aria-hidden="true">
+  <i [class]="slika() ? 'pi pi-image' : 'pi pi-file-pdf'"></i>
+</span>
+<span class="podaci">
+  <a class="naziv" [href]="dokument().url" target="_blank" rel="noopener"
+    >{{ dokument().naziv }}<span class="sr-only"> (otvara se u novoj kartici)</span></a
+  >
+  <span class="opis">
+    @if (saKategorijom()) {
+      {{ kategorija() }} ·
+    }
+    <time [attr.datetime]="dokument().datumOtpremanja">{{
+      dokument().datumOtpremanja | date: 'd. M. y.'
+    }}</time>
+    · {{ fajl() }}
+  </span>
+</span>
+@if (dokument().samoVlasnici) {
+  <span class="znacka">Vlasnici</span>
+}
+<ng-content />

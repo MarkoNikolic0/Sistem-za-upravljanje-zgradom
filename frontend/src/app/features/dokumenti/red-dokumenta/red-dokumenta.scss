@@ -1,0 +1,51 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--color-linija);
+}
+
+.ikonica-dokumenta {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.75rem;
+  border: 1px solid var(--color-linija);
+  border-radius: 0.25rem 0.75rem 0.25rem 0.25rem;
+  background: var(--color-panel);
+  color: var(--color-priguseno);
+  font-size: 1rem;
+}
+
+.podaci {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.naziv {
+  color: var(--color-naslov);
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 150ms;
+
+  &:hover {
+    text-decoration-color: var(--color-svetlo);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+}
+
+.opis {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+}

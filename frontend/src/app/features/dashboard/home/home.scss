@@ -6,9 +6,9 @@
 .pocetna {
   max-width: 48rem;
 
-  // Dovoljno široko: kontakti u koloni desno, od vrha stranice
+  // Dovoljno široko: dokumenti i kontakti u koloni desno, od vrha stranice
   @container (width >= 66rem) {
-    &:has(app-vazni-kontakti) {
+    &:has(.kolona) {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 18rem;
       grid-template-rows: auto auto 1fr;
@@ -18,7 +18,10 @@
   }
 }
 
-.kontakti {
+.kolona {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
   margin-top: 2.5rem;
 
   // Ostaju vidljivi pri skrolovanju: ispod gornje trake, a kad su viši od ekrana,
@@ -27,7 +30,7 @@
     position: sticky;
     top: min(
       calc(var(--visina-gornje-trake) + 2rem),
-      calc(100dvh - var(--visina-kontakata, 0px) - 2rem)
+      calc(100dvh - var(--visina-kolone, 0px) - 2rem)
     );
     grid-column: 2;
     grid-row: 1 / -1;

@@ -1,4 +1,11 @@
-<input #polje type="file" hidden multiple [accept]="tipovi()" (change)="izaberi(polje)" />
+<input
+  #polje
+  type="file"
+  hidden
+  [multiple]="pravila().maksBroj > 1"
+  [accept]="tipovi()"
+  (change)="izaberi(polje)"
+/>
 <button
   pButton
   type="button"

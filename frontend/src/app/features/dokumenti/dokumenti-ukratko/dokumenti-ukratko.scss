@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.zgrada + .zgrada {
+  margin-top: 1.25rem;
+}
+
+.zgrada ul > li:last-child > app-red-dokumenta {
+  border-bottom: 1px solid var(--color-linija);
+}
+
+.jos {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-priguseno);
+  text-decoration: underline;
+  text-decoration-color: var(--color-ivica);
+  text-underline-offset: 4px;
+
+  &:hover {
+    color: var(--color-tekst);
+    text-decoration-color: var(--color-svetlo);
+  }
+}
