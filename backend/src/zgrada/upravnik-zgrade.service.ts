@@ -11,6 +11,7 @@ import { AKTIVNA_ZGRADA, proveriAktivnu } from './aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OglasService } from '../oglas/oglas.service.js';
+import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
 
 @Injectable()
 export class UpravnikZgradeService {
@@ -99,12 +100,14 @@ export class UpravnikZgradeService {
     if (bivsi === null) {
       return false;
     }
-    await this.oglasService.sakrijAkoNemaPristup(
-      manager,
-      bivsi,
-      zgradaId,
-      'Autor više ne upravlja zgradom.',
-    );
+    const veze = await zakljucajVeze(manager, bivsi, zgradaId);
+    if (veze.length === 0) {
+      await this.oglasService.sakrijOglase(
+        manager,
+        { autor: { id: bivsi }, zgrada: { id: zgradaId } },
+        'Autor više ne upravlja zgradom.',
+      );
+    }
     return true;
   }
 

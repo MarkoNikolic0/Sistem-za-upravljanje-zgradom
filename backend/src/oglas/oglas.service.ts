@@ -12,6 +12,7 @@ import {
   Repository,
   DataSource,
   EntityManager,
+  FindOptionsWhere,
 } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
@@ -32,8 +33,6 @@ import { OglasPravaService } from './oglas-prava.service.js';
 import { GlasanjeService } from '../glasanje/glasanje.service.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
-import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
-import { Korisnik } from '../korisnik/korisnik.entity.js';
 
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
@@ -255,38 +254,20 @@ export class OglasService {
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
-  async sakrijOglaseAutora(
+  async sakrijOglase(
     manager: EntityManager,
-    autorId: number,
+    gde: FindOptionsWhere<Oglas>,
     razlog: string,
-    zgradaId?: number,
   ) {
     await manager.update(
       Oglas,
       {
-        autor: { id: autorId },
-        ...(zgradaId !== undefined && { zgrada: { id: zgradaId } }),
+        ...gde,
         vrsta: Not(VrstaOglasa.OBAVESTENJE),
         datumSakrivanja: IsNull(),
       },
       { datumSakrivanja: new Date(), razlogSakrivanja: razlog },
     );
-  }
-
-  async sakrijAkoNemaPristup(
-    manager: EntityManager,
-    autorId: number,
-    zgradaId: number,
-    razlog: string,
-  ) {
-    const veze = await zakljucajVeze(manager, autorId, zgradaId);
-    const upravlja = await manager.existsBy(Korisnik, {
-      id: autorId,
-      zgrada: { id: zgradaId },
-    });
-    if (veze.length === 0 && !upravlja) {
-      await this.sakrijOglaseAutora(manager, autorId, razlog, zgradaId);
-    }
   }
 
   async obnovi(id: number, korisnikId: number, uloga: Uloga) {

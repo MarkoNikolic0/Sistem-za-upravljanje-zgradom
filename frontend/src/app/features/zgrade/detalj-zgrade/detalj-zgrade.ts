@@ -123,7 +123,7 @@ export class DetaljZgrade {
     this.poruka.set(null);
     this.confirmationService.confirm({
       header: 'Arhiviranje zgrade',
-      message: `Zgrada „${zgrada.naziv}“ nestaje iz aplikacije za sve. Stanari se odseljavaju, upravnik se vraća u stanara, a zahtevi na čekanju se odbijaju. Stanovi, kvarovi, oglasi, glasanja i sastanci ostaju sačuvani i vraćaju se kad vratiš zgradu.`,
+      message: `Zgrada „${zgrada.naziv}“ nestaje iz aplikacije za sve. Stanari se odseljavaju, upravnik se vraća u stanara, zahtevi na čekanju se odbijaju, a oglasi se sakrivaju. Stanovi, kvarovi, obaveštenja, glasanja i sastanci ostaju sačuvani i vraćaju se kad vratiš zgradu.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Arhiviraj', severity: 'danger' },

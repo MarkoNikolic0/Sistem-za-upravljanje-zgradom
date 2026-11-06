@@ -176,7 +176,7 @@ export class StanariZgrade {
     const ime = this.ime(stanar);
     this.confirmationService.confirm({
       header: 'Odseljenje',
-      message: `${ime} više neće biti stanar stana ${stan.broj}. Glasovi za ovaj stan u odlukama koje traju se brišu, a ako nema drugi stan u zgradi, brišu se i glasovi u anketama i praćenja kvarova, a oglasi se sakrivaju (obaveštenja ostaju). Nalog ostaje.`,
+      message: `${ime} više neće biti stanar stana ${stan.broj}. Glasovi za ovaj stan u odlukama koje traju se brišu, a ako nema drugi stan u zgradi, brišu se i glasovi u anketama i praćenja kvarova, a oglasi se sakrivaju ako ne upravlja zgradom (obaveštenja ostaju). Nalog ostaje.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Odseli', severity: 'danger' },

@@ -5,6 +5,7 @@ import { StanarStana } from './stanar-stana.entity.js';
 import { Stan } from '../stan/stan.entity.js';
 import { poRedosleduStanova } from '../stan/redosled-stanova.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
+import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { GlasanjeGlasoviService } from '../glasanje/glasanje-glasovi.service.js';
 import { PratilacKvaraService } from '../pratilac-kvara/pratilac-kvara.service.js';
@@ -164,12 +165,17 @@ export class StanarStanaService {
     );
     if (!ostajeUZgradi) {
       await this.pracenjaService.ukloniPracenja(manager, korisnikId, zgradaId);
-      await this.oglasService.sakrijAkoNemaPristup(
-        manager,
-        korisnikId,
-        zgradaId,
-        'Autor se odselio iz zgrade.',
-      );
+      const upravlja = await manager.existsBy(Korisnik, {
+        id: korisnikId,
+        zgrada: { id: zgradaId },
+      });
+      if (!upravlja) {
+        await this.oglasService.sakrijOglase(
+          manager,
+          { autor: { id: korisnikId }, zgrada: { id: zgradaId } },
+          'Autor se odselio iz zgrade.',
+        );
+      }
     }
   }
 
@@ -186,6 +192,24 @@ export class StanarStanaService {
     );
   }
 
+  private async zakljucajStanara(
+    manager: EntityManager,
+    korisnikId: number,
+    zgradaId: number,
+  ) {
+    await manager.findOne(Korisnik, {
+      where: { id: korisnikId },
+      select: { id: true },
+      lock: { mode: 'pessimistic_read' },
+    });
+    return await zakljucajVeze(
+      manager,
+      korisnikId,
+      zgradaId,
+      'pessimistic_write',
+    );
+  }
+
   private async zakljucajVezu(
     manager: EntityManager,
     zgradaId: number,
@@ -197,12 +221,7 @@ export class StanarStanaService {
       select: { id: true, korisnik: { id: true } },
     });
     const veze = nadjena
-      ? await zakljucajVeze(
-          manager,
-          nadjena.korisnik.id,
-          zgradaId,
-          'pessimistic_write',
-        )
+      ? await this.zakljucajStanara(manager, nadjena.korisnik.id, zgradaId)
       : [];
     const veza = veze.find((v) => v.id === id);
     if (!nadjena || !veza) {

@@ -7,6 +7,7 @@ import { Glas } from '../glasanje/glas.entity.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
+import { OglasService } from '../oglas/oglas.service.js';
 
 function uZgradi(
   tabela: 'stan' | 'kvar' | 'glasanje',
@@ -25,6 +26,7 @@ export class ArhivaZgradeService {
   constructor(
     private dataSource: DataSource,
     private upravnikService: UpravnikZgradeService,
+    private oglasService: OglasService,
   ) {}
 
   async arhiviraj(zgradaId: number) {
@@ -51,6 +53,11 @@ export class ArhivaZgradeService {
         kvar: { id: uZgradi('kvar', zgradaId) },
       });
 
+      await this.oglasService.sakrijOglase(
+        manager,
+        { zgrada: { id: zgradaId } },
+        'Zgrada je arhivirana.',
+      );
       await this.upravnikService.vratiUStanara(manager, zgradaId);
       await manager.update(Zgrada, zgradaId, { arhivirana: new Date() });
     });

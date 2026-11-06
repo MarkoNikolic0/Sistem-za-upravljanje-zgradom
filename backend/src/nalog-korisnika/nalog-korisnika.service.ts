@@ -72,9 +72,9 @@ export class NalogKorisnikaService {
         return;
       }
       await this.odbijZahteve(manager, id);
-      await this.oglasService.sakrijOglaseAutora(
+      await this.oglasService.sakrijOglase(
         manager,
-        id,
+        { autor: { id } },
         'Nalog autora je deaktiviran.',
       );
       await this.stanariService.odseliIzSvihStanova(manager, id);
