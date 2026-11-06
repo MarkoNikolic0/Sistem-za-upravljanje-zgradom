@@ -83,6 +83,6 @@ export const PRAVILA_DOKUMENTA: PravilaFajlova = {
 };
 
 export const MAKS_NAZIVA_DOKUMENTA = 120;
-export const DOKUMENATA_NA_POCETNOJ = 3;
+export const DOKUMENATA_NA_POCETNOJ = 2;
 export const DOKUMENATA_PO_STRANI = 50;
 export const OSVEZI_LINKOVE_MS = 50 * 60_000;

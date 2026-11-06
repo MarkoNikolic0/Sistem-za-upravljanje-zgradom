@@ -27,26 +27,28 @@
       </div>
     }
 
-    <div class="kategorije mt-6" role="group" aria-label="Kategorija">
-      <button
-        type="button"
-        class="kategorija"
-        [attr.aria-pressed]="kategorija() === null"
-        (click)="promeniKategoriju(null)"
-      >
-        Sve
-      </button>
-      @for (k of kategorije; track k.kategorija) {
+    @if (forma() !== 'novi') {
+      <div class="kategorije mt-6" role="group" aria-label="Kategorija">
         <button
           type="button"
           class="kategorija"
-          [attr.aria-pressed]="kategorija() === k.kategorija"
-          (click)="promeniKategoriju(k.kategorija)"
+          [attr.aria-pressed]="kategorija() === null"
+          (click)="promeniKategoriju(null)"
         >
-          {{ k.naziv }}
+          Sve
         </button>
-      }
-    </div>
+        @for (k of kategorije; track k.kategorija) {
+          <button
+            type="button"
+            class="kategorija"
+            [attr.aria-pressed]="kategorija() === k.kategorija"
+            (click)="promeniKategoriju(k.kategorija)"
+          >
+            {{ k.naziv }}
+          </button>
+        }
+      </div>
+    }
 
     <div id="poruka-dokumenata" tabindex="-1" class="mt-6 outline-none empty:hidden">
       @if (akcije.poruka(); as p) {
