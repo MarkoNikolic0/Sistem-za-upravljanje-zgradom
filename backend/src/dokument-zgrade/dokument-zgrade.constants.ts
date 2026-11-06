@@ -1,0 +1,1 @@
+export const MAKS_NAZIV_DOKUMENTA = 120;

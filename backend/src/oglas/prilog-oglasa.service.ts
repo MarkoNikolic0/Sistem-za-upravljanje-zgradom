@@ -16,10 +16,8 @@ import {
   MAKS_PRILOGA_PO_OGLASU,
   PORUKA_SAKRIVEN,
 } from './oglas.constants.js';
+import { PDF } from '../shared/skladiste/otpremanje-fajla.js';
 
-const PDF = 'application/pdf';
-
-// Ime sa uređaja služi samo za prikaz; u skladištu fajl dobija nov ključ.
 function nazivZaPrikaz(originalno: string) {
   const ime = originalno
     .replace(/[\p{Cc}\p{Cf}]/gu, '')

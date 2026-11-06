@@ -18,6 +18,7 @@ import { Sastanak } from '../sastanak/sastanak.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { brojPoZgradi } from './broj-po-zgradi.js';
+import { DokumentZgrade } from '../dokument-zgrade/dokument-zgrade.entity.js';
 
 @Injectable()
 export class ZgradaService {
@@ -120,6 +121,7 @@ export class ZgradaService {
         oglasa: Oglas,
         glasanja: Glasanje,
         sastanaka: Sastanak,
+        dokumenata: DokumentZgrade,
       };
       const ima: string[] = [];
       for (const [naziv, entitet] of Object.entries(veze)) {
