@@ -51,6 +51,7 @@ export class FormaDokumenta implements OnInit {
 
   readonly zgradaId = input.required<number>();
   readonly dokument = input<DokumentZgrade>();
+  readonly kategorija = input<KategorijaDokumenta | null>(null);
 
   readonly sacuvan = output<DokumentZgrade>();
   readonly odustani = output<void>();
@@ -64,6 +65,7 @@ export class FormaDokumenta implements OnInit {
   protected readonly greskaFajla = signal('');
   protected readonly slanje = signal(false);
   protected readonly greska = signal('');
+  private predlogNaziva = '';
 
   protected readonly forma = this.fb.group({
     naziv: this.fb.nonNullable.control('', [
@@ -97,6 +99,7 @@ export class FormaDokumenta implements OnInit {
       this.forma.controls.samoVlasnici.markAsDirty();
       this.fokusiraj('#dokument-naziv');
     } else {
+      this.forma.controls.kategorija.setValue(this.kategorija());
       this.fokusiraj('app-izbor-fajlova button');
     }
   }
@@ -114,8 +117,9 @@ export class FormaDokumenta implements OnInit {
     this.fajl.set(fajl);
     this.greskaFajla.set('');
     const naziv = this.forma.controls.naziv;
-    if (!naziv.value.trim()) {
-      naziv.setValue(nazivIzFajla(fajl.name));
+    if (!naziv.value.trim() || naziv.value === this.predlogNaziva) {
+      this.predlogNaziva = nazivIzFajla(fajl.name);
+      naziv.setValue(this.predlogNaziva);
     }
   }
 
@@ -180,11 +184,15 @@ export class FormaDokumenta implements OnInit {
       this.fokusirajPrvuGresku();
       return;
     }
-    if (err.status === 404 && this.dokument()) {
-      this.zastarelo.emit('Dokument je u međuvremenu obrisan.');
+    if (err.status === 404) {
+      this.zastarelo.emit(
+        this.dokument()
+          ? 'Dokument više ne postoji ili zgrada više nije u aplikaciji.'
+          : 'Zgrada više nije u aplikaciji.',
+      );
       return;
     }
-    this.greska.set(porukaServera(err) && err.status < 500 ? porukaServera(err)! : neuspeh);
+    this.greska.set(err.status === 403 ? (porukaServera(err) ?? neuspeh) : neuspeh);
     this.fokusiraj('#greska-dokumenta');
   }
 }

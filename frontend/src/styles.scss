@@ -292,6 +292,35 @@ a.plocica-fajla:hover {
   }
 }
 
+.dodaj-prvi {
+  width: 100%;
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  &:hover {
+    border-color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 5%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+}
+
+.poziv-dodaj {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-svetlo);
+}
+
 [tabindex='-1']:focus:not(:focus-visible) {
   outline: none;
 }

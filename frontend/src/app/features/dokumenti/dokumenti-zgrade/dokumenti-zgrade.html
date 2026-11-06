@@ -63,7 +63,7 @@
         <h2 id="lista-dokumenata" class="naslov-odeljka">
           {{ naslovListe() }}
         </h2>
-        @if (upravlja() && forma() !== 'novi') {
+        @if (upravlja() && forma() !== 'novi' && grupe().length > 0) {
           <button pButton id="dodaj-dokument" type="button" size="small" (click)="otvori('novi')">
             <i class="pi pi-upload" aria-hidden="true"></i>
             Okači dokument
@@ -76,6 +76,7 @@
           <h3 class="naslov-forme">Novi dokument</h3>
           <app-forma-dokumenta
             [zgradaId]="izabrana"
+            [kategorija]="kategorija()"
             (sacuvan)="sacuvan($event)"
             (zastarelo)="zastarelo($event)"
             (odustani)="zatvori()"
@@ -96,22 +97,47 @@
         </div>
         <span class="sr-only">Učitavanje…</span>
       } @else if (grupe().length === 0) {
-        @if (forma() !== 'novi') {
+        @if (!upravlja()) {
           <div class="prazno">
-            <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-folder-open"></i></span>
+            <span class="prazno-ikonica neutralno" aria-hidden="true"
+              ><i class="pi pi-folder-open"></i
+            ></span>
             <p class="text-naslov">
-              {{
-                kategorija() === null ? 'Još nema dokumenata' : 'Nema dokumenata u ovoj kategoriji'
-              }}
-            </p>
-            <p class="mt-1 text-sm text-priguseno">
-              @if (upravlja()) {
-                Okači pravila vlasnika, kućni red, zapisnike sa skupštine ili ugovore.
+              @if (izabranaKategorija(); as k) {
+                Nema dokumenata u kategoriji {{ k.naziv }}
               } @else {
-                Upravnik još nije okačio dokumente.
+                Još nema dokumenata koje možeš da vidiš
               }
             </p>
+            <p class="mt-1 text-sm text-priguseno">
+              Kad upravnik okači dokument, pojaviće se ovde.
+            </p>
           </div>
+        } @else if (forma() !== 'novi') {
+          <button
+            id="dodaj-dokument"
+            type="button"
+            class="prazno dodaj-prvi"
+            (click)="otvori('novi')"
+          >
+            <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-folder-plus"></i></span>
+            <span class="text-naslov">
+              @if (izabranaKategorija(); as k) {
+                Nema dokumenata u kategoriji {{ k.naziv }}
+              } @else {
+                Još nema dokumenata
+              }
+            </span>
+            <span class="mt-1 text-sm text-priguseno">
+              {{
+                izabranaKategorija()?.opis ??
+                  'Pravila vlasnika, kućni red, zapisnici i ugovori, na jednom mestu za sve stanare.'
+              }}
+            </span>
+            <span class="poziv-dodaj mt-5"
+              ><i class="pi pi-upload" aria-hidden="true"></i>Okači prvi dokument</span
+            >
+          </button>
         }
       } @else {
         @for (g of grupe(); track g.kategorija) {

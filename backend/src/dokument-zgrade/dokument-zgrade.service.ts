@@ -14,7 +14,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { stranicenje } from '../shared/stranicenje.js';
 import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
-import { obradiSliku } from '../shared/skladiste/obrada-slike.js';
+import { obradiVelikuSliku } from '../shared/skladiste/obrada-slike.js';
 import { PDF } from '../shared/skladiste/otpremanje-fajla.js';
 import { CreateDokumentDto } from './dto/create-dokument.dto.js';
 import { UpdateDokumentDto } from './dto/update-dokument.dto.js';
@@ -80,7 +80,7 @@ export class DokumentZgradeService {
         ? [`${osnova}.pdf`, fajl.buffer, PDF]
         : [
             `${osnova}.webp`,
-            (await obradiSliku(fajl.buffer, 'fajl'))[0],
+            await obradiVelikuSliku(fajl.buffer, 'fajl'),
             'image/webp',
           ];
     await this.skladiste.sacuvaj(kljuc, sadrzaj, tip);

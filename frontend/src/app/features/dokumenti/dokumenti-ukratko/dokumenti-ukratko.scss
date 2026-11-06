@@ -24,3 +24,23 @@
     text-decoration-color: var(--color-svetlo);
   }
 }
+
+.prvi-dokument {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border: 1px dashed var(--color-ivica);
+  border-radius: 12px;
+}
+
+.ikonica-dodaj {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  color: var(--color-svetlo);
+  background: color-mix(in srgb, var(--color-svetlo) 12%, transparent);
+}

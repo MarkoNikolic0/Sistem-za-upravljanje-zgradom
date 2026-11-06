@@ -81,3 +81,8 @@
   display: flex;
   gap: 0.25rem;
 }
+
+.dodaj-prvi .prazno-ikonica {
+  color: var(--color-svetlo);
+  background: color-mix(in srgb, var(--color-svetlo) 12%, transparent);
+}

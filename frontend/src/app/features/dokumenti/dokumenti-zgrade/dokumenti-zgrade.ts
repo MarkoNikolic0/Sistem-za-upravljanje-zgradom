@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   Component,
   computed,
   inject,
@@ -18,6 +19,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { Poruka } from '../../../shared/stanje/poruka';
+import { osveziPosle } from '../../../shared/stanje/osvezavanje';
 import { AkcijeStore } from '../../../shared/stanje/with-akcije';
 import { uMnozini } from '../../../shared/tekst/mnozina';
 import { injectZgradeKorisnika, upravljaZgradom } from '../../zgrade/zgrade-korisnika';
@@ -26,6 +28,8 @@ import {
   DokumentZgrade,
   KATEGORIJE_DOKUMENATA,
   KategorijaDokumenta,
+  opisKategorije,
+  OSVEZI_LINKOVE_MS,
 } from '../dokument-models';
 import { DokumentService } from '../dokument-service';
 import { FormaDokumenta } from '../forma-dokumenta/forma-dokumenta';
@@ -56,6 +60,7 @@ export class DokumentiZgrade {
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly zgrada = input(undefined, { transform: numberAttribute });
+  readonly novi = input(false, { transform: booleanAttribute });
 
   private readonly izbor = injectZgradeKorisnika();
   protected readonly profil = this.izbor.profil;
@@ -114,7 +119,18 @@ export class DokumentiZgrade {
       .filter((g) => g.dokumenti.length > 0);
   });
 
-  protected readonly forma = signal<'novi' | number | null>(null);
+  protected readonly forma = linkedSignal<'novi' | number | null>(() =>
+    this.novi() && this.upravlja() ? 'novi' : null,
+  );
+
+  protected readonly izabranaKategorija = computed(() => {
+    const kategorija = this.kategorija();
+    return kategorija && opisKategorije(kategorija);
+  });
+
+  constructor() {
+    osveziPosle(this.dokumenti, OSVEZI_LINKOVE_MS);
+  }
 
   protected promeniZgradu(id: number): void {
     this.zgradaId.set(id);
@@ -170,10 +186,15 @@ export class DokumentiZgrade {
       acceptButtonProps: { label: 'Obriši', severity: 'danger' },
       accept: async () => {
         const osvezi = () => {
-          if (this.dokumenti.hasValue() && this.dokumenti.value().stavke.length === 1) {
-            this.strana.update((s) => Math.max(1, s - 1));
+          const poslednjiNaStrani =
+            this.strana() > 1 &&
+            this.dokumenti.hasValue() &&
+            this.dokumenti.value().stavke.length === 1;
+          if (poslednjiNaStrani) {
+            this.strana.update((s) => s - 1);
+          } else {
+            this.dokumenti.reload();
           }
-          this.dokumenti.reload();
         };
         await this.akcije.izvrsiZahtev(
           this.dokumentService.obrisi(zgradaId, dokument.id),

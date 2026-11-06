@@ -37,13 +37,23 @@
               </a>
             }
           } @else {
-            <p class="prazna-zgrada">
-              @if (zgrada.id === zgradaUpravnika()) {
-                Još nema dokumenata. Okači pravila i kućni red da bi ih stanari videli.
-              } @else {
-                Upravnik još nije okačio dokumente.
-              }
-            </p>
+            @if (zgrada.id === zgradaUpravnika()) {
+              <a
+                class="dodaj-prvi prvi-dokument"
+                routerLink="/dokumenti"
+                [queryParams]="{ zgrada: zgrada.id, novi: true }"
+              >
+                <span class="ikonica-dodaj" aria-hidden="true"
+                  ><i class="pi pi-folder-plus"></i
+                ></span>
+                <span class="flex flex-col gap-1">
+                  <span class="text-naslov">Još nema dokumenata</span>
+                  <span class="poziv-dodaj">Okači prvi dokument</span>
+                </span>
+              </a>
+            } @else {
+              <p class="prazna-zgrada">Još nema dokumenata koje možeš da vidiš.</p>
+            }
           }
         }
       </div>

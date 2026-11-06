@@ -1,8 +1,8 @@
 import { inject, Service, Signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { catchError, forkJoin, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { poZgradama } from '../zgrade/po-zgradama';
 import { KontaktRequest, KontaktZgrade } from './kontakt-models';
 
 @Service()
@@ -22,17 +22,8 @@ export class KontaktService {
     });
   }
 
-  // Početna: kontakti svih zgrada korisnika, istim redom kao zgrade; zgrada koja ne stigne je null
   kontaktiZgrada(zgradeId: Signal<number[]>) {
-    return rxResource({
-      params: () => (zgradeId().length > 0 ? zgradeId() : undefined),
-      stream: ({ params }) =>
-        forkJoin(
-          params.map((id) =>
-            this.http.get<KontaktZgrade[]>(this.url(id)).pipe(catchError(() => of(null))),
-          ),
-        ),
-    });
+    return poZgradama(zgradeId, (id) => this.http.get<KontaktZgrade[]>(this.url(id)));
   }
 
   dodaj(zgradaId: number, podaci: KontaktRequest): Observable<KontaktZgrade> {

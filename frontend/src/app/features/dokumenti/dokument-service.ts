@@ -1,9 +1,9 @@
 import { inject, Service, Signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { catchError, forkJoin, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/liste/stranica';
+import { poZgradama } from '../zgrade/po-zgradama';
 import {
   DOKUMENATA_NA_POCETNOJ,
   DOKUMENATA_PO_STRANI,
@@ -46,19 +46,11 @@ export class DokumentService {
   }
 
   najnovijiZgrada(zgradeId: Signal<number[]>) {
-    return rxResource({
-      params: () => (zgradeId().length > 0 ? zgradeId() : undefined),
-      stream: ({ params }) =>
-        forkJoin(
-          params.map((id) =>
-            this.http
-              .get<Stranica<DokumentZgrade>>(this.url(id), {
-                params: { poStrani: DOKUMENATA_NA_POCETNOJ },
-              })
-              .pipe(catchError(() => of(null))),
-          ),
-        ),
-    });
+    return poZgradama(zgradeId, (id) =>
+      this.http.get<Stranica<DokumentZgrade>>(this.url(id), {
+        params: { poStrani: DOKUMENATA_NA_POCETNOJ },
+      }),
+    );
   }
 
   dodaj(zgradaId: number, podaci: DokumentRequest, fajl: File): Observable<DokumentZgrade> {
