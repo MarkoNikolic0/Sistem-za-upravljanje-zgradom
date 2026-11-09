@@ -57,7 +57,7 @@
                   <span class="min-w-0">
                     <span class="block text-naslov">Stan {{ stan.broj }}</span>
                     <span class="imena">{{ imena(stan) || 'Bez vlasnika u aplikaciji' }}</span>
-                    @if (najavaStana(stan) === 'dolazi') {
+                    @if (najavioDolazak(stan)) {
                       <span class="najavio">najavljen dolazak</span>
                     }
                   </span>

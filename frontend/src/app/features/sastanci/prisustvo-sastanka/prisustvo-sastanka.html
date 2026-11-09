@@ -90,7 +90,8 @@
     <app-evidencija-prisustva
       [sastanakId]="sastanakId()"
       [prisustvo]="pr"
-      (promena)="promena.emit()"
+      (promena)="promena.emit($event)"
+      (osvezi)="osvezi.emit()"
     />
   }
 

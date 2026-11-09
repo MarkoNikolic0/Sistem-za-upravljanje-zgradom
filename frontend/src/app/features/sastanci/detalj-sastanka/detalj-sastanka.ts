@@ -18,6 +18,7 @@ import { PrisustvoSastanka } from '../prisustvo-sastanka/prisustvo-sastanka';
 import { OznakeSastanka } from '../oznake-sastanka/oznake-sastanka';
 import { SastanakService } from '../sastanak-service';
 import { kadaJe } from '../pravila-sastanka';
+import { PregledPrisustva } from '../sastanak-models';
 
 @Component({
   imports: [
@@ -63,6 +64,10 @@ export class DetaljSastanka {
     if (navigacija?.trigger === 'imperative' && stanje?.poruka) {
       this.poruka.set(stanje.poruka);
     }
+  }
+
+  protected azurirajPrisustvo(prisustvo: PregledPrisustva): void {
+    this.sastanak.update((s) => s && { ...s, prisustvo });
   }
 
   protected zapocniOtkazivanje(): void {

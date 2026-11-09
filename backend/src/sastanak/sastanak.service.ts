@@ -37,7 +37,11 @@ import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateSastanakDto, TackaDto } from './dto/create-sastanak.dto.js';
 import { UpdateSastanakDto } from './dto/update-sastanak.dto.js';
 import { SastanakUpitDto } from './dto/sastanak-upit.dto.js';
-import { SastanakPravaService, zgradeVrste } from './sastanak-prava.service.js';
+import {
+  SAMO_ZGRADA,
+  SastanakPravaService,
+  zgradeVrste,
+} from './sastanak-prava.service.js';
 import { PrisustvoSastankaService } from './prisustvo-sastanka.service.js';
 import { DANA_ZA_POZIV, PORUKA_PROSAO } from './sastanak.constants.js';
 
@@ -190,7 +194,7 @@ export class SastanakService {
   }
 
   async otkazi(id: number, korisnikId: number, uloga: Uloga, razlog: string) {
-    await this.prava.findZaUpravljanje(id, korisnikId, uloga);
+    await this.prava.findZaUpravljanje(id, korisnikId, uloga, SAMO_ZGRADA);
     const rezultat = await this.sastanakRepository.update(
       { id, pocetak: MoreThan(new Date()), datumOtkazivanja: IsNull() },
       { datumOtkazivanja: new Date(), razlogOtkazivanja: razlog },

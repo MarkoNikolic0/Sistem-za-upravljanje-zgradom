@@ -21,12 +21,14 @@ import { stanova } from '../../glasanje/pravila-glasanja';
 import { PregledPrisustva, SpisakPrisustva, StanNaSpisku } from '../sastanak-models';
 import { SastanakService } from '../sastanak-service';
 
+function najavioDolazak(stan: StanNaSpisku): boolean {
+  return stan.stanari.some((st) => st.dolazi === true);
+}
+
 function prisutniPoNajavi(spisak: SpisakPrisustva): Set<number> {
   return new Set(
     spisak.stanovi
-      .filter((s) =>
-        spisak.datumEvidencije === null ? s.stanari.some((st) => st.dolazi) : s.prisutan,
-      )
+      .filter((s) => (spisak.datumEvidencije === null ? najavioDolazak(s) : s.prisutan))
       .map((s) => s.id),
   );
 }
@@ -45,7 +47,9 @@ export class EvidencijaPrisustva {
 
   readonly sastanakId = input.required<number>();
   readonly prisustvo = input.required<PregledPrisustva>();
-  readonly promena = output();
+  readonly promena = output<PregledPrisustva>();
+  readonly osvezi = output();
+  private readonly mojOdgovor = computed(() => this.prisustvo().mojOdgovor);
 
   protected readonly otvoren = linkedSignal({
     source: this.sastanakId,
@@ -66,10 +70,11 @@ export class EvidencijaPrisustva {
   );
 
   protected readonly stanova = stanova;
+  protected readonly najavioDolazak = najavioDolazak;
 
   constructor() {
     effect(() => {
-      this.prisustvo();
+      this.mojOdgovor();
       untracked(() => {
         if (this.spisak.hasValue()) {
           this.spisak.reload();
@@ -80,13 +85,6 @@ export class EvidencijaPrisustva {
 
   protected imena(stan: StanNaSpisku): string {
     return stan.stanari.map((st) => `${st.ime} ${st.prezime}`).join(', ');
-  }
-
-  protected najavaStana(stan: StanNaSpisku): 'dolazi' | 'ne' | null {
-    if (stan.stanari.some((st) => st.dolazi === true)) {
-      return 'dolazi';
-    }
-    return stan.stanari.some((st) => st.dolazi === false) ? 'ne' : null;
   }
 
   protected promeni(stanId: number, prisutan: boolean): void {
@@ -111,11 +109,11 @@ export class EvidencijaPrisustva {
           this.sastanakService.evidentiraj(this.sastanakId(), [...this.izabrani()]),
         );
         this.spisak.set(spisak);
-        this.promena.emit();
+        this.promena.emit(spisak);
       },
       'Evidencija prisustva je sačuvana.',
       'Evidencija nije sačuvana. Pokušaj ponovo.',
-      () => this.promena.emit(),
+      () => this.osvezi.emit(),
     );
     this.fokusiraj('#poruka-evidencije');
   }

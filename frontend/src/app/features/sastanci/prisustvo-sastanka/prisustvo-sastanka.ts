@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, output } from '@angular/core';
+import { Observable, firstValueFrom } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { AkcijeStore } from '../../../shared/stanje/with-akcije';
@@ -24,7 +25,8 @@ export class PrisustvoSastanka {
 
   readonly sastanakId = input.required<number>();
   readonly prisustvo = input.required<PregledPrisustva>();
-  readonly promena = output();
+  readonly promena = output<PregledPrisustva>();
+  readonly osvezi = output();
 
   protected readonly stanova = stanova;
   protected readonly udeo = udeo;
@@ -43,11 +45,10 @@ export class PrisustvoSastanka {
     if (this.akcije.akcijaUToku() || this.prisustvo().mojOdgovor === dolazi) {
       return;
     }
-    const uspelo = await this.akcije.izvrsiZahtev(
+    const uspelo = await this.posalji(
       this.sastanakService.najavi(this.sastanakId(), dolazi),
       dolazi ? 'Zabeleženo je da dolaziš.' : 'Zabeleženo je da ne dolaziš.',
       'Odgovor nije sačuvan. Pokušaj ponovo.',
-      () => this.promena.emit(),
     );
     if (!uspelo) {
       this.fokusiraj('#poruka-prisustva');
@@ -55,12 +56,24 @@ export class PrisustvoSastanka {
   }
 
   protected async povuci(): Promise<void> {
-    const uspelo = await this.akcije.izvrsiZahtev(
+    const uspelo = await this.posalji(
       this.sastanakService.povuciNajavu(this.sastanakId()),
       'Odgovor je povučen.',
       'Odgovor nije povučen. Pokušaj ponovo.',
-      () => this.promena.emit(),
     );
     this.fokusiraj(uspelo ? '.odgovor' : '#poruka-prisustva');
+  }
+
+  private posalji(
+    zahtev: Observable<PregledPrisustva>,
+    uspeh: string,
+    neuspeh: string,
+  ): Promise<boolean> {
+    return this.akcije.izvrsi(
+      async () => this.promena.emit(await firstValueFrom(zahtev)),
+      uspeh,
+      neuspeh,
+      () => this.osvezi.emit(),
+    );
   }
 }

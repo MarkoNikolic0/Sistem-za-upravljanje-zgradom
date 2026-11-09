@@ -16,10 +16,15 @@ import { Sastanak } from './sastanak.entity.js';
 import { PotvrdaPrisustva } from './potvrda-prisustva.entity.js';
 import { PrisutanStan } from './prisutan-stan.entity.js';
 import { Stan } from '../stan/stan.entity.js';
-import { SastanakPravaService, smeDaNajavi } from './sastanak-prava.service.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
+import {
+  SAMO_ZGRADA,
+  SastanakPravaService,
+  smeDaNajavi,
+} from './sastanak-prava.service.js';
 import { PORUKA_PROSAO } from './sastanak.constants.js';
 import {
-  type PodaciPrisustva,
+  type OdgovorStanara,
   pregledPrisustva,
   spisakPrisustva,
 } from './prisustvo-sastanka.js';
@@ -44,8 +49,12 @@ export class PrisustvoSastankaService {
   ) {}
 
   async pregled(sastanak: Sastanak, korisnikId: number, p: PristupZgradama) {
-    const podaci = await this.podaci(sastanak);
-    return this.saPravima(sastanak, korisnikId, p, podaci);
+    return this.saPotvrdama(
+      sastanak,
+      korisnikId,
+      p,
+      await this.potvrde(sastanak.id),
+    );
   }
 
   async spisak(id: number, korisnikId: number, uloga: Uloga) {
@@ -53,6 +62,7 @@ export class PrisustvoSastankaService {
       id,
       korisnikId,
       uloga,
+      SAMO_ZGRADA,
     );
     return this.saSpiskom(sastanak, korisnikId, p);
   }
@@ -71,7 +81,7 @@ export class PrisustvoSastankaService {
   }
 
   async povuci(id: number, korisnikId: number, uloga: Uloga) {
-    await this.findZaNajavu(id, korisnikId, uloga);
+    const { sastanak, p } = await this.findZaNajavu(id, korisnikId, uloga);
     await this.dataSource.transaction(async (manager) => {
       await this.zakljucajOtvoren(manager.getRepository(Sastanak), id);
       await manager.delete(PotvrdaPrisustva, {
@@ -79,6 +89,7 @@ export class PrisustvoSastankaService {
         korisnik: { id: korisnikId },
       });
     });
+    return this.pregled(sastanak, korisnikId, p);
   }
 
   async evidentiraj(
@@ -91,6 +102,7 @@ export class PrisustvoSastankaService {
       id,
       korisnikId,
       uloga,
+      SAMO_ZGRADA,
     );
     if (sastanak.vrsta !== VrstaSastanka.SKUPSTINA) {
       throw new ConflictException('Prisustvo se evidentira samo na skupštini.');
@@ -136,7 +148,12 @@ export class PrisustvoSastankaService {
   }
 
   private async findZaNajavu(id: number, korisnikId: number, uloga: Uloga) {
-    const dostupno = await this.prava.findDostupno(id, korisnikId, uloga);
+    const dostupno = await this.prava.findDostupno(
+      id,
+      korisnikId,
+      uloga,
+      SAMO_ZGRADA,
+    );
     if (!smeDaNajavi(dostupno.sastanak, dostupno.p)) {
       throw new ForbiddenException(
         dostupno.sastanak.vrsta === VrstaSastanka.SKUPSTINA
@@ -158,41 +175,66 @@ export class PrisustvoSastankaService {
     }
   }
 
-  private async podaci(sastanak: Sastanak): Promise<PodaciPrisustva> {
-    const [stanovi, potvrde, prisutni] = await Promise.all([
-      stanoviSaStanarima(this.dataSource.manager, sastanak.zgrada.id),
-      this.potvrdaRepository.find({
-        where: { sastanak: { id: sastanak.id } },
-        relations: { korisnik: true },
-        select: { id: true, dolazi: true, korisnik: { id: true } },
-      }),
-      sastanak.datumEvidencije === null
-        ? null
-        : this.prisutanStanRepository.find({
-            where: { sastanak: { id: sastanak.id } },
-            relations: { stan: true },
-            select: { id: true, stan: { id: true } },
-          }),
-    ]);
-    return {
-      vrsta: sastanak.vrsta,
-      stanovi,
-      odgovori: new Map(potvrde.map((pp) => [pp.korisnik.id, pp.dolazi])),
-      prisutni: prisutni && new Set(prisutni.map((ps) => ps.stan.id)),
-    };
+  private potvrde(sastanakId: number) {
+    return this.potvrdaRepository.find({
+      where: { sastanak: { id: sastanakId } },
+      relations: { korisnik: true },
+      select: { id: true, dolazi: true, korisnik: { id: true } },
+    });
   }
 
-  private saPravima(
+  private async odgovori(
+    zgradaId: number,
+    potvrde: PotvrdaPrisustva[],
+  ): Promise<OdgovorStanara[]> {
+    if (potvrde.length === 0) {
+      return [];
+    }
+    const dolazi = new Map(potvrde.map((pp) => [pp.korisnik.id, pp.dolazi]));
+    const veze = await this.dataSource.manager.find(StanarStana, {
+      where: {
+        stan: { zgrada: { id: zgradaId } },
+        korisnik: { id: In([...dolazi.keys()]) },
+      },
+      relations: { stan: true, korisnik: true },
+      select: {
+        id: true,
+        vlasnik: true,
+        stan: { id: true },
+        korisnik: { id: true },
+      },
+    });
+    return veze.map((v) => ({
+      korisnikId: v.korisnik.id,
+      stanId: v.stan.id,
+      vlasnik: v.vlasnik,
+      dolazi: dolazi.get(v.korisnik.id) ?? false,
+    }));
+  }
+
+  private async saPotvrdama(
     sastanak: Sastanak,
     korisnikId: number,
     p: PristupZgradama,
-    podaci: PodaciPrisustva,
+    potvrde: PotvrdaPrisustva[],
   ) {
+    const [ukupnoStanova, odgovori, prisutno] = await Promise.all([
+      this.stanRepository.countBy({ zgrada: { id: sastanak.zgrada.id } }),
+      this.odgovori(sastanak.zgrada.id, potvrde),
+      sastanak.datumEvidencije === null
+        ? null
+        : this.prisutanStanRepository.countBy({
+            sastanak: { id: sastanak.id },
+          }),
+    ]);
     const otkazan = sastanak.datumOtkazivanja !== null;
     const poceo = sastanak.pocetak <= new Date();
     const upravlja = sadrzi(p.upravlja, sastanak.zgrada.id);
     return {
-      ...pregledPrisustva(podaci, korisnikId),
+      ...pregledPrisustva(
+        { vrsta: sastanak.vrsta, ukupnoStanova, odgovori, prisutno },
+        korisnikId,
+      ),
       datumEvidencije: sastanak.datumEvidencije,
       smeDaNajavi: smeDaNajavi(sastanak, p) && !otkazan && !poceo,
       smeDaVidiSpisak: upravlja,
@@ -209,10 +251,26 @@ export class PrisustvoSastankaService {
     korisnikId: number,
     p: PristupZgradama,
   ) {
-    const podaci = await this.podaci(sastanak);
+    const potvrde = await this.potvrde(sastanak.id);
+    const [pregled, stanovi, prisutni] = await Promise.all([
+      this.saPotvrdama(sastanak, korisnikId, p, potvrde),
+      stanoviSaStanarima(this.dataSource.manager, sastanak.zgrada.id),
+      sastanak.datumEvidencije === null
+        ? []
+        : this.prisutanStanRepository.find({
+            where: { sastanak: { id: sastanak.id } },
+            relations: { stan: true },
+            select: { id: true, stan: { id: true } },
+          }),
+    ]);
     return {
-      ...this.saPravima(sastanak, korisnikId, p, podaci),
-      stanovi: spisakPrisustva(podaci),
+      ...pregled,
+      stanovi: spisakPrisustva(
+        sastanak.vrsta,
+        stanovi,
+        new Map(potvrde.map((pp) => [pp.korisnik.id, pp.dolazi])),
+        new Set(prisutni.map((ps) => ps.stan.id)),
+      ),
     };
   }
 }

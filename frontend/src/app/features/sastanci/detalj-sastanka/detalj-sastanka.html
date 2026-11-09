@@ -132,7 +132,8 @@
         <app-prisustvo-sastanka
           [sastanakId]="s.id"
           [prisustvo]="s.prisustvo"
-          (promena)="sastanak.reload()"
+          (promena)="azurirajPrisustvo($event)"
+          (osvezi)="sastanak.reload()"
         />
       </section>
     }

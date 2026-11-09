@@ -4,8 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   ParseIntPipe,
   Put,
@@ -43,7 +41,6 @@ export class PrisustvoSastankaController {
   }
 
   @Delete('najava')
-  @HttpCode(HttpStatus.NO_CONTENT)
   povuci(
     @Param('sastanakId', ParseIntPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,

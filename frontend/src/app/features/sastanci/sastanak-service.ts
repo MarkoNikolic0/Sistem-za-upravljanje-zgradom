@@ -58,8 +58,8 @@ export class SastanakService {
     return this.http.put<PregledPrisustva>(`${this.apiUrl}/${id}/najava`, { dolazi });
   }
 
-  povuciNajavu(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}/najava`);
+  povuciNajavu(id: number): Observable<PregledPrisustva> {
+    return this.http.delete<PregledPrisustva>(`${this.apiUrl}/${id}/najava`);
   }
 
   spisak(id: Signal<number | undefined>) {
