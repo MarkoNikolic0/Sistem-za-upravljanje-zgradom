@@ -14,6 +14,7 @@ import { GlasanjePravaService } from './glasanje-prava.service.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
+import { TackaDnevnogReda } from '../sastanak/tacka-dnevnog-reda.entity.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { Oglas } from '../oglas/oglas.entity.js';
       Stan,
       Zgrada,
       Oglas,
+      TackaDnevnogReda,
     ]),
     AuthModule,
     KorisnikModule,

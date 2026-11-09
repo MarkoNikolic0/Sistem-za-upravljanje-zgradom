@@ -14,7 +14,7 @@
     }}</time>
     · {{ fajl() }}
     @if (saSastankom() && dokument().sastanakId; as sastanakId) {
-      · <a class="sastanak" [routerLink]="['/sastanci', sastanakId]">Sastanak</a>
+      · <a class="tekst-link" [routerLink]="['/sastanci', sastanakId]">Sastanak</a>
     }
   </span>
 </span>

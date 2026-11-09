@@ -11,6 +11,12 @@ export interface GlasStana {
   moj: boolean;
 }
 
+export interface SastanakOdluke {
+  id: number;
+  naslov: string;
+  pocetak: Date;
+}
+
 // Podaci iz baze za više glasanja odjednom
 export interface PodaciGlasanja {
   brojPoOpciji: Map<number, number>;
@@ -18,6 +24,7 @@ export interface PodaciGlasanja {
   stanaraPoZgradi: Map<number, number>;
   oglasPoOdluci: Map<number | undefined, number>;
   glasoviStanova: GlasStana[];
+  sastanakPoOdluci: Map<number, SastanakOdluke>;
 }
 
 export function prikazGlasanja(
@@ -81,6 +88,7 @@ export function prikazGlasanja(
         ? null
         : pragoviOdluke(glasanje.vecina, brojGlasaca, ukupnoGlasaca),
     oglasId,
+    sastanak: podaci.sastanakPoOdluci.get(glasanje.id) ?? null,
     smeDaGlasa: !zavrseno && imaPravoGlasa,
     smeDaZatvori: !zavrseno && !odluka && upravlja,
     smeDaObrise: upravlja,

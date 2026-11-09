@@ -74,6 +74,7 @@ export interface Glasanje {
   ishod: IshodOdluke | null;
   pragovi: PragoviOdluke | null;
   oglasId: number | null;
+  sastanak: { id: number; naslov: string; pocetak: string } | null;
   smeDaGlasa: boolean;
   smeDaZatvori: boolean;
   smeDaObrise: boolean;

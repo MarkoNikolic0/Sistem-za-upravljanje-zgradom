@@ -32,6 +32,15 @@
   @if (g.opis) {
     <p class="mt-2 text-priguseno whitespace-pre-line wrap-anywhere">{{ g.opis }}</p>
   }
+  @if (g.sastanak; as s) {
+    <p class="mt-2 text-sm text-priguseno">
+      <i class="pi pi-calendar mr-1" aria-hidden="true"></i>
+      Na dnevnom redu sastanka
+      <a class="tekst-link" [routerLink]="['/sastanci', s.id]">{{ s.naslov }}</a
+      >,
+      <time [attr.datetime]="s.pocetak">{{ s.pocetak | date: 'd. M. y.' }}</time>
+    </p>
+  }
 
   <div class="opcije" role="group" [attr.aria-labelledby]="'pitanje-' + g.id">
     @for (opcija of g.opcije; track opcija.id) {

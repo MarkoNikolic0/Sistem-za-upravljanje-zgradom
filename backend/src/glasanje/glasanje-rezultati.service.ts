@@ -5,9 +5,14 @@ import { Glasanje } from './glasanje.entity.js';
 import { Glas } from './glas.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
+import { TackaDnevnogReda } from '../sastanak/tacka-dnevnog-reda.entity.js';
 import type { PristupZgradama } from '../korisnik/pristup-zgradama.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
-import { type GlasStana, prikazGlasanja } from './prikaz-glasanja.js';
+import {
+  type GlasStana,
+  type SastanakOdluke,
+  prikazGlasanja,
+} from './prikaz-glasanja.js';
 
 @Injectable()
 export class GlasanjeRezultatiService {
@@ -18,6 +23,8 @@ export class GlasanjeRezultatiService {
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
     @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
+    @InjectRepository(TackaDnevnogReda)
+    private tackaRepository: Repository<TackaDnevnogReda>,
   ) {}
 
   // Glasanje posle izmene, sa rezultatima za korisnika
@@ -65,8 +72,8 @@ export class GlasanjeRezultatiService {
       .filter((g) => g.vrsta === VrstaGlasanja.ODLUKA)
       .map((g) => g.id);
 
-    const [poOpciji, moji, stanari, glasoviStanova, objave] = await Promise.all(
-      [
+    const [poOpciji, moji, stanari, glasoviStanova, objave, sastanci] =
+      await Promise.all([
         this.glasRepository
           .createQueryBuilder('glas')
           .select('glas.opcijaId', 'opcijaId')
@@ -102,8 +109,8 @@ export class GlasanjeRezultatiService {
               relations: { glasanje: true },
               select: { id: true, glasanje: { id: true } },
             }),
-      ],
-    );
+        odluke.length === 0 ? [] : this.sastanciOdluka(odluke),
+      ]);
 
     const podaci = {
       brojPoOpciji: new Map(poOpciji.map((r) => [r.opcijaId, r.broj])),
@@ -115,10 +122,31 @@ export class GlasanjeRezultatiService {
         objave.map((oglas) => [oglas.glasanje?.id, oglas.id]),
       ),
       glasoviStanova,
+      sastanakPoOdluci: new Map(
+        sastanci.map(({ odlukaId, ...sastanak }) => [odlukaId, sastanak]),
+      ),
     };
     return glasanja.map((glasanje) =>
       prikazGlasanja(glasanje, p, podaci, sada),
     );
+  }
+
+  private async sastanciOdluka(odluke: number[]) {
+    return await this.tackaRepository
+      .createQueryBuilder('tacka')
+      .innerJoin('tacka.sastanak', 'sastanak')
+      .select([
+        'tacka.odlukaId AS "odlukaId"',
+        'sastanak.id AS id',
+        'sastanak.naslov AS naslov',
+        'sastanak.pocetak AS pocetak',
+      ])
+      .distinctOn(['tacka.odlukaId'])
+      .where('tacka.odlukaId IN (:...odluke)', { odluke })
+      .andWhere('sastanak.datumOtkazivanja IS NULL')
+      .orderBy('tacka.odlukaId')
+      .addOrderBy('sastanak.pocetak', 'DESC')
+      .getRawMany<SastanakOdluke & { odlukaId: number }>();
   }
 
   // Glasovi u datim odlukama za stanove u kojima je korisnik vlasnik
