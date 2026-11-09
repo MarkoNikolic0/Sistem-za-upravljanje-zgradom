@@ -32,7 +32,6 @@ export class Sastanak {
   @Column({ length: 200 })
   lokacija: string;
 
-  // Hitna sednica skupstine sme da se zakaze bez roka od tri dana
   @Column({ default: false })
   hitno: boolean;
 
@@ -41,6 +40,9 @@ export class Sastanak {
 
   @Column({ type: 'text', nullable: true })
   razlogOtkazivanja: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  datumEvidencije: Date | null;
 
   @ManyToOne(() => Zgrada, { nullable: false, onDelete: 'CASCADE' })
   zgrada: Zgrada;

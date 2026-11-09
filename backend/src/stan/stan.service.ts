@@ -17,6 +17,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
+import { PrisutanStan } from '../sastanak/prisutan-stan.entity.js';
 import { poRedosleduStanova } from './redosled-stanova.js';
 import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
@@ -31,6 +32,8 @@ export class StanService {
     @InjectRepository(ZahtevPovezivanje)
     private zahtevRepository: Repository<ZahtevPovezivanje>,
     @InjectRepository(Glas) private glasRepository: Repository<Glas>,
+    @InjectRepository(PrisutanStan)
+    private prisutanStanRepository: Repository<PrisutanStan>,
     private korisnikService: KorisnikService,
   ) {}
 
@@ -101,15 +104,16 @@ export class StanService {
     const stan = await this.findOne(id);
     await this.proveriZgradu(korisnikId, uloga, stan.zgrada.id);
 
-    const [stanari, kvarovi, zahtevi, glasovi] = await Promise.all([
+    const [stanari, kvarovi, zahtevi, glasovi, prisustva] = await Promise.all([
       this.stanarStanaRepository.count({ where: { stan: { id } } }),
       this.kvarRepository.count({ where: { stan: { id } } }),
       this.zahtevRepository.count({ where: { stan: { id } } }),
       this.glasRepository.count({ where: { stan: { id } } }),
+      this.prisutanStanRepository.count({ where: { stan: { id } } }),
     ]);
-    if (stanari + kvarovi + zahtevi + glasovi > 0) {
+    if (stanari + kvarovi + zahtevi + glasovi + prisustva > 0) {
       throw new ConflictException(
-        `Stan se ne može obrisati jer ima: stanara ${stanari}, kvarova ${kvarovi}, zahteva za povezivanje ${zahtevi}, glasova u odlukama ${glasovi}.`,
+        `Stan se ne može obrisati jer ima: stanara ${stanari}, kvarova ${kvarovi}, zahteva za povezivanje ${zahtevi}, glasova u odlukama ${glasovi}, prisustva na skupštinama ${prisustva}.`,
       );
     }
 

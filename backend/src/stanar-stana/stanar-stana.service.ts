@@ -2,14 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { StanarStana } from './stanar-stana.entity.js';
-import { Stan } from '../stan/stan.entity.js';
-import { poRedosleduStanova } from '../stan/redosled-stanova.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { GlasanjeGlasoviService } from '../glasanje/glasanje-glasovi.service.js';
 import { PratilacKvaraService } from '../pratilac-kvara/pratilac-kvara.service.js';
 import { zakljucajVeze } from './veze-u-zgradi.js';
+import { stanoviSaStanarima } from './stanovi-sa-stanarima.js';
 import { UpdateStanarStanaDto } from './dto/update-stanar-stana.dto.js';
 import { OglasService } from '../oglas/oglas.service.js';
 
@@ -18,7 +17,6 @@ export class StanarStanaService {
   constructor(
     @InjectRepository(StanarStana)
     private stanarStanaRepository: Repository<StanarStana>,
-    @InjectRepository(Stan) private stanRepository: Repository<Stan>,
     private korisnikService: KorisnikService,
     private glasoviService: GlasanjeGlasoviService,
     private pracenjaService: PratilacKvaraService,
@@ -34,51 +32,7 @@ export class StanarStanaService {
       'Stanare vidi samo upravnik ove zgrade!',
     );
 
-    const [stanovi, veze] = await Promise.all([
-      this.stanRepository.find({
-        where: { zgrada: { id: zgradaId } },
-        select: { id: true, broj: true, sprat: true, kvadratura: true },
-      }),
-      this.stanarStanaRepository.find({
-        where: { stan: { zgrada: { id: zgradaId } } },
-        relations: { korisnik: true, stan: true },
-        select: {
-          id: true,
-          vlasnik: true,
-          stan: { id: true },
-          korisnik: {
-            id: true,
-            ime: true,
-            prezime: true,
-            email: true,
-            telefon: true,
-          },
-        },
-        order: {
-          vlasnik: 'DESC',
-          korisnik: { prezime: 'ASC', ime: 'ASC' },
-        },
-      }),
-    ]);
-
-    const stanariStana = new Map<
-      number,
-      Pick<StanarStana, 'id' | 'vlasnik' | 'korisnik'>[]
-    >();
-    for (const v of veze) {
-      const stanari = stanariStana.get(v.stan.id) ?? [];
-      stanari.push({ id: v.id, vlasnik: v.vlasnik, korisnik: v.korisnik });
-      stanariStana.set(v.stan.id, stanari);
-    }
-    return stanovi
-      .sort(poRedosleduStanova)
-      .map(({ id, broj, sprat, kvadratura }) => ({
-        id,
-        broj,
-        sprat,
-        kvadratura,
-        stanari: stanariStana.get(id) ?? [],
-      }));
+    return stanoviSaStanarima(this.dataSource.manager, zgradaId);
   }
 
   async update(

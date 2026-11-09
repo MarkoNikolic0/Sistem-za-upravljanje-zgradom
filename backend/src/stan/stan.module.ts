@@ -10,6 +10,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
+import { PrisutanStan } from '../sastanak/prisutan-stan.entity.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Glas } from '../glasanje/glas.entity.js';
       Kvar,
       ZahtevPovezivanje,
       Glas,
+      PrisutanStan,
     ]),
     AuthModule,
     KorisnikModule,

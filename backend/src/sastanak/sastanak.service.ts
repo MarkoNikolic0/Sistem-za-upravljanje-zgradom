@@ -2,7 +2,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -24,7 +23,6 @@ import {
   sadrzi,
   samoZgrada,
   uZgradama,
-  zgradeVlasnika,
 } from '../korisnik/pristup-zgradama.js';
 import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -39,15 +37,9 @@ import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateSastanakDto, TackaDto } from './dto/create-sastanak.dto.js';
 import { UpdateSastanakDto } from './dto/update-sastanak.dto.js';
 import { SastanakUpitDto } from './dto/sastanak-upit.dto.js';
-
-// Zakon: obaveštenje o sednici skupštine najmanje tri dana pre, osim u hitnim slučajevima
-export const DANA_ZA_POZIV = 3;
-
-const PORUKA_PROSAO = 'Sastanak je već počeo ili je otkazan.';
-
-function zgradeVrste(vrsta: VrstaSastanka, p: PristupZgradama) {
-  return vrsta === VrstaSastanka.SKUPSTINA ? zgradeVlasnika(p) : p.zgrade;
-}
+import { SastanakPravaService, zgradeVrste } from './sastanak-prava.service.js';
+import { PrisustvoSastankaService } from './prisustvo-sastanka.service.js';
+import { DANA_ZA_POZIV, PORUKA_PROSAO } from './sastanak.constants.js';
 
 @Injectable()
 export class SastanakService {
@@ -58,6 +50,8 @@ export class SastanakService {
     private glasanjeRepository: Repository<Glasanje>,
     private glasanjeRezultati: GlasanjeRezultatiService,
     private korisnikService: KorisnikService,
+    private prava: SastanakPravaService,
+    private prisustvo: PrisustvoSastankaService,
     private dataSource: DataSource,
   ) {}
 
@@ -100,8 +94,16 @@ export class SastanakService {
   }
 
   async findOne(id: number, korisnikId: number, uloga: Uloga) {
-    const { sastanak, p } = await this.findDostupno(id, korisnikId, uloga);
-    return this.saOdlukama(sastanak, korisnikId, p);
+    const { sastanak, p } = await this.prava.findDostupno(
+      id,
+      korisnikId,
+      uloga,
+    );
+    const [saOdlukama, prisustvo] = await Promise.all([
+      this.saOdlukama(sastanak, korisnikId, p),
+      this.prisustvo.pregled(sastanak, korisnikId, p),
+    ]);
+    return Object.assign(saOdlukama, { prisustvo });
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateSastanakDto) {
@@ -139,7 +141,11 @@ export class SastanakService {
     uloga: Uloga,
     dto: UpdateSastanakDto,
   ) {
-    const { sastanak } = await this.findZaUpravljanje(id, korisnikId, uloga);
+    const { sastanak } = await this.prava.findZaUpravljanje(
+      id,
+      korisnikId,
+      uloga,
+    );
     const vrsta = dto.vrsta ?? sastanak.vrsta;
     const pocetak = dto.pocetak ?? sastanak.pocetak;
     const hitno = dto.hitno ?? sastanak.hitno;
@@ -184,7 +190,7 @@ export class SastanakService {
   }
 
   async otkazi(id: number, korisnikId: number, uloga: Uloga, razlog: string) {
-    await this.findZaUpravljanje(id, korisnikId, uloga);
+    await this.prava.findZaUpravljanje(id, korisnikId, uloga);
     const rezultat = await this.sastanakRepository.update(
       { id, pocetak: MoreThan(new Date()), datumOtkazivanja: IsNull() },
       { datumOtkazivanja: new Date(), razlogOtkazivanja: razlog },
@@ -193,37 +199,6 @@ export class SastanakService {
       throw new ConflictException(PORUKA_PROSAO);
     }
     return this.findOne(id, korisnikId, uloga);
-  }
-
-  private async findDostupno(id: number, korisnikId: number, uloga: Uloga) {
-    const sastanak = await this.sastanakRepository.findOne({
-      where: { id },
-      relations: {
-        zgrada: true,
-        organizator: true,
-        tacke: { odluka: true },
-      },
-    });
-    if (!sastanak) {
-      throw new NotFoundException(`Sastanak sa id-jem ${id} ne postoji!`);
-    }
-    const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
-    if (!sadrzi(zgradeVrste(sastanak.vrsta, p), sastanak.zgrada.id)) {
-      throw new ForbiddenException('Nemate pristup ovom sastanku!');
-    }
-    return { sastanak, p };
-  }
-
-  private async findZaUpravljanje(
-    id: number,
-    korisnikId: number,
-    uloga: Uloga,
-  ) {
-    const dostupno = await this.findDostupno(id, korisnikId, uloga);
-    if (!sadrzi(dostupno.p.upravlja, dostupno.sastanak.zgrada.id)) {
-      throw new ForbiddenException('Sastankom upravlja upravnik zgrade.');
-    }
-    return dostupno;
   }
 
   private proveriTermin(vrsta: VrstaSastanka, pocetak: Date, hitno: boolean) {

@@ -1,4 +1,5 @@
 import { IshodOdluke, VecinaOdluke } from '../shared/enums/glasanje.enums.js';
+import { pragKvoruma } from '../shared/kvorum.js';
 
 export const ZA = 'Za';
 export const ODGOVORI_ODLUKE = [ZA, 'Protiv', 'Uzdržan'];
@@ -14,7 +15,7 @@ export function pragoviOdluke(
   ukupno: number,
 ): PragoviOdluke {
   return {
-    kvorum: Math.floor(ukupno / 2) + 1,
+    kvorum: pragKvoruma(ukupno),
     potrebnoZa:
       vecina === VecinaOdluke.OBICNA
         ? Math.floor(glasalo / 2) + 1
