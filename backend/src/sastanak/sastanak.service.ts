@@ -108,10 +108,13 @@ export class SastanakService {
       korisnikId,
       uloga,
     );
+    const ucitanZapisnik = this.zapisnici.zapisnik(sastanak.id);
     const [saOdlukama, prisustvo, zapisnik] = await Promise.all([
       this.saOdlukama(sastanak, korisnikId, p),
-      this.prisustvo.pregled(sastanak, korisnikId, p),
-      this.zapisnici.zapisnik(sastanak.id),
+      ucitanZapisnik.then((z) =>
+        this.prisustvo.pregled(sastanak, korisnikId, p, z !== null),
+      ),
+      ucitanZapisnik,
     ]);
     return Object.assign(saOdlukama, {
       prisustvo,

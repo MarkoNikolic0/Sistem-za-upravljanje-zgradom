@@ -71,7 +71,10 @@ Pri prvom pokretanju tabele se prave same. API: http://localhost:3000 · Swagger
 ```powershell
 docker cp seed/seed.sql zgrada_container:/tmp/seed.sql
 docker exec zgrada_container sh -c 'psql -q -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/seed.sql'
+node seed/fajlovi.mjs
 ```
+
+Poslednja komanda otprema u Garage fajlove test podataka (zapisnik sa skupštine).
 
 **6. Frontend** (novi terminal)
 

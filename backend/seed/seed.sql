@@ -878,7 +878,9 @@ WHERE s.rb = 10
 -- pa termini uvek vaze od danas. Skupstinu vide samo vlasnici, upravnik i admin; zbor svi stanari.
 --   Delta, predstojeci: redovna skupstina (krecenje i profesionalni upravnik kao odluke),
 --     zbor o kucnom redu, hitna sednica sutra, otkazan zbor o parkingu (Natalija vidi samo zborove)
---   Delta, odrzani: skupstina sa odlukama o ulaznim vratima i prostoriji, zbor o ciscenju podruma
+--   Delta, odrzani: skupstina sa odlukama o ulaznim vratima i prostoriji (evidencija i okacen zapisnik),
+--     zbor o ciscenju podruma pre 12 dana bez zapisnika (Danijel na pocetnoj vidi Ceka zapisnik)
+--   Fajl zapisnika salje u Garage: node seed/fajlovi.mjs
 --   Obrenoviceva (Jelena) i Lamela (Nikola): po jedan predstojeci, Marko ih vidi uz filter
 -- dana i sat = termin po beogradskom vremenu; odluka = rb iz seed_glasanje
 CREATE TEMP TABLE seed_sastanak ON COMMIT DROP AS
@@ -901,7 +903,7 @@ FROM (VALUES
   (5, 'skupstina', 'Sednica skupštine o ulaznim vratima', NULL,
    'Prostorija u prizemlju', false, 'Bulevar Nemanjića 45, Niš', 'danijel@gmail.com', -20, interval '18 hours', NULL),
   (6, 'zbor', 'Akcija čišćenja podruma', NULL,
-   'Podrum', false, 'Bulevar Nemanjića 45, Niš', 'marko@gmail.com', -45, interval '10 hours', NULL),
+   'Podrum', false, 'Bulevar Nemanjića 45, Niš', 'marko@gmail.com', -12, interval '10 hours', NULL),
   (7, 'skupstina', 'Sednica skupštine o interfonu', NULL,
    'Ulaz zgrade', false, 'Obrenovićeva 30, Niš', 'jelena.markovic@example.com', 8, interval '19 hours', NULL),
   (8, 'zbor', 'Uređenje zelene površine', NULL,
@@ -977,6 +979,20 @@ FROM unnest(ARRAY['1', '2', '3', '4', '5', '6', '7', '8', '10', '11', '12', '14'
 JOIN seed_sastanak v ON v.rb = 5
 JOIN sastanak s ON s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id
 JOIN stan st ON st."zgradaId" = v.zgrada_id AND st.broj = b.broj;
+
+DELETE FROM dokument_zgrade WHERE kljuc = 'dokumenti/primeri/zapisnik-skupstine.pdf';
+
+INSERT INTO dokument_zgrade (naziv, kategorija, "samoVlasnici", kljuc, tip, velicina, "zgradaId", "sastanakId", "datumOtpremanja")
+SELECT 'Zapisnik sa skupštine, ' || to_char(d, 'FMDD') || '. '
+         || (ARRAY['januar', 'februar', 'mart', 'april', 'maj', 'jun', 'jul', 'avgust',
+                   'septembar', 'oktobar', 'novembar', 'decembar'])[extract(month FROM d)::int]
+         || ' ' || to_char(d, 'YYYY') || '.',
+       'zapisnik', true, 'dokumenti/primeri/zapisnik-skupstine.pdf', 'application/pdf', 1251,
+       v.zgrada_id, s.id, s.pocetak + interval '2 days'
+FROM seed_sastanak v
+JOIN sastanak s ON s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id
+CROSS JOIN LATERAL (SELECT s.pocetak AT TIME ZONE 'Europe/Belgrade' AS d) AS lokalno
+WHERE v.rb = 5;
 
 -- VAZNI KONTAKTI ZGRADE -----------------------------------------------------------------------
 -- Kontakti iz skripte se pisu iznova; kontakti dodati kroz aplikaciju se ne diraju.

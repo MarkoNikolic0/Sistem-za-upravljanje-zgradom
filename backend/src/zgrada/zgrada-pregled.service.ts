@@ -105,8 +105,8 @@ export class ZgradaPregledService {
         ),
         this.sastanakPoZgradi(
           ids,
-          `sastanak.pocetak <= now()
-            AND sastanak.pocetak > now() - make_interval(days => ${DANA_ZA_ZAPISNIK})
+          `sastanak.pocetak < ${POCETAK_DANA}
+            AND sastanak.pocetak >= ${POCETAK_DANA} - make_interval(days => ${DANA_ZA_ZAPISNIK})
             AND NOT EXISTS (SELECT 1 FROM dokument_zgrade WHERE dokument_zgrade."sastanakId" = sastanak.id)`,
           'DESC',
         ),

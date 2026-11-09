@@ -53,12 +53,18 @@ export class PrisustvoSastankaService {
     private dataSource: DataSource,
   ) {}
 
-  async pregled(sastanak: Sastanak, korisnikId: number, p: PristupZgradama) {
+  async pregled(
+    sastanak: Sastanak,
+    korisnikId: number,
+    p: PristupZgradama,
+    imaZapisnik?: boolean,
+  ) {
     return this.saPotvrdama(
       sastanak,
       korisnikId,
       p,
       await this.potvrde(sastanak.id),
+      imaZapisnik,
     );
   }
 
@@ -225,6 +231,7 @@ export class PrisustvoSastankaService {
     korisnikId: number,
     p: PristupZgradama,
     potvrde: PotvrdaPrisustva[],
+    imaZapisnik?: boolean,
   ) {
     const otkazan = sastanak.datumOtkazivanja !== null;
     const poceo = sastanak.pocetak <= new Date();
@@ -234,7 +241,7 @@ export class PrisustvoSastankaService {
       upravlja &&
       !otkazan &&
       poceo;
-    const [ukupnoStanova, odgovori, prisutno, imaZapisnik] = await Promise.all([
+    const [ukupnoStanova, odgovori, prisutno, zakljucana] = await Promise.all([
       this.stanRepository.countBy({ zgrada: { id: sastanak.zgrada.id } }),
       this.odgovori(sastanak.zgrada.id, potvrde),
       sastanak.datumEvidencije === null
@@ -243,7 +250,8 @@ export class PrisustvoSastankaService {
             sastanak: { id: sastanak.id },
           }),
       mozeEvidencija &&
-        this.dokumentRepository.existsBy({ sastanakId: sastanak.id }),
+        (imaZapisnik ??
+          this.dokumentRepository.existsBy({ sastanakId: sastanak.id })),
     ]);
     return {
       ...pregledPrisustva(
@@ -253,7 +261,7 @@ export class PrisustvoSastankaService {
       datumEvidencije: sastanak.datumEvidencije,
       smeDaNajavi: smeDaNajavi(sastanak, p) && !otkazan && !poceo,
       smeDaVidiSpisak: upravlja,
-      smeDaEvidentira: mozeEvidencija && !imaZapisnik,
+      smeDaEvidentira: mozeEvidencija && !zakljucana,
     };
   }
 

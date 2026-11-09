@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, linkedSignal, output } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -31,7 +31,10 @@ export class ZapisnikSastanka {
   readonly osvezi = output<void>();
   readonly zastarelo = output<string>();
 
-  protected readonly forma = signal(false);
+  protected readonly forma = linkedSignal({
+    source: () => this.sastanak().zapisnik?.id,
+    computation: () => false,
+  });
 
   protected otvori(): void {
     this.forma.set(true);

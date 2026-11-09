@@ -25,7 +25,9 @@ import { DokumentUpitDto } from './dto/dokument-upit.dto.js';
 export type SacuvanFajl = Pick<DokumentZgrade, 'kljuc' | 'tip' | 'velicina'>;
 
 function nazivPdfFajla(naziv: string) {
-  return naziv.toLowerCase().endsWith('.pdf') ? naziv : `${naziv}.pdf`;
+  return naziv.toLowerCase().endsWith('.pdf')
+    ? naziv
+    : `${naziv.replace(/\.+$/, '')}.pdf`;
 }
 
 @Injectable()
