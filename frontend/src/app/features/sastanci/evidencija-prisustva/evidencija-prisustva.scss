@@ -1,0 +1,87 @@
+:host {
+  display: block;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-linija);
+}
+
+.sprat + .sprat {
+  margin-top: 1rem;
+}
+
+.naziv-sprata {
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-utisano);
+}
+
+.stanovi {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.5rem;
+}
+
+.stan {
+  gap: 0.625rem;
+  padding: 0.75rem;
+
+  > .pi {
+    margin-top: 0.1875rem;
+    color: var(--color-ivica);
+  }
+}
+
+.imena {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--color-priguseno);
+  overflow-wrap: anywhere;
+}
+
+.najavio {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-svetlo);
+}
+
+.cuvanje {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--color-linija);
+  background: var(--color-povrsina);
+
+  @media (width < 64rem) {
+    bottom: var(--visina-donje-trake);
+  }
+}
+
+.odgovori {
+  > li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.625rem 0;
+    font-size: 0.875rem;
+    border-top: 1px solid var(--color-linija);
+  }
+
+  .dolazi {
+    flex-shrink: 0;
+    color: var(--color-svetlo);
+  }
+
+  .ne-dolazi {
+    flex-shrink: 0;
+    color: var(--color-utisano);
+  }
+}

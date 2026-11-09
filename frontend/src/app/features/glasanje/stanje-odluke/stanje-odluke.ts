@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { Glasanje, ISHODI_ODLUKE } from '../glasanje-models';
+import { TrakaKvoruma } from '../traka-kvoruma/traka-kvoruma';
 import { detaljIshoda, glasova, stanova, udeo, uProcentima } from '../pravila-glasanja';
 
 const IKONICE_ISHODA = {
@@ -9,6 +10,7 @@ const IKONICE_ISHODA = {
 } as const;
 
 @Component({
+  imports: [TrakaKvoruma],
   selector: 'app-stanje-odluke',
   styleUrl: './stanje-odluke.scss',
   templateUrl: './stanje-odluke.html',

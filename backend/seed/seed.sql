@@ -949,6 +949,35 @@ LEFT JOIN seed_glasanje sg ON sg.rb = t.odluka
 LEFT JOIN glasanje g ON g.pitanje = sg.pitanje AND g."zgradaId" = sg.zgrada_id
 ORDER BY t.sastanak, t.rb;
 
+UPDATE sastanak s
+SET "datumEvidencije" = s.pocetak + interval '20 minutes'
+FROM seed_sastanak v
+WHERE v.rb = 5 AND s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id;
+
+INSERT INTO potvrda_prisustva ("sastanakId", "korisnikId", dolazi, "datumIzmene")
+SELECT s.id, k.id, p.dolazi, least(now(), s.pocetak) - interval '2 days'
+FROM (VALUES
+  (1, 'danijel@gmail.com', true), (1, 'dejan.milosavljevic@example.com', true),
+  (1, 'vesna.djokic@example.com', true), (1, 'nenad.vasic@example.com', true),
+  (1, 'bojan.tasic@example.com', true), (1, 'igor.stevanovic@example.com', true),
+  (1, 'ana.jovanovic@example.com', false), (1, 'marina.cvetkovic@example.com', false),
+  (2, 'natalija.stojadinovic@example.com', true), (2, 'ivana.nikolic@example.com', true),
+  (2, 'goran.stamenkovic@example.com', true), (2, 'milan.stojkovic@example.com', false),
+  (3, 'danijel@gmail.com', true), (3, 'stefan.popovic@example.com', true),
+  (5, 'danijel@gmail.com', true), (5, 'marija@gmail.com', true),
+  (5, 'vesna.djokic@example.com', true), (5, 'jasmina.krstic@example.com', false)
+) AS p(sastanak, email, dolazi)
+JOIN seed_sastanak v ON v.rb = p.sastanak
+JOIN sastanak s ON s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id
+JOIN korisnik k ON k.email = p.email;
+
+INSERT INTO prisutan_stan ("sastanakId", "stanId")
+SELECT s.id, st.id
+FROM unnest(ARRAY['1', '2', '3', '4', '5', '6', '7', '8', '10', '11', '12', '14', '16']) AS b(broj)
+JOIN seed_sastanak v ON v.rb = 5
+JOIN sastanak s ON s.naslov = v.naslov AND s."zgradaId" = v.zgrada_id
+JOIN stan st ON st."zgradaId" = v.zgrada_id AND st.broj = b.broj;
+
 -- VAZNI KONTAKTI ZGRADE -----------------------------------------------------------------------
 -- Kontakti iz skripte se pisu iznova; kontakti dodati kroz aplikaciju se ne diraju.
 -- Delta: upravnik Danijel se sam dodao, servis lifta, domar, dezurne sluzbe;

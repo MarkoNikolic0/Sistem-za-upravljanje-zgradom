@@ -14,6 +14,7 @@ import { Poruka, StanjeNavigacije } from '../../../shared/stanje/poruka';
 import { formatRoka } from '../../../shared/tekst/datum';
 import { StanjeOdluke } from '../../glasanje/stanje-odluke/stanje-odluke';
 import { VECINE_ODLUKE } from '../../glasanje/glasanje-models';
+import { PrisustvoSastanka } from '../prisustvo-sastanka/prisustvo-sastanka';
 import { OznakeSastanka } from '../oznake-sastanka/oznake-sastanka';
 import { SastanakService } from '../sastanak-service';
 import { kadaJe } from '../pravila-sastanka';
@@ -28,6 +29,7 @@ import { kadaJe } from '../pravila-sastanka';
     FormaRazloga,
     StanjeOdluke,
     OznakeSastanka,
+    PrisustvoSastanka,
   ],
   selector: 'app-detalj-sastanka',
   styleUrl: './detalj-sastanka.scss',

@@ -190,13 +190,15 @@ export class PrisustvoSastankaService {
   ) {
     const otkazan = sastanak.datumOtkazivanja !== null;
     const poceo = sastanak.pocetak <= new Date();
+    const upravlja = sadrzi(p.upravlja, sastanak.zgrada.id);
     return {
       ...pregledPrisustva(podaci, korisnikId),
       datumEvidencije: sastanak.datumEvidencije,
       smeDaNajavi: smeDaNajavi(sastanak, p) && !otkazan && !poceo,
+      smeDaVidiSpisak: upravlja,
       smeDaEvidentira:
         sastanak.vrsta === VrstaSastanka.SKUPSTINA &&
-        sadrzi(p.upravlja, sastanak.zgrada.id) &&
+        upravlja &&
         !otkazan &&
         poceo,
     };

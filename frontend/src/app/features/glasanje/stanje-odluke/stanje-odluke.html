@@ -1,7 +1,11 @@
 @let g = glasanje();
 @if (g.pragovi; as prag) {
   @if (g.ishod; as ishod) {
-    <p class="ishod" [class]="ishod">
+    <p
+      class="ishod mb-4"
+      [class.uspeh]="ishod === 'usvojena'"
+      [class.greska]="ishod === 'odbijena'"
+    >
       <i class="pi" [class]="ikonice[ishod]" aria-hidden="true"></i>
       <span>
         <span class="font-medium">{{ nazivi[ishod] }}</span>
@@ -16,10 +20,7 @@
       <span class="text-utisano">· {{ uProcentima(ucesce()) }}</span>
     </span>
   </div>
-  <div class="traka-ucesca" aria-hidden="true">
-    <span class="popunjeno" [style.--udeo]="ucesce()"></span>
-    <span class="prag" [style.--polozaj]="polozajKvoruma()"></span>
-  </div>
+  <app-traka-kvoruma [udeo]="ucesce()" [prag]="polozajKvoruma()" />
   <p class="mt-1.5 text-xs text-utisano">
     Kvorum {{ stanova(prag.kvorum) }} ·
     @if (g.vecina === 'dve_trecine') {

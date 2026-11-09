@@ -2,7 +2,7 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { danaDo, zaDana } from '../../shared/tekst/datum';
 import { uMnozini } from '../../shared/tekst/mnozina';
 import { imaPonavljanja } from '../../shared/forme/ponavljanje';
-import { Sastanak, VrstaSastanka } from './sastanak-models';
+import { KvorumSastanka, Sastanak, VrstaSastanka } from './sastanak-models';
 
 // Zakon: poziv za sednicu skupštine najmanje tri dana pre, osim u hitnim slučajevima
 export const DANA_ZA_POZIV = 3;
@@ -86,4 +86,8 @@ export function poMesecima(sastanci: Sastanak[]): { mesec: string; sastanci: Sas
     grupe.set(naziv, [...(grupe.get(naziv) ?? []), sastanak]);
   }
   return [...grupe].map(([naziv, uMesecu]) => ({ mesec: naziv, sastanci: uMesecu }));
+}
+
+export function imaKvorum(kvorum: KvorumSastanka): boolean {
+  return (kvorum.prisutno ?? 0) >= kvorum.prag;
 }

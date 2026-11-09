@@ -3,7 +3,14 @@ import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/liste/stranica';
-import { NoviSastanakRequest, Sastanak, SastanakRequest, UpitSastanaka } from './sastanak-models';
+import {
+  NoviSastanakRequest,
+  PregledPrisustva,
+  Sastanak,
+  SastanakRequest,
+  SpisakPrisustva,
+  UpitSastanaka,
+} from './sastanak-models';
 
 @Service()
 export class SastanakService {
@@ -45,5 +52,24 @@ export class SastanakService {
 
   otkazi(id: number, razlog: string): Observable<Sastanak> {
     return this.http.patch<Sastanak>(`${this.apiUrl}/${id}/otkazi`, { razlog });
+  }
+
+  najavi(id: number, dolazi: boolean): Observable<PregledPrisustva> {
+    return this.http.put<PregledPrisustva>(`${this.apiUrl}/${id}/najava`, { dolazi });
+  }
+
+  povuciNajavu(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/najava`);
+  }
+
+  spisak(id: Signal<number | undefined>) {
+    return httpResource<SpisakPrisustva>(() => {
+      const sastanakId = id();
+      return sastanakId === undefined ? undefined : `${this.apiUrl}/${sastanakId}/prisustvo`;
+    });
+  }
+
+  evidentiraj(id: number, stanovi: number[]): Observable<SpisakPrisustva> {
+    return this.http.put<SpisakPrisustva>(`${this.apiUrl}/${id}/prisustvo`, { stanovi });
   }
 }

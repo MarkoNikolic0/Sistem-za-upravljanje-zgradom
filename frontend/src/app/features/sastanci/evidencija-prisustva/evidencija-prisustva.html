@@ -1,0 +1,115 @@
+@let pr = prisustvo();
+<div class="zaglavlje-odeljka">
+  <h3 class="text-naslov">
+    {{ pr.smeDaEvidentira ? 'Evidencija prisustva' : 'Ko je odgovorio' }}
+  </h3>
+  <button
+    pButton
+    type="button"
+    text
+    size="small"
+    aria-controls="spisak-prisustva"
+    [attr.aria-expanded]="otvoren()"
+    (click)="otvoren.set(!otvoren())"
+  >
+    {{ otvoren() ? 'Sakrij spisak' : 'Prikaži spisak' }}
+  </button>
+</div>
+@if (pr.smeDaEvidentira) {
+  <p class="text-sm text-priguseno">
+    @if (pr.datumEvidencije; as datum) {
+      Sačuvano {{ datum | date: "d. MMMM 'u' HH:mm" }}. Možeš da ispraviš i sačuvaš ponovo.
+    } @else {
+      Označi stanove čiji su vlasnici na sednici. Unapred su označeni oni koji su najavili dolazak.
+    }
+  </p>
+}
+
+<div id="spisak-prisustva" class="mt-4" [hidden]="!otvoren()">
+  @if (otvoren()) {
+    @if (spisak.error()) {
+      <p class="text-sm text-priguseno">
+        Spisak trenutno nije moguće učitati.
+        <button type="button" class="ponovo" (click)="spisak.reload()">Pokušaj ponovo</button>
+      </p>
+    } @else if (!spisak.hasValue()) {
+      <div class="ucitavanje" aria-hidden="true">
+        <p-skeleton height="10rem" />
+      </div>
+      <span class="sr-only">Učitavanje spiska…</span>
+    } @else if (pr.smeDaEvidentira) {
+      @let k = spisak.value().kvorum;
+      <fieldset>
+        <legend class="sr-only">Prisutni stanovi</legend>
+        @for (sprat of spratovi(); track sprat.sprat) {
+          <div class="sprat">
+            <p class="naziv-sprata">{{ sprat.sprat | sprat }}</p>
+            <div class="stanovi">
+              @for (stan of sprat.stanovi; track stan.id) {
+                <label class="plocica stan">
+                  <input
+                    type="checkbox"
+                    class="sr-only"
+                    [checked]="izabrani().has(stan.id)"
+                    (change)="promeni(stan.id, $any($event.target).checked)"
+                  />
+                  <i class="pi pi-check" aria-hidden="true"></i>
+                  <span class="min-w-0">
+                    <span class="block text-naslov">Stan {{ stan.broj }}</span>
+                    <span class="imena">{{ imena(stan) || 'Bez vlasnika u aplikaciji' }}</span>
+                    @if (najavaStana(stan) === 'dolazi') {
+                      <span class="najavio">najavljen dolazak</span>
+                    }
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </fieldset>
+      <div class="cuvanje">
+        <p class="text-sm" aria-live="polite">
+          Prisutno <span class="text-naslov tabular-nums">{{ izabrani().size }}</span> od
+          {{ stanova(k?.ukupno ?? 0) }}
+          @if (k) {
+            <span class="text-utisano">
+              · {{ izabrani().size >= k.prag ? 'ima kvoruma' : 'kvorum ' + k.prag }}
+            </span>
+          }
+        </p>
+        <button pButton type="button" [disabled]="akcije.akcijaUToku()" (click)="sacuvaj()">
+          Sačuvaj evidenciju
+        </button>
+      </div>
+    } @else {
+      <ul class="odgovori">
+        @for (stan of spisak.value().stanovi; track stan.id) {
+          @for (st of stan.stanari; track st.id) {
+            @if (st.dolazi !== null) {
+              <li>
+                <span class="min-w-0 text-tekst">
+                  {{ st.ime }} {{ st.prezime }}
+                  <span class="text-utisano">· stan {{ stan.broj }}</span>
+                </span>
+                <span [class]="st.dolazi ? 'dolazi' : 'ne-dolazi'">
+                  {{ st.dolazi ? 'dolazi' : 'ne dolazi' }}
+                </span>
+              </li>
+            }
+          }
+        } @empty {
+          <li class="text-priguseno">U zgradi nema stanova.</li>
+        }
+      </ul>
+      @if (pr.dolazi + pr.neDolazi === 0) {
+        <p class="text-sm text-priguseno">Još niko nije odgovorio.</p>
+      }
+    }
+  }
+</div>
+
+<div id="poruka-evidencije" tabindex="-1" class="mt-4 outline-none empty:hidden">
+  @if (akcije.poruka(); as p) {
+    <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+  }
+</div>

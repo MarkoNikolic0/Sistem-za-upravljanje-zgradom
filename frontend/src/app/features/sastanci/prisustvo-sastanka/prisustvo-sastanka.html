@@ -1,0 +1,102 @@
+@let pr = prisustvo();
+<div class="panel">
+  @if (pr.kvorum; as k) {
+    @if (k.prisutno !== null) {
+      <p class="ishod mb-4" [class.uspeh]="kvorumUtvrdjen()">
+        <i
+          class="pi"
+          [class]="kvorumUtvrdjen() ? 'pi-check-circle' : 'pi-minus-circle'"
+          aria-hidden="true"
+        ></i>
+        <span>
+          <span class="font-medium">
+            {{ kvorumUtvrdjen() ? 'Kvorum je utvrđen' : 'Nije bilo kvoruma' }}
+          </span>
+          <span class="block text-sm text-priguseno">
+            Na sednici je bilo {{ k.prisutno }} od {{ stanova(k.ukupno) }}, a potrebno je najmanje
+            {{ k.prag }}.
+          </span>
+        </span>
+      </p>
+    }
+    <div class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-priguseno">
+        {{ k.prisutno === null ? 'Najavili dolazak' : 'Prisutni' }}
+      </span>
+      <span class="text-naslov tabular-nums">{{ brojStanova() }} od {{ stanova(k.ukupno) }}</span>
+    </div>
+    <app-traka-kvoruma [udeo]="udeo(brojStanova(), k.ukupno)" [prag]="udeo(k.prag, k.ukupno)" />
+    <p class="mt-1.5 text-xs text-utisano">
+      Kvorum {{ stanova(k.prag) }}, više od polovine svih stanova
+    </p>
+  }
+
+  <p class="text-sm text-priguseno" [class.mt-4]="pr.kvorum">
+    @if (pr.dolazi + pr.neDolazi === 0) {
+      Još niko nije odgovorio.
+    } @else {
+      Dolazi <span class="text-naslov tabular-nums">{{ pr.dolazi }}</span> · ne dolazi
+      <span class="text-naslov tabular-nums">{{ pr.neDolazi }}</span>
+    }
+  </p>
+
+  @if (pr.smeDaNajavi) {
+    <div class="najava">
+      <p id="pitanje-dolaska" class="text-naslov">Dolaziš?</p>
+      <div class="odgovori" role="group" aria-labelledby="pitanje-dolaska">
+        <button
+          type="button"
+          class="odgovor"
+          [attr.aria-pressed]="pr.mojOdgovor === true"
+          [attr.aria-disabled]="akcije.akcijaUToku() || null"
+          (click)="najavi(true)"
+        >
+          <i class="pi pi-check" aria-hidden="true"></i>Dolazim
+        </button>
+        <button
+          type="button"
+          class="odgovor"
+          [attr.aria-pressed]="pr.mojOdgovor === false"
+          [attr.aria-disabled]="akcije.akcijaUToku() || null"
+          (click)="najavi(false)"
+        >
+          <i class="pi pi-times" aria-hidden="true"></i>Ne dolazim
+        </button>
+      </div>
+      <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <p class="text-xs text-utisano">Odgovor menjaš do početka. Imena vidi samo upravnik.</p>
+        @if (pr.mojOdgovor !== null) {
+          <button
+            pButton
+            type="button"
+            text
+            size="small"
+            [disabled]="akcije.akcijaUToku()"
+            (click)="povuci()"
+          >
+            Povuci odgovor
+          </button>
+        }
+      </div>
+    </div>
+  } @else if (pr.mojOdgovor !== null) {
+    <p class="mt-4 text-sm text-priguseno">
+      Tvoj odgovor:
+      <span class="text-naslov">{{ pr.mojOdgovor ? 'Dolazim' : 'Ne dolazim' }}</span>
+    </p>
+  }
+
+  @if (pr.smeDaVidiSpisak) {
+    <app-evidencija-prisustva
+      [sastanakId]="sastanakId()"
+      [prisustvo]="pr"
+      (promena)="promena.emit()"
+    />
+  }
+
+  <div id="poruka-prisustva" tabindex="-1" class="mt-4 outline-none empty:hidden">
+    @if (akcije.poruka(); as p) {
+      <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+    }
+  </div>
+</div>

@@ -1,0 +1,56 @@
+:host {
+  display: block;
+}
+
+.najava {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-linija);
+}
+
+.odgovori {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.odgovor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--color-ivica);
+  border-radius: 10px;
+  color: var(--color-tekst);
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+
+  &:hover:not([aria-pressed='true']) {
+    border-color: var(--color-priguseno);
+    background: rgb(255 255 255 / 0.03);
+  }
+
+  &[aria-pressed='true'] {
+    border-color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 10%, transparent);
+    color: var(--color-naslov);
+
+    .pi {
+      color: var(--color-svetlo);
+    }
+  }
+
+  &[aria-disabled] {
+    cursor: progress;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+}

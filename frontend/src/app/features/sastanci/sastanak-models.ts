@@ -47,6 +47,45 @@ export interface Sastanak {
   otkazan: boolean;
   smeDaMenja: boolean;
   smeDaOtkaze: boolean;
+  prisustvo?: PregledPrisustva;
+}
+
+export interface KvorumSastanka {
+  ukupno: number;
+  prag: number;
+  najavljeno: number;
+  prisutno: number | null;
+}
+
+export interface PregledPrisustva {
+  dolazi: number;
+  neDolazi: number;
+  mojOdgovor: boolean | null;
+  kvorum: KvorumSastanka | null;
+  datumEvidencije: string | null;
+  smeDaNajavi: boolean;
+  smeDaVidiSpisak: boolean;
+  smeDaEvidentira: boolean;
+}
+
+export interface StanarNaSpisku {
+  id: number;
+  ime: string;
+  prezime: string;
+  vlasnik: boolean;
+  dolazi: boolean | null;
+}
+
+export interface StanNaSpisku {
+  id: number;
+  broj: string;
+  sprat: number;
+  prisutan: boolean;
+  stanari: StanarNaSpisku[];
+}
+
+export interface SpisakPrisustva extends PregledPrisustva {
+  stanovi: StanNaSpisku[];
 }
 
 export interface SastanakRequest {

@@ -126,6 +126,17 @@
       </ol>
     </section>
 
+    @if (s.prisustvo && !s.otkazan) {
+      <section class="odeljak" aria-labelledby="prisustvo">
+        <h2 id="prisustvo" class="naslov-odeljka mb-4">Prisustvo</h2>
+        <app-prisustvo-sastanka
+          [sastanakId]="s.id"
+          [prisustvo]="s.prisustvo"
+          (promena)="sastanak.reload()"
+        />
+      </section>
+    }
+
     @if (s.smeDaMenja || s.smeDaOtkaze) {
       <section class="odeljak panel" aria-labelledby="upravljanje">
         <h2 id="upravljanje" class="naslov-odeljka">Upravljanje</h2>
