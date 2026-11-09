@@ -76,13 +76,3 @@
 .lista > li:last-child > app-red-dokumenta {
   border-bottom: 1px solid var(--color-linija);
 }
-
-.akcije {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.dodaj-prvi .prazno-ikonica {
-  color: var(--color-svetlo);
-  background: color-mix(in srgb, var(--color-svetlo) 12%, transparent);
-}

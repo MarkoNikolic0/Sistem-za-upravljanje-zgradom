@@ -13,6 +13,9 @@
       dokument().datumOtpremanja | date: 'd. M. y.'
     }}</time>
     · {{ fajl() }}
+    @if (saSastankom() && dokument().sastanakId; as sastanakId) {
+      · <a class="sastanak" [routerLink]="['/sastanci', sastanakId]">Sastanak</a>
+    }
   </span>
 </span>
 @if (dokument().samoVlasnici) {

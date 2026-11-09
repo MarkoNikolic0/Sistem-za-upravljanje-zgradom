@@ -12,6 +12,7 @@ export interface DokumentZgrade {
   velicina: number;
   datumOtpremanja: string;
   url: string;
+  sastanakId: number | null;
 }
 
 export type DokumentRequest = Pick<DokumentZgrade, 'naziv' | 'kategorija' | 'samoVlasnici'>;

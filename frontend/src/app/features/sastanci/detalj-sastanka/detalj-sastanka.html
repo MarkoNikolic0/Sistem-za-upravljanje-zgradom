@@ -138,6 +138,18 @@
       </section>
     }
 
+    @if (s.zapisnik || s.smeDaOkaciZapisnik || (!s.otkazan && poceo(s))) {
+      <section class="odeljak" aria-labelledby="zapisnik">
+        <h2 id="zapisnik" class="naslov-odeljka mb-4">Zapisnik</h2>
+        <app-zapisnik-sastanka
+          [sastanak]="s"
+          (promena)="sastanak.set($event)"
+          (osvezi)="sastanak.reload()"
+          (zastarelo)="zastareoZapisnik($event)"
+        />
+      </section>
+    }
+
     @if (s.smeDaMenja || s.smeDaOtkaze) {
       <section class="odeljak panel" aria-labelledby="upravljanje">
         <h2 id="upravljanje" class="naslov-odeljka">Upravljanje</h2>

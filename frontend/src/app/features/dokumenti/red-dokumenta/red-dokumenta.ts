@@ -1,17 +1,19 @@
 import { Component, computed, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { jeSlika, velicinaFajla } from '../../../shared/fajlovi/fajlovi';
 import { DokumentZgrade, opisKategorije } from '../dokument-models';
 
 @Component({
   selector: 'app-red-dokumenta',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './red-dokumenta.html',
   styleUrl: './red-dokumenta.scss',
 })
 export class RedDokumenta {
   readonly dokument = input.required<DokumentZgrade>();
   readonly saKategorijom = input(false);
+  readonly saSastankom = input(true);
 
   protected readonly slika = computed(() => jeSlika(this.dokument().tip));
   protected readonly kategorija = computed(() => opisKategorije(this.dokument().kategorija).naziv);

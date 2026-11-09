@@ -1,6 +1,7 @@
 import { Glasanje } from '../../glasanje/glasanje-models';
 import { Oglas } from '../../oglasi/oglas-models';
 import { Sastanak, VRSTE_SASTANKA } from '../../sastanci/sastanak-models';
+import { kadaJe } from '../../sastanci/pravila-sastanka';
 import { PregledZgrade } from '../../zgrade/zgrada-models';
 import { danaDo } from '../../../shared/tekst/datum';
 import { uMnozini } from '../../../shared/tekst/mnozina';
@@ -145,6 +146,19 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
       ),
       opis: 'Glasanje je završeno, objavi ishod na oglasnoj tabli.',
       putanja: ['/glasanje'],
+      hitno: false,
+    });
+  }
+
+  const bezZapisnika = pregled?.sastanakBezZapisnika;
+  if (bezZapisnika) {
+    dodaj(7, {
+      kljuc: 'zapisnik',
+      ikonica: 'pi pi-file-edit',
+      oznaka: 'Čeka zapisnik',
+      naslov: bezZapisnika.naslov,
+      opis: `Sastanak je održan ${kadaJe(bezZapisnika.pocetak)}, okači zapisnik da ga stanari vide.`,
+      putanja: ['/sastanci', bezZapisnika.id],
       hitno: false,
     });
   }

@@ -1,0 +1,75 @@
+@let s = sastanak();
+@if (forma()) {
+  <div class="panel">
+    <h3 class="naslov-forme">{{ s.zapisnik ? 'Zamena zapisnika' : 'Novi zapisnik' }}</h3>
+    <app-forma-dokumenta
+      [zgradaId]="s.zgrada.id"
+      [sastanak]="s"
+      (okacen)="okacen($event)"
+      (zastarelo)="odbijeno($event)"
+      (odustani)="zatvori()"
+    />
+  </div>
+} @else if (s.zapisnik; as z) {
+  <div class="panel">
+    <app-red-dokumenta [dokument]="z" [saSastankom]="false">
+      @if (s.smeDaOkaciZapisnik) {
+        <span class="akcije">
+          <button
+            pButton
+            id="zameni-zapisnik"
+            type="button"
+            size="small"
+            text
+            iconOnly
+            [attr.aria-label]="'Zameni ' + z.naziv"
+            (click)="otvori()"
+          >
+            <i class="pi pi-sync" aria-hidden="true"></i>
+          </button>
+          <button
+            pButton
+            type="button"
+            size="small"
+            text
+            severity="danger"
+            iconOnly
+            [attr.aria-label]="'Ukloni ' + z.naziv"
+            [disabled]="akcije.akcijaUToku()"
+            (click)="ukloni($event)"
+          >
+            <i class="pi pi-trash" aria-hidden="true"></i>
+          </button>
+        </span>
+      }
+    </app-red-dokumenta>
+    @if (s.smeDaOkaciZapisnik && s.vrsta === 'skupstina') {
+      <p class="mt-3 text-xs text-utisano">
+        Evidencija prisustva je zaključana dok je zapisnik okačen.
+      </p>
+    }
+  </div>
+} @else if (s.smeDaOkaciZapisnik) {
+  <button id="okaci-zapisnik" type="button" class="prazno dodaj-prvi" (click)="otvori()">
+    <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-file-edit"></i></span>
+    <span class="text-naslov">Zapisnik još nije okačen</span>
+    <span class="mt-1 text-sm text-priguseno">
+      Okači potpisan zapisnik kao PDF ili fotografiju.
+      {{ s.vrsta === 'skupstina' ? 'Vlasnici' : 'Svi stanari' }} ga vide ovde i u Dokumentima
+      zgrade.
+    </span>
+    <span class="poziv-dodaj mt-5"
+      ><i class="pi pi-upload" aria-hidden="true"></i>Okači zapisnik</span
+    >
+  </button>
+} @else {
+  <p class="text-sm text-priguseno">Upravnik još nije okačio zapisnik.</p>
+}
+
+<div id="poruka-zapisnika" tabindex="-1" class="mt-4 outline-none empty:hidden">
+  @if (akcije.poruka(); as p) {
+    <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
+  }
+</div>
+
+<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

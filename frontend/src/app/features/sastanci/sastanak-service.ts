@@ -72,4 +72,15 @@ export class SastanakService {
   evidentiraj(id: number, stanovi: number[]): Observable<SpisakPrisustva> {
     return this.http.put<SpisakPrisustva>(`${this.apiUrl}/${id}/prisustvo`, { stanovi });
   }
+
+  okaciZapisnik(id: number, naziv: string, fajl: File): Observable<Sastanak> {
+    const forma = new FormData();
+    forma.append('naziv', naziv);
+    forma.append('fajl', fajl);
+    return this.http.put<Sastanak>(`${this.apiUrl}/${id}/zapisnik`, forma);
+  }
+
+  ukloniZapisnik(id: number): Observable<Sastanak> {
+    return this.http.delete<Sastanak>(`${this.apiUrl}/${id}/zapisnik`);
+  }
 }

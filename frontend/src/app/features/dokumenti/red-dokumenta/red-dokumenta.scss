@@ -44,6 +44,21 @@
   }
 }
 
+.sastanak {
+  color: var(--color-tekst);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: var(--color-naslov);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-svetlo);
+    outline-offset: 2px;
+  }
+}
+
 .opis {
   margin-top: 0.125rem;
   font-size: 0.8125rem;

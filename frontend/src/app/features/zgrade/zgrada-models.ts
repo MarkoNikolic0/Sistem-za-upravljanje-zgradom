@@ -22,13 +22,16 @@ export interface UpravnikZgrade {
   korisnik: Upravnik | null;
 }
 
+type SastanakUkratko = Pick<Sastanak, 'id' | 'naslov' | 'pocetak' | 'vrsta' | 'hitno'>;
+
 export interface PregledZgrade {
   zgrada: Pick<ZgradaOsnovno, 'id' | 'naziv'>;
   zahteviNaCekanju: number;
   noviKvarovi: number;
   hitniKvarovi: number;
   neobjavljeneOdluke: number;
-  sledeciSastanak: Pick<Sastanak, 'id' | 'naslov' | 'pocetak' | 'vrsta' | 'hitno'> | null;
+  sledeciSastanak: SastanakUkratko | null;
+  sastanakBezZapisnika: SastanakUkratko | null;
 }
 
 export interface StanOsnovno {

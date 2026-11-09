@@ -1,16 +1,18 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { DokumentZgrade } from './dokument-zgrade.entity.js';
 import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { sadrzi, zgradeVlasnika } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { KategorijaDokumenta } from '../shared/enums/dokument.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { stranicenje } from '../shared/stranicenje.js';
 import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
@@ -19,6 +21,8 @@ import { PDF } from '../shared/skladiste/otpremanje-fajla.js';
 import { CreateDokumentDto } from './dto/create-dokument.dto.js';
 import { UpdateDokumentDto } from './dto/update-dokument.dto.js';
 import { DokumentUpitDto } from './dto/dokument-upit.dto.js';
+
+export type SacuvanFajl = Pick<DokumentZgrade, 'kljuc' | 'tip' | 'velicina'>;
 
 function nazivPdfFajla(naziv: string) {
   return naziv.toLowerCase().endsWith('.pdf') ? naziv : `${naziv}.pdf`;
@@ -70,6 +74,28 @@ export class DokumentZgradeService {
     fajl: Express.Multer.File | undefined,
   ) {
     await this.proveriUpravnika(zgradaId, korisnikId, uloga);
+    const dokument = await this.sacuvajSaFajlom(
+      zgradaId,
+      fajl,
+      (manager, sacuvan) =>
+        manager.save(
+          manager.create(DokumentZgrade, {
+            naziv: dto.naziv,
+            kategorija: dto.kategorija,
+            samoVlasnici: dto.samoVlasnici,
+            ...sacuvan,
+            zgrada: { id: zgradaId },
+          }),
+        ),
+    );
+    return await this.saLinkom(dokument);
+  }
+
+  async sacuvajSaFajlom<T>(
+    zgradaId: number,
+    fajl: Express.Multer.File | undefined,
+    upisi: (manager: EntityManager, sacuvan: SacuvanFajl) => Promise<T>,
+  ) {
     if (!fajl) {
       throw greskaPolja('fajl', 'Izaberi fajl.');
     }
@@ -86,21 +112,14 @@ export class DokumentZgradeService {
     await this.skladiste.sacuvaj(kljuc, sadrzaj, tip);
 
     try {
-      const dokument = await this.dataSource.transaction(async (manager) => {
+      return await this.dataSource.transaction(async (manager) => {
         await proveriAktivnu(manager, zgradaId, true);
-        return await manager.save(
-          manager.create(DokumentZgrade, {
-            naziv: dto.naziv,
-            kategorija: dto.kategorija,
-            samoVlasnici: dto.samoVlasnici,
-            kljuc,
-            tip,
-            velicina: sadrzaj.length,
-            zgrada: { id: zgradaId },
-          }),
-        );
+        return await upisi(manager, {
+          kljuc,
+          tip,
+          velicina: sadrzaj.length,
+        });
       });
-      return await this.saLinkom(dokument);
     } catch (greska) {
       await this.skladiste.obrisi(kljuc);
       throw greska;
@@ -116,6 +135,16 @@ export class DokumentZgradeService {
   ) {
     await this.proveriUpravnika(zgradaId, korisnikId, uloga);
     const dokument = await this.nadjiDokument(zgradaId, id);
+    if (
+      dokument.sastanakId !== null &&
+      ((dto.kategorija ?? dokument.kategorija) !==
+        KategorijaDokumenta.ZAPISNIK ||
+        (dto.samoVlasnici ?? dokument.samoVlasnici) !== dokument.samoVlasnici)
+    ) {
+      throw new ConflictException(
+        'Kategoriju i vidljivost zapisnika određuje sastanak.',
+      );
+    }
     Object.assign(dokument, {
       naziv: dto.naziv ?? dokument.naziv,
       kategorija: dto.kategorija ?? dokument.kategorija,
@@ -155,7 +184,7 @@ export class DokumentZgradeService {
     return dokument;
   }
 
-  private async saLinkom(dokument: DokumentZgrade) {
+  async saLinkom(dokument: DokumentZgrade) {
     const url = await this.skladiste.link(
       dokument.kljuc,
       dokument.tip === PDF ? nazivPdfFajla(dokument.naziv) : undefined,

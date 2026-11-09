@@ -15,9 +15,10 @@ import { formatRoka } from '../../../shared/tekst/datum';
 import { StanjeOdluke } from '../../glasanje/stanje-odluke/stanje-odluke';
 import { VECINE_ODLUKE } from '../../glasanje/glasanje-models';
 import { PrisustvoSastanka } from '../prisustvo-sastanka/prisustvo-sastanka';
+import { ZapisnikSastanka } from '../zapisnik-sastanka/zapisnik-sastanka';
 import { OznakeSastanka } from '../oznake-sastanka/oznake-sastanka';
 import { SastanakService } from '../sastanak-service';
-import { kadaJe } from '../pravila-sastanka';
+import { kadaJe, poceo } from '../pravila-sastanka';
 import { PregledPrisustva } from '../sastanak-models';
 
 @Component({
@@ -31,6 +32,7 @@ import { PregledPrisustva } from '../sastanak-models';
     StanjeOdluke,
     OznakeSastanka,
     PrisustvoSastanka,
+    ZapisnikSastanka,
   ],
   selector: 'app-detalj-sastanka',
   styleUrl: './detalj-sastanka.scss',
@@ -52,6 +54,7 @@ export class DetaljSastanka {
 
   protected readonly vecine = VECINE_ODLUKE;
   protected readonly kadaJe = kadaJe;
+  protected readonly poceo = poceo;
   protected readonly formatRoka = formatRoka;
 
   protected readonly poruka = signal<Poruka | null>(null);
@@ -68,6 +71,12 @@ export class DetaljSastanka {
 
   protected azurirajPrisustvo(prisustvo: PregledPrisustva): void {
     this.sastanak.update((s) => s && { ...s, prisustvo });
+  }
+
+  protected zastareoZapisnik(tekst: string): void {
+    this.poruka.set({ tip: 'greska', tekst });
+    this.sastanak.reload();
+    this.fokusiraj('#poruka-sastanka');
   }
 
   protected zapocniOtkazivanje(): void {

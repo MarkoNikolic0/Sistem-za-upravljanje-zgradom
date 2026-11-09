@@ -16,5 +16,6 @@ import { DokumentZgradeService } from './dokument-zgrade.service.js';
   ],
   controllers: [DokumentZgradeController],
   providers: [DokumentZgradeService],
+  exports: [DokumentZgradeService],
 })
 export class DokumentZgradeModule {}

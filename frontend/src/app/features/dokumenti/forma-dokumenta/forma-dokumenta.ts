@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, output, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,6 +24,9 @@ import {
   PRAVILA_DOKUMENTA,
 } from '../dokument-models';
 import { DokumentService } from '../dokument-service';
+import { Sastanak } from '../../sastanci/sastanak-models';
+import { SastanakService } from '../../sastanci/sastanak-service';
+import { nazivZapisnika } from '../../sastanci/pravila-sastanka';
 
 const POLJA = ['naziv', 'kategorija', 'samoVlasnici'] as const;
 
@@ -47,13 +50,16 @@ function nazivIzFajla(ime: string): string {
 export class FormaDokumenta implements OnInit {
   private fb = inject(FormBuilder);
   private dokumentService = inject(DokumentService);
+  private sastanakService = inject(SastanakService);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly zgradaId = input.required<number>();
   readonly dokument = input<DokumentZgrade>();
   readonly kategorija = input<KategorijaDokumenta | null>(null);
+  readonly sastanak = input<Sastanak>();
 
   readonly sacuvan = output<DokumentZgrade>();
+  readonly okacen = output<Sastanak>();
   readonly odustani = output<void>();
   readonly zastarelo = output<string>();
 
@@ -66,6 +72,10 @@ export class FormaDokumenta implements OnInit {
   protected readonly slanje = signal(false);
   protected readonly greska = signal('');
   private predlogNaziva = '';
+
+  protected readonly zapisnik = computed(
+    () => this.sastanak() !== undefined || (this.dokument()?.sastanakId ?? null) !== null,
+  );
 
   protected readonly forma = this.fb.group({
     naziv: this.fb.nonNullable.control('', [
@@ -90,7 +100,15 @@ export class FormaDokumenta implements OnInit {
 
   ngOnInit(): void {
     const dokument = this.dokument();
-    if (dokument) {
+    const sastanak = this.sastanak();
+    if (sastanak) {
+      this.forma.setValue({
+        naziv: sastanak.zapisnik?.naziv ?? nazivZapisnika(sastanak),
+        kategorija: 'zapisnik',
+        samoVlasnici: sastanak.vrsta === 'skupstina',
+      });
+      this.fokusiraj('app-izbor-fajlova button');
+    } else if (dokument) {
       this.forma.setValue({
         naziv: dokument.naziv,
         kategorija: dokument.kategorija,
@@ -142,7 +160,16 @@ export class FormaDokumenta implements OnInit {
     const podaci = { naziv: naziv.trim(), kategorija: kategorija!, samoVlasnici };
     this.greska.set('');
     this.slanje.set(true);
+    const sastanak = this.sastanak();
     try {
+      if (sastanak) {
+        this.okacen.emit(
+          await firstValueFrom(
+            this.sastanakService.okaciZapisnik(sastanak.id, podaci.naziv, fajl!),
+          ),
+        );
+        return;
+      }
       this.sacuvan.emit(
         await firstValueFrom(
           dokument
@@ -182,6 +209,10 @@ export class FormaDokumenta implements OnInit {
     }
     if (oznaciGreskuPolja(err, this.forma.controls, POLJA)) {
       this.fokusirajPrvuGresku();
+      return;
+    }
+    if (this.sastanak() && (err.status === 404 || err.status === 409)) {
+      this.zastarelo.emit(porukaServera(err) ?? 'Sastanak više nije dostupan.');
       return;
     }
     if (err.status === 404) {

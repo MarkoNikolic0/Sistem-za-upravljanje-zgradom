@@ -47,60 +47,71 @@
         {{ forma.controls.naziv.getError('server') }}
       } @else if (nevazece('naziv')) {
         Unesi naziv.
+      } @else if (zapisnik()) {
+        Pod ovim nazivom se vidi u Dokumentima zgrade.
       } @else {
         Kako ga stanari vide u listi, npr. Kućni red ili Zapisnik sa skupštine, mart 2026.
       }
     </small>
   </div>
 
-  <fieldset [attr.aria-describedby]="nevazece('kategorija') ? 'dokument-kategorija-greska' : null">
-    <legend class="text-sm font-medium">Kategorija</legend>
-    <div class="mt-2 grid grid-cols-2 gap-2">
-      @for (k of kategorije; track k.kategorija; let prva = $first) {
-        <label class="plocica" [class.nevazeca]="nevazece('kategorija')">
-          <input
-            type="radio"
-            class="sr-only"
-            formControlName="kategorija"
-            [id]="prva ? 'dokument-kategorija' : null"
-            [value]="k.kategorija"
-          />
-          <span class="ikonica" aria-hidden="true"><i [class]="k.ikonica"></i></span>
+  @if (zapisnik()) {
+    <p class="text-sm text-priguseno">
+      Zapisnik je u kategoriji Zapisnici i vide ga
+      {{ forma.controls.samoVlasnici.value ? 'samo vlasnici' : 'svi stanari' }}, kao i sastanak.
+    </p>
+  } @else {
+    <fieldset
+      [attr.aria-describedby]="nevazece('kategorija') ? 'dokument-kategorija-greska' : null"
+    >
+      <legend class="text-sm font-medium">Kategorija</legend>
+      <div class="mt-2 grid grid-cols-2 gap-2">
+        @for (k of kategorije; track k.kategorija; let prva = $first) {
+          <label class="plocica" [class.nevazeca]="nevazece('kategorija')">
+            <input
+              type="radio"
+              class="sr-only"
+              formControlName="kategorija"
+              [id]="prva ? 'dokument-kategorija' : null"
+              [value]="k.kategorija"
+            />
+            <span class="ikonica" aria-hidden="true"><i [class]="k.ikonica"></i></span>
+            <span class="min-w-0">
+              <span class="block font-medium text-naslov">{{ k.naziv }}</span>
+              <span class="mt-0.5 block text-sm text-priguseno max-sm:hidden">{{ k.opis }}</span>
+            </span>
+          </label>
+        }
+      </div>
+      @if (nevazece('kategorija')) {
+        <small id="dokument-kategorija-greska" class="mt-1.5 block text-sm text-greska">
+          {{ forma.controls.kategorija.getError('server') ?? 'Izaberi kategoriju.' }}
+        </small>
+      }
+    </fieldset>
+
+    <fieldset>
+      <legend class="text-sm font-medium">Ko vidi dokument</legend>
+      <div class="mt-2 grid gap-2 sm:grid-cols-2">
+        <label class="plocica">
+          <input type="radio" class="sr-only" formControlName="samoVlasnici" [value]="false" />
+          <span class="ikonica" aria-hidden="true"><i class="pi pi-users"></i></span>
           <span class="min-w-0">
-            <span class="block font-medium text-naslov">{{ k.naziv }}</span>
-            <span class="mt-0.5 block text-sm text-priguseno max-sm:hidden">{{ k.opis }}</span>
+            <span class="block font-medium text-naslov">Svi stanari</span>
+            <span class="mt-0.5 block text-sm text-priguseno">Vlasnici i ukućani</span>
           </span>
         </label>
-      }
-    </div>
-    @if (nevazece('kategorija')) {
-      <small id="dokument-kategorija-greska" class="mt-1.5 block text-sm text-greska">
-        {{ forma.controls.kategorija.getError('server') ?? 'Izaberi kategoriju.' }}
-      </small>
-    }
-  </fieldset>
-
-  <fieldset>
-    <legend class="text-sm font-medium">Ko vidi dokument</legend>
-    <div class="mt-2 grid gap-2 sm:grid-cols-2">
-      <label class="plocica">
-        <input type="radio" class="sr-only" formControlName="samoVlasnici" [value]="false" />
-        <span class="ikonica" aria-hidden="true"><i class="pi pi-users"></i></span>
-        <span class="min-w-0">
-          <span class="block font-medium text-naslov">Svi stanari</span>
-          <span class="mt-0.5 block text-sm text-priguseno">Vlasnici i ukućani</span>
-        </span>
-      </label>
-      <label class="plocica">
-        <input type="radio" class="sr-only" formControlName="samoVlasnici" [value]="true" />
-        <span class="ikonica" aria-hidden="true"><i class="pi pi-key"></i></span>
-        <span class="min-w-0">
-          <span class="block font-medium text-naslov">Samo vlasnici</span>
-          <span class="mt-0.5 block text-sm text-priguseno">Kao skupština i odluke</span>
-        </span>
-      </label>
-    </div>
-  </fieldset>
+        <label class="plocica">
+          <input type="radio" class="sr-only" formControlName="samoVlasnici" [value]="true" />
+          <span class="ikonica" aria-hidden="true"><i class="pi pi-key"></i></span>
+          <span class="min-w-0">
+            <span class="block font-medium text-naslov">Samo vlasnici</span>
+            <span class="mt-0.5 block text-sm text-priguseno">Kao skupština i odluke</span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+  }
 
   <div id="greska-dokumenta" tabindex="-1" class="outline-none empty:hidden">
     @if (greska()) {
@@ -113,7 +124,7 @@
       @if (slanje()) {
         <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
       }
-      {{ dokument() ? 'Sačuvaj izmene' : 'Okači dokument' }}
+      {{ dokument() ? 'Sačuvaj izmene' : sastanak() ? 'Okači zapisnik' : 'Okači dokument' }}
     </button>
     <button pButton type="button" severity="secondary" text (click)="odustani.emit()">
       Odustani

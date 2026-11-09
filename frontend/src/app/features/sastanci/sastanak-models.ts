@@ -2,6 +2,7 @@ import { KorisnikOsnovno } from '../auth/auth-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
 import { Glasanje } from '../glasanje/glasanje-models';
 import { UpitStrane } from '../../shared/liste/stranica';
+import { DokumentZgrade } from '../dokumenti/dokument-models';
 
 export type VrstaSastanka = 'skupstina' | 'zbor';
 export type StanjeSastanka = 'predstojeci' | 'odrzani';
@@ -48,6 +49,8 @@ export interface Sastanak {
   smeDaMenja: boolean;
   smeDaOtkaze: boolean;
   prisustvo?: PregledPrisustva;
+  zapisnik?: DokumentZgrade | null;
+  smeDaOkaciZapisnik?: boolean;
 }
 
 export interface KvorumSastanka {

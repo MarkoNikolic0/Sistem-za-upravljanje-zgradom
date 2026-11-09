@@ -43,6 +43,10 @@ import {
   zgradeVrste,
 } from './sastanak-prava.service.js';
 import { PrisustvoSastankaService } from './prisustvo-sastanka.service.js';
+import {
+  ZapisnikSastankaService,
+  smeDaOkaciZapisnik,
+} from './zapisnik-sastanka.service.js';
 import { DANA_ZA_POZIV, PORUKA_PROSAO } from './sastanak.constants.js';
 
 @Injectable()
@@ -56,6 +60,7 @@ export class SastanakService {
     private korisnikService: KorisnikService,
     private prava: SastanakPravaService,
     private prisustvo: PrisustvoSastankaService,
+    private zapisnici: ZapisnikSastankaService,
     private dataSource: DataSource,
   ) {}
 
@@ -103,11 +108,16 @@ export class SastanakService {
       korisnikId,
       uloga,
     );
-    const [saOdlukama, prisustvo] = await Promise.all([
+    const [saOdlukama, prisustvo, zapisnik] = await Promise.all([
       this.saOdlukama(sastanak, korisnikId, p),
       this.prisustvo.pregled(sastanak, korisnikId, p),
+      this.zapisnici.zapisnik(sastanak.id),
     ]);
-    return Object.assign(saOdlukama, { prisustvo });
+    return Object.assign(saOdlukama, {
+      prisustvo,
+      zapisnik,
+      smeDaOkaciZapisnik: smeDaOkaciZapisnik(sastanak, p),
+    });
   }
 
   async create(korisnikId: number, uloga: Uloga, dto: CreateSastanakDto) {

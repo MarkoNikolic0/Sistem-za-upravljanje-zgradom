@@ -308,6 +308,16 @@ a.plocica-fajla:hover {
     outline: 2px solid var(--color-svetlo);
     outline-offset: 2px;
   }
+
+  .prazno-ikonica {
+    color: var(--color-svetlo);
+    background: color-mix(in srgb, var(--color-svetlo) 12%, transparent);
+  }
+}
+
+.akcije {
+  display: flex;
+  gap: 0.25rem;
 }
 
 .poziv-dodaj {

@@ -15,8 +15,9 @@ import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { OTVORENI_STATUSI } from '../kvar/kvar.constants.js';
 import { POCETAK_DANA } from '../shared/vreme.js';
+import { DANA_ZA_ZAPISNIK } from '../sastanak/sastanak.constants.js';
 
-type SledeciSastanak = Pick<
+type SastanakUkratko = Pick<
   Sastanak,
   'id' | 'naslov' | 'pocetak' | 'vrsta' | 'hitno'
 >;
@@ -27,7 +28,8 @@ export interface PregledZgrade {
   noviKvarovi: number;
   hitniKvarovi: number;
   neobjavljeneOdluke: number;
-  sledeciSastanak: SledeciSastanak | null;
+  sledeciSastanak: SastanakUkratko | null;
+  sastanakBezZapisnika: SastanakUkratko | null;
 }
 
 @Injectable()
@@ -51,50 +53,64 @@ export class ZgradaPregledService {
     }
     const ids = zgrade.map((z) => z.id);
 
-    const [zahtevi, novi, hitni, odluke, sastanci] = await Promise.all([
-      brojPoZgradi(
-        this.zahtevRepository
-          .createQueryBuilder('zahtev')
-          .innerJoin('zahtev.stan', 'stan')
-          .where('zahtev.status = :status', {
-            status: StatusZahteva.NA_CEKANJU,
-          }),
-        'stan.zgradaId',
-        ids,
-      ),
-      brojPoZgradi(
-        this.kvarRepository
-          .createQueryBuilder('kvar')
-          .where('kvar.status = :status', { status: StatusKvara.PRIJAVLJEN })
-          .andWhere('kvar.prioritet <> :prioritet', {
-            prioritet: Prioritet.HITNO,
-          }),
-        'kvar.zgradaId',
-        ids,
-      ),
-      brojPoZgradi(
-        this.kvarRepository
-          .createQueryBuilder('kvar')
-          .where('kvar.prioritet = :prioritet', { prioritet: Prioritet.HITNO })
-          .andWhere('kvar.status IN (:...statusi)', {
-            statusi: OTVORENI_STATUSI,
-          }),
-        'kvar.zgradaId',
-        ids,
-      ),
-      brojPoZgradi(
-        this.glasanjeRepository
-          .createQueryBuilder('glasanje')
-          .where('glasanje.vrsta = :vrsta', { vrsta: VrstaGlasanja.ODLUKA })
-          .andWhere('glasanje.rok <= now()')
-          .andWhere(
-            'NOT EXISTS (SELECT 1 FROM oglas WHERE oglas."glasanjeId" = glasanje.id)',
-          ),
-        'glasanje.zgradaId',
-        ids,
-      ),
-      this.sledeciSastanci(ids),
-    ]);
+    const [zahtevi, novi, hitni, odluke, sledeci, bezZapisnika] =
+      await Promise.all([
+        brojPoZgradi(
+          this.zahtevRepository
+            .createQueryBuilder('zahtev')
+            .innerJoin('zahtev.stan', 'stan')
+            .where('zahtev.status = :status', {
+              status: StatusZahteva.NA_CEKANJU,
+            }),
+          'stan.zgradaId',
+          ids,
+        ),
+        brojPoZgradi(
+          this.kvarRepository
+            .createQueryBuilder('kvar')
+            .where('kvar.status = :status', { status: StatusKvara.PRIJAVLJEN })
+            .andWhere('kvar.prioritet <> :prioritet', {
+              prioritet: Prioritet.HITNO,
+            }),
+          'kvar.zgradaId',
+          ids,
+        ),
+        brojPoZgradi(
+          this.kvarRepository
+            .createQueryBuilder('kvar')
+            .where('kvar.prioritet = :prioritet', {
+              prioritet: Prioritet.HITNO,
+            })
+            .andWhere('kvar.status IN (:...statusi)', {
+              statusi: OTVORENI_STATUSI,
+            }),
+          'kvar.zgradaId',
+          ids,
+        ),
+        brojPoZgradi(
+          this.glasanjeRepository
+            .createQueryBuilder('glasanje')
+            .where('glasanje.vrsta = :vrsta', { vrsta: VrstaGlasanja.ODLUKA })
+            .andWhere('glasanje.rok <= now()')
+            .andWhere(
+              'NOT EXISTS (SELECT 1 FROM oglas WHERE oglas."glasanjeId" = glasanje.id)',
+            ),
+          'glasanje.zgradaId',
+          ids,
+        ),
+        this.sastanakPoZgradi(
+          ids,
+          `sastanak.pocetak >= ${POCETAK_DANA}`,
+          'ASC',
+        ),
+        this.sastanakPoZgradi(
+          ids,
+          `sastanak.pocetak <= now()
+            AND sastanak.pocetak > now() - make_interval(days => ${DANA_ZA_ZAPISNIK})
+            AND NOT EXISTS (SELECT 1 FROM dokument_zgrade WHERE dokument_zgrade."sastanakId" = sastanak.id)`,
+          'DESC',
+        ),
+      ]);
 
     return zgrade.map((zgrada) => ({
       zgrada,
@@ -102,7 +118,8 @@ export class ZgradaPregledService {
       noviKvarovi: novi.get(zgrada.id) ?? 0,
       hitniKvarovi: hitni.get(zgrada.id) ?? 0,
       neobjavljeneOdluke: odluke.get(zgrada.id) ?? 0,
-      sledeciSastanak: sastanci.get(zgrada.id) ?? null,
+      sledeciSastanak: sledeci.get(zgrada.id) ?? null,
+      sastanakBezZapisnika: bezZapisnika.get(zgrada.id) ?? null,
     }));
   }
 
@@ -124,7 +141,11 @@ export class ZgradaPregledService {
     });
   }
 
-  private async sledeciSastanci(ids: number[]) {
+  private async sastanakPoZgradi(
+    ids: number[],
+    uslov: string,
+    redosled: 'ASC' | 'DESC',
+  ) {
     const redovi = await this.sastanakRepository
       .createQueryBuilder('sastanak')
       .select([
@@ -138,10 +159,10 @@ export class ZgradaPregledService {
       .distinctOn(['sastanak.zgradaId'])
       .where('sastanak.zgradaId IN (:...ids)', { ids })
       .andWhere('sastanak.datumOtkazivanja IS NULL')
-      .andWhere(`sastanak.pocetak >= ${POCETAK_DANA}`)
+      .andWhere(uslov)
       .orderBy('sastanak.zgradaId')
-      .addOrderBy('sastanak.pocetak', 'ASC')
-      .getRawMany<SledeciSastanak & { zgradaId: number }>();
+      .addOrderBy('sastanak.pocetak', redosled)
+      .getRawMany<SastanakUkratko & { zgradaId: number }>();
     return new Map(
       redovi.map(({ zgradaId, ...sastanak }) => [zgradaId, sastanak]),
     );

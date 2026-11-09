@@ -88,6 +88,21 @@ export function poMesecima(sastanci: Sastanak[]): { mesec: string; sastanci: Sas
   return [...grupe].map(([naziv, uMesecu]) => ({ mesec: naziv, sastanci: uMesecu }));
 }
 
+export function poceo(sastanak: Pick<Sastanak, 'pocetak'>): boolean {
+  return new Date(sastanak.pocetak).getTime() <= Date.now();
+}
+
+const datumZapisnika = new Intl.DateTimeFormat('sr-Latn', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+export function nazivZapisnika(sastanak: Pick<Sastanak, 'vrsta' | 'pocetak'>): string {
+  const sa = sastanak.vrsta === 'skupstina' ? 'skupštine' : 'zbora stanara';
+  return `Zapisnik sa ${sa}, ${datumZapisnika.format(new Date(sastanak.pocetak))}`;
+}
+
 export function imaKvorum(kvorum: KvorumSastanka): boolean {
   return (kvorum.prisutno ?? 0) >= kvorum.prag;
 }

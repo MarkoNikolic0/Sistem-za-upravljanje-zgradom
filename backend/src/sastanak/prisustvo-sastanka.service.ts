@@ -16,6 +16,7 @@ import { Sastanak } from './sastanak.entity.js';
 import { PotvrdaPrisustva } from './potvrda-prisustva.entity.js';
 import { PrisutanStan } from './prisutan-stan.entity.js';
 import { Stan } from '../stan/stan.entity.js';
+import { DokumentZgrade } from '../dokument-zgrade/dokument-zgrade.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import {
   SAMO_ZGRADA,
@@ -35,6 +36,8 @@ import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 
 const PORUKA_NIJE_POCEO = 'Prisustvo se evidentira kad sednica počne.';
+const PORUKA_ZAPISNIK =
+  'Zapisnik je okačen. Ukloni ga da bi izmenio evidenciju.';
 
 @Injectable()
 export class PrisustvoSastankaService {
@@ -44,6 +47,8 @@ export class PrisustvoSastankaService {
     @InjectRepository(PrisutanStan)
     private prisutanStanRepository: Repository<PrisutanStan>,
     @InjectRepository(Stan) private stanRepository: Repository<Stan>,
+    @InjectRepository(DokumentZgrade)
+    private dokumentRepository: Repository<DokumentZgrade>,
     private prava: SastanakPravaService,
     private dataSource: DataSource,
   ) {}
@@ -132,6 +137,9 @@ export class PrisustvoSastankaService {
       if (!zakljucan) {
         throw new ConflictException(PORUKA_NIJE_POCEO);
       }
+      if (await manager.existsBy(DokumentZgrade, { sastanakId: id })) {
+        throw new ConflictException(PORUKA_ZAPISNIK);
+      }
       await manager.delete(PrisutanStan, { sastanak: { id } });
       if (stanovi.length > 0) {
         await manager.insert(
@@ -218,7 +226,15 @@ export class PrisustvoSastankaService {
     p: PristupZgradama,
     potvrde: PotvrdaPrisustva[],
   ) {
-    const [ukupnoStanova, odgovori, prisutno] = await Promise.all([
+    const otkazan = sastanak.datumOtkazivanja !== null;
+    const poceo = sastanak.pocetak <= new Date();
+    const upravlja = sadrzi(p.upravlja, sastanak.zgrada.id);
+    const mozeEvidencija =
+      sastanak.vrsta === VrstaSastanka.SKUPSTINA &&
+      upravlja &&
+      !otkazan &&
+      poceo;
+    const [ukupnoStanova, odgovori, prisutno, imaZapisnik] = await Promise.all([
       this.stanRepository.countBy({ zgrada: { id: sastanak.zgrada.id } }),
       this.odgovori(sastanak.zgrada.id, potvrde),
       sastanak.datumEvidencije === null
@@ -226,10 +242,9 @@ export class PrisustvoSastankaService {
         : this.prisutanStanRepository.countBy({
             sastanak: { id: sastanak.id },
           }),
+      mozeEvidencija &&
+        this.dokumentRepository.existsBy({ sastanakId: sastanak.id }),
     ]);
-    const otkazan = sastanak.datumOtkazivanja !== null;
-    const poceo = sastanak.pocetak <= new Date();
-    const upravlja = sadrzi(p.upravlja, sastanak.zgrada.id);
     return {
       ...pregledPrisustva(
         { vrsta: sastanak.vrsta, ukupnoStanova, odgovori, prisutno },
@@ -238,11 +253,7 @@ export class PrisustvoSastankaService {
       datumEvidencije: sastanak.datumEvidencije,
       smeDaNajavi: smeDaNajavi(sastanak, p) && !otkazan && !poceo,
       smeDaVidiSpisak: upravlja,
-      smeDaEvidentira:
-        sastanak.vrsta === VrstaSastanka.SKUPSTINA &&
-        upravlja &&
-        !otkazan &&
-        poceo,
+      smeDaEvidentira: mozeEvidencija && !imaZapisnik,
     };
   }
 
