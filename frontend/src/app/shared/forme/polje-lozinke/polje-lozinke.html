@@ -1,0 +1,14 @@
+<p-iconfield>
+  <ng-content />
+  <p-inputicon>
+    <button
+      type="button"
+      class="prikaz-lozinke"
+      [attr.aria-label]="'Prikaži ' + oznaka()"
+      [attr.aria-pressed]="!sakrivena()"
+      (click)="sakrivena.set(!sakrivena())"
+    >
+      <i [class]="sakrivena() ? 'pi pi-eye' : 'pi pi-eye-slash'" aria-hidden="true"></i>
+    </button>
+  </p-inputicon>
+</p-iconfield>

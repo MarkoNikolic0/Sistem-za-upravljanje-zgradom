@@ -3,10 +3,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
+import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
 import { AuthService } from '../../auth/auth-service';
 import { MAX_DUZINA_LOZINKE, MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../../auth/pravila-naloga';
 import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
@@ -15,14 +14,7 @@ import { fokusPosleCrtanja } from '../../../shared/fokus';
 type Polje = 'trenutnaLozinka' | 'novaLozinka';
 
 @Component({
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    IconFieldModule,
-    InputIconModule,
-    InputPasswordModule,
-    MessageModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, PoljeLozinke, InputPasswordModule, MessageModule],
   selector: 'app-change-password',
   templateUrl: './change-password.html',
 })
@@ -38,8 +30,6 @@ export class ChangePassword {
   protected readonly salje = signal(false);
   protected readonly greska = signal('');
   protected readonly promenjena = signal(false);
-  protected readonly sakrijTrenutnu = signal(true);
-  protected readonly sakrijNovu = signal(true);
 
   protected readonly forma = this.fb.nonNullable.group(
     {
@@ -56,8 +46,6 @@ export class ChangePassword {
 
   otvori(): void {
     this.forma.reset();
-    this.sakrijTrenutnu.set(true);
-    this.sakrijNovu.set(true);
     this.greska.set('');
     this.promenjena.set(false);
     this.otvoreno.set(true);

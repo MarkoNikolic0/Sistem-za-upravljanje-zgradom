@@ -8,12 +8,19 @@ import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { DataSource, LessThan, MoreThan, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  LessThan,
+  MoreThan,
+  Repository,
+} from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../../korisnik/aktivan-korisnik.js';
 import { MailService } from '../../shared/mail/mail.service.js';
 import { greskaPolja } from '../../shared/greske-validacije.js';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
+import { NeuspelePrijaveService } from '../neuspele-prijave/neuspele-prijave.service.js';
 import { generisiToken, hesirajToken } from '../token.util.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
 import { NovaLozinkaDto } from '../dto/nova-lozinka.dto.js';
@@ -36,6 +43,7 @@ export class LozinkaService {
     private tokenRepository: Repository<TokenLozinke>,
     private dataSource: DataSource,
     private refreshTokenService: RefreshTokenService,
+    private neuspelePrijaveService: NeuspelePrijaveService,
     private mailService: MailService,
     private config: ConfigService,
   ) {}
@@ -51,15 +59,18 @@ export class LozinkaService {
         this.config.get<string>('FRONTEND_URL'),
       );
       link.searchParams.set('token', token);
-      await this.mailService.posalji(mailNovaLozinka(email, link.href));
+      const poslat = await this.mailService.posalji(
+        mailNovaLozinka(email, link.href),
+      );
+      if (!poslat) {
+        await this.tokenRepository.delete({ tokenHash: hesirajToken(token) });
+      }
     } catch (greska) {
       this.logger.error('Link za novu lozinku nije napravljen.', greska);
     }
   }
 
   async postaviNovu(dto: NovaLozinkaDto): Promise<void> {
-    const hes = await bcrypt.hash(dto.lozinka, 10);
-
     const email = await this.dataSource.transaction(async (manager) => {
       const { raw } = await manager
         .createQueryBuilder()
@@ -82,12 +93,10 @@ export class LozinkaService {
         throw new BadRequestException(PORUKA_LINK);
       }
 
-      await manager.update(Korisnik, korisnik.id, {
-        lozinka: hes,
-        neuspelePrijave: 0,
-        zakljucanDo: null,
-      });
-      await manager.delete(TokenLozinke, { korisnik: { id: korisnik.id } });
+      const hes = await bcrypt.hash(dto.lozinka, 10);
+      await manager.update(Korisnik, korisnik.id, { lozinka: hes });
+      await this.obrisiLinkove(manager, korisnik.id);
+      await this.neuspelePrijaveService.obrisiSve(manager, korisnik.id);
       await this.refreshTokenService.opozoviSveSesije(manager, korisnik.id);
       return korisnik.email;
     });
@@ -129,7 +138,7 @@ export class LozinkaService {
     const hes = await bcrypt.hash(dto.novaLozinka, 10);
     await this.dataSource.transaction(async (manager) => {
       await manager.update(Korisnik, korisnikId, { lozinka: hes });
-      await manager.delete(TokenLozinke, { korisnik: { id: korisnikId } });
+      await this.obrisiLinkove(manager, korisnikId);
       await this.refreshTokenService.opozoviOstaleSesije(
         manager,
         korisnikId,
@@ -138,6 +147,10 @@ export class LozinkaService {
     });
 
     void this.mailService.posalji(mailLozinkaPromenjena(korisnik.email));
+  }
+
+  async obrisiLinkove(manager: EntityManager, korisnikId: number) {
+    await manager.delete(TokenLozinke, { korisnik: { id: korisnikId } });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
@@ -166,7 +179,7 @@ export class LozinkaService {
       }
 
       const token = generisiToken();
-      await manager.delete(TokenLozinke, { korisnik: { id: korisnik.id } });
+      await this.obrisiLinkove(manager, korisnik.id);
       await manager.insert(TokenLozinke, {
         tokenHash: hesirajToken(token),
         korisnik: { id: korisnik.id },

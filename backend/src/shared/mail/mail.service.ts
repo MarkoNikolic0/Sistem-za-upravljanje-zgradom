@@ -29,7 +29,7 @@ export class MailService {
     );
   }
 
-  async posalji({ za, naslov, tekst, html }: Mail): Promise<void> {
+  async posalji({ za, naslov, tekst, html }: Mail): Promise<boolean> {
     try {
       await this.transport.sendMail({
         to: za,
@@ -37,8 +37,10 @@ export class MailService {
         text: tekst,
         html,
       });
+      return true;
     } catch (greska) {
       this.logger.error(`Mail „${naslov}“ nije poslat.`, greska);
+      return false;
     }
   }
 }

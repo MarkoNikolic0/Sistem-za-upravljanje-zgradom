@@ -8,9 +8,8 @@ import { StanjePrijave } from '../auth-models';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
 import { MessageModule } from 'primeng/message';
-import { InputIconModule } from 'primeng/inputicon';
+import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
@@ -31,8 +30,7 @@ type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
     InputPasswordModule,
     ButtonModule,
     MessageModule,
-    IconFieldModule,
-    InputIconModule,
+    PoljeLozinke,
     RouterLink,
     AuthLayout,
   ],
@@ -48,7 +46,6 @@ export class Register {
 
   greska = signal('');
   salje = signal(false);
-  sakrijLozinku = signal(true);
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
   protected readonly maxDuzinaLozinke = MAX_DUZINA_LOZINKE;
   protected readonly maxDuzinaImena = MAX_DUZINA_IMENA;

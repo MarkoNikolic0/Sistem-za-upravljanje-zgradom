@@ -10,10 +10,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
+import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthService } from '../auth-service';
 import { AuthStore } from '../sesija/auth-store';
@@ -31,8 +30,7 @@ function isteLozinke(grupa: AbstractControl): ValidationErrors | null {
   imports: [
     ReactiveFormsModule,
     ButtonModule,
-    IconFieldModule,
-    InputIconModule,
+    PoljeLozinke,
     InputPasswordModule,
     MessageModule,
     RouterLink,
@@ -56,8 +54,6 @@ export class NovaLozinka {
   protected readonly salje = signal(false);
   protected readonly greska = signal('');
   protected readonly linkNevazi = signal(false);
-  protected readonly sakrijLozinku = signal(true);
-  protected readonly sakrijPonovljenu = signal(true);
 
   protected readonly forma = this.fb.nonNullable.group(
     {
@@ -99,17 +95,21 @@ export class NovaLozinka {
       .novaLozinka(this.token, this.forma.controls.lozinka.value)
       .pipe(finalize(() => this.salje.set(false)))
       .subscribe({
-        next: () => {
-          this.authStore.ocistiSesiju();
-          void this.router.navigate(['/login'], {
-            replaceUrl: true,
-            state: {
-              obavestenje: 'Lozinka je promenjena. Prijavi se novom lozinkom.',
-            } satisfies StanjePrijave,
-          });
-        },
+        next: () => void this.naPrijavu(),
         error: (err: HttpErrorResponse) => this.obradiGresku(err),
       });
+  }
+
+  private async naPrijavu(): Promise<void> {
+    if (this.authStore.jePrijavljen()) {
+      await this.authStore.logout();
+    }
+    await this.router.navigate(['/login'], {
+      replaceUrl: true,
+      state: {
+        obavestenje: 'Lozinka je promenjena. Prijavi se novom lozinkom.',
+      } satisfies StanjePrijave,
+    });
   }
 
   private obradiGresku(err: HttpErrorResponse): void {

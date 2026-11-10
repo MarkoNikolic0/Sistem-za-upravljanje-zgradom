@@ -20,7 +20,7 @@
     <form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="mt-8 flex flex-col gap-5">
       <div class="flex flex-col gap-1.5">
         <label for="lozinka" class="text-sm font-medium">Nova lozinka</label>
-        <p-iconfield>
+        <app-polje-lozinke #poljeLozinke oznaka="novu lozinku">
           <input
             pInputPassword
             id="lozinka"
@@ -31,23 +31,12 @@
             required
             aria-describedby="lozinka-pomoc"
             [minlength]="minDuzinaLozinke"
-            [mask]="sakrijLozinku()"
+            [mask]="poljeLozinke.sakrivena()"
             [fluid]="true"
             [invalid]="nevazece('lozinka')"
             [attr.aria-invalid]="nevazece('lozinka')"
           />
-          <p-inputicon>
-            <button
-              type="button"
-              class="prikaz-lozinke"
-              aria-label="Prikaži novu lozinku"
-              [attr.aria-pressed]="!sakrijLozinku()"
-              (click)="sakrijLozinku.set(!sakrijLozinku())"
-            >
-              <i [class]="sakrijLozinku() ? 'pi pi-eye' : 'pi pi-eye-slash'" aria-hidden="true"></i>
-            </button>
-          </p-inputicon>
-        </p-iconfield>
+        </app-polje-lozinke>
         <small
           id="lozinka-pomoc"
           class="text-sm"
@@ -67,7 +56,7 @@
 
       <div class="flex flex-col gap-1.5">
         <label for="ponovljena" class="text-sm font-medium">Ponovi novu lozinku</label>
-        <p-iconfield>
+        <app-polje-lozinke #poljePonovljene oznaka="ponovljenu lozinku">
           <input
             pInputPassword
             id="ponovljena"
@@ -76,27 +65,13 @@
             autocomplete="new-password"
             enterkeyhint="done"
             required
-            [mask]="sakrijPonovljenu()"
+            [mask]="poljePonovljene.sakrivena()"
             [fluid]="true"
             [invalid]="nevazece('ponovljena')"
             [attr.aria-invalid]="nevazece('ponovljena')"
             [attr.aria-describedby]="nevazece('ponovljena') ? 'ponovljena-greska' : null"
           />
-          <p-inputicon>
-            <button
-              type="button"
-              class="prikaz-lozinke"
-              aria-label="Prikaži ponovljenu lozinku"
-              [attr.aria-pressed]="!sakrijPonovljenu()"
-              (click)="sakrijPonovljenu.set(!sakrijPonovljenu())"
-            >
-              <i
-                [class]="sakrijPonovljenu() ? 'pi pi-eye' : 'pi pi-eye-slash'"
-                aria-hidden="true"
-              ></i>
-            </button>
-          </p-inputicon>
-        </p-iconfield>
+        </app-polje-lozinke>
         @if (nevazece('ponovljena')) {
           <small id="ponovljena-greska" class="text-sm text-greska">
             @if (forma.controls.ponovljena.hasError('required')) {

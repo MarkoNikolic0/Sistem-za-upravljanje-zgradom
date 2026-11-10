@@ -15,12 +15,8 @@ import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
-import {
-  MAKS_NEUSPELIH_PRIJAVA,
-  PORUKA_DEAKTIVIRAN,
-  PORUKA_ZAKLJUCAN,
-  ZAKLJUCAVANJE_MIN,
-} from './auth.constants.js';
+import { PORUKA_DEAKTIVIRAN, PORUKA_ZAKLJUCAN } from './auth.constants.js';
+import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.service.js';
 
 const LAZNI_HES = bcrypt.hashSync('lozinka-za-isto-vreme-odgovora', 10);
 
@@ -31,6 +27,7 @@ export class AuthService {
     private korisnikRepository: Repository<Korisnik>,
     private jwtService: JwtService,
     private refreshTokenService: RefreshTokenService,
+    private neuspelePrijaveService: NeuspelePrijaveService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -58,7 +55,7 @@ export class AuthService {
     return rezultat;
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, ip: string) {
     const korisnik = await this.korisnikRepository.findOne({
       where: { email: dto.email },
     });
@@ -69,18 +66,19 @@ export class AuthService {
     if (!korisnik) {
       throw new UnauthorizedException('Neispravan email ili lozinka.');
     }
-    if (korisnik.zakljucanDo && korisnik.zakljucanDo > new Date()) {
+    if (await this.neuspelePrijaveService.zakljucan(korisnik.id, ip)) {
       throw new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS);
     }
     if (!lozinkaValidna) {
-      throw await this.zabeleziNeuspeh(korisnik.id);
+      const zakljucan = await this.neuspelePrijaveService.zabelezi(
+        korisnik.id,
+        ip,
+      );
+      throw zakljucan
+        ? new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS)
+        : new UnauthorizedException('Neispravan email ili lozinka.');
     }
-    if (korisnik.neuspelePrijave > 0 || korisnik.zakljucanDo) {
-      await this.korisnikRepository.update(korisnik.id, {
-        neuspelePrijave: 0,
-        zakljucanDo: null,
-      });
-    }
+    await this.neuspelePrijaveService.obrisi(korisnik.id, ip);
     if (korisnik.deaktiviran) {
       throw new ForbiddenException(PORUKA_DEAKTIVIRAN);
     }
@@ -116,26 +114,5 @@ export class AuthService {
       return;
     }
     await this.refreshTokenService.opozoviPoTokenu(refreshToken);
-  }
-
-  private async zabeleziNeuspeh(korisnikId: number): Promise<HttpException> {
-    const prag = `"neuspelePrijave" + 1 >= ${MAKS_NEUSPELIH_PRIJAVA}`;
-    const { raw } = await this.korisnikRepository
-      .createQueryBuilder()
-      .update(Korisnik)
-      .set({
-        neuspelePrijave: () =>
-          `CASE WHEN ${prag} THEN 0 ELSE "neuspelePrijave" + 1 END`,
-        zakljucanDo: () =>
-          `CASE WHEN ${prag} THEN now() + interval '${ZAKLJUCAVANJE_MIN} minutes' ELSE "zakljucanDo" END`,
-      })
-      .where('id = :korisnikId', { korisnikId })
-      .returning('"zakljucanDo"')
-      .execute();
-
-    const zakljucanDo = (raw as { zakljucanDo: Date | null }[])[0]?.zakljucanDo;
-    return zakljucanDo
-      ? new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS)
-      : new UnauthorizedException('Neispravan email ili lozinka.');
   }
 }

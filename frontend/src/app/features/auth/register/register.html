@@ -126,7 +126,7 @@
 
     <div class="flex flex-col gap-1.5">
       <label for="new-password" class="text-sm font-medium">Lozinka</label>
-      <p-iconfield>
+      <app-polje-lozinke #poljeLozinke oznaka="lozinku">
         <input
           pInputPassword
           id="new-password"
@@ -137,23 +137,12 @@
           [minlength]="minDuzinaLozinke"
           required
           aria-describedby="lozinka-pomoc"
-          [mask]="sakrijLozinku()"
+          [mask]="poljeLozinke.sakrivena()"
           [fluid]="true"
           [invalid]="nevazece('lozinka')"
           [attr.aria-invalid]="nevazece('lozinka')"
         />
-        <p-inputicon>
-          <button
-            type="button"
-            class="prikaz-lozinke"
-            aria-label="Prikaži lozinku"
-            [attr.aria-pressed]="!sakrijLozinku()"
-            (click)="sakrijLozinku.set(!sakrijLozinku())"
-          >
-            <i [class]="sakrijLozinku() ? 'pi pi-eye' : 'pi pi-eye-slash'" aria-hidden="true"></i>
-          </button>
-        </p-inputicon>
-      </p-iconfield>
+      </app-polje-lozinke>
       <small
         id="lozinka-pomoc"
         class="text-sm"

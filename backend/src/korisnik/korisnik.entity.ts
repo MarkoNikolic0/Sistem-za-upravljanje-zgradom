@@ -49,12 +49,4 @@ export class Korisnik {
 
   @Column({ type: 'timestamptz', nullable: true })
   deaktiviran: Date | null;
-
-  @Column({ default: 0 })
-  @Exclude()
-  neuspelePrijave: number;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  @Exclude()
-  zakljucanDo: Date | null;
 }

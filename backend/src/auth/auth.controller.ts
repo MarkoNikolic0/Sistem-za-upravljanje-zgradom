@@ -51,10 +51,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const { accessToken, refreshToken, datumIsteka } =
-      await this.authService.login(dto);
+      await this.authService.login(dto, req.ip ?? '');
 
     const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
     res.cookie(

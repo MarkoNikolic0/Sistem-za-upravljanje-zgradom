@@ -6,8 +6,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
+import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../sesija/auth-store';
 import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
@@ -21,8 +20,7 @@ import { bezbednaAdresa } from '../pristup/povratak';
     InputPasswordModule,
     ButtonModule,
     MessageModule,
-    IconFieldModule,
-    InputIconModule,
+    PoljeLozinke,
     RouterLink,
     AuthLayout,
   ],
@@ -43,7 +41,6 @@ export class Login {
   greska = signal('');
   obavestenje = signal(this.stanje?.obavestenje ?? '');
   salje = signal(false);
-  sakrijLozinku = signal(true);
 
   loginForm = this.fb.nonNullable.group({
     email: [this.stanje?.email ?? '', [Validators.required, Validators.email]],

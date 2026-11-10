@@ -16,6 +16,7 @@ import { UpravnikZgradeService } from '../zgrada/upravnik-zgrade.service.js';
 import { KvarAkcijeService } from '../kvar/kvar-akcije.service.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { RefreshTokenService } from '../auth/refresh-token/refresh-token.service.js';
+import { LozinkaService } from '../auth/token-lozinke/lozinka.service.js';
 import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class NalogKorisnikaService {
     private kvarAkcijeService: KvarAkcijeService,
     private oglasService: OglasService,
     private refreshTokenService: RefreshTokenService,
+    private lozinkaService: LozinkaService,
   ) {}
 
   async promeniUlogu(id: number, adminId: number, dto: PromeniUloguDto) {
@@ -83,6 +85,7 @@ export class NalogKorisnikaService {
       }
       await this.kvarAkcijeService.vratiKvaroveServisera(manager, id, adminId);
       await this.refreshTokenService.opozoviSveSesije(manager, id);
+      await this.lozinkaService.obrisiLinkove(manager, id);
       await manager.update(Korisnik, id, { deaktiviran: new Date() });
     });
   }

@@ -11,10 +11,12 @@ import { RefreshTokenModule } from './refresh-token/refresh-token.module.js';
 import { TokenLozinke } from './token-lozinke/token-lozinke.entity.js';
 import { LozinkaService } from './token-lozinke/lozinka.service.js';
 import { MailModule } from '../shared/mail/mail.module.js';
+import { NeuspelaPrijava } from './neuspele-prijave/neuspela-prijava.entity.js';
+import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.service.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Korisnik, TokenLozinke]),
+    TypeOrmModule.forFeature([Korisnik, TokenLozinke, NeuspelaPrijava]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -27,7 +29,7 @@ import { MailModule } from '../shared/mail/mail.module.js';
     MailModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, LozinkaService, JwtStrategy],
-  exports: [PassportModule, JwtModule],
+  providers: [AuthService, LozinkaService, NeuspelePrijaveService, JwtStrategy],
+  exports: [PassportModule, JwtModule, LozinkaService],
 })
 export class AuthModule {}
