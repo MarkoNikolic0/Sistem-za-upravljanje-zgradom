@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -11,6 +11,8 @@ import { InputIconModule } from 'primeng/inputicon';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../sesija/auth-store';
 import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
+import { StanjePrijave } from '../auth-models';
+import { bezbednaAdresa } from '../pristup/povratak';
 
 @Component({
   imports: [
@@ -34,16 +36,17 @@ export class Login {
   private router = inject(Router);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  private registrovanEmail: string | undefined =
-    this.router.currentNavigation()?.extras.state?.['registrovanEmail'];
+  private stanje = this.router.currentNavigation()?.extras.state as StanjePrijave | undefined;
+
+  readonly returnUrl = input<string>();
 
   greska = signal('');
-  obavestenje = signal(this.registrovanEmail ? 'Nalog je napravljen. Prijavi se.' : '');
+  obavestenje = signal(this.stanje?.obavestenje ?? '');
   salje = signal(false);
   sakrijLozinku = signal(true);
 
   loginForm = this.fb.nonNullable.group({
-    email: [this.registrovanEmail ?? '', [Validators.required, Validators.email]],
+    email: [this.stanje?.email ?? '', [Validators.required, Validators.email]],
     lozinka: ['', Validators.required],
   });
 
@@ -66,7 +69,7 @@ export class Login {
 
     try {
       await this.authStore.login(email, lozinka);
-      await this.router.navigate(['/']);
+      await this.router.navigateByUrl(bezbednaAdresa(this.returnUrl()));
     } catch (err) {
       this.obradiGresku(err);
     } finally {
@@ -90,7 +93,7 @@ export class Login {
     }
 
     if (err.status === 429) {
-      this.greska.set(PREVISE_POKUSAJA);
+      this.greska.set(porukaServera(err) ?? PREVISE_POKUSAJA);
       return;
     }
 
@@ -104,5 +107,9 @@ export class Login {
         ? 'Email ili lozinka nisu ispravni.'
         : 'Server trenutno nije dostupan. Pokušaj ponovo za nekoliko trenutaka.',
     );
+  }
+
+  stanjeZaLozinku(): StanjePrijave {
+    return { email: this.loginForm.controls.email.value.trim() };
   }
 }

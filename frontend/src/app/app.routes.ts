@@ -18,6 +18,21 @@ export const routes: Routes = [
     title: 'Registracija | Upravljanje zgradom',
   },
   {
+    path: 'zaboravljena-lozinka',
+    loadComponent: () =>
+      import('./features/auth/zaboravljena-lozinka/zaboravljena-lozinka').then(
+        (m) => m.ZaboravljenaLozinka,
+      ),
+    canActivate: [gostGuard],
+    title: 'Zaboravljena lozinka | Upravljanje zgradom',
+  },
+  {
+    path: 'nova-lozinka',
+    loadComponent: () =>
+      import('./features/auth/nova-lozinka/nova-lozinka').then((m) => m.NovaLozinka),
+    title: 'Nova lozinka | Upravljanje zgradom',
+  },
+  {
     path: '',
     loadComponent: () => import('./features/layout/app-layout/app-layout').then((m) => m.AppLayout),
     canActivate: [prijavljenGuard],

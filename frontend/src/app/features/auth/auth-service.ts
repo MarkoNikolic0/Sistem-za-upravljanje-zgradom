@@ -43,4 +43,12 @@ export class AuthService {
       withCredentials: true,
     });
   }
+
+  zaboravljenaLozinka(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/zaboravljena-lozinka`, { email });
+  }
+
+  novaLozinka(token: string, lozinka: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/nova-lozinka`, { token, lozinka });
+  }
 }

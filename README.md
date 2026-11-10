@@ -96,7 +96,7 @@ Lozinka za sve: **`Zgrada123!`**
 
 | Uloga | Email |
 | --- | --- |
-| Admin | `marko@gmail.com` |
+| Admin | `markonikolic287@gmail.com` |
 | Upravnik | `danijel@gmail.com` |
 | Serviser | `petar@gmail.com` |
 | Stanar | `marija@gmail.com` |

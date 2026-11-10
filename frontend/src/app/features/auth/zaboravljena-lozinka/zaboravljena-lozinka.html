@@ -1,0 +1,80 @@
+<app-auth-layout>
+  @if (poslato()) {
+    <h1 id="poslato" class="naslov-stranice" tabindex="-1">Proveri mejl</h1>
+
+    <div class="mt-6 flex flex-col gap-4 text-priguseno">
+      <p>
+        Ako postoji nalog sa adresom <strong class="text-naslov">{{ poslato() }}</strong
+        >, poslali smo link za novu lozinku.
+      </p>
+      <p>
+        Link važi {{ trajanjeLinka }} minuta. Ako mejl ne stigne za nekoliko minuta, proveri i
+        neželjenu poštu.
+      </p>
+    </div>
+  } @else {
+    <h1 class="naslov-stranice">Zaboravljena lozinka</h1>
+    <p class="mt-3 text-priguseno">Unesi email naloga i poslaćemo ti link za novu lozinku.</p>
+
+    <div aria-live="polite" class="mt-6 empty:hidden">
+      @if (greska()) {
+        <p-message severity="error">{{ greska() }}</p-message>
+      }
+    </div>
+
+    <form [formGroup]="forma" (ngSubmit)="posalji()" class="mt-8 flex flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label for="email" class="text-sm font-medium">Email</label>
+        <input
+          pInputText
+          id="email"
+          name="email"
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          enterkeyhint="send"
+          required
+          [fluid]="true"
+          [invalid]="nevazece()"
+          [attr.aria-invalid]="nevazece()"
+          [attr.aria-describedby]="nevazece() ? 'email-greska' : null"
+        />
+        @if (nevazece()) {
+          <small id="email-greska" class="text-sm text-greska">
+            @if (forma.controls.email.hasError('server')) {
+              {{ forma.controls.email.getError('server') }}
+            } @else if (forma.controls.email.hasError('required')) {
+              Unesi email adresu.
+            } @else {
+              Email adresa nije ispravna. Proveri da li sadrži &#64; i domen.
+            }
+          </small>
+        }
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        size="large"
+        [disabled]="salje()"
+        class="mt-2 w-full justify-center"
+      >
+        @if (salje()) {
+          <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+          Slanje…
+        } @else {
+          Pošalji link
+        }
+      </button>
+    </form>
+  }
+
+  <p class="mt-6 text-center text-priguseno">
+    <a
+      routerLink="/login"
+      [state]="stanjeZaPrijavu()"
+      class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
+      >Nazad na prijavu</a
+    >
+  </p>
+</app-auth-layout>

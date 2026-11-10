@@ -1,0 +1,127 @@
+<app-auth-layout>
+  <h1 class="naslov-stranice">Nova lozinka</h1>
+
+  @if (!token || linkNevazi()) {
+    <p id="link-nevazi" class="mt-6 text-priguseno" tabindex="-1">
+      @if (linkNevazi()) {
+        Ovaj link je istekao ili je već iskorišćen. Zatraži novi link za promenu lozinke.
+      } @else {
+        Link nije potpun. Otvori ponovo link iz mejla ili zatraži novi.
+      }
+    </p>
+    <a routerLink="/zaboravljena-lozinka" class="tekst-link mt-6 inline-block">Zatraži novi link</a>
+  } @else {
+    <div aria-live="polite" class="mt-6 empty:hidden">
+      @if (greska()) {
+        <p-message severity="error">{{ greska() }}</p-message>
+      }
+    </div>
+
+    <form [formGroup]="forma" (ngSubmit)="sacuvaj()" class="mt-8 flex flex-col gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label for="lozinka" class="text-sm font-medium">Nova lozinka</label>
+        <p-iconfield>
+          <input
+            pInputPassword
+            id="lozinka"
+            name="new-password"
+            formControlName="lozinka"
+            autocomplete="new-password"
+            enterkeyhint="next"
+            required
+            aria-describedby="lozinka-pomoc"
+            [minlength]="minDuzinaLozinke"
+            [mask]="sakrijLozinku()"
+            [fluid]="true"
+            [invalid]="nevazece('lozinka')"
+            [attr.aria-invalid]="nevazece('lozinka')"
+          />
+          <p-inputicon>
+            <button
+              type="button"
+              class="prikaz-lozinke"
+              aria-label="Prikaži novu lozinku"
+              [attr.aria-pressed]="!sakrijLozinku()"
+              (click)="sakrijLozinku.set(!sakrijLozinku())"
+            >
+              <i [class]="sakrijLozinku() ? 'pi pi-eye' : 'pi pi-eye-slash'" aria-hidden="true"></i>
+            </button>
+          </p-inputicon>
+        </p-iconfield>
+        <small
+          id="lozinka-pomoc"
+          class="text-sm"
+          [class]="nevazece('lozinka') ? 'text-greska' : 'text-priguseno'"
+        >
+          @if (forma.controls.lozinka.hasError('server')) {
+            {{ forma.controls.lozinka.getError('server') }}
+          } @else if (forma.controls.lozinka.hasError('required') && nevazece('lozinka')) {
+            Unesi novu lozinku.
+          } @else if (forma.controls.lozinka.hasError('maxlength') && nevazece('lozinka')) {
+            Lozinka može imati najviše {{ maxDuzinaLozinke }} znaka.
+          } @else {
+            Najmanje {{ minDuzinaLozinke }} znakova.
+          }
+        </small>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="ponovljena" class="text-sm font-medium">Ponovi novu lozinku</label>
+        <p-iconfield>
+          <input
+            pInputPassword
+            id="ponovljena"
+            name="confirm-password"
+            formControlName="ponovljena"
+            autocomplete="new-password"
+            enterkeyhint="done"
+            required
+            [mask]="sakrijPonovljenu()"
+            [fluid]="true"
+            [invalid]="nevazece('ponovljena')"
+            [attr.aria-invalid]="nevazece('ponovljena')"
+            [attr.aria-describedby]="nevazece('ponovljena') ? 'ponovljena-greska' : null"
+          />
+          <p-inputicon>
+            <button
+              type="button"
+              class="prikaz-lozinke"
+              aria-label="Prikaži ponovljenu lozinku"
+              [attr.aria-pressed]="!sakrijPonovljenu()"
+              (click)="sakrijPonovljenu.set(!sakrijPonovljenu())"
+            >
+              <i
+                [class]="sakrijPonovljenu() ? 'pi pi-eye' : 'pi pi-eye-slash'"
+                aria-hidden="true"
+              ></i>
+            </button>
+          </p-inputicon>
+        </p-iconfield>
+        @if (nevazece('ponovljena')) {
+          <small id="ponovljena-greska" class="text-sm text-greska">
+            @if (forma.controls.ponovljena.hasError('required')) {
+              Ponovi novu lozinku.
+            } @else {
+              Lozinke se ne poklapaju.
+            }
+          </small>
+        }
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        size="large"
+        [disabled]="salje()"
+        class="mt-2 w-full justify-center"
+      >
+        @if (salje()) {
+          <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+          Čuvanje…
+        } @else {
+          Sačuvaj lozinku
+        }
+      </button>
+    </form>
+  }
+</app-auth-layout>

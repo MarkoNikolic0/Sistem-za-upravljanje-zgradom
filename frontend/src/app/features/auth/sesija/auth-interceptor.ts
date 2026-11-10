@@ -5,6 +5,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthStore } from './auth-store';
 import { TokenRefresh } from './token-refresh';
+import { naPrijavu } from '../pristup/povratak';
 
 const BEZ_TOKENA = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].map(
   (putanja) => `${environment.apiUrl}${putanja}`,
@@ -33,7 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       return tokenRefresh.osvezi().pipe(
         catchError((greskaRefresha: unknown) => {
-          void router.navigateByUrl('/login');
+          void router.navigateByUrl(naPrijavu(router));
           return throwError(() => greskaRefresha);
         }),
         switchMap((noviToken) => next(saTokenom(req, noviToken))),

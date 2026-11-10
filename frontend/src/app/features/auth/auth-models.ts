@@ -45,3 +45,8 @@ export interface ChangePasswordRequest {
   trenutnaLozinka: string;
   novaLozinka: string;
 }
+
+export interface StanjePrijave {
+  email?: string;
+  obavestenje?: string;
+}

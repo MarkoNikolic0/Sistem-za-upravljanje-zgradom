@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth-service';
+import { StanjePrijave } from '../auth-models';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { ButtonModule } from 'primeng/button';
@@ -80,7 +81,13 @@ export class Register {
       .register(podaci)
       .pipe(finalize(() => this.salje.set(false)))
       .subscribe({
-        next: () => this.router.navigate(['/login'], { state: { registrovanEmail: podaci.email } }),
+        next: () =>
+          this.router.navigate(['/login'], {
+            state: {
+              email: podaci.email,
+              obavestenje: 'Nalog je napravljen. Prijavi se.',
+            } satisfies StanjePrijave,
+          }),
         error: (err: HttpErrorResponse) => this.obradiGresku(err),
       });
   }

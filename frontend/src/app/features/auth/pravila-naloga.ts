@@ -4,6 +4,7 @@ import { NIJE_PRAZNO } from '../../shared/forme/nije-prazno';
 export const MIN_DUZINA_LOZINKE = 8;
 export const MAX_DUZINA_LOZINKE = 64;
 export const MAX_DUZINA_IMENA = 50;
+export const TRAJANJE_LINKA_MIN = 30;
 
 export const PRAVILA_LOZINKE = [
   Validators.required,
