@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { RefreshToken } from './refresh-token.entity.js';
-import { generisiToken, hesirajToken } from './refresh-token.util.js';
+import { generisiToken, hesirajToken } from '../token.util.js';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MS_PO_DANU } from '../../shared/vreme.js';
 
@@ -95,14 +95,22 @@ export class RefreshTokenService {
     }
   }
 
-  async opozoviOstaleSesije(korisnikId: number, token: string | undefined) {
+  async opozoviOstaleSesije(
+    manager: EntityManager,
+    korisnikId: number,
+    token: string | undefined,
+  ) {
     const trenutna = token
-      ? await this.refreshTokenRepository.findOne({
-          where: { tokenHash: hesirajToken(token) },
+      ? await manager.findOne(RefreshToken, {
+          where: {
+            tokenHash: hesirajToken(token),
+            korisnik: { id: korisnikId },
+          },
         })
       : null;
 
-    await this.refreshTokenRepository.update(
+    await manager.update(
+      RefreshToken,
       {
         korisnik: { id: korisnikId },
         datumOpoziva: IsNull(),

@@ -32,11 +32,13 @@ cp backend/.env.example backend/.env
 
 Primeri već sadrže sve vrednosti potrebne za lokalni rad, ništa ne treba menjati.
 
-**2. Baza i skladište**
+**2. Baza, skladište i mail**
 
 ```powershell
 docker compose up -d
 ```
+
+Mailovi koje aplikacija šalje (npr. link za novu lozinku) ne idu na prave adrese nego u Mailpit: http://localhost:8025
 
 **3. Garage — samo prvi put**
 
@@ -119,4 +121,4 @@ Ostali nalozi su na početku `backend/seed/seed.sql`.
 | backend / frontend | `npm run build` | produkcijski build |
 | koren | `docker compose down` | zaustavlja kontejnere (podaci ostaju) |
 
-> Vrednosti u `.env.example` fajlovima su samo za lokalni razvoj. Na pravom serveru promeni lozinku baze, `JWT_SECRET`, Garage ključ i `GARAGE_RPC_SECRET`, i postavi `NODE_ENV=production`.
+> Vrednosti u `.env.example` fajlovima su samo za lokalni razvoj. Na pravom serveru promeni lozinku baze, `JWT_SECRET`, Garage ključ i `GARAGE_RPC_SECRET`, podesi pravi SMTP servis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_KORISNIK`, `SMTP_LOZINKA`, `MAIL_OD`) i postavi `NODE_ENV=production`.

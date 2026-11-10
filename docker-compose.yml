@@ -28,6 +28,14 @@ services:
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
 
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    container_name: zgrada_mailpit
+    restart: always
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
 volumes:
   postgres_data:
   garage_meta:

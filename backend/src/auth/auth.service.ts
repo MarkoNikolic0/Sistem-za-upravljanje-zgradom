@@ -1,8 +1,9 @@
 import {
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,11 +15,14 @@ import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
-import { greskaPolja } from '../shared/greske-validacije.js';
-import { ChangePasswordDto } from './dto/change-password.dto.js';
+import {
+  MAKS_NEUSPELIH_PRIJAVA,
+  PORUKA_DEAKTIVIRAN,
+  PORUKA_ZAKLJUCAN,
+  ZAKLJUCAVANJE_MIN,
+} from './auth.constants.js';
 
-const PORUKA_DEAKTIVIRAN =
-  'Nalog je deaktiviran. Za pomoć se javi administratoru.';
+const LAZNI_HES = bcrypt.hashSync('lozinka-za-isto-vreme-odgovora', 10);
 
 @Injectable()
 export class AuthService {
@@ -58,13 +62,24 @@ export class AuthService {
     const korisnik = await this.korisnikRepository.findOne({
       where: { email: dto.email },
     });
+    const lozinkaValidna = await bcrypt.compare(
+      dto.lozinka,
+      korisnik?.lozinka ?? LAZNI_HES,
+    );
     if (!korisnik) {
       throw new UnauthorizedException('Neispravan email ili lozinka.');
     }
-
-    const lozinkaValidna = await bcrypt.compare(dto.lozinka, korisnik.lozinka);
+    if (korisnik.zakljucanDo && korisnik.zakljucanDo > new Date()) {
+      throw new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS);
+    }
     if (!lozinkaValidna) {
-      throw new UnauthorizedException('Neispravan email ili lozinka.');
+      throw await this.zabeleziNeuspeh(korisnik.id);
+    }
+    if (korisnik.neuspelePrijave > 0 || korisnik.zakljucanDo) {
+      await this.korisnikRepository.update(korisnik.id, {
+        neuspelePrijave: 0,
+        zakljucanDo: null,
+      });
     }
     if (korisnik.deaktiviran) {
       throw new ForbiddenException(PORUKA_DEAKTIVIRAN);
@@ -103,43 +118,24 @@ export class AuthService {
     await this.refreshTokenService.opozoviPoTokenu(refreshToken);
   }
 
-  async promeniLozinku(
-    korisnikId: number,
-    dto: ChangePasswordDto,
-    refreshToken: string | undefined,
-  ) {
-    const korisnik = await this.korisnikRepository.findOne({
-      where: { id: korisnikId },
-    });
-    if (!korisnik) {
-      throw new NotFoundException('Korisnik ne postoji.');
-    }
+  private async zabeleziNeuspeh(korisnikId: number): Promise<HttpException> {
+    const prag = `"neuspelePrijave" + 1 >= ${MAKS_NEUSPELIH_PRIJAVA}`;
+    const { raw } = await this.korisnikRepository
+      .createQueryBuilder()
+      .update(Korisnik)
+      .set({
+        neuspelePrijave: () =>
+          `CASE WHEN ${prag} THEN 0 ELSE "neuspelePrijave" + 1 END`,
+        zakljucanDo: () =>
+          `CASE WHEN ${prag} THEN now() + interval '${ZAKLJUCAVANJE_MIN} minutes' ELSE "zakljucanDo" END`,
+      })
+      .where('id = :korisnikId', { korisnikId })
+      .returning('"zakljucanDo"')
+      .execute();
 
-    const trenutnaIspravna = await bcrypt.compare(
-      dto.trenutnaLozinka,
-      korisnik.lozinka,
-    );
-    if (!trenutnaIspravna) {
-      throw greskaPolja('trenutnaLozinka', 'Trenutna lozinka nije ispravna.');
-    }
-
-    const istaKaoStara = await bcrypt.compare(
-      dto.novaLozinka,
-      korisnik.lozinka,
-    );
-    if (istaKaoStara) {
-      throw greskaPolja(
-        'novaLozinka',
-        'Nova lozinka mora biti drugačija od trenutne.',
-      );
-    }
-
-    korisnik.lozinka = await bcrypt.hash(dto.novaLozinka, 10);
-    await this.korisnikRepository.save(korisnik);
-
-    await this.refreshTokenService.opozoviOstaleSesije(
-      korisnikId,
-      refreshToken,
-    );
+    const zakljucanDo = (raw as { zakljucanDo: Date | null }[])[0]?.zakljucanDo;
+    return zakljucanDo
+      ? new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS)
+      : new UnauthorizedException('Neispravan email ili lozinka.');
   }
 }
