@@ -1,15 +1,23 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MenuModule } from 'primeng/menu';
 import { SidebarModule } from 'primeng/sidebar';
 import { STAVKE_NAVIGACIJE } from '../navigacija';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { Logo } from '../../../shared/logo/logo';
 import { ButtonModule } from 'primeng/button';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { filter, skip } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { ToastModule } from 'primeng/toast';
+import { Zvonce } from '../../notifikacije/zvonce/zvonce';
+import { KLJUC_TOASTA, Notifikacija } from '../../notifikacije/notifikacija-models';
+import {
+  NotifikacijeActions,
+  VezaActions,
+} from '../../notifikacije/notifikacija-store/notifikacije-actions';
 
 const NAJMANJE_U_TRACI = 3;
 const NAJVISE_U_TRACI = 5;
@@ -22,7 +30,9 @@ const NAJVISE_U_TRACI = 5;
     ButtonModule,
     MenuModule,
     SidebarModule,
+    ToastModule,
     Logo,
+    Zvonce,
   ],
   selector: 'app-app-layout',
   styleUrl: './app-layout.scss',
@@ -31,12 +41,17 @@ const NAJVISE_U_TRACI = 5;
 export class AppLayout {
   private authStore = inject(AuthStore);
   private router = inject(Router);
+  private store = inject(Store);
+  private messageService = inject(MessageService);
   private readonly fokusiraj = fokusPosleCrtanja();
+  protected readonly kljucToasta = KLJUC_TOASTA;
 
   protected readonly nalogOtvoren = signal(false);
   protected readonly viseOtvoreno = signal(false);
 
   constructor() {
+    this.store.dispatch(VezaActions.pokreni());
+    inject(DestroyRef).onDestroy(() => this.store.dispatch(VezaActions.zaustavi()));
     this.router.events
       .pipe(
         filter((e) => e instanceof NavigationEnd),
@@ -44,6 +59,11 @@ export class AppLayout {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.fokusiraj('#sadrzaj'));
+  }
+
+  protected otvori(notifikacija: Notifikacija): void {
+    this.store.dispatch(NotifikacijeActions.procitaj({ notifikacija }));
+    this.messageService.clear(KLJUC_TOASTA);
   }
 
   protected preskoci(event: Event): void {

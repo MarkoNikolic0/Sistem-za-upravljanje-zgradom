@@ -50,6 +50,12 @@ export const routes: Routes = [
         title: 'Moj profil | Upravljanje zgradom',
       },
       {
+        path: 'notifikacije',
+        loadComponent: () =>
+          import('./features/notifikacije/notifikacije/notifikacije').then((m) => m.Notifikacije),
+        title: 'Obaveštenja | Upravljanje zgradom',
+      },
+      {
         path: 'povezivanje',
         canActivate: [ulogaGuard('stanar', 'upravnik')],
         loadComponent: () =>

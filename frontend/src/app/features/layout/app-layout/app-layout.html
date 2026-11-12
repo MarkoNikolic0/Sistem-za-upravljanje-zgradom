@@ -53,7 +53,7 @@
           text
           iconOnly
           aria-label="Glavni meni"
-          class="max-lg:hidden"
+          class="dugme-trake max-lg:hidden"
         >
           <i class="pi pi-bars" aria-hidden="true"></i>
         </button>
@@ -64,6 +64,8 @@
         <span>Upravljanje zgradom</span>
       </a>
 
+      <app-zvonce class="ml-auto" />
+
       <button
         pButton
         type="button"
@@ -73,7 +75,7 @@
         aria-label="Meni naloga"
         aria-haspopup="true"
         [attr.aria-expanded]="nalogOtvoren()"
-        class="ml-auto"
+        class="dugme-trake"
         (click)="nalog.toggle($event)"
       >
         <i class="pi pi-user" aria-hidden="true"></i>
@@ -130,3 +132,17 @@
     }
   </p-sidebar-main>
 </p-sidebar-layout>
+
+<p-toast [key]="kljucToasta" position="top-right">
+  <ng-template #message let-poruka>
+    <div class="toast-notifikacije">
+      <i class="pi pi-bell" aria-hidden="true"></i>
+      <div class="min-w-0 flex-1">
+        <p>{{ poruka.detail }}</p>
+        @if (poruka.data.link; as link) {
+          <a [routerLink]="link" class="otvori" (click)="otvori(poruka.data)">Otvori</a>
+        }
+      </div>
+    </div>
+  </ng-template>
+</p-toast>

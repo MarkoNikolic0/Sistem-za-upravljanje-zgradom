@@ -1,0 +1,142 @@
+<div class="stranica">
+  <header class="zaglavlje">
+    <div>
+      <p class="oznaka">Nalog</p>
+      <h1 id="notifikacije-naslov" class="naslov-stranice mt-3" tabindex="-1">Obaveštenja</h1>
+      <p class="mt-2 text-priguseno">Čuvaju se 90 dana.</p>
+    </div>
+    @if (brojNeprocitanih() > 0) {
+      <button pButton type="button" outlined size="small" (click)="procitajSve()">
+        <i class="pi pi-check" aria-hidden="true"></i>
+        Označi sve kao pročitano
+      </button>
+    }
+  </header>
+
+  <div class="mt-8">
+    <p-selectbutton
+      [options]="filteri"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="samoNeprocitane()"
+      (ngModelChange)="otvori($event)"
+      ariaLabelledBy="notifikacije-filter"
+    />
+    <span id="notifikacije-filter" class="sr-only">Prikaz obaveštenja</span>
+  </div>
+
+  @if (greska(); as tekst) {
+    <p-message severity="error" styleClass="mt-6">{{ tekst }}</p-message>
+  }
+
+  <section class="mt-6" aria-label="Lista obaveštenja" [attr.aria-busy]="status() === 'ucitavanje'">
+    @switch (status()) {
+      @case ('greska') {
+        <p-message severity="error">Obaveštenja nisu učitana.</p-message>
+        <button pButton type="button" outlined class="mt-4" (click)="otvori(samoNeprocitane())">
+          Pokušaj ponovo
+        </button>
+      }
+      @case ('ucitano') {
+        @for (grupa of grupe(); track grupa.naziv) {
+          <h2 class="dan">{{ grupa.naziv }}</h2>
+          <ul class="lista">
+            @for (notifikacija of grupa.stavke; track notifikacija.id) {
+              <li
+                class="notifikacija"
+                [class.neprocitana]="!notifikacija.procitano"
+                [attr.data-id]="notifikacija.id"
+                tabindex="-1"
+              >
+                <span class="ikonica" aria-hidden="true"
+                  ><i [class]="ikonice[notifikacija.tip]"></i
+                ></span>
+                <div class="min-w-0 flex-1">
+                  @if (notifikacija.link; as link) {
+                    <a
+                      class="tekst kartica-link"
+                      [routerLink]="link"
+                      (click)="procitaj(notifikacija)"
+                    >
+                      @if (!notifikacija.procitano) {
+                        <span class="sr-only">Nepročitano: </span>
+                      }
+                      {{ notifikacija.tekst }}
+                    </a>
+                  } @else {
+                    <p class="tekst">
+                      @if (!notifikacija.procitano) {
+                        <span class="sr-only">Nepročitano: </span>
+                      }
+                      {{ notifikacija.tekst }}
+                    </p>
+                  }
+                  <time class="vreme" [attr.datetime]="notifikacija.datumKreiranja">
+                    {{
+                      notifikacija.datumKreiranja
+                        | date: (grupa.naziv === 'Ranije' ? 'd. MMM y. HH:mm' : 'HH:mm')
+                    }}
+                  </time>
+                </div>
+                @if (!notifikacija.procitano) {
+                  @if (notifikacija.link) {
+                    <span class="tacka" aria-hidden="true"></span>
+                  } @else {
+                    <button
+                      pButton
+                      type="button"
+                      text
+                      rounded
+                      iconOnly
+                      size="small"
+                      aria-label="Označi kao pročitano"
+                      class="oznaci"
+                      (click)="oznaci(notifikacija)"
+                    >
+                      <i class="pi pi-check" aria-hidden="true"></i>
+                    </button>
+                  }
+                }
+              </li>
+            }
+          </ul>
+        } @empty {
+          <div class="prazno">
+            <span class="prazno-ikonica neutralno" aria-hidden="true"
+              ><i class="pi pi-bell-slash"></i
+            ></span>
+            <p class="text-naslov">
+              {{ samoNeprocitane() ? 'Nema nepročitanih obaveštenja' : 'Nema obaveštenja' }}
+            </p>
+            <p class="mt-1 text-sm text-priguseno">
+              Ovde stižu novosti o kvarovima, sastancima, glasanjima i važnim oglasima.
+            </p>
+          </div>
+        }
+
+        @if (preostaloStarijih() > 0) {
+          <button
+            pButton
+            type="button"
+            text
+            size="small"
+            class="mt-4"
+            [disabled]="ucitavaStarije()"
+            (click)="ucitajStarije()"
+          >
+            Prikaži starije ({{ preostaloStarijih() }})
+          </button>
+        }
+      }
+      @default {
+        <div class="ucitavanje" aria-hidden="true">
+          <p-skeleton height="4rem" />
+          <p-skeleton height="4rem" styleClass="mt-2" />
+          <p-skeleton height="4rem" styleClass="mt-2" />
+        </div>
+        <span class="sr-only">Učitavanje obaveštenja…</span>
+      }
+    }
+  </section>
+</div>

@@ -1,0 +1,18 @@
+<a
+  pButton
+  routerLink="/notifikacije"
+  routerLinkActive="aktivno"
+  ariaCurrentWhenActive="page"
+  severity="secondary"
+  text
+  iconOnly
+  class="zvonce dugme-trake"
+  [class.ima]="broj() > 0"
+  [class.zvoni]="zvoni()"
+  [attr.aria-label]="naziv()"
+>
+  <i class="pi pi-bell" aria-hidden="true" (animationend)="zvoni.set(false)"></i>
+  @if (broj() > 0) {
+    <span class="broj" aria-hidden="true">{{ prikaz() }}</span>
+  }
+</a>

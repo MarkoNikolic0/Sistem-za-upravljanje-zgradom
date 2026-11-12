@@ -22,7 +22,7 @@ export function upravljaZgradom(profil: ProfileResponse, zgradaId: number | null
 
 // Zgrade za izbor na stranici: admin dobija sve posebnim zahtevom, ostali iz profila
 function injectZgrade(izProfila: (profil: ProfileResponse) => ZgradaOsnovno[]) {
-  const profil = inject(ProfileService).profile();
+  const profil = inject(ProfileService).profil;
   const admin = computed(() => profil.hasValue() && profil.value().uloga === 'admin');
   const sveZgrade = inject(ZgradaService).zgrade(admin);
   const zgrade = computed(() => {

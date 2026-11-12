@@ -72,6 +72,44 @@ body {
   }
 }
 
+.dugme-trake.p-button {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+
+  .pi {
+    font-size: 1.125rem;
+  }
+
+  @media (width >= 64rem) {
+    width: 2.75rem;
+    height: 2.75rem;
+
+    .pi {
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.kartica-link {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &::after {
+      outline: 2px solid var(--color-svetlo);
+      outline-offset: 2px;
+    }
+  }
+}
+
 // Povratak na listu (detalj i forma)
 .nazad {
   display: inline-flex;

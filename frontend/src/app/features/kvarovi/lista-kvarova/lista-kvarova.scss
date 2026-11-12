@@ -93,24 +93,6 @@
   }
 }
 
-.kartica-link {
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-  }
-
-  &:focus-visible {
-    outline: none;
-
-    &::after {
-      outline: 2px solid var(--color-svetlo);
-      outline-offset: 2px;
-    }
-  }
-}
-
 // Jedan panel, kvarovi su redovi u njemu
 .panel-liste {
   overflow: hidden;

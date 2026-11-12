@@ -44,7 +44,7 @@ export class Home {
   private profileService = inject(ProfileService);
   private zahtevService = inject(ZahtevService);
 
-  protected readonly profil = this.profileService.profile();
+  protected readonly profil = this.profileService.profil;
   protected readonly zahtevi = this.zahtevService.mojiZahtevi();
   protected readonly danas = new Date();
 

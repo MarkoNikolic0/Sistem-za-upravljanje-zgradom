@@ -1021,4 +1021,77 @@ SELECT v.naziv, v.uloga, v.telefon, v.zgrada_id
 FROM seed_kontakt v
 ORDER BY v.rb;
 
+CREATE TEMP TABLE seed_notifikacija ON COMMIT DROP AS
+SELECT v.rb, k.id AS korisnik_id, v.tip::notifikacija_tip_enum AS tip,
+       replace(v.tekst, '{termin}', coalesce(
+         (ARRAY['ponedeljak', 'utorak', 'sreda', 'četvrtak', 'petak', 'subota', 'nedelja'])[extract(isodow FROM t.d)::int]
+           || ', ' || extract(day FROM t.d)::int || '. ' || extract(month FROM t.d)::int || '. u ' || to_char(t.d, 'HH24:MI'),
+         '')) AS tekst,
+       split_part(v.tekst, '{termin}', 1) AS prefiks,
+       coalesce(v.link, '/kvarovi/' || kv.id, '/sastanci/' || s.id) AS link,
+       v.procitano, now() - v.pre AS datum
+FROM (VALUES
+  (1, 'marija@gmail.com', 'kvar_komentar', 'Nov komentar na kvaru „Slab mlaz vode u tušu“.',
+   'Slab mlaz vode u tušu', NULL, NULL, false, interval '25 minutes'),
+  (2, 'marija@gmail.com', 'sastanak_novi', 'Zakazan je sastanak „Hitna sednica: zamena vertikale“ za {termin}.',
+   NULL, 3, NULL, false, interval '5 hours'),
+  (3, 'marija@gmail.com', 'glasanje_novo', 'Nova odluka za glasanje: „Prihvatamo ponudu za krečenje ulaza od 280.000 dinara“.',
+   NULL, NULL, '/glasanje', false, interval '1 day 6 hours'),
+  (4, 'marija@gmail.com', 'kvar_status', 'Upravnik je prihvatio prijavu kvara „Ne zatvara se prozor u spavaćoj sobi“.',
+   'Ne zatvara se prozor u spavaćoj sobi', NULL, NULL, true, interval '1 day 3 hours'),
+  (5, 'marija@gmail.com', 'sastanak_otkazan', 'Otkazan je sastanak „Raspored parking mesta u dvorištu“ zakazan za {termin}. Razlog: Dvorište je tog dana zauzeto zbog radova na vodovodu. Javiću novi termin.',
+   NULL, 4, NULL, false, interval '1 day'),
+  (6, 'marija@gmail.com', 'kvar_status', 'Kvar „Ne radi bojler“ je rešen. Potvrdi da je sve u redu ili javi da nije.',
+   'Ne radi bojler', NULL, NULL, true, interval '2 days 4 hours'),
+  (7, 'marija@gmail.com', 'vazno_obavestenje', 'Važno obaveštenje: „Isključenje vode u četvrtak“.',
+   NULL, NULL, '/oglasi', true, interval '3 days'),
+  (8, 'marija@gmail.com', 'kvar_dolazak', 'Serviser dolazi {termin} zbog kvara „Curi ispod veš mašine“.',
+   'Curi ispod veš mašine', NULL, NULL, true, interval '3 days 2 hours'),
+  (9, 'marija@gmail.com', 'glasanje_novo', 'Nova anketa za glasanje: „Koju boju da izaberemo za zidove ulaza?“.',
+   NULL, NULL, '/glasanje', true, interval '4 days'),
+  (10, 'marija@gmail.com', 'sastanak_novi', 'Zakazan je sastanak „Redovna sednica skupštine stambene zajednice“ za {termin}.',
+   NULL, 1, NULL, true, interval '7 days'),
+  (11, 'natalija.stojadinovic@example.com', 'kvar_status', 'Kvar „Curi ispod veš mašine“ je dodeljen serviseru.',
+   'Curi ispod veš mašine', NULL, NULL, false, interval '4 days'),
+  (12, 'natalija.stojadinovic@example.com', 'vazno_obavestenje', 'Važno obaveštenje: „Isključenje vode u četvrtak“.',
+   NULL, NULL, '/oglasi', false, interval '3 days'),
+  (13, 'danijel@gmail.com', 'kvar_prijavljen', 'Prijavljen je nov kvar „Ne radi ventilator u kupatilu“.',
+   'Ne radi ventilator u kupatilu', NULL, NULL, false, interval '3 hours'),
+  (14, 'danijel@gmail.com', 'zahtev_novi', 'Nov zahtev za povezivanje sa stanom 20.',
+   NULL, NULL, '/zahtevi', false, interval '9 hours'),
+  (15, 'danijel@gmail.com', 'kvar_prijavljen', 'Prijavljen je nov kvar „Zaglavljena roletna u dnevnoj sobi“.',
+   'Zaglavljena roletna u dnevnoj sobi', NULL, NULL, false, interval '1 day 2 hours'),
+  (16, 'danijel@gmail.com', 'zahtev_novi', 'Nov zahtev za povezivanje sa stanom 13.',
+   NULL, NULL, '/zahtevi', true, interval '2 days'),
+  (17, 'danijel@gmail.com', 'kvar_status', 'Prijava kvara „Zaglavljuje se brava na vratima stana“ je povučena.',
+   'Zaglavljuje se brava na vratima stana', NULL, NULL, true, interval '3 days 5 hours'),
+  (18, 'danijel@gmail.com', 'kvar_status', 'Kvar „Ne radi svetlo u liftu“ je rešen.',
+   'Ne radi svetlo u liftu', NULL, NULL, true, interval '5 days'),
+  (19, 'petar@gmail.com', 'kvar_komentar', 'Nov komentar na kvaru „Slab mlaz vode u tušu“.',
+   'Slab mlaz vode u tušu', NULL, NULL, false, interval '25 minutes'),
+  (20, 'petar@gmail.com', 'kvar_dodeljen', 'Dodeljen ti je kvar „Curi ispod veš mašine“.',
+   'Curi ispod veš mašine', NULL, NULL, false, interval '4 days'),
+  (21, 'petar@gmail.com', 'kvar_status', 'Kvar „Curi slavina“ je zatvoren.',
+   'Curi slavina', NULL, NULL, true, interval '6 days'),
+  (22, 'petar@gmail.com', 'kvar_dodeljen', 'Dodeljen ti je kvar „Ne radi grejanje u celoj zgradi“.',
+   'Ne radi grejanje u celoj zgradi', NULL, NULL, true, interval '8 days')
+) AS v(rb, email, tip, tekst, kvar, sastanak, link, procitano, pre)
+JOIN korisnik k ON k.email = v.email
+JOIN zgrada z ON z.adresa = 'Bulevar Nemanjića 45, Niš'
+LEFT JOIN kvar kv ON kv.naslov = v.kvar AND kv."zgradaId" = z.id
+LEFT JOIN seed_sastanak ss ON ss.rb = v.sastanak
+LEFT JOIN sastanak s ON s.naslov = ss.naslov AND s."zgradaId" = ss.zgrada_id
+CROSS JOIN LATERAL (
+  SELECT coalesce(s.pocetak, kv."dolazakServisera") AT TIME ZONE 'Europe/Belgrade' AS d
+) AS t;
+
+DELETE FROM notifikacija n
+USING seed_notifikacija v
+WHERE n."korisnikId" = v.korisnik_id AND n.tip = v.tip AND n.tekst LIKE v.prefiks || '%';
+
+INSERT INTO notifikacija (tip, tekst, link, procitano, "korisnikId", "datumKreiranja")
+SELECT v.tip, v.tekst, v.link, v.procitano, v.korisnik_id, v.datum
+FROM seed_notifikacija v
+ORDER BY v.datum;
+
 COMMIT;

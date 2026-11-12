@@ -1,8 +1,19 @@
-import { IsBoolean, IsOptional } from 'class-validator';
-import { StranicenjeDto } from '../../shared/stranicenje.js';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, Min } from 'class-validator';
 import { KaoBoolean } from '../../shared/kao-boolean.js';
 
-export class NotifikacijaUpitDto extends StranicenjeDto {
+export class NotifikacijaUpitDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  poStrani: number = 20;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  preId?: number;
+
   @IsOptional()
   @KaoBoolean()
   @IsBoolean()
