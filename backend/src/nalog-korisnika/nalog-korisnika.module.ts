@@ -7,6 +7,7 @@ import { KvarModule } from '../kvar/kvar.module.js';
 import { OglasModule } from '../oglas/oglas.module.js';
 import { NalogKorisnikaController } from './nalog-korisnika.controller.js';
 import { NalogKorisnikaService } from './nalog-korisnika.service.js';
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NalogKorisnikaService } from './nalog-korisnika.service.js';
     ZgradaModule,
     KvarModule,
     OglasModule,
+    NotifikacijaModule,
   ],
   controllers: [NalogKorisnikaController],
   providers: [NalogKorisnikaService],

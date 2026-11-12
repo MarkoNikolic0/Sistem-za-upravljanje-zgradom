@@ -20,6 +20,7 @@ import { PrisustvoSastankaController } from './prisustvo-sastanka.controller.js'
 import { PrisustvoSastankaService } from './prisustvo-sastanka.service.js';
 import { ZapisnikSastankaController } from './zapisnik-sastanka.controller.js';
 import { ZapisnikSastankaService } from './zapisnik-sastanka.service.js';
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ZapisnikSastankaService } from './zapisnik-sastanka.service.js';
     ]),
     AuthModule,
     KorisnikModule,
+    NotifikacijaModule,
     GlasanjeModule,
     DokumentZgradeModule,
     SkladisteModule,

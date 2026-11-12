@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
+  EntityManager,
   In,
   IsNull,
   MoreThan,
@@ -31,7 +32,7 @@ import {
   StanjeSastanka,
   VrstaSastanka,
 } from '../shared/enums/sastanak.enums.js';
-import { POCETAK_DANA, danaDo } from '../shared/vreme.js';
+import { POCETAK_DANA, danISat, danaDo } from '../shared/vreme.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateSastanakDto, TackaDto } from './dto/create-sastanak.dto.js';
@@ -48,6 +49,9 @@ import {
   smeDaOkaciZapisnik,
 } from './zapisnik-sastanka.service.js';
 import { DANA_ZA_POZIV, PORUKA_PROSAO } from './sastanak.constants.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { stanariZgrade } from '../notifikacija/primaoci.js';
 
 @Injectable()
 export class SastanakService {
@@ -61,6 +65,7 @@ export class SastanakService {
     private prava: SastanakPravaService,
     private prisustvo: PrisustvoSastankaService,
     private zapisnici: ZapisnikSastankaService,
+    private notifikacije: NotifikacijaService,
     private dataSource: DataSource,
   ) {}
 
@@ -135,7 +140,7 @@ export class SastanakService {
 
     const { id } = await this.dataSource.transaction(async (manager) => {
       await proveriAktivnu(manager, dto.zgradaId, true);
-      return await manager.save(
+      const sacuvan = await manager.save(
         this.sastanakRepository.create({
           vrsta: dto.vrsta,
           naslov: dto.naslov,
@@ -148,6 +153,14 @@ export class SastanakService {
           tacke: this.noveTacke(dto.tacke),
         }),
       );
+      await this.obavestiPozvane(
+        manager,
+        sacuvan,
+        TipNotifikacije.SASTANAK_NOVI,
+        `Zakazan je sastanak „${sacuvan.naslov}“ za ${danISat(sacuvan.pocetak)}.`,
+        korisnikId,
+      );
+      return sacuvan;
     });
     return this.findOne(id, korisnikId, uloga);
   }
@@ -202,20 +215,58 @@ export class SastanakService {
           this.noveTacke(dto.tacke).map((t) => ({ ...t, sastanak: { id } })),
         );
       }
+      await this.obavestiPozvane(
+        manager,
+        { id, vrsta, zgrada: sastanak.zgrada },
+        TipNotifikacije.SASTANAK_IZMENJEN,
+        `Sastanak „${dto.naslov ?? sastanak.naslov}“ je izmenjen. Termin: ${danISat(pocetak)}.`,
+        korisnikId,
+      );
     });
     return this.findOne(id, korisnikId, uloga);
   }
 
   async otkazi(id: number, korisnikId: number, uloga: Uloga, razlog: string) {
-    await this.prava.findZaUpravljanje(id, korisnikId, uloga, SAMO_ZGRADA);
-    const rezultat = await this.sastanakRepository.update(
-      { id, pocetak: MoreThan(new Date()), datumOtkazivanja: IsNull() },
-      { datumOtkazivanja: new Date(), razlogOtkazivanja: razlog },
+    const { sastanak } = await this.prava.findZaUpravljanje(
+      id,
+      korisnikId,
+      uloga,
+      SAMO_ZGRADA,
     );
-    if (rezultat.affected === 0) {
-      throw new ConflictException(PORUKA_PROSAO);
-    }
+    await this.dataSource.transaction(async (manager) => {
+      const rezultat = await manager.update(
+        Sastanak,
+        { id, pocetak: MoreThan(new Date()), datumOtkazivanja: IsNull() },
+        { datumOtkazivanja: new Date(), razlogOtkazivanja: razlog },
+      );
+      if (rezultat.affected === 0) {
+        throw new ConflictException(PORUKA_PROSAO);
+      }
+      await this.obavestiPozvane(
+        manager,
+        sastanak,
+        TipNotifikacije.SASTANAK_OTKAZAN,
+        `Otkazan je sastanak „${sastanak.naslov}“ zakazan za ${danISat(sastanak.pocetak)}. Razlog: ${razlog}`,
+        korisnikId,
+      );
+    });
     return this.findOne(id, korisnikId, uloga);
+  }
+
+  private async obavestiPozvane(
+    manager: EntityManager,
+    sastanak: Pick<Sastanak, 'id' | 'vrsta' | 'zgrada'>,
+    tip: TipNotifikacije,
+    tekst: string,
+    akterId: number,
+  ) {
+    const samoVlasnici = sastanak.vrsta === VrstaSastanka.SKUPSTINA;
+    await this.notifikacije.obavesti(
+      manager,
+      await stanariZgrade(manager, sastanak.zgrada.id, samoVlasnici),
+      { tip, tekst, link: `/sastanci/${sastanak.id}` },
+      akterId,
+    );
   }
 
   private proveriTermin(vrsta: VrstaSastanka, pocetak: Date, hitno: boolean) {

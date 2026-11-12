@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { KontaktSerializerInterceptor } from './korisnik/kontakt-serializer.interceptor.js';
 import { greskeValidacije } from './shared/greske-validacije.js';
+import { SocketIoAdapter } from './shared/socket-io.adapter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,10 @@ async function bootstrap() {
     origin: configService.get<string>('FRONTEND_URL'),
     credentials: true,
   });
+
+  app.useWebSocketAdapter(
+    new SocketIoAdapter(app, configService.get<string>('FRONTEND_URL')),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({

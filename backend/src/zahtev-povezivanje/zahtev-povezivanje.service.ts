@@ -19,6 +19,9 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { ZahtevUpitDto } from './dto/zahtev-upit.dto.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { upravnikZgrade } from '../notifikacija/primaoci.js';
 
 @Injectable()
 export class ZahtevPovezivanjeService {
@@ -30,11 +33,13 @@ export class ZahtevPovezivanjeService {
     private stanarStanaRepository: Repository<StanarStana>,
     private dataSource: DataSource,
     private korisnikService: KorisnikService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async create(korisnikId: number, dto: CreateZahtevDto) {
     const stan = await this.stanRepository.findOne({
       where: { id: dto.stanId, zgrada: AKTIVNA_ZGRADA },
+      relations: { zgrada: true },
     });
     if (!stan) {
       throw new NotFoundException(`Stan sa id-jem ${dto.stanId} ne postoji!`);
@@ -53,7 +58,19 @@ export class ZahtevPovezivanjeService {
     });
 
     try {
-      return await this.zahtevRepository.save(zahtev);
+      return await this.dataSource.transaction(async (manager) => {
+        const sacuvan = await manager.save(zahtev);
+        await this.notifikacije.obavesti(
+          manager,
+          await upravnikZgrade(manager, stan.zgrada.id),
+          {
+            tip: TipNotifikacije.ZAHTEV_NOVI,
+            tekst: `Nov zahtev za povezivanje sa stanom ${stan.broj}.`,
+            link: '/zahtevi',
+          },
+        );
+        return sacuvan;
+      });
     } catch (greska) {
       if (jeDupliUnos(greska)) {
         throw new ConflictException(
@@ -134,6 +151,16 @@ export class ZahtevPovezivanjeService {
         });
         await manager.save(veza);
       }
+      await this.notifikacije.obavesti(
+        manager,
+        [zahtev.korisnik.id],
+        {
+          tip: TipNotifikacije.ZAHTEV_OBRADJEN,
+          tekst: `Zahtev za stan ${zahtev.stan.broj} je ${dto.status === StatusZahteva.PRIHVACEN ? 'prihvaćen' : 'odbijen'}.`,
+          link: '/povezivanje',
+        },
+        korisnikId,
+      );
 
       zahtev.status = dto.status;
       return zahtev;

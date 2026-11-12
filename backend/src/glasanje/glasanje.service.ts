@@ -25,6 +25,9 @@ import { ODGOVORI_ODLUKE } from './ishod-odluke.js';
 import { GlasanjePravaService } from './glasanje-prava.service.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
 import { PORUKA_ZAVRSENA } from './glasanje.constants.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { stanariZgrade } from '../notifikacija/primaoci.js';
 
 @Injectable()
 export class GlasanjeService {
@@ -35,6 +38,7 @@ export class GlasanjeService {
     private korisnikService: KorisnikService,
     private prava: GlasanjePravaService,
     private rezultati: GlasanjeRezultatiService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async findAll(
@@ -114,7 +118,7 @@ export class GlasanjeService {
     const { id } = await this.glasanjeRepository.manager.transaction(
       async (manager) => {
         await proveriAktivnu(manager, dto.zgradaId, true);
-        return await manager.save(
+        const sacuvano = await manager.save(
           this.glasanjeRepository.create({
             vrsta: dto.vrsta,
             vecina: dto.vecina ?? null,
@@ -129,6 +133,17 @@ export class GlasanjeService {
             opcije: (dto.opcije ?? ODGOVORI_ODLUKE).map((tekst) => ({ tekst })),
           }),
         );
+        await this.notifikacije.obavesti(
+          manager,
+          await stanariZgrade(manager, dto.zgradaId, odluka),
+          {
+            tip: TipNotifikacije.GLASANJE_NOVO,
+            tekst: `${odluka ? 'Nova odluka' : 'Nova anketa'} za glasanje: „${dto.pitanje}“.`,
+            link: '/glasanje',
+          },
+          korisnikId,
+        );
+        return sacuvano;
       },
     );
     return this.rezultati.jedno(id, korisnikId, p);

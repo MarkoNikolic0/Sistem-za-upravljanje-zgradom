@@ -16,6 +16,7 @@ import { PromenaStatusaKvara } from '../kvar/promena-statusa-kvara.entity.js';
 import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
 import { Kvar } from '../kvar/kvar.entity.js';
+import { ObavestenjaKvaraService } from '../kvar/obavestenja-kvara.service.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -24,6 +25,7 @@ export class KomentarKvarService {
     private komentarKvarRepository: Repository<KomentarKvar>,
     private kvarService: KvarService,
     private kvarPravaService: KvarPravaService,
+    private obavestenja: ObavestenjaKvaraService,
     @InjectRepository(PromenaStatusaKvara)
     private promenaRepository: Repository<PromenaStatusaKvara>,
     private dataSource: DataSource,
@@ -53,6 +55,7 @@ export class KomentarKvarService {
         kvar: { id: kvar.id },
         korisnik: { id: korisnikId },
       });
+      await this.obavestenja.komentar(manager, kvar, korisnikId);
       return identifiers[0].id as number;
     });
 

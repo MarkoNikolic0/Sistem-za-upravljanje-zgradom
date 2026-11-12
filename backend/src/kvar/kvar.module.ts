@@ -12,6 +12,8 @@ import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
 import { KvarPravaService } from './kvar-prava.service.js';
 import { KvarAkcijeService } from './kvar-akcije.service.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
+import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
 
 @Module({
   imports: [
@@ -25,9 +27,20 @@ import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
     ]),
     AuthModule,
     KorisnikModule,
+    NotifikacijaModule,
   ],
   controllers: [KvarController],
-  providers: [KvarService, KvarPravaService, KvarAkcijeService],
-  exports: [KvarService, KvarPravaService, KvarAkcijeService],
+  providers: [
+    KvarService,
+    KvarPravaService,
+    KvarAkcijeService,
+    ObavestenjaKvaraService,
+  ],
+  exports: [
+    KvarService,
+    KvarPravaService,
+    KvarAkcijeService,
+    ObavestenjaKvaraService,
+  ],
 })
 export class KvarModule {}

@@ -30,6 +30,6 @@ import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.serv
   ],
   controllers: [AuthController],
   providers: [AuthService, LozinkaService, NeuspelePrijaveService, JwtStrategy],
-  exports: [PassportModule, JwtModule, LozinkaService],
+  exports: [PassportModule, JwtModule, JwtStrategy, LozinkaService],
 })
 export class AuthModule {}

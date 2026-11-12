@@ -15,6 +15,7 @@ import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
 import { Stan } from '../stan/stan.entity.js';
 import { Oglas } from '../oglas/oglas.entity.js';
 import { TackaDnevnogReda } from '../sastanak/tacka-dnevnog-reda.entity.js';
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TackaDnevnogReda } from '../sastanak/tacka-dnevnog-reda.entity.js';
     ]),
     AuthModule,
     KorisnikModule,
+    NotifikacijaModule,
   ],
   controllers: [GlasanjeController],
   providers: [

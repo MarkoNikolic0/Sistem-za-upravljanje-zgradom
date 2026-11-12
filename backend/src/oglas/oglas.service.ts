@@ -33,6 +33,9 @@ import { OglasPravaService } from './oglas-prava.service.js';
 import { GlasanjeService } from '../glasanje/glasanje.service.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { stanariZgrade } from '../notifikacija/primaoci.js';
 
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
@@ -46,6 +49,7 @@ export class OglasService {
     private glasanjeService: GlasanjeService,
     private dataSource: DataSource,
     private prava: OglasPravaService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async findAll(
@@ -102,7 +106,7 @@ export class OglasService {
     try {
       return await this.dataSource.transaction(async (manager) => {
         await proveriAktivnu(manager, dto.zgradaId, true);
-        return await manager.save(
+        const sacuvan = await manager.save(
           this.oglasRepository.create({
             naslov: dto.naslov,
             tekst: dto.tekst,
@@ -115,6 +119,19 @@ export class OglasService {
               dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
           }),
         );
+        if (dto.vazno && dto.vrsta === VrstaOglasa.OBAVESTENJE) {
+          await this.notifikacije.obavesti(
+            manager,
+            await stanariZgrade(manager, dto.zgradaId),
+            {
+              tip: TipNotifikacije.VAZNO_OBAVESTENJE,
+              tekst: `Važno obaveštenje: „${dto.naslov}“.`,
+              link: '/oglasi',
+            },
+            korisnikId,
+          );
+        }
+        return sacuvan;
       });
     } catch (greska) {
       if (jeDupliUnos(greska)) {

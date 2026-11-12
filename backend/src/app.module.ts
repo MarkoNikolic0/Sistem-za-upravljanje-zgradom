@@ -24,6 +24,7 @@ import { KontaktZgradeModule } from './kontakt-zgrade/kontakt-zgrade.module.js';
 import { StanarStanaModule } from './stanar-stana/stanar-stana.module.js';
 import { NalogKorisnikaModule } from './nalog-korisnika/nalog-korisnika.module.js';
 import { DokumentZgradeModule } from './dokument-zgrade/dokument-zgrade.module.js';
+import { NotifikacijaModule } from './notifikacija/notifikacija.module.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -68,6 +69,7 @@ const __dirname = dirname(__filename);
     StanarStanaModule,
     NalogKorisnikaModule,
     DokumentZgradeModule,
+    NotifikacijaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

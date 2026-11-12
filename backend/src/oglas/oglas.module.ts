@@ -11,12 +11,14 @@ import { PrilogOglasaService } from './prilog-oglasa.service.js';
 import { OglasPravaService } from './oglas-prava.service.js';
 import { SkladisteModule } from '../shared/skladiste/skladiste.module.js';
 import { GlasanjeModule } from '../glasanje/glasanje.module.js';
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Oglas, PrilogOglasa, Zgrada]),
     AuthModule,
     KorisnikModule,
+    NotifikacijaModule,
     SkladisteModule,
     GlasanjeModule,
   ],

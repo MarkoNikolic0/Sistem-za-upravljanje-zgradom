@@ -18,6 +18,7 @@ import { OglasService } from '../oglas/oglas.service.js';
 import { RefreshTokenService } from '../auth/refresh-token/refresh-token.service.js';
 import { LozinkaService } from '../auth/token-lozinke/lozinka.service.js';
 import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 
 @Injectable()
 export class NalogKorisnikaService {
@@ -29,6 +30,7 @@ export class NalogKorisnikaService {
     private oglasService: OglasService,
     private refreshTokenService: RefreshTokenService,
     private lozinkaService: LozinkaService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async promeniUlogu(id: number, adminId: number, dto: PromeniUloguDto) {
@@ -88,6 +90,7 @@ export class NalogKorisnikaService {
       await this.lozinkaService.obrisiLinkove(manager, id);
       await manager.update(Korisnik, id, { deaktiviran: new Date() });
     });
+    this.notifikacije.prekiniVeze(id);
   }
 
   async aktiviraj(id: number, adminId: number) {

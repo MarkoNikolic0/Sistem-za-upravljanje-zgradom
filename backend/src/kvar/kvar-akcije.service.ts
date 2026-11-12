@@ -41,6 +41,7 @@ import { greskaPolja } from '../shared/greske-validacije.js';
 import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
+import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
 
 const PRETHODNI_STATUS: Record<StatusRadaServisera, StatusKvara> = {
   [StatusKvara.U_TOKU]: StatusKvara.DODELJEN,
@@ -51,6 +52,7 @@ interface Prelaz {
   izmene?: QueryDeepPartialEntity<Kvar>;
   uslov?: FindOptionsWhere<Kvar>;
   komentar?: string;
+  noviServiserId?: number;
   provera?: (manager: EntityManager) => Promise<void>;
 }
 
@@ -63,6 +65,7 @@ export class KvarAkcijeService {
     private serviserSpecijalnostRepository: Repository<ServiserSpecijalnost>,
     private kvarService: KvarService,
     private prava: KvarPravaService,
+    private obavestenja: ObavestenjaKvaraService,
     private dataSource: DataSource,
   ) {}
 
@@ -70,7 +73,7 @@ export class KvarAkcijeService {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
-      id,
+      kvar,
       [StatusKvara.PRIJAVLJEN],
       StatusKvara.PRIHVACEN,
       korisnikId,
@@ -82,7 +85,7 @@ export class KvarAkcijeService {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
-      id,
+      kvar,
       [StatusKvara.PRIJAVLJEN, StatusKvara.PRIHVACEN],
       StatusKvara.ODBIJEN,
       korisnikId,
@@ -100,7 +103,7 @@ export class KvarAkcijeService {
     const kvar = await this.kvarService.findOne(id);
     this.prava.proveriPovlacenje(kvar, korisnikId);
     await this.prelaz(
-      id,
+      kvar,
       [StatusKvara.PRIJAVLJEN],
       StatusKvara.POVUCEN,
       korisnikId,
@@ -167,11 +170,14 @@ export class KvarAkcijeService {
       );
     }
     await this.prelaz(
-      id,
+      kvar,
       [StatusKvara.PRIHVACEN, StatusKvara.DODELJEN],
       StatusKvara.DODELJEN,
       korisnikId,
-      { izmene: { serviser: { id: dto.serviserId }, dolazakServisera: null } },
+      {
+        izmene: { serviser: { id: dto.serviserId }, dolazakServisera: null },
+        noviServiserId: dto.serviserId,
+      },
     );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -185,7 +191,7 @@ export class KvarAkcijeService {
     const kvar = await this.kvarService.findOne(id);
     this.prava.proveriServisera(kvar, korisnikId);
     await this.prelaz(
-      id,
+      kvar,
       [PRETHODNI_STATUS[dto.status]],
       dto.status,
       korisnikId,
@@ -219,12 +225,16 @@ export class KvarAkcijeService {
         'Dolazak je posle roka. Za kasniji termin javi se upravniku.',
       );
     }
-    await this.izmeniAkoJeU(
-      id,
-      statusi,
-      { dolazakServisera: dto.dolazak },
-      { serviser: { id: korisnikId } },
-    );
+    await this.dataSource.transaction(async (manager) => {
+      await this.izmeniAkoJeU(
+        id,
+        statusi,
+        { dolazakServisera: dto.dolazak },
+        { serviser: { id: korisnikId } },
+        manager,
+      );
+      await this.obavestenja.dolazak(manager, kvar, dto.dolazak, korisnikId);
+    });
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
 
@@ -232,7 +242,7 @@ export class KvarAkcijeService {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriPotvrdu(kvar, korisnikId);
     await this.prelaz(
-      id,
+      kvar,
       [StatusKvara.RESEN],
       StatusKvara.ZATVOREN,
       korisnikId,
@@ -243,10 +253,16 @@ export class KvarAkcijeService {
   async vrati(id: number, korisnikId: number, uloga: Uloga, dto: RazlogDto) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriPotvrdu(kvar, korisnikId);
-    await this.prelaz(id, [StatusKvara.RESEN], StatusKvara.U_TOKU, korisnikId, {
-      izmene: { datumResenja: null },
-      komentar: dto.tekst,
-    });
+    await this.prelaz(
+      kvar,
+      [StatusKvara.RESEN],
+      StatusKvara.U_TOKU,
+      korisnikId,
+      {
+        izmene: { datumResenja: null },
+        komentar: dto.tekst,
+      },
+    );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
 
@@ -254,7 +270,7 @@ export class KvarAkcijeService {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
-      id,
+      kvar,
       [StatusKvara.RESEN],
       StatusKvara.ZATVOREN,
       korisnikId,
@@ -323,12 +339,13 @@ export class KvarAkcijeService {
   }
 
   private async prelaz(
-    id: number,
+    kvar: Kvar,
     izStatusa: StatusKvara[],
     status: StatusKvara,
     korisnikId: number,
-    { izmene = {}, uslov = {}, komentar, provera }: Prelaz = {},
+    { izmene = {}, uslov = {}, komentar, provera, noviServiserId }: Prelaz = {},
   ): Promise<void> {
+    const { id } = kvar;
     await this.dataSource.transaction(async (manager) => {
       await provera?.(manager);
       await this.izmeniAkoJeU(
@@ -350,6 +367,13 @@ export class KvarAkcijeService {
         status,
         korisnik: { id: korisnikId },
         komentar: sacuvanKomentar,
+      });
+      await this.obavestenja.promenaStatusa(manager, {
+        kvar,
+        izStatusa,
+        status,
+        akterId: korisnikId,
+        noviServiserId,
       });
     });
   }

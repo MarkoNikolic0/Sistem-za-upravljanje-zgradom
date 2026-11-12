@@ -33,6 +33,7 @@ import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
+import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
 
 @Injectable()
 export class KvarService {
@@ -48,6 +49,7 @@ export class KvarService {
     @InjectRepository(PratilacKvara)
     private pratilacRepository: Repository<PratilacKvara>,
     private prava: KvarPravaService,
+    private obavestenja: ObavestenjaKvaraService,
     private dataSource: DataSource,
   ) {}
 
@@ -75,6 +77,7 @@ export class KvarService {
         status: StatusKvara.PRIJAVLJEN,
         korisnik: { id: korisnikId },
       });
+      await this.obavestenja.prijavljen(manager, sacuvan);
       return sacuvan;
     });
   }
