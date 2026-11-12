@@ -1,14 +1,14 @@
 import type { EntityManager } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
-import { Uloga } from '../shared/enums/uloga.enum.js';
+import { uslovUpravnika } from '../zgrada/uslov-upravnika.js';
 
 export async function upravnikZgrade(
   manager: EntityManager,
   zgradaId: number,
 ): Promise<number[]> {
   const upravnik = await manager.findOne(Korisnik, {
-    where: { zgrada: { id: zgradaId }, uloga: Uloga.UPRAVNIK },
+    where: uslovUpravnika(zgradaId),
     select: { id: true },
   });
   return upravnik ? [upravnik.id] : [];

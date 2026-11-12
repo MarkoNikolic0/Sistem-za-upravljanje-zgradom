@@ -31,6 +31,7 @@ import {
 } from '../auth.constants.js';
 import { TokenLozinke } from './token-lozinke.entity.js';
 import { mailLozinkaPromenjena, mailNovaLozinka } from './mailovi-lozinke.js';
+import { NotifikacijaService } from '../../notifikacija/notifikacija.service.js';
 
 @Injectable()
 export class LozinkaService {
@@ -46,6 +47,7 @@ export class LozinkaService {
     private neuspelePrijaveService: NeuspelePrijaveService,
     private mailService: MailService,
     private config: ConfigService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async posaljiLink(email: string): Promise<void> {
@@ -71,7 +73,7 @@ export class LozinkaService {
   }
 
   async postaviNovu(dto: NovaLozinkaDto): Promise<void> {
-    const email = await this.dataSource.transaction(async (manager) => {
+    const { id, email } = await this.dataSource.transaction(async (manager) => {
       const { raw } = await manager
         .createQueryBuilder()
         .delete()
@@ -98,8 +100,9 @@ export class LozinkaService {
       await this.obrisiLinkove(manager, korisnik.id);
       await this.neuspelePrijaveService.obrisiSve(manager, korisnik.id);
       await this.refreshTokenService.opozoviSveSesije(manager, korisnik.id);
-      return korisnik.email;
+      return korisnik;
     });
+    this.notifikacije.prekiniVeze(id);
 
     void this.mailService.posalji(mailLozinkaPromenjena(email));
   }
@@ -145,6 +148,7 @@ export class LozinkaService {
         refreshToken,
       );
     });
+    this.notifikacije.prekiniVeze(korisnikId);
 
     void this.mailService.posalji(mailLozinkaPromenjena(korisnik.email));
   }

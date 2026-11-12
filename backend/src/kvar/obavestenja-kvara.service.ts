@@ -69,12 +69,17 @@ export class ObavestenjaKvaraService {
               await stanari(),
               `Serviser je počeo popravku kvara ${naslov}.`,
             );
-      case StatusKvara.RESEN:
+      case StatusKvara.RESEN: {
+        const potvrdjuju = await stanari();
         await posalji(
-          await stanari(),
+          potvrdjuju,
           `Kvar ${naslov} je rešen. Potvrdi da je sve u redu ili javi da nije.`,
         );
-        return posalji(await upravnik(), `Kvar ${naslov} je rešen.`);
+        return posalji(
+          (await upravnik()).filter((id) => !potvrdjuju.includes(id)),
+          `Kvar ${naslov} je rešen.`,
+        );
+      }
       case StatusKvara.ZATVOREN:
         return posalji(
           [...(await stanari()), ...(await upravnik()), ...serviser],

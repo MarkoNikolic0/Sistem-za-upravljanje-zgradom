@@ -3,8 +3,10 @@ import {
   DataSource,
   EntitySubscriberInterface,
   InsertEvent,
+  QueryRunner,
   TransactionCommitEvent,
   TransactionRollbackEvent,
+  TransactionStartEvent,
 } from 'typeorm';
 import { Notifikacija } from './notifikacija.entity.js';
 import { NotifikacijaGateway } from './notifikacija.gateway.js';
@@ -24,26 +26,36 @@ export class NotifikacijaSubscriber implements EntitySubscriberInterface<Notifik
     return Notifikacija;
   }
 
+  afterTransactionStart({ queryRunner }: TransactionStartEvent) {
+    this.nivoi(queryRunner).push([]);
+  }
+
   afterInsert({ queryRunner, entity }: InsertEvent<Notifikacija>) {
-    const data = queryRunner.data as Record<string, Notifikacija[]>;
-    (data[ZA_SLANJE] ??= []).push(entity);
+    const nivo = this.nivoi(queryRunner).at(-1);
+    if (nivo) {
+      nivo.push(entity);
+    } else {
+      this.gateway.posalji([entity]);
+    }
   }
 
   afterTransactionCommit({ queryRunner }: TransactionCommitEvent) {
-    if (queryRunner.isTransactionActive) {
-      return;
-    }
-    const data = queryRunner.data as Record<string, Notifikacija[]>;
-    const nove = data[ZA_SLANJE];
-    if (nove) {
-      delete data[ZA_SLANJE];
-      this.gateway.posalji(nove);
+    const nivoi = this.nivoi(queryRunner);
+    const zavrsen = nivoi.pop() ?? [];
+    const spoljni = nivoi.at(-1);
+    if (spoljni) {
+      spoljni.push(...zavrsen);
+    } else if (zavrsen.length > 0) {
+      this.gateway.posalji(zavrsen);
     }
   }
 
   afterTransactionRollback({ queryRunner }: TransactionRollbackEvent) {
-    if (!queryRunner.isTransactionActive) {
-      delete (queryRunner.data as Record<string, Notifikacija[]>)[ZA_SLANJE];
-    }
+    this.nivoi(queryRunner).pop();
+  }
+
+  private nivoi(queryRunner: QueryRunner) {
+    const data = queryRunner.data as Record<string, Notifikacija[][]>;
+    return (data[ZA_SLANJE] ??= []);
   }
 }

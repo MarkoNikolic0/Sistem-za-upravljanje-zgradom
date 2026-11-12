@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -13,6 +13,7 @@ import { LozinkaService } from './token-lozinke/lozinka.service.js';
 import { MailModule } from '../shared/mail/mail.module.js';
 import { NeuspelaPrijava } from './neuspele-prijave/neuspela-prijava.entity.js';
 import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.service.js';
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.serv
     }),
     RefreshTokenModule,
     MailModule,
+    forwardRef(() => NotifikacijaModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, LozinkaService, NeuspelePrijaveService, JwtStrategy],

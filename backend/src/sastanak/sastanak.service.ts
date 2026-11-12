@@ -222,6 +222,25 @@ export class SastanakService {
         `Sastanak „${dto.naslov ?? sastanak.naslov}“ je izmenjen. Termin: ${danISat(pocetak)}.`,
         korisnikId,
       );
+      if (
+        vrsta === VrstaSastanka.SKUPSTINA &&
+        sastanak.vrsta !== VrstaSastanka.SKUPSTINA
+      ) {
+        const zgradaId = sastanak.zgrada.id;
+        const vlasnici = await stanariZgrade(manager, zgradaId, true);
+        await this.notifikacije.obavesti(
+          manager,
+          (await stanariZgrade(manager, zgradaId)).filter(
+            (stanarId) => !vlasnici.includes(stanarId),
+          ),
+          {
+            tip: TipNotifikacije.SASTANAK_IZMENJEN,
+            tekst: `Sastanak „${dto.naslov ?? sastanak.naslov}“ je promenjen u skupštinu, na koju dolaze samo vlasnici stanova.`,
+            link: null,
+          },
+          korisnikId,
+        );
+      }
     });
     return this.findOne(id, korisnikId, uloga);
   }

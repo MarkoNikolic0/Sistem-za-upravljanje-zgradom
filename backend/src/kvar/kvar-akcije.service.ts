@@ -233,7 +233,9 @@ export class KvarAkcijeService {
         { serviser: { id: korisnikId } },
         manager,
       );
-      await this.obavestenja.dolazak(manager, kvar, dto.dolazak, korisnikId);
+      if (kvar.dolazakServisera?.getTime() !== dto.dolazak?.getTime()) {
+        await this.obavestenja.dolazak(manager, kvar, dto.dolazak, korisnikId);
+      }
     });
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -347,6 +349,12 @@ export class KvarAkcijeService {
   ): Promise<void> {
     const { id } = kvar;
     await this.dataSource.transaction(async (manager) => {
+      const trenutni = await manager.findOne(Kvar, {
+        where: { id },
+        relations: { serviser: true },
+        select: { id: true, serviser: { id: true } },
+        lock: { mode: 'for_no_key_update', tables: ['kvar'] },
+      });
       await provera?.(manager);
       await this.izmeniAkoJeU(
         id,
@@ -369,7 +377,7 @@ export class KvarAkcijeService {
         komentar: sacuvanKomentar,
       });
       await this.obavestenja.promenaStatusa(manager, {
-        kvar,
+        kvar: { ...kvar, serviser: trenutni?.serviser ?? null },
         izStatusa,
         status,
         akterId: korisnikId,

@@ -12,6 +12,7 @@ import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
+import { uslovUpravnika } from './uslov-upravnika.js';
 
 @Injectable()
 export class UpravnikZgradeService {
@@ -25,7 +26,7 @@ export class UpravnikZgradeService {
   async find(zgradaId: number) {
     await proveriAktivnu(this.dataSource.manager, zgradaId);
     const korisnik = await this.korisnikRepository.findOne({
-      where: { uloga: Uloga.UPRAVNIK, zgrada: { id: zgradaId } },
+      where: uslovUpravnika(zgradaId),
       select: {
         id: true,
         ime: true,
