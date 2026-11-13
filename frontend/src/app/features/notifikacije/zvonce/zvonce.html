@@ -13,6 +13,6 @@
 >
   <i class="pi pi-bell" aria-hidden="true" (animationend)="zvoni.set(false)"></i>
   @if (broj() > 0) {
-    <span class="broj" aria-hidden="true">{{ prikaz() }}</span>
+    <span class="broj broj-neprocitanih" aria-hidden="true">{{ prikaz() }}</span>
   }
 </a>

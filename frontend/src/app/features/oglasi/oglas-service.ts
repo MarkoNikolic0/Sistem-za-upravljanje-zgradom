@@ -3,7 +3,14 @@ import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Stranica } from '../../shared/liste/stranica';
-import { NoviOglasRequest, Oglas, OglasRequest, PrilogOglasa, UpitOglasa } from './oglas-models';
+import {
+  NeprocitaniOglasi,
+  NoviOglasRequest,
+  Oglas,
+  OglasRequest,
+  PrilogOglasa,
+  UpitOglasa,
+} from './oglas-models';
 
 @Service()
 export class OglasService {
@@ -34,6 +41,14 @@ export class OglasService {
       const oglasId = id();
       return oglasId === undefined ? undefined : `${this.apiUrl}/${oglasId}`;
     });
+  }
+
+  brojNeprocitanih(): Observable<NeprocitaniOglasi> {
+    return this.http.get<NeprocitaniOglasi>(`${this.apiUrl}/broj-neprocitanih`);
+  }
+
+  procitajSve(): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/procitano`, null);
   }
 
   objavi(podaci: NoviOglasRequest): Observable<Oglas> {

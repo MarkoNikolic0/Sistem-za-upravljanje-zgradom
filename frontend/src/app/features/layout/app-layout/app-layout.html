@@ -29,7 +29,15 @@
                       >
                         <i [class]="stavka.ikonica" aria-hidden="true"></i>
                         <span>{{ stavka.naziv }}</span>
+                        @if (stavka.broj) {
+                          <span class="sr-only">, {{ opisBroja(stavka.broj) }}</span>
+                        }
                       </a>
+                      @if (stavka.broj) {
+                        <p-sidebar-menu-badge class="broj-neprocitanih" aria-hidden="true">
+                          {{ prikazBroja(stavka.broj) }}
+                        </p-sidebar-menu-badge>
+                      }
                     </p-sidebar-menu-item>
                   }
                 </p-sidebar-menu>
@@ -104,8 +112,18 @@
             [routerLinkActiveOptions]="{ exact: stavka.putanja === '/' }"
             ariaCurrentWhenActive="page"
           >
-            <span class="ikonica"><i [class]="stavka.ikonica" aria-hidden="true"></i></span>
+            <span class="ikonica">
+              <i [class]="stavka.ikonica" aria-hidden="true"></i>
+              @if (stavka.broj) {
+                <span class="broj-neprocitanih" aria-hidden="true">{{
+                  prikazBroja(stavka.broj)
+                }}</span>
+              }
+            </span>
             <span class="naziv">{{ stavka.naziv }}</span>
+            @if (stavka.broj) {
+              <span class="sr-only">, {{ opisBroja(stavka.broj) }}</span>
+            }
           </a>
         }
         @if (stavkeVise().length) {
@@ -116,8 +134,18 @@
             [attr.aria-expanded]="viseOtvoreno()"
             (click)="vise.toggle($event)"
           >
-            <span class="ikonica"><i class="pi pi-ellipsis-h" aria-hidden="true"></i></span>
+            <span class="ikonica">
+              <i class="pi pi-ellipsis-h" aria-hidden="true"></i>
+              @if (brojVise()) {
+                <span class="broj-neprocitanih" aria-hidden="true">{{
+                  prikazBroja(brojVise())
+                }}</span>
+              }
+            </span>
             <span class="naziv">Više</span>
+            @if (brojVise()) {
+              <span class="sr-only">, {{ opisBroja(brojVise()) }}</span>
+            }
           </button>
         }
       </nav>

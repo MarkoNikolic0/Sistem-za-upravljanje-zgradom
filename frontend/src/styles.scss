@@ -595,3 +595,49 @@ a.plocica-fajla:hover {
     --boja: var(--color-greska);
   }
 }
+
+// Broj nepročitanih (zvonce, stavke menija)
+.broj-neprocitanih {
+  display: grid;
+  place-items: center;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-pozadina);
+  background: var(--color-svetlo);
+  box-shadow:
+    0 0 0 2px var(--color-pozadina),
+    0 0 12px color-mix(in srgb, var(--color-svetlo) 45%, transparent);
+  pointer-events: none;
+}
+
+// Nepročitana kartica: traka uz levu ivicu (obaveštenja, oglasi)
+.neprocitano {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0.875rem;
+    bottom: 0.875rem;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-svetlo);
+  }
+}
+
+// Tačka uz nepročitanu stavku (obaveštenja, oglasi)
+.tacka-novo {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background: var(--color-svetlo);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-svetlo) 20%, transparent);
+}

@@ -25,6 +25,8 @@ import { provideEffects } from '@ngrx/effects';
 import { MessageService } from 'primeng/api';
 import { notifikacijeFeature } from './features/notifikacije/notifikacija-store/notifikacije-reducer';
 import * as notifikacijeEffects from './features/notifikacije/notifikacija-store/notifikacije-effects';
+import { neprocitaniOglasiFeature } from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
+import * as neprocitaniOglasiEffects from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-effects';
 
 registerLocaleData(localeSrLatn);
 
@@ -42,7 +44,8 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'sr-Latn' },
     provideStore(),
     provideState(notifikacijeFeature),
-    provideEffects(notifikacijeEffects),
+    provideState(neprocitaniOglasiFeature),
+    provideEffects(notifikacijeEffects, neprocitaniOglasiEffects),
     MessageService,
     providePrimeNG({
       license:

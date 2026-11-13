@@ -3,9 +3,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { oblik } from '../../../shared/tekst/mnozina';
+import { prikazBroja } from '../../../shared/tekst/prikaz-broja';
 import { notifikacijeFeature } from '../notifikacija-store/notifikacije-reducer';
-
-const NAJVECI_PRIKAZ = 99;
 
 @Component({
   selector: 'app-zvonce',
@@ -21,9 +20,7 @@ export class Zvonce {
   );
   protected readonly zvoni = signal(false);
 
-  protected readonly prikaz = computed(() =>
-    this.broj() > NAJVECI_PRIKAZ ? `${NAJVECI_PRIKAZ}+` : String(this.broj()),
-  );
+  protected readonly prikaz = computed(() => prikazBroja(this.broj()));
 
   protected readonly naziv = computed(() => {
     const broj = this.broj();

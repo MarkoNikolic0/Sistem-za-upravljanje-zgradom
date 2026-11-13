@@ -71,8 +71,10 @@
       } @else {
         <div class="oglasi">
           @for (oglas of store.oglasi(); track oglas.id) {
+            @let nov = jeNov(oglas);
             <article
               class="oglas"
+              [class.neprocitano]="nov"
               [class.obavestenje]="oglas.vrsta === 'obavestenje'"
               [class.upozorenje]="oglas.vrsta === 'upozorenje'"
               [class.sakriven]="oglas.datumSakrivanja"
@@ -121,11 +123,19 @@
                       [rounded]="true"
                     />
                   }
+                  @if (nov) {
+                    <span class="tacka-novo ml-1 self-center" aria-hidden="true"></span>
+                  }
                 </div>
               </div>
 
               <div class="telo">
-                <h2 [id]="'oglas-' + oglas.id" class="naslov-oglasa">{{ oglas.naslov }}</h2>
+                <h2 [id]="'oglas-' + oglas.id" class="naslov-oglasa">
+                  @if (nov) {
+                    <span class="sr-only">Novo: </span>
+                  }
+                  {{ oglas.naslov }}
+                </h2>
                 <p class="mt-2 whitespace-pre-line wrap-anywhere">{{ oglas.tekst }}</p>
                 @if (oglas.prilozi.length > 0) {
                   <app-prilozi-oglasa class="mt-4" [prilozi]="oglas.prilozi" />

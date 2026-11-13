@@ -45,7 +45,7 @@
             @for (notifikacija of grupa.stavke; track notifikacija.id) {
               <li
                 class="notifikacija"
-                [class.neprocitana]="!notifikacija.procitano"
+                [class.neprocitano]="!notifikacija.procitano"
                 [style.--boja]="boje[notifikacija.tip]"
                 [attr.data-id]="notifikacija.id"
                 tabindex="-1"
@@ -83,7 +83,7 @@
                   </time>
                   @if (!notifikacija.procitano) {
                     @if (notifikacija.link) {
-                      <span class="tacka" aria-hidden="true"></span>
+                      <span class="tacka-novo mr-1" aria-hidden="true"></span>
                     } @else {
                       <button
                         pButton

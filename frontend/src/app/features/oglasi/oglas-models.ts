@@ -83,6 +83,11 @@ export interface Oglas {
   smeDaSakrije: boolean;
 }
 
+export interface NeprocitaniOglasi {
+  broj: number;
+  procitanoDo: string;
+}
+
 export interface OglasRequest {
   naslov: string;
   tekst: string;

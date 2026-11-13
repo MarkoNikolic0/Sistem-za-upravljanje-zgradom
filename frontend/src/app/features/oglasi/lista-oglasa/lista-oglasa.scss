@@ -59,6 +59,25 @@
     }
   }
 
+  &.neprocitano {
+    background:
+      linear-gradient(to bottom, rgb(255 255 255 / 0.03), transparent 45%),
+      color-mix(in srgb, var(--color-svetlo) 6%, var(--color-povrsina));
+    border-color: color-mix(in srgb, var(--color-svetlo) 22%, transparent);
+  }
+
+  // Novo obaveštenje upravnika je najjače istaknuto
+  &.obavestenje.neprocitano {
+    background:
+      radial-gradient(
+        120% 90% at 0% 0%,
+        color-mix(in srgb, var(--color-svetlo) 24%, transparent),
+        transparent 65%
+      ),
+      color-mix(in srgb, var(--color-svetlo) 4%, var(--color-povrsina));
+    border-color: color-mix(in srgb, var(--color-svetlo) 50%, transparent);
+  }
+
   &.sakriven,
   &.istekao {
     background: transparent;

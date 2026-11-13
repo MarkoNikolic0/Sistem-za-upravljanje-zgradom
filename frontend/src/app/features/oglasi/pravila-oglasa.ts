@@ -1,4 +1,4 @@
-import { VrstaOglasa } from './oglas-models';
+import { Oglas, VrstaOglasa } from './oglas-models';
 import { PravilaFajlova } from '../../shared/fajlovi/fajlovi';
 import { zaDana } from '../../shared/tekst/datum';
 
@@ -22,4 +22,15 @@ export function predlozenRok(vrsta: VrstaOglasa | null): Date | null {
     return null;
   }
   return zaDana(DANA_VAZENJA);
+}
+
+// Nov je tuđ oglas koji svi vide, a objavljen je posle poslednjeg otvaranja liste
+export function jeNov(oglas: Oglas, noviPosle: string | null, korisnikId?: number): boolean {
+  return (
+    noviPosle !== null &&
+    oglas.autor.id !== korisnikId &&
+    oglas.datumSakrivanja === null &&
+    !oglas.isteklo &&
+    Date.parse(oglas.datumKreiranja) > Date.parse(noviPosle)
+  );
 }

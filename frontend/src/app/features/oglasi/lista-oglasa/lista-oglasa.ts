@@ -1,4 +1,7 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Actions, ofType } from '@ngrx/effects';
+import { Store } from '@ngrx/store';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -19,6 +22,11 @@ import { formatRoka } from '../../../shared/tekst/datum';
 import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
 import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
 import { StanjeNavigacije } from '../../../shared/stanje/poruka';
+import { AuthStore } from '../../auth/sesija/auth-store';
+import { VezaActions } from '../../notifikacije/notifikacija-store/notifikacije-actions';
+import { NeprocitaniOglasiActions } from '../neprocitani-oglasi-store/neprocitani-oglasi-actions';
+import { neprocitaniOglasiFeature } from '../neprocitani-oglasi-store/neprocitani-oglasi-reducer';
+import { jeNov } from '../pravila-oglasa';
 
 @Component({
   imports: [
@@ -44,7 +52,12 @@ export class ListaOglasa {
   protected readonly store = inject(ListaOglasaStore);
   private confirmationService = inject(ConfirmationService);
   private router = inject(Router);
+  private authStore = inject(AuthStore);
+  private globalniStore = inject(Store);
   private readonly fokusiraj = fokusPosleCrtanja();
+  private readonly noviPosle = this.globalniStore.selectSignal(
+    neprocitaniOglasiFeature.selectNoviPosle,
+  );
 
   protected readonly vrste = VRSTE_OGLASA;
   protected readonly naziviUloga = NAZIVI_ULOGA;
@@ -73,6 +86,14 @@ export class ListaOglasa {
   protected readonly sakrivanjeId = signal<number | null>(null);
 
   constructor() {
+    this.globalniStore.dispatch(NeprocitaniOglasiActions.listaOtvorena());
+    inject(DestroyRef).onDestroy(() =>
+      this.globalniStore.dispatch(NeprocitaniOglasiActions.listaZatvorena()),
+    );
+    inject(Actions)
+      .pipe(ofType(VezaActions.novOglas), takeUntilDestroyed())
+      .subscribe(() => this.store.ucitaj());
+
     const navigacija = this.router.currentNavigation();
     const stanje = navigacija?.extras.state as StanjeNavigacije | undefined;
     if (navigacija?.trigger === 'imperative' && stanje?.poruka) {
@@ -85,6 +106,10 @@ export class ListaOglasa {
         }
       });
     }
+  }
+
+  protected jeNov(oglas: Oglas): boolean {
+    return jeNov(oglas, this.noviPosle(), this.authStore.korisnik()?.id);
   }
 
   protected detaljiAutora(oglas: Oglas): string {

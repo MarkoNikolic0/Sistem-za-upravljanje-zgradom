@@ -40,11 +40,16 @@ export const veza = createEffect(
       ofType(VezaActions.pokreni),
       switchMap(() =>
         notifikacijeVeza.dogadjaji().pipe(
-          map((dogadjaj) =>
-            dogadjaj.tip === 'povezan'
-              ? VezaActions.povezan()
-              : VezaActions.stigla({ notifikacija: dogadjaj.notifikacija }),
-          ),
+          map((dogadjaj) => {
+            switch (dogadjaj.tip) {
+              case 'povezan':
+                return VezaActions.povezan();
+              case 'nov-oglas':
+                return VezaActions.novOglas();
+              case 'notifikacija':
+                return VezaActions.stigla({ notifikacija: dogadjaj.notifikacija });
+            }
+          }),
           takeUntil(actions$.pipe(ofType(VezaActions.zaustavi))),
         ),
       ),

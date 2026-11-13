@@ -9,10 +9,12 @@ import { naPrijavu } from '../auth/pristup/povratak';
 import { Notifikacija } from './notifikacija-models';
 
 const DOGADJAJ_NOTIFIKACIJA = 'notifikacija';
+const DOGADJAJ_NOV_OGLAS = 'nov-oglas';
 const PRVA_PAUZA_MS = 1000;
 const NAJDUZA_PAUZA_MS = 30_000;
 
-export type DogadjajVeze = { tip: 'povezan' } | { tip: 'notifikacija'; notifikacija: Notifikacija };
+export type DogadjajVeze =
+  { tip: 'povezan' } | { tip: 'notifikacija'; notifikacija: Notifikacija } | { tip: 'nov-oglas' };
 
 @Service()
 export class NotifikacijeVeza {
@@ -57,6 +59,7 @@ export class NotifikacijeVeza {
       socket.on(DOGADJAJ_NOTIFIKACIJA, (notifikacija: Notifikacija) =>
         pretplatnik.next({ tip: 'notifikacija', notifikacija }),
       );
+      socket.on(DOGADJAJ_NOV_OGLAS, () => pretplatnik.next({ tip: 'nov-oglas' }));
       socket.on('connect_error', () => {
         if (!socket.active) {
           poveziSaNovimTokenom();
