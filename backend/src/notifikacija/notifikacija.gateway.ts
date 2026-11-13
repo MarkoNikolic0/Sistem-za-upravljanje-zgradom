@@ -10,6 +10,7 @@ import { JwtStrategy } from '../auth/strategies/jwt.strategy.js';
 import { Notifikacija } from './notifikacija.entity.js';
 import {
   DOGADJAJ_NOTIFIKACIJA,
+  DOGADJAJ_NOV_OGLAS,
   SOBA_KORISNIKA,
 } from './notifikacija.constants.js';
 
@@ -40,6 +41,14 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
       this.server
         .to(SOBA_KORISNIKA(korisnik.id))
         .emit(DOGADJAJ_NOTIFIKACIJA, prikaz);
+    }
+  }
+
+  javiNovOglas(korisnici: number[]) {
+    if (korisnici.length > 0) {
+      this.server
+        .to([...new Set(korisnici)].map(SOBA_KORISNIKA))
+        .emit(DOGADJAJ_NOV_OGLAS);
     }
   }
 

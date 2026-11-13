@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, IsNull, MoreThan, Or, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import {
@@ -16,7 +16,7 @@ import {
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
 import { OglasUpitDto } from './dto/oglas-upit.dto.js';
-import { istekao } from './oglas.constants.js';
+import { istekao, vidljivSvima } from './oglas.constants.js';
 
 // Šta sa oglasom sme samo onaj ko ga je objavio
 type RadnjaAutora = 'menja' | 'obriše' | 'obnovi';
@@ -45,11 +45,7 @@ export class OglasPravaService {
       ...(upit.vrsta ? { vrsta: upit.vrsta } : {}),
     });
     return [
-      {
-        ...uslov(zgrade),
-        datumSakrivanja: IsNull(),
-        vaziDo: Or(IsNull(), MoreThan(new Date())),
-      },
+      { ...uslov(zgrade), ...vidljivSvima() },
       { ...uslov(zgrade), autor: { id: korisnikId } },
       ...(upravlja.length > 0 ? [uslov(upravlja)] : []),
     ];

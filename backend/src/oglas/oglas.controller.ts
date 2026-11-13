@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseGuards,
@@ -22,6 +23,7 @@ import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OglasService } from './oglas.service.js';
+import { OglasProcitanoService } from './oglas-procitano.service.js';
 import { CreateOglasDto } from './dto/create-oglas.dto.js';
 import { UpdateOglasDto } from './dto/update-oglas.dto.js';
 import { SakrijOglasDto } from './dto/sakrij-oglas.dto.js';
@@ -37,7 +39,10 @@ import {
 @Roles(Uloga.STANAR, Uloga.UPRAVNIK, Uloga.ADMIN)
 @Controller('oglas')
 export class OglasController {
-  constructor(private readonly oglasService: OglasService) {}
+  constructor(
+    private readonly oglasService: OglasService,
+    private readonly procitanoService: OglasProcitanoService,
+  ) {}
 
   @Post()
   create(
@@ -53,6 +58,19 @@ export class OglasController {
     @Query() upit: OglasUpitDto,
   ) {
     return this.oglasService.findAll(korisnik.id, korisnik.uloga, upit);
+  }
+
+  @Get('broj-neprocitanih')
+  @Roles(Uloga.STANAR, Uloga.UPRAVNIK)
+  brojNeprocitanih(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.procitanoService.brojNeprocitanih(korisnik.id, korisnik.uloga);
+  }
+
+  @Put('procitano')
+  @Roles(Uloga.STANAR, Uloga.UPRAVNIK)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  procitajSve(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
+    return this.procitanoService.procitajSve(korisnik.id);
   }
 
   @Get(':id')

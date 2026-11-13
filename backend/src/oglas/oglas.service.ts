@@ -35,7 +35,8 @@ import { jeDupliUnos } from '../shared/greske-baze.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
-import { stanariZgrade } from '../notifikacija/primaoci.js';
+import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
+import { NotifikacijaGateway } from '../notifikacija/notifikacija.gateway.js';
 
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
@@ -50,6 +51,7 @@ export class OglasService {
     private dataSource: DataSource,
     private prava: OglasPravaService,
     private notifikacije: NotifikacijaService,
+    private gateway: NotifikacijaGateway,
   ) {}
 
   async findAll(
@@ -104,35 +106,46 @@ export class OglasService {
     }
 
     try {
-      return await this.dataSource.transaction(async (manager) => {
-        await proveriAktivnu(manager, dto.zgradaId, true);
-        const sacuvan = await manager.save(
-          this.oglasRepository.create({
-            naslov: dto.naslov,
-            tekst: dto.tekst,
-            vrsta: dto.vrsta,
-            vazno: dto.vazno,
-            vaziDo: dto.vaziDo,
-            zgrada: { id: dto.zgradaId },
-            autor: { id: korisnikId },
-            glasanje:
-              dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
-          }),
-        );
-        if (dto.vazno && dto.vrsta === VrstaOglasa.OBAVESTENJE) {
-          await this.notifikacije.obavesti(
-            manager,
-            await stanariZgrade(manager, dto.zgradaId),
-            {
-              tip: TipNotifikacije.VAZNO_OBAVESTENJE,
-              tekst: `Važno obaveštenje: „${dto.naslov}“.`,
-              link: '/oglasi',
-            },
-            korisnikId,
+      const { sacuvan, primaoci } = await this.dataSource.transaction(
+        async (manager) => {
+          await proveriAktivnu(manager, dto.zgradaId, true);
+          const sacuvan = await manager.save(
+            this.oglasRepository.create({
+              naslov: dto.naslov,
+              tekst: dto.tekst,
+              vrsta: dto.vrsta,
+              vazno: dto.vazno,
+              vaziDo: dto.vaziDo,
+              zgrada: { id: dto.zgradaId },
+              autor: { id: korisnikId },
+              glasanje:
+                dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
+            }),
           );
-        }
-        return sacuvan;
-      });
+          const stanari = await stanariZgrade(manager, dto.zgradaId);
+          if (dto.vazno && dto.vrsta === VrstaOglasa.OBAVESTENJE) {
+            await this.notifikacije.obavesti(
+              manager,
+              stanari,
+              {
+                tip: TipNotifikacije.VAZNO_OBAVESTENJE,
+                tekst: `Važno obaveštenje: „${dto.naslov}“.`,
+                link: '/oglasi',
+              },
+              korisnikId,
+            );
+          }
+          return {
+            sacuvan,
+            primaoci: [
+              ...stanari,
+              ...(await upravnikZgrade(manager, dto.zgradaId)),
+            ],
+          };
+        },
+      );
+      this.gateway.javiNovOglas(primaoci.filter((id) => id !== korisnikId));
+      return sacuvan;
     } catch (greska) {
       if (jeDupliUnos(greska)) {
         throw new ConflictException('Odluka je već objavljena.');

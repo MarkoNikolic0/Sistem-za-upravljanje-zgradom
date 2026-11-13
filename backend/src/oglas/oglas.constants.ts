@@ -1,9 +1,17 @@
+import { FindOptionsWhere, IsNull, MoreThan, Or } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 
 export const DANA_VAZENJA = 30;
 
 export function istekao(oglas: Oglas, sada = new Date()) {
   return oglas.vaziDo !== null && oglas.vaziDo <= sada;
+}
+
+export function vidljivSvima(): FindOptionsWhere<Oglas> {
+  return {
+    datumSakrivanja: IsNull(),
+    vaziDo: Or(IsNull(), MoreThan(new Date())),
+  };
 }
 
 export const PORUKA_SAKRIVEN =

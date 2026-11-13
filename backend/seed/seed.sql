@@ -1094,4 +1094,9 @@ SELECT v.tip, v.tekst, v.link, v.procitano, v.korisnik_id, v.datum
 FROM seed_notifikacija v
 ORDER BY v.datum;
 
+-- Nepročitani oglasi: Marija, Natalija i Danijel su oglase poslednji put otvorili pre tri i po dana
+UPDATE korisnik
+SET "oglasiProcitaniDo" = now() - interval '3 days 12 hours'
+WHERE email IN ('marija@gmail.com', 'natalija.stojadinovic@example.com', 'danijel@gmail.com');
+
 COMMIT;

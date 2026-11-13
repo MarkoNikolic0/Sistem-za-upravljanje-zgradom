@@ -49,4 +49,8 @@ export class Korisnik {
 
   @Column({ type: 'timestamptz', nullable: true })
   deaktiviran: Date | null;
+
+  @Column({ type: 'timestamptz', default: () => 'now()' })
+  @Exclude()
+  oglasiProcitaniDo: Date;
 }

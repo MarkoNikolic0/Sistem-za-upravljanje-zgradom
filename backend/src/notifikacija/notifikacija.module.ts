@@ -14,6 +14,6 @@ import { NotifikacijaSubscriber } from './notifikacija.subscriber.js';
   ],
   controllers: [NotifikacijaController],
   providers: [NotifikacijaService, NotifikacijaGateway, NotifikacijaSubscriber],
-  exports: [NotifikacijaService],
+  exports: [NotifikacijaService, NotifikacijaGateway],
 })
 export class NotifikacijaModule {}
