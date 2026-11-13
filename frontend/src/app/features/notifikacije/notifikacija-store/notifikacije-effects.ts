@@ -25,6 +25,15 @@ import { NotifikacijeVeza } from '../notifikacije-veza';
 
 const TRAJANJE_TOASTA_MS = 6000;
 
+const krajListe = (actions$: Actions) =>
+  actions$.pipe(
+    ofType(
+      NotifikacijeActions.listaOtvorena,
+      NotifikacijeActions.listaZatvorena,
+      VezaActions.zaustavi,
+    ),
+  );
+
 export const veza = createEffect(
   (actions$ = inject(Actions), notifikacijeVeza = inject(NotifikacijeVeza)) =>
     actions$.pipe(
@@ -46,7 +55,7 @@ export const veza = createEffect(
 export const brojNeprocitanih = createEffect(
   (actions$ = inject(Actions), service = inject(NotifikacijaService)) =>
     actions$.pipe(
-      ofType(VezaActions.povezan, NotifikacijeApiActions.procitana),
+      ofType(VezaActions.povezan, VezaActions.stigla),
       switchMap(() =>
         service.brojNeprocitanih().pipe(
           map((broj) => NotifikacijeApiActions.brojUcitan({ broj })),
@@ -70,6 +79,9 @@ export const ucitajListu = createEffect(
         service.notifikacije(samoNeprocitane).pipe(
           map((stranica) => NotifikacijeApiActions.listaUcitana({ stranica })),
           catchError(() => of(NotifikacijeApiActions.listaNeuspela())),
+          takeUntil(
+            actions$.pipe(ofType(NotifikacijeActions.listaZatvorena, VezaActions.zaustavi)),
+          ),
         ),
       ),
     ),
@@ -88,6 +100,7 @@ export const ucitajStarije = createEffect(
         service.notifikacije(samoNeprocitane, stavke.at(-1)?.id).pipe(
           map((stranica) => NotifikacijeApiActions.starijeUcitane({ stranica })),
           catchError(() => of(NotifikacijeApiActions.starijeNeuspele())),
+          takeUntil(krajListe(actions$)),
         ),
       ),
     ),

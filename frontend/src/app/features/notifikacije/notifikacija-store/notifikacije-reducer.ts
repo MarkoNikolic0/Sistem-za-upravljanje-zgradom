@@ -12,6 +12,7 @@ interface NotifikacijeState {
   status: StatusListe;
   ucitavaStarije: boolean;
   greska: string | null;
+  poslednjaStigla: number | null;
 }
 
 const pocetnoStanje: NotifikacijeState = {
@@ -22,6 +23,7 @@ const pocetnoStanje: NotifikacijeState = {
   status: 'pocetno',
   ucitavaStarije: false,
   greska: null,
+  poslednjaStigla: null,
 };
 
 function bezDuplikata(postojece: Notifikacija[], nove: Notifikacija[]): Notifikacija[] {
@@ -41,6 +43,7 @@ export const notifikacijeFeature = createFeature({
     on(VezaActions.stigla, (stanje, { notifikacija }): NotifikacijeState => ({
       ...stanje,
       brojNeprocitanih: stanje.brojNeprocitanih + 1,
+      poslednjaStigla: notifikacija.id,
       stavke:
         stanje.status === 'ucitano' ? bezDuplikata([notifikacija], stanje.stavke) : stanje.stavke,
     })),
@@ -56,6 +59,7 @@ export const notifikacijeFeature = createFeature({
     on(NotifikacijeActions.listaZatvorena, (stanje): NotifikacijeState => ({
       ...pocetnoStanje,
       brojNeprocitanih: stanje.brojNeprocitanih,
+      poslednjaStigla: stanje.poslednjaStigla,
     })),
     on(NotifikacijeApiActions.listaUcitana, (stanje, { stranica }): NotifikacijeState => ({
       ...stanje,
@@ -85,6 +89,7 @@ export const notifikacijeFeature = createFeature({
     })),
     on(NotifikacijeApiActions.procitana, (stanje, { id }): NotifikacijeState => ({
       ...stanje,
+      brojNeprocitanih: Math.max(0, stanje.brojNeprocitanih - 1),
       stavke: stanje.stavke.map((n) => (n.id === id ? { ...n, procitano: true } : n)),
     })),
     on(NotifikacijeActions.procitajSve, (stanje): NotifikacijeState => ({

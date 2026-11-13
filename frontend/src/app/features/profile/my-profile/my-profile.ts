@@ -40,7 +40,7 @@ export class MyProfile {
   private fb = inject(FormBuilder);
   private readonly fokusiraj = fokusPosleCrtanja();
 
-  protected readonly profil = this.profileService.profil;
+  protected readonly profil = this.profileService.osvezenProfil();
 
   protected readonly nazivUloge = computed(() =>
     this.profil.hasValue() ? NAZIVI_ULOGA[this.profil.value().uloga] : '',

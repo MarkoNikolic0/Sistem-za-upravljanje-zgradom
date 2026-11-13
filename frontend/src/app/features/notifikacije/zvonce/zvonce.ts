@@ -14,7 +14,11 @@ const NAJVECI_PRIKAZ = 99;
   styleUrl: './zvonce.scss',
 })
 export class Zvonce {
-  protected readonly broj = inject(Store).selectSignal(notifikacijeFeature.selectBrojNeprocitanih);
+  private store = inject(Store);
+  protected readonly broj = this.store.selectSignal(notifikacijeFeature.selectBrojNeprocitanih);
+  private readonly poslednjaStigla = this.store.selectSignal(
+    notifikacijeFeature.selectPoslednjaStigla,
+  );
   protected readonly zvoni = signal(false);
 
   protected readonly prikaz = computed(() =>
@@ -29,13 +33,10 @@ export class Zvonce {
   });
 
   constructor() {
-    let prethodni = this.broj();
     effect(() => {
-      const broj = this.broj();
-      if (broj > prethodni) {
+      if (this.poslednjaStigla() !== null) {
         this.zvoni.set(true);
       }
-      prethodni = broj;
     });
   }
 }

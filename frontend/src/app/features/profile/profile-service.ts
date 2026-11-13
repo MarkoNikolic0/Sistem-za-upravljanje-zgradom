@@ -16,6 +16,11 @@ export class ProfileService {
     this.korisnikId() ? this.apiUrl : undefined,
   );
 
+  osvezenProfil() {
+    this.profil.reload();
+    return this.profil;
+  }
+
   update(podaci: UpdateProfileRequest): Observable<ProfileResponse> {
     return this.http.patch<ProfileResponse>(this.apiUrl, podaci);
   }

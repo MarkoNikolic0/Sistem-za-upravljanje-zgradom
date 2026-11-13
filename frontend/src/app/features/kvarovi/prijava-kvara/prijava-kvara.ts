@@ -67,7 +67,7 @@ export class PrijavaKvara {
   protected readonly danaZaHitno = DANA_ZA_RESAVANJE.hitno;
   protected readonly pravilaSlika = PRAVILA_SLIKA_KVARA;
 
-  protected readonly profil = this.profileService.profil;
+  protected readonly profil = this.profileService.osvezenProfil();
   protected readonly greska = signal('');
   protected readonly slanje = signal(false);
 

@@ -1,6 +1,7 @@
 import {
   afterNextRender,
   Component,
+  computed,
   DestroyRef,
   effect,
   ElementRef,
@@ -9,6 +10,8 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { defer, map, repeat, timer } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -17,10 +20,15 @@ import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { IKONICE_NOTIFIKACIJA, Notifikacija } from '../notifikacija-models';
+import {
+  BOJE_NOTIFIKACIJA,
+  doPonoci,
+  IKONICE_NOTIFIKACIJA,
+  Notifikacija,
+  poDanima,
+} from '../notifikacija-models';
 import { notifikacijeFeature } from '../notifikacija-store/notifikacije-reducer';
 import { NotifikacijeActions } from '../notifikacija-store/notifikacije-actions';
-import { selectGrupe } from '../notifikacija-store/notifikacije-selectors';
 
 @Component({
   selector: 'app-notifikacije',
@@ -44,6 +52,7 @@ export class Notifikacije {
   private poslednjiPreUcitavanja: number | null = null;
 
   protected readonly ikonice = IKONICE_NOTIFIKACIJA;
+  protected readonly boje = BOJE_NOTIFIKACIJA;
   protected readonly filteri = [
     { label: 'Sve', value: false },
     { label: 'Nepročitana', value: true },
@@ -65,7 +74,14 @@ export class Notifikacije {
     notifikacijeFeature.selectBrojNeprocitanih,
   );
 
-  protected readonly grupe = this.store.selectSignal(selectGrupe);
+  private readonly danas = toSignal(
+    defer(() => timer(doPonoci())).pipe(
+      repeat(),
+      map(() => new Date()),
+    ),
+    { initialValue: new Date() },
+  );
+  protected readonly grupe = computed(() => poDanima(this.stavke(), this.danas()));
 
   constructor() {
     this.otvori(false);

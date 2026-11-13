@@ -6,7 +6,7 @@ import { Notifikacija, TipNotifikacije } from './notifikacija.entity.js';
 import { NotifikacijaUpitDto } from './dto/notifikacija-upit.dto.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
-import { MAKS_PO_STRANI, Stranica } from '../shared/stranicenje.js';
+import { Stranica, velicinaStrane } from '../shared/stranicenje.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 import { DANA_CUVANJA } from './notifikacija.constants.js';
 import { NotifikacijaGateway } from './notifikacija.gateway.js';
@@ -61,7 +61,7 @@ export class NotifikacijaService {
         ...(upit.preId && { id: LessThan(upit.preId) }),
       },
       order: { id: 'DESC' },
-      take: Math.min(upit.poStrani, MAKS_PO_STRANI),
+      take: velicinaStrane(upit.poStrani),
     });
     return { stavke, ukupno };
   }

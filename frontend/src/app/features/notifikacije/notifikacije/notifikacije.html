@@ -46,6 +46,7 @@
               <li
                 class="notifikacija"
                 [class.neprocitana]="!notifikacija.procitano"
+                [style.--boja]="boje[notifikacija.tip]"
                 [attr.data-id]="notifikacija.id"
                 tabindex="-1"
               >
@@ -72,32 +73,34 @@
                       {{ notifikacija.tekst }}
                     </p>
                   }
+                </div>
+                <div class="desno">
                   <time class="vreme" [attr.datetime]="notifikacija.datumKreiranja">
                     {{
                       notifikacija.datumKreiranja
-                        | date: (grupa.naziv === 'Ranije' ? 'd. MMM y. HH:mm' : 'HH:mm')
+                        | date: (grupa.naziv === 'Ranije' ? 'd. MMM' : 'HH:mm')
                     }}
                   </time>
-                </div>
-                @if (!notifikacija.procitano) {
-                  @if (notifikacija.link) {
-                    <span class="tacka" aria-hidden="true"></span>
-                  } @else {
-                    <button
-                      pButton
-                      type="button"
-                      text
-                      rounded
-                      iconOnly
-                      size="small"
-                      aria-label="Označi kao pročitano"
-                      class="oznaci"
-                      (click)="oznaci(notifikacija)"
-                    >
-                      <i class="pi pi-check" aria-hidden="true"></i>
-                    </button>
+                  @if (!notifikacija.procitano) {
+                    @if (notifikacija.link) {
+                      <span class="tacka" aria-hidden="true"></span>
+                    } @else {
+                      <button
+                        pButton
+                        type="button"
+                        text
+                        rounded
+                        iconOnly
+                        size="small"
+                        aria-label="Označi kao pročitano"
+                        class="oznaci"
+                        (click)="oznaci(notifikacija)"
+                      >
+                        <i class="pi pi-check" aria-hidden="true"></i>
+                      </button>
+                    }
                   }
-                }
+                </div>
               </li>
             }
           </ul>

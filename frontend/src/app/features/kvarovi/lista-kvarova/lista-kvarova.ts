@@ -81,7 +81,7 @@ export class ListaKvarova {
     ...this.listaZgrada(),
   ]);
 
-  private readonly profil = this.profileService.profil;
+  private readonly profil = this.profileService.osvezenProfil();
   protected readonly imaStan = computed(
     () => this.profil.hasValue() && this.profil.value().stanovi.length > 0,
   );

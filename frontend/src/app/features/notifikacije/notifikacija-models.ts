@@ -36,6 +36,31 @@ export const IKONICE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   vazno_obavestenje: 'pi pi-megaphone',
 };
 
+const KVAR = 'var(--color-upozorenje)';
+const ZAHTEV = 'var(--p-violet-300)';
+const SASTANAK = 'var(--color-info)';
+
+export const BOJE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
+  kvar_prijavljen: KVAR,
+  kvar_status: KVAR,
+  kvar_dodeljen: KVAR,
+  kvar_dolazak: KVAR,
+  kvar_komentar: KVAR,
+  zahtev_novi: ZAHTEV,
+  zahtev_obradjen: ZAHTEV,
+  sastanak_novi: SASTANAK,
+  sastanak_izmenjen: SASTANAK,
+  sastanak_otkazan: SASTANAK,
+  glasanje_novo: 'var(--color-uspeh)',
+  vazno_obavestenje: 'var(--color-greska)',
+};
+
+export function doPonoci(sada = new Date()): number {
+  return (
+    new Date(sada.getFullYear(), sada.getMonth(), sada.getDate() + 1).getTime() - sada.getTime()
+  );
+}
+
 export const KLJUC_TOASTA = 'notifikacija';
 
 export interface GrupaNotifikacija {
