@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -43,6 +44,8 @@ const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA
 
 @Injectable()
 export class OglasService {
+  private readonly logger = new Logger(OglasService.name);
+
   constructor(
     @InjectRepository(Oglas) private oglasRepository: Repository<Oglas>,
     private korisnikService: KorisnikService,
@@ -106,51 +109,57 @@ export class OglasService {
     }
 
     try {
-      const { sacuvan, primaoci } = await this.dataSource.transaction(
-        async (manager) => {
-          await proveriAktivnu(manager, dto.zgradaId, true);
-          const sacuvan = await manager.save(
-            this.oglasRepository.create({
-              naslov: dto.naslov,
-              tekst: dto.tekst,
-              vrsta: dto.vrsta,
-              vazno: dto.vazno,
-              vaziDo: dto.vaziDo,
-              zgrada: { id: dto.zgradaId },
-              autor: { id: korisnikId },
-              glasanje:
-                dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
-            }),
+      const sacuvan = await this.dataSource.transaction(async (manager) => {
+        await proveriAktivnu(manager, dto.zgradaId, true);
+        const sacuvan = await manager.save(
+          this.oglasRepository.create({
+            naslov: dto.naslov,
+            tekst: dto.tekst,
+            vrsta: dto.vrsta,
+            vazno: dto.vazno,
+            vaziDo: dto.vaziDo,
+            zgrada: { id: dto.zgradaId },
+            autor: { id: korisnikId },
+            glasanje:
+              dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
+          }),
+        );
+        if (dto.vazno && dto.vrsta === VrstaOglasa.OBAVESTENJE) {
+          await this.notifikacije.obavesti(
+            manager,
+            await stanariZgrade(manager, dto.zgradaId),
+            {
+              tip: TipNotifikacije.VAZNO_OBAVESTENJE,
+              tekst: `Važno obaveštenje: „${dto.naslov}“.`,
+              link: '/oglasi',
+            },
+            korisnikId,
           );
-          const stanari = await stanariZgrade(manager, dto.zgradaId);
-          if (dto.vazno && dto.vrsta === VrstaOglasa.OBAVESTENJE) {
-            await this.notifikacije.obavesti(
-              manager,
-              stanari,
-              {
-                tip: TipNotifikacije.VAZNO_OBAVESTENJE,
-                tekst: `Važno obaveštenje: „${dto.naslov}“.`,
-                link: '/oglasi',
-              },
-              korisnikId,
-            );
-          }
-          return {
-            sacuvan,
-            primaoci: [
-              ...stanari,
-              ...(await upravnikZgrade(manager, dto.zgradaId)),
-            ],
-          };
-        },
-      );
-      this.gateway.javiNovOglas(primaoci.filter((id) => id !== korisnikId));
+        }
+        return sacuvan;
+      });
+      void this.javiNovOglas(dto.zgradaId, korisnikId);
       return sacuvan;
     } catch (greska) {
       if (jeDupliUnos(greska)) {
         throw new ConflictException('Odluka je već objavljena.');
       }
       throw greska;
+    }
+  }
+
+  private async javiNovOglas(zgradaId: number, autorId: number) {
+    try {
+      const manager = this.dataSource.manager;
+      const [stanari, upravnik] = await Promise.all([
+        stanariZgrade(manager, zgradaId),
+        upravnikZgrade(manager, zgradaId),
+      ]);
+      this.gateway.javiNovOglas(
+        [...stanari, ...upravnik].filter((id) => id !== autorId),
+      );
+    } catch (greska) {
+      this.logger.error('Signal za nov oglas nije poslat.', greska);
     }
   }
 

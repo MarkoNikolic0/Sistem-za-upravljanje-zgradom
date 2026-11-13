@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Not, Repository } from 'typeorm';
+import { Not, Raw, Repository } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
@@ -32,7 +32,11 @@ export class OglasProcitanoService {
       ...uZgradama(p.zgrade),
       ...vidljivSvima(),
       autor: { id: Not(korisnikId) },
-      datumKreiranja: MoreThan(procitanoDo),
+      datumKreiranja: Raw(
+        (kolona) =>
+          `${kolona} > (SELECT "oglasiProcitaniDo" FROM korisnik WHERE id = :korisnikId)`,
+        { korisnikId },
+      ),
     });
     return { broj, procitanoDo };
   }

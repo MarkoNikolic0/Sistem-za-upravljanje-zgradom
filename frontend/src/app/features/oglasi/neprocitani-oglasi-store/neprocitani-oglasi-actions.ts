@@ -12,6 +12,6 @@ export const NeprocitaniOglasiApiActions = createActionGroup({
   source: 'Neprocitani oglasi API',
   events: {
     'Broj ucitan': props<{ broj: number }>(),
-    'Oznaceni procitani': props<{ procitanoDo: string }>(),
+    'Oznaceni procitani': props<{ procitanoDo: string; osveziListu: boolean }>(),
   },
 });

@@ -1,6 +1,4 @@
-import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Actions, ofType } from '@ngrx/effects';
+import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +21,6 @@ import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
 import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
 import { StanjeNavigacije } from '../../../shared/stanje/poruka';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { VezaActions } from '../../notifikacije/notifikacija-store/notifikacije-actions';
 import { NeprocitaniOglasiActions } from '../neprocitani-oglasi-store/neprocitani-oglasi-actions';
 import { neprocitaniOglasiFeature } from '../neprocitani-oglasi-store/neprocitani-oglasi-reducer';
 import { jeNov } from '../pravila-oglasa';
@@ -58,6 +55,9 @@ export class ListaOglasa {
   private readonly noviPosle = this.globalniStore.selectSignal(
     neprocitaniOglasiFeature.selectNoviPosle,
   );
+  private readonly osvezenja = this.globalniStore.selectSignal(
+    neprocitaniOglasiFeature.selectOsvezenja,
+  );
 
   protected readonly vrste = VRSTE_OGLASA;
   protected readonly naziviUloga = NAZIVI_ULOGA;
@@ -90,9 +90,11 @@ export class ListaOglasa {
     inject(DestroyRef).onDestroy(() =>
       this.globalniStore.dispatch(NeprocitaniOglasiActions.listaZatvorena()),
     );
-    inject(Actions)
-      .pipe(ofType(VezaActions.novOglas), takeUntilDestroyed())
-      .subscribe(() => this.store.ucitaj());
+    effect(() => {
+      if (this.osvezenja() > 0) {
+        untracked(() => this.store.ucitaj());
+      }
+    });
 
     const navigacija = this.router.currentNavigation();
     const stanje = navigacija?.extras.state as StanjeNavigacije | undefined;

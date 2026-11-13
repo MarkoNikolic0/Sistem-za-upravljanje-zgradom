@@ -49,7 +49,7 @@ export class Oglas {
   @ManyToOne(() => Korisnik, { nullable: false, onDelete: 'CASCADE' })
   autor: Korisnik;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'clock_timestamp()' })
   datumKreiranja: Date;
 
   @Column({ type: 'timestamptz', nullable: true })

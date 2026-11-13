@@ -9,12 +9,14 @@ interface NeprocitaniOglasiState {
   broj: number;
   listaOtvorena: boolean;
   noviPosle: string | null;
+  osvezenja: number;
 }
 
 const pocetnoStanje: NeprocitaniOglasiState = {
   broj: 0,
   listaOtvorena: false,
   noviPosle: null,
+  osvezenja: 0,
 };
 
 export const neprocitaniOglasiFeature = createFeature({
@@ -29,6 +31,7 @@ export const neprocitaniOglasiFeature = createFeature({
     on(NeprocitaniOglasiActions.listaOtvorena, (stanje): NeprocitaniOglasiState => ({
       ...stanje,
       listaOtvorena: true,
+      osvezenja: 0,
     })),
     on(NeprocitaniOglasiActions.listaZatvorena, (stanje): NeprocitaniOglasiState => ({
       ...stanje,
@@ -37,11 +40,15 @@ export const neprocitaniOglasiFeature = createFeature({
     })),
     on(
       NeprocitaniOglasiApiActions.oznaceniProcitani,
-      (stanje, { procitanoDo }): NeprocitaniOglasiState => ({
-        ...stanje,
-        broj: 0,
-        noviPosle: stanje.noviPosle ?? procitanoDo,
-      }),
+      (stanje, { procitanoDo, osveziListu }): NeprocitaniOglasiState =>
+        stanje.listaOtvorena
+          ? {
+              ...stanje,
+              broj: 0,
+              noviPosle: stanje.noviPosle ?? procitanoDo,
+              osvezenja: osveziListu ? stanje.osvezenja + 1 : stanje.osvezenja,
+            }
+          : { ...stanje, broj: 0 },
     ),
   ),
 });

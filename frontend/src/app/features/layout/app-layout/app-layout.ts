@@ -19,7 +19,7 @@ import {
   VezaActions,
 } from '../../notifikacije/notifikacija-store/notifikacije-actions';
 import { neprocitaniOglasiFeature } from '../../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
-import { oblik } from '../../../shared/tekst/mnozina';
+import { uMnozini } from '../../../shared/tekst/mnozina';
 import { prikazBroja } from '../../../shared/tekst/prikaz-broja';
 
 const NAJMANJE_U_TRACI = 3;
@@ -77,7 +77,7 @@ export class AppLayout {
   }
 
   protected opisBroja(broj: number): string {
-    return `${broj} ${oblik(broj, 'nepročitan', 'nepročitana', 'nepročitanih')}`;
+    return uMnozini(broj, 'nepročitan', 'nepročitana', 'nepročitanih');
   }
 
   protected readonly stavke = computed(() => {
