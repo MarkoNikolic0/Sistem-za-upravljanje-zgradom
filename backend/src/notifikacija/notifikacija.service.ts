@@ -67,11 +67,26 @@ export class NotifikacijaService {
   }
 
   async brojNeprocitanih(korisnikId: number) {
-    const broj = await this.notifikacijaRepository.countBy({
-      korisnik: { id: korisnikId },
-      procitano: false,
-    });
-    return { broj };
+    const poLinku = await this.notifikacijaRepository
+      .createQueryBuilder('notifikacija')
+      .select('notifikacija.link', 'link')
+      .addSelect('COUNT(*)::int', 'broj')
+      .addSelect(
+        '(ARRAY_AGG(notifikacija.tip ORDER BY notifikacija.id DESC))[1]',
+        'tip',
+      )
+      .where('notifikacija.korisnik = :korisnikId', { korisnikId })
+      .andWhere('notifikacija.procitano = false')
+      .groupBy('notifikacija.link')
+      .getRawMany<{
+        link: string | null;
+        broj: number;
+        tip: TipNotifikacije;
+      }>();
+    return {
+      broj: poLinku.reduce((zbir, { broj }) => zbir + broj, 0),
+      linkovi: poLinku.filter(({ link }) => link !== null),
+    };
   }
 
   async procitaj(id: number, korisnikId: number): Promise<void> {
@@ -84,9 +99,13 @@ export class NotifikacijaService {
     }
   }
 
-  async procitajSve(korisnikId: number): Promise<void> {
+  async procitajSve(korisnikId: number, link?: string): Promise<void> {
     await this.notifikacijaRepository.update(
-      { korisnik: { id: korisnikId }, procitano: false },
+      {
+        korisnik: { id: korisnikId },
+        procitano: false,
+        ...(link !== undefined && { link }),
+      },
       { procitano: true },
     );
   }

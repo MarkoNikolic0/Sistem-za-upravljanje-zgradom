@@ -1,6 +1,6 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
 import { Stranica } from '../../../shared/liste/stranica';
-import { Notifikacija } from '../notifikacija-models';
+import { NeprocitaneNotifikacije, Notifikacija } from '../notifikacija-models';
 
 export const NotifikacijeActions = createActionGroup({
   source: 'Notifikacije',
@@ -27,12 +27,13 @@ export const VezaActions = createActionGroup({
 export const NotifikacijeApiActions = createActionGroup({
   source: 'Notifikacije API',
   events: {
-    'Broj ucitan': props<{ broj: number }>(),
+    'Neprocitane ucitane': props<NeprocitaneNotifikacije>(),
     'Lista ucitana': props<{ stranica: Stranica<Notifikacija> }>(),
     'Lista neuspela': emptyProps(),
     'Starije ucitane': props<{ stranica: Stranica<Notifikacija> }>(),
     'Starije neuspele': emptyProps(),
-    Procitana: props<{ id: number }>(),
+    Procitana: props<{ notifikacija: Notifikacija }>(),
+    'Stranica procitana': props<{ link: string }>(),
     'Procitane sve': emptyProps(),
     'Procitaj sve neuspelo': emptyProps(),
   },

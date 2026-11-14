@@ -60,6 +60,10 @@
   padding: 0.875rem 1.25rem;
   transition: background-color 150ms;
 
+  &.neprocitano {
+    background: color-mix(in srgb, var(--color-svetlo) 6%, transparent);
+  }
+
   &:hover {
     background: rgb(255 255 255 / 0.025);
   }

@@ -116,8 +116,10 @@
     } @else {
       <div class="panel-liste">
         @for (kvar of store.kvarovi(); track kvar.id) {
+          @let novo = neprocitane()['/kvarovi/' + kvar.id];
           <article
             class="stavka"
+            [class.neprocitano]="novo"
             [class.hitna]="jeHitan(kvar)"
             [class.zavrsena]="jeZavrsen(kvar.status)"
             [style.--boja]="boje[kvar.status]"
@@ -146,6 +148,9 @@
                   kvar.datumPrijave | date: 'd. MMM y.'
                 }}</time>
               </p>
+              @if (novo) {
+                <app-novo-obavestenje class="mt-1.5" [neprocitano]="novo" />
+              }
             </div>
             <div class="desno">
               <span class="stanje">

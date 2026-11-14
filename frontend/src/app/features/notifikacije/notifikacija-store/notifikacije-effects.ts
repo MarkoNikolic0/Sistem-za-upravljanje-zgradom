@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { concatLatestFrom } from '@ngrx/operators';
 import { Store } from '@ngrx/store';
@@ -10,6 +10,7 @@ import {
   exhaustMap,
   filter,
   map,
+  merge,
   mergeMap,
   of,
   switchMap,
@@ -17,7 +18,7 @@ import {
   tap,
 } from 'rxjs';
 import { ProfileService } from '../../profile/profile-service';
-import { KLJUC_TOASTA } from '../notifikacija-models';
+import { KLJUC_TOASTA, putanjaAdrese } from '../notifikacija-models';
 import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import { notifikacijeFeature } from './notifikacije-reducer';
@@ -57,13 +58,13 @@ export const veza = createEffect(
   { functional: true },
 );
 
-export const brojNeprocitanih = createEffect(
+export const neprocitane = createEffect(
   (actions$ = inject(Actions), service = inject(NotifikacijaService)) =>
     actions$.pipe(
       ofType(VezaActions.povezan, VezaActions.stigla),
       switchMap(() =>
-        service.brojNeprocitanih().pipe(
-          map((broj) => NotifikacijeApiActions.brojUcitan({ broj })),
+        service.neprocitane().pipe(
+          map((neprocitane) => NotifikacijeApiActions.neprocitaneUcitane(neprocitane)),
           catchError(() => EMPTY),
         ),
       ),
@@ -119,7 +120,31 @@ export const procitaj = createEffect(
       filter(({ notifikacija }) => !notifikacija.procitano),
       mergeMap(({ notifikacija }) =>
         service.procitaj(notifikacija.id).pipe(
-          map(() => NotifikacijeApiActions.procitana({ id: notifikacija.id })),
+          map(() => NotifikacijeApiActions.procitana({ notifikacija })),
+          catchError(() => EMPTY),
+        ),
+      ),
+    ),
+  { functional: true },
+);
+
+export const procitajOtvorenuStranicu = createEffect(
+  (
+    actions$ = inject(Actions),
+    router = inject(Router),
+    store = inject(Store),
+    service = inject(NotifikacijaService),
+  ) =>
+    merge(
+      router.events.pipe(filter((dogadjaj) => dogadjaj instanceof NavigationEnd)),
+      actions$.pipe(ofType(NotifikacijeApiActions.neprocitaneUcitane)),
+    ).pipe(
+      map(() => putanjaAdrese(router.url)),
+      concatLatestFrom(() => store.select(notifikacijeFeature.selectLinkovi)),
+      filter(([link, linkovi]) => Object.hasOwn(linkovi, link)),
+      mergeMap(([link]) =>
+        service.procitajStranicu(link).pipe(
+          map(() => NotifikacijeApiActions.stranicaProcitana({ link })),
           catchError(() => EMPTY),
         ),
       ),

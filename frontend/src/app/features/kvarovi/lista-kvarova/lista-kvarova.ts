@@ -28,9 +28,13 @@ import { KvarService } from '../kvar-service';
 import { ListaKvarovaStore } from '../lista-kvarova-store';
 import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { BrojStanaraPipe } from '../broj-stanara-pipe';
+import { Store } from '@ngrx/store';
+import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
+import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
 
 @Component({
   imports: [
+    NovoObavestenje,
     DatePipe,
     FormsModule,
     ButtonModule,
@@ -48,6 +52,7 @@ import { BrojStanaraPipe } from '../broj-stanara-pipe';
   templateUrl: './lista-kvarova.html',
 })
 export class ListaKvarova {
+  protected readonly neprocitane = inject(Store).selectSignal(notifikacijeFeature.selectLinkovi);
   protected readonly store = inject(ListaKvarovaStore);
   private authStore = inject(AuthStore);
   private profileService = inject(ProfileService);

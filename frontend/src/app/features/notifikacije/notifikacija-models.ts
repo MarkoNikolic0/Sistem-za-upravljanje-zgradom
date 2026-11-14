@@ -21,6 +21,39 @@ export interface Notifikacija {
   datumKreiranja: string;
 }
 
+export interface Neprocitano {
+  broj: number;
+  tip: TipNotifikacije;
+}
+
+export interface NeprocitaneNotifikacije {
+  broj: number;
+  linkovi: Record<string, Neprocitano>;
+}
+
+export const DOGADJAJI_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
+  kvar_prijavljen: 'Prijavljen kvar',
+  kvar_status: 'Promenjen status',
+  kvar_dodeljen: 'Dodeljen serviser',
+  kvar_dolazak: 'Zakazan dolazak servisera',
+  kvar_komentar: 'Nov komentar',
+  zahtev_novi: 'Nov zahtev',
+  zahtev_obradjen: 'Zahtev je obrađen',
+  sastanak_novi: 'Zakazan sastanak',
+  sastanak_izmenjen: 'Sastanak je izmenjen',
+  sastanak_otkazan: 'Sastanak je otkazan',
+  glasanje_novo: 'Novo glasanje',
+  vazno_obavestenje: 'Važno obaveštenje',
+};
+
+export function odeljakLinka(link: string): string {
+  return `/${link.split('/')[1]}`;
+}
+
+export function putanjaAdrese(adresa: string): string {
+  return adresa.split(/[?#]/)[0];
+}
+
 export const IKONICE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   kvar_prijavljen: 'pi pi-wrench',
   kvar_status: 'pi pi-wrench',

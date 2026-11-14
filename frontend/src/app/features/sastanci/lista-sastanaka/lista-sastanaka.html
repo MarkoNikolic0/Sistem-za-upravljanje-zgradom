@@ -81,8 +81,12 @@
         </div>
       } @else {
         @if (sledeci(); as s) {
+          @let novo = neprocitane()['/sastanci/' + s.id];
           <a [routerLink]="['/sastanci', s.id]" class="panel istaknut sledeci">
             <p class="oznaka">Sledeći sastanak · {{ kadaJe(s.pocetak) }}</p>
+            @if (novo) {
+              <app-novo-obavestenje class="mt-3" [neprocitano]="novo" />
+            }
             <div class="mt-4 flex gap-4 sm:gap-6">
               <div class="datum-kalendara veliki" aria-hidden="true">
                 <span class="dan">{{ s.pocetak | date: 'd' }}</span>
@@ -114,8 +118,14 @@
           <h2 class="naslov-odeljka mt-8 mb-3">{{ grupa.mesec }}</h2>
           <ul class="panel raspored">
             @for (s of grupa.sastanci; track s.id) {
+              @let novo = neprocitane()['/sastanci/' + s.id];
               <li>
-                <a [routerLink]="['/sastanci', s.id]" class="stavka" [class.otkazan]="s.otkazan">
+                <a
+                  [routerLink]="['/sastanci', s.id]"
+                  class="stavka"
+                  [class.otkazan]="s.otkazan"
+                  [class.neprocitano]="novo"
+                >
                   <div class="datum-kalendara" aria-hidden="true">
                     <span class="dan">{{ s.pocetak | date: 'd' }}</span>
                     <span class="dan-u-nedelji">{{ s.pocetak | date: 'EEE' }}</span>
@@ -131,6 +141,9 @@
                         · {{ s.zgrada.naziv }}
                       }
                     </p>
+                    @if (novo) {
+                      <app-novo-obavestenje class="mt-1" [neprocitano]="novo" />
+                    }
                   </div>
                   <div class="max-sm:hidden">
                     <app-oznake-sastanka [sastanak]="s" />

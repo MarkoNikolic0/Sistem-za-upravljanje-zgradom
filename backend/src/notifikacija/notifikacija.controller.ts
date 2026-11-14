@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -15,6 +16,7 @@ import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { NotifikacijaService } from './notifikacija.service.js';
 import { NotifikacijaUpitDto } from './dto/notifikacija-upit.dto.js';
+import { ProcitanoDto } from './dto/procitano.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -37,8 +39,11 @@ export class NotifikacijaController {
 
   @Put('procitano')
   @HttpCode(HttpStatus.NO_CONTENT)
-  procitajSve(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
-    return this.notifikacijaService.procitajSve(korisnik.id);
+  procitajSve(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: ProcitanoDto,
+  ) {
+    return this.notifikacijaService.procitajSve(korisnik.id, dto.link);
   }
 
   @Put(':id/procitano')

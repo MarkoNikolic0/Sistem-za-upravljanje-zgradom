@@ -122,6 +122,10 @@
     border-top: 1px solid var(--color-linija);
   }
 
+  &.neprocitano {
+    background: color-mix(in srgb, var(--color-svetlo) 6%, transparent);
+  }
+
   // Hitan kvar: crvena traka uz levu ivicu
   &.hitna::before {
     content: '';

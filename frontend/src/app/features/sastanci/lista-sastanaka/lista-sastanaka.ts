@@ -13,9 +13,13 @@ import { StanjeSastanka } from '../sastanak-models';
 import { OznakeSastanka } from '../oznake-sastanka/oznake-sastanka';
 import { ListaSastanakaStore } from '../lista-sastanaka-store';
 import { kadaJe, poMesecima, tacaka } from '../pravila-sastanka';
+import { Store } from '@ngrx/store';
+import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
+import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
 
 @Component({
   imports: [
+    NovoObavestenje,
     DatePipe,
     FormsModule,
     RouterLink,
@@ -34,6 +38,7 @@ import { kadaJe, poMesecima, tacaka } from '../pravila-sastanka';
 })
 export class ListaSastanaka {
   protected readonly store = inject(ListaSastanakaStore);
+  protected readonly neprocitane = inject(Store).selectSignal(notifikacijeFeature.selectLinkovi);
 
   protected readonly filteri: { label: string; value: StanjeSastanka }[] = [
     { label: 'Predstojeći', value: 'predstojeci' },

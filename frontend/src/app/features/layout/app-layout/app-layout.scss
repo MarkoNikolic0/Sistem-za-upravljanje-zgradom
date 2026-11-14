@@ -118,6 +118,18 @@ p-sidebar-group-label.oznaka {
   left: calc(50% + 0.375rem);
 }
 
+// Tačka po sredini stavke, ispod sredine broja
+p-sidebar-menu-badge.tacka-meni {
+  top: calc(50% - 0.1875rem);
+  right: 0.5625rem;
+}
+
+.ikonica .tacka-meni {
+  position: absolute;
+  top: 0.25rem;
+  left: calc(50% + 0.5rem);
+}
+
 .stavka-trake.aktivna {
   color: var(--color-naslov);
 

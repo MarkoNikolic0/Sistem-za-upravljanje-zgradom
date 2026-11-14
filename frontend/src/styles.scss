@@ -616,6 +616,29 @@ a.plocica-fajla:hover {
   pointer-events: none;
 }
 
+// Tačka bez broja: ima novih obaveštenja u tom delu menija (Material 3 small badge)
+.tacka-meni {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.375rem;
+  min-width: 0;
+  height: 0.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-svetlo);
+  box-shadow: 0 0 0 2px var(--color-pozadina);
+  pointer-events: none;
+}
+
+// Stavka padajućeg menija Više sa tačkom (PrimeNG Menu prikazuje značku samo sa tekstom)
+.ima-novo .p-menu-item-label::after {
+  @extend .tacka-meni;
+  content: '';
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
 // Nepročitana kartica: traka uz levu ivicu (obaveštenja, oglasi)
 .neprocitano {
   position: relative;

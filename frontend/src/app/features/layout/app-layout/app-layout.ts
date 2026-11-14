@@ -18,6 +18,7 @@ import {
   NotifikacijeActions,
   VezaActions,
 } from '../../notifikacije/notifikacija-store/notifikacije-actions';
+import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
 import { neprocitaniOglasiFeature } from '../../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
 import { uMnozini } from '../../../shared/tekst/mnozina';
 import { prikazBroja } from '../../../shared/tekst/prikaz-broja';
@@ -49,7 +50,11 @@ export class AppLayout {
   private readonly fokusiraj = fokusPosleCrtanja();
   protected readonly kljucToasta = KLJUC_TOASTA;
   protected readonly prikazBroja = prikazBroja;
+  protected readonly opisTacke = 'ima novih obaveštenja';
   private readonly brojOglasa = this.store.selectSignal(neprocitaniOglasiFeature.selectBroj);
+  private readonly odeljciNeprocitanih = this.store.selectSignal(
+    notifikacijeFeature.selectOdeljciNeprocitanih,
+  );
 
   protected readonly nalogOtvoren = signal(false);
   protected readonly viseOtvoreno = signal(false);
@@ -83,10 +88,12 @@ export class AppLayout {
   protected readonly stavke = computed(() => {
     const uloga = this.authStore.korisnik()?.uloga;
     const brojOglasa = this.brojOglasa();
+    const odeljci = this.odeljciNeprocitanih();
     return uloga
       ? STAVKE_NAVIGACIJE.filter((s) => s.uloge.includes(uloga)).map((s) => ({
           ...s,
           broj: s.putanja === '/oglasi' ? brojOglasa : 0,
+          tacka: odeljci.has(s.putanja),
         }))
       : [];
   });
@@ -104,6 +111,8 @@ export class AppLayout {
     this.ostaleStavke().reduce((zbir, stavka) => zbir + stavka.broj, 0),
   );
 
+  protected readonly tackaVise = computed(() => this.ostaleStavke().some((stavka) => stavka.tacka));
+
   protected readonly stavkeVise = computed((): MenuItem[] =>
     this.ostaleStavke().map((stavka) => ({
       label: stavka.naziv,
@@ -111,6 +120,7 @@ export class AppLayout {
       routerLink: stavka.putanja,
       badge: stavka.broj ? prikazBroja(stavka.broj) : undefined,
       badgeStyleClass: 'broj-neprocitanih',
+      styleClass: stavka.tacka && !stavka.broj ? 'ima-novo' : undefined,
     })),
   );
 
