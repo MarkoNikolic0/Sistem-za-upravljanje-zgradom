@@ -1,14 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, IsNull, MoreThan, Repository } from 'typeorm';
 import webpush from 'web-push';
+import type { TrenutniKorisnikPodaci } from '../../auth/decorators/trenutni-korisnik.decorator.js';
+import { RefreshToken } from '../../auth/refresh-token/refresh-token.entity.js';
 import { Notifikacija } from '../notifikacija.entity.js';
 import { NotifikacijaGateway } from '../notifikacija.gateway.js';
 import { PushPretplataDto } from '../dto/push-pretplata.dto.js';
 import { PushPretplata } from './push-pretplata.entity.js';
 import {
   ISTEKLA_PRETPLATA,
+  ISTOVREMENO_PUSH,
   NAJDUZI_TEKST_PUSH,
   NASLOVI_PUSH,
   TRAJANJE_PUSH_S,
@@ -26,6 +30,8 @@ export class PushService {
   constructor(
     @InjectRepository(PushPretplata)
     private pretplataRepository: Repository<PushPretplata>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>,
     private gateway: NotifikacijaGateway,
     config: ConfigService,
   ) {
@@ -40,13 +46,17 @@ export class PushService {
     return { kljuc: this.vapid.publicKey };
   }
 
-  async sacuvaj(korisnikId: number, dto: PushPretplataDto): Promise<void> {
+  async sacuvaj(
+    korisnik: TrenutniKorisnikPodaci,
+    dto: PushPretplataDto,
+  ): Promise<void> {
     await this.pretplataRepository.upsert(
       {
         endpoint: dto.endpoint,
         p256dh: dto.keys.p256dh,
         auth: dto.keys.auth,
-        korisnik: { id: korisnikId },
+        porodicaId: korisnik.sid,
+        korisnik: { id: korisnik.id },
       },
       ['endpoint'],
     );
@@ -63,17 +73,46 @@ export class PushService {
     await manager.delete(PushPretplata, { korisnik: { id: korisnikId } });
   }
 
+  @Cron(CronExpression.EVERY_DAY_AT_4AM)
+  async obrisiNeaktivne(): Promise<void> {
+    const aktivne = this.refreshTokenRepository
+      .createQueryBuilder('sesija')
+      .select('sesija.porodicaId')
+      .where('sesija.datumOpoziva IS NULL')
+      .andWhere('sesija.datumIsteka > now()')
+      .getQuery();
+    await this.pretplataRepository
+      .createQueryBuilder()
+      .delete()
+      .where(`"porodicaId" NOT IN (${aktivne})`)
+      .execute();
+  }
+
+  private async aktivneSesije(korisnici: number[]): Promise<string[]> {
+    const tokeni = await this.refreshTokenRepository.find({
+      select: { porodicaId: true },
+      where: {
+        korisnik: { id: In(korisnici) },
+        datumOpoziva: IsNull(),
+        datumIsteka: MoreThan(new Date()),
+      },
+    });
+    return tokeni.map((token) => token.porodicaId);
+  }
+
   async posalji(notifikacije: Notifikacija[]): Promise<void> {
     try {
-      const vidljivi = await this.gateway.vidljiviKorisnici(
-        notifikacije.map((n) => n.korisnik.id),
-      );
-      const zaSlanje = notifikacije.filter((n) => !vidljivi.has(n.korisnik.id));
-      if (zaSlanje.length === 0) {
+      const korisnici = [...new Set(notifikacije.map((n) => n.korisnik.id))];
+      const [vidljive, aktivne] = await Promise.all([
+        this.gateway.vidljiveSesije(korisnici),
+        this.aktivneSesije(korisnici),
+      ]);
+      const sesije = aktivne.filter((sesija) => !vidljive.has(sesija));
+      if (sesije.length === 0) {
         return;
       }
       const pretplate = await this.pretplataRepository.find({
-        where: { korisnik: { id: In(zaSlanje.map((n) => n.korisnik.id)) } },
+        where: { porodicaId: In(sesije) },
         relations: { korisnik: true },
         select: {
           id: true,
@@ -83,13 +122,22 @@ export class PushService {
           korisnik: { id: true },
         },
       });
-      await Promise.all(
-        zaSlanje.flatMap((notifikacija) =>
-          pretplate
-            .filter((p) => p.korisnik.id === notifikacija.korisnik.id)
-            .map((pretplata) => this.posaljiNaUredjaj(pretplata, notifikacija)),
+      const poKorisniku = new Map<number, PushPretplata[]>();
+      for (const pretplata of pretplate) {
+        const lista = poKorisniku.get(pretplata.korisnik.id) ?? [];
+        lista.push(pretplata);
+        poKorisniku.set(pretplata.korisnik.id, lista);
+      }
+      const slanja = notifikacije.flatMap((notifikacija) =>
+        (poKorisniku.get(notifikacija.korisnik.id) ?? []).map(
+          (pretplata) => () => this.posaljiNaUredjaj(pretplata, notifikacija),
         ),
       );
+      for (let i = 0; i < slanja.length; i += ISTOVREMENO_PUSH) {
+        await Promise.all(
+          slanja.slice(i, i + ISTOVREMENO_PUSH).map((posalji) => posalji()),
+        );
+      }
     } catch (greska) {
       this.logger.error(
         `Slanje push obaveštenja nije uspelo: ${String(greska)}`,

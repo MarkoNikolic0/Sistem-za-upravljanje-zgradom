@@ -6,6 +6,7 @@ export interface TrenutniKorisnikPodaci {
   id: number;
   email: string;
   uloga: Uloga;
+  sid: string;
 }
 
 export const TrenutniKorisnik = createParamDecorator(

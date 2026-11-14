@@ -22,7 +22,6 @@ import {
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
 import { cekaGlasFeature } from '../../glasanje/ceka-glas-store/ceka-glas-reducer';
 import { neprocitaniOglasiFeature } from '../../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
-import { PushObavestenja } from '../../notifikacije/push-obavestenja';
 import { brojNaIkonici } from '../../pwa/broj-na-ikonici';
 
 const NAJMANJE_U_TRACI = 3;
@@ -50,7 +49,6 @@ export class AppLayout {
   private router = inject(Router);
   private store = inject(Store);
   private messageService = inject(MessageService);
-  private push = inject(PushObavestenja);
   private readonly fokusiraj = fokusPosleCrtanja();
   protected readonly kljucToasta = KLJUC_TOASTA;
   protected readonly opisTacke = 'ima novo';
@@ -138,7 +136,6 @@ export class AppLayout {
   });
 
   private async odjava() {
-    await this.push.iskljuci();
     await this.authStore.logout();
     await this.router.navigate(['/login']);
   }

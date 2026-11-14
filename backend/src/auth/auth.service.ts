@@ -17,6 +17,7 @@ import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
 import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
 import { PORUKA_DEAKTIVIRAN, PORUKA_ZAKLJUCAN } from './auth.constants.js';
 import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.service.js';
+import type { JwtPayload } from './strategies/jwt.strategy.js';
 
 const LAZNI_HES = bcrypt.hashSync('lozinka-za-isto-vreme-odgovora', 10);
 
@@ -83,28 +84,20 @@ export class AuthService {
       throw new ForbiddenException(PORUKA_DEAKTIVIRAN);
     }
 
-    const payload = {
-      sub: korisnik.id,
-      email: korisnik.email,
-      uloga: korisnik.uloga,
-    };
-    const accessToken = await this.jwtService.signAsync(payload);
-    const { token: refreshToken, datumIsteka } =
-      await this.refreshTokenService.kreiraj(korisnik);
+    const {
+      token: refreshToken,
+      datumIsteka,
+      porodicaId,
+    } = await this.refreshTokenService.kreiraj(korisnik);
+    const accessToken = await this.accessToken(korisnik, porodicaId);
 
     return { accessToken, refreshToken, datumIsteka };
   }
 
   async refresh(refreshToken: string) {
-    const { korisnik, noviToken, datumIsteka } =
+    const { korisnik, noviToken, datumIsteka, porodicaId } =
       await this.refreshTokenService.rotiraj(refreshToken);
-
-    const payload = {
-      sub: korisnik.id,
-      email: korisnik.email,
-      uloga: korisnik.uloga,
-    };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.accessToken(korisnik, porodicaId);
 
     return { accessToken, refreshToken: noviToken, datumIsteka };
   }
@@ -114,5 +107,15 @@ export class AuthService {
       return;
     }
     await this.refreshTokenService.opozoviPoTokenu(refreshToken);
+  }
+
+  private accessToken(korisnik: Korisnik, porodicaId: string) {
+    const payload: JwtPayload = {
+      sub: korisnik.id,
+      email: korisnik.email,
+      uloga: korisnik.uloga,
+      sid: porodicaId,
+    };
+    return this.jwtService.signAsync(payload);
   }
 }

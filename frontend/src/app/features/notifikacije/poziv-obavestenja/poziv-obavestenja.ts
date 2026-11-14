@@ -11,6 +11,7 @@ import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { lokalnoSkladiste } from '../../../shared/lokalno-skladiste';
 import { PushObavestenja } from '../push-obavestenja';
 
 const KLJUC_ZATVOREN = 'poziv-obavestenja-zatvoren';
@@ -28,8 +29,9 @@ export class PozivObavestenja {
   private document = inject(DOCUMENT);
   private injector = inject(Injector);
   private readonly fokusiraj = fokusPosleCrtanja();
+  private skladiste = lokalnoSkladiste();
 
-  private readonly zatvoren = signal(this.procitajZatvoren());
+  private readonly zatvoren = signal(this.skladiste.procitaj(KLJUC_ZATVOREN) === '1');
   protected readonly radi = signal(false);
   protected readonly ishod = signal<Ishod | null>(null);
 
@@ -60,27 +62,11 @@ export class PozivObavestenja {
   }
 
   protected zatvori(): void {
-    this.zapamtiZatvaranje();
+    this.skladiste.zapamti(KLJUC_ZATVOREN, '1');
     this.zatvoren.set(true);
     this.ishod.set(null);
     afterNextRender(() => this.document.getElementById('sadrzaj')?.focus(), {
       injector: this.injector,
     });
-  }
-
-  private zapamtiZatvaranje(): void {
-    try {
-      this.document.defaultView?.localStorage.setItem(KLJUC_ZATVOREN, '1');
-    } catch {
-      return;
-    }
-  }
-
-  private procitajZatvoren(): boolean {
-    try {
-      return this.document.defaultView?.localStorage.getItem(KLJUC_ZATVOREN) === '1';
-    } catch {
-      return false;
-    }
   }
 }

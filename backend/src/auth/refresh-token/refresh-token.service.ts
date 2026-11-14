@@ -39,7 +39,7 @@ export class RefreshTokenService {
     });
     await this.refreshTokenRepository.save(zapis);
 
-    return { token, datumIsteka };
+    return { token, datumIsteka, porodicaId };
   }
 
   async rotiraj(token: string) {
@@ -76,7 +76,12 @@ export class RefreshTokenService {
       zapis.datumIsteka,
     );
 
-    return { korisnik: zapis.korisnik, noviToken, datumIsteka };
+    return {
+      korisnik: zapis.korisnik,
+      noviToken,
+      datumIsteka,
+      porodicaId: zapis.porodicaId,
+    };
   }
 
   async opozoviPorodicu(porodicaId: string) {

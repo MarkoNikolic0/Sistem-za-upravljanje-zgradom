@@ -7,10 +7,14 @@ import { Repository } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../../korisnik/aktivan-korisnik.js';
 import type { TrenutniKorisnikPodaci } from '../decorators/trenutni-korisnik.decorator.js';
+import { Uloga } from '../../shared/enums/uloga.enum.js';
 
 // Sadrzaj access tokena (postavlja ga AuthService pri prijavi i osvezavanju)
-interface JwtPayload {
+export interface JwtPayload {
   sub: number;
+  email: string;
+  uloga: Uloga;
+  sid: string;
 }
 
 @Injectable()
@@ -35,6 +39,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!korisnik) {
       throw new UnauthorizedException();
     }
-    return { id: korisnik.id, email: korisnik.email, uloga: korisnik.uloga };
+    return {
+      id: korisnik.id,
+      email: korisnik.email,
+      uloga: korisnik.uloga,
+      sid: payload.sid,
+    };
   }
 }

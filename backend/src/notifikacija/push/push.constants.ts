@@ -3,6 +3,7 @@ import { TipNotifikacije } from '../notifikacija.entity.js';
 export const TRAJANJE_PUSH_S = 24 * 60 * 60;
 export const NAJDUZI_TEKST_PUSH = 300;
 export const ISTEKLA_PRETPLATA = [404, 410];
+export const ISTOVREMENO_PUSH = 20;
 
 export const SERVISI_ZA_PUSH = [
   /^fcm\.googleapis\.com$/,

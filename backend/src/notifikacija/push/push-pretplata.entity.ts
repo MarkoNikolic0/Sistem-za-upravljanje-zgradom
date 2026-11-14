@@ -24,6 +24,10 @@ export class PushPretplata {
   auth: string;
 
   @Index()
+  @Column({ type: 'uuid' })
+  porodicaId: string;
+
+  @Index()
   @ManyToOne(() => Korisnik, { nullable: false, onDelete: 'CASCADE' })
   korisnik: Korisnik;
 

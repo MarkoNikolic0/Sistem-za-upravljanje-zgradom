@@ -9,7 +9,10 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import type { Namespace, Socket } from 'socket.io';
-import { JwtStrategy } from '../auth/strategies/jwt.strategy.js';
+import {
+  JwtStrategy,
+  type JwtPayload,
+} from '../auth/strategies/jwt.strategy.js';
 import { Notifikacija } from './notifikacija.entity.js';
 import {
   DOGADJAJ_NOTIFIKACIJA,
@@ -56,17 +59,17 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
     socket.data.vidljiv = vidljiv === true;
   }
 
-  async vidljiviKorisnici(korisnici: number[]): Promise<Set<number>> {
+  async vidljiveSesije(korisnici: number[]): Promise<Set<string>> {
     if (korisnici.length === 0) {
       return new Set();
     }
     const soketi = await this.server
-      .in([...new Set(korisnici)].map(SOBA_KORISNIKA))
+      .in(korisnici.map(SOBA_KORISNIKA))
       .fetchSockets();
     return new Set(
       soketi
         .filter((socket) => socket.data.vidljiv === true)
-        .map((socket) => socket.data.korisnikId as number),
+        .map((socket) => socket.data.sid as string),
     );
   }
 
@@ -90,9 +93,10 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
     if (typeof token !== 'string') {
       throw new Error('Nema tokena.');
     }
-    const payload = await this.jwtService.verifyAsync<{ sub: number }>(token);
+    const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
     const korisnik = await this.jwtStrategy.validate(payload);
     socket.data.korisnikId = korisnik.id;
+    socket.data.sid = korisnik.sid;
     socket.data.vidljiv = vidljiv === true;
   }
 }

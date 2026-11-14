@@ -63,7 +63,7 @@ export class NotifikacijaController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PushPretplataDto,
   ) {
-    return this.pushService.sacuvaj(korisnik.id, dto);
+    return this.pushService.sacuvaj(korisnik, dto);
   }
 
   @Delete('push-pretplata')

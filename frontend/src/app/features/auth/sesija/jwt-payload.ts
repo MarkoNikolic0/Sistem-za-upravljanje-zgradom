@@ -4,6 +4,7 @@ export interface JwtPayload {
   sub: number;
   email: string;
   uloga: Uloga;
+  sid: string;
   iat: number;
   exp: number;
 }

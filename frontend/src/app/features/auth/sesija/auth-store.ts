@@ -9,6 +9,7 @@ export interface PrijavljenKorisnik {
   id: number;
   email: string;
   uloga: Uloga;
+  sid: string;
 }
 
 type StatusSesije = 'provera' | 'prijavljen' | 'odjavljen';
@@ -33,8 +34,8 @@ export const AuthStore = signalStore(
       if (!token) {
         return null;
       }
-      const { sub, email, uloga } = procitajJwtPayload(token);
-      return { id: sub, email, uloga };
+      const { sub, email, uloga, sid } = procitajJwtPayload(token);
+      return { id: sub, email, uloga, sid };
     }),
   })),
   withMethods((store, authService = inject(AuthService)) => {
