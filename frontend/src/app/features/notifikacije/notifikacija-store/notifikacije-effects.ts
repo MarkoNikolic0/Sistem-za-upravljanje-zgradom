@@ -23,6 +23,7 @@ import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import { notifikacijeFeature } from './notifikacije-reducer';
 import { NotifikacijeVeza } from '../notifikacije-veza';
+import { PushObavestenja } from '../push-obavestenja';
 
 const TRAJANJE_TOASTA_MS = 6000;
 
@@ -78,6 +79,15 @@ export const neprocitane = createEffect(
       ),
     ),
   { functional: true },
+);
+
+export const sinhronizujPush = createEffect(
+  (actions$ = inject(Actions), push = inject(PushObavestenja)) =>
+    actions$.pipe(
+      ofType(VezaActions.povezan),
+      exhaustMap(() => push.sinhronizuj()),
+    ),
+  { functional: true, dispatch: false },
 );
 
 export const procitajNaOtvorenojStranici = createEffect(

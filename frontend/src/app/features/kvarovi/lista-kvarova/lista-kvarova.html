@@ -18,6 +18,9 @@
       </a>
     }
   </header>
+  @if (serviser()) {
+    <app-poziv-obavestenja />
+  }
 
   @if (stanarBezStana()) {
     <p class="mt-6 text-sm text-priguseno">

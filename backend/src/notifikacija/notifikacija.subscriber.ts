@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Notifikacija } from './notifikacija.entity.js';
 import { NotifikacijaGateway } from './notifikacija.gateway.js';
+import { PushService } from './push/push.service.js';
 
 const ZA_SLANJE = 'notifikacijeZaSlanje';
 
@@ -18,6 +19,7 @@ export class NotifikacijaSubscriber implements EntitySubscriberInterface<Notifik
   constructor(
     dataSource: DataSource,
     private gateway: NotifikacijaGateway,
+    private push: PushService,
   ) {
     dataSource.subscribers.push(this);
   }
@@ -35,7 +37,7 @@ export class NotifikacijaSubscriber implements EntitySubscriberInterface<Notifik
     if (nivo) {
       nivo.push(entity);
     } else {
-      this.gateway.posalji([entity]);
+      this.isporuci([entity]);
     }
   }
 
@@ -46,12 +48,17 @@ export class NotifikacijaSubscriber implements EntitySubscriberInterface<Notifik
     if (spoljni) {
       spoljni.push(...zavrsen);
     } else if (zavrsen.length > 0) {
-      this.gateway.posalji(zavrsen);
+      this.isporuci(zavrsen);
     }
   }
 
   afterTransactionRollback({ queryRunner }: TransactionRollbackEvent) {
     this.nivoi(queryRunner).pop();
+  }
+
+  private isporuci(notifikacije: Notifikacija[]) {
+    this.gateway.posalji(notifikacije);
+    void this.push.posalji(notifikacije);
   }
 
   private nivoi(queryRunner: QueryRunner) {

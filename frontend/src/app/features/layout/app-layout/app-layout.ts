@@ -22,6 +22,8 @@ import {
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
 import { cekaGlasFeature } from '../../glasanje/ceka-glas-store/ceka-glas-reducer';
 import { neprocitaniOglasiFeature } from '../../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
+import { PushObavestenja } from '../../notifikacije/push-obavestenja';
+import { brojNaIkonici } from '../../pwa/broj-na-ikonici';
 
 const NAJMANJE_U_TRACI = 3;
 const NAJVISE_U_TRACI = 5;
@@ -48,6 +50,7 @@ export class AppLayout {
   private router = inject(Router);
   private store = inject(Store);
   private messageService = inject(MessageService);
+  private push = inject(PushObavestenja);
   private readonly fokusiraj = fokusPosleCrtanja();
   protected readonly kljucToasta = KLJUC_TOASTA;
   protected readonly opisTacke = 'ima novo';
@@ -63,6 +66,7 @@ export class AppLayout {
   constructor() {
     this.store.dispatch(VezaActions.pokreni());
     inject(DestroyRef).onDestroy(() => this.store.dispatch(VezaActions.zaustavi()));
+    brojNaIkonici(this.store.selectSignal(notifikacijeFeature.selectBrojNeprocitanih));
     this.router.events
       .pipe(
         filter((e) => e instanceof NavigationEnd),
@@ -134,6 +138,7 @@ export class AppLayout {
   });
 
   private async odjava() {
+    await this.push.iskljuci();
     await this.authStore.logout();
     await this.router.navigate(['/login']);
   }

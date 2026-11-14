@@ -121,4 +121,4 @@ Ostali nalozi su na početku `backend/seed/seed.sql`.
 | backend / frontend | `npm run build` | produkcijski build |
 | koren | `docker compose down` | zaustavlja kontejnere (podaci ostaju) |
 
-> Vrednosti u `.env.example` fajlovima su samo za lokalni razvoj. Na pravom serveru promeni lozinku baze, `JWT_SECRET`, Garage ključ i `GARAGE_RPC_SECRET`, podesi pravi SMTP servis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_KORISNIK`, `SMTP_LOZINKA`, `MAIL_OD`) i postavi `NODE_ENV=production`.
+> Vrednosti u `.env.example` fajlovima su samo za lokalni razvoj. Na pravom serveru promeni lozinku baze, `JWT_SECRET`, Garage ključ i `GARAGE_RPC_SECRET`, napravi nove VAPID ključeve (`npx web-push generate-vapid-keys` u `backend`, pa `VAPID_JAVNI_KLJUC`, `VAPID_PRIVATNI_KLJUC` i `VAPID_KONTAKT` sa pravom adresom), podesi pravi SMTP servis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_KORISNIK`, `SMTP_LOZINKA`, `MAIL_OD`) i postavi `NODE_ENV=production`.

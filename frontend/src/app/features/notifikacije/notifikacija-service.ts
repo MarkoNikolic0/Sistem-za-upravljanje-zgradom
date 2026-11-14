@@ -48,4 +48,17 @@ export class NotifikacijaService {
   procitajSve(): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/procitano`, null);
   }
+
+  pushKljuc(): Observable<{ kljuc: string }> {
+    return this.http.get<{ kljuc: string }>(`${this.apiUrl}/push-kljuc`);
+  }
+
+  sacuvajPretplatu(pretplata: PushSubscription): Observable<void> {
+    const { endpoint, keys } = pretplata.toJSON();
+    return this.http.put<void>(`${this.apiUrl}/push-pretplata`, { endpoint, keys });
+  }
+
+  obrisiPretplatu(endpoint: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/push-pretplata`, { body: { endpoint } });
+  }
 }

@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.poziv,
+.ishod {
+  margin-top: 2.5rem;
+  max-width: 40rem;
+}
+
+.poziv {
+  padding: 1.25rem 0 1.25rem 1.25rem;
+  border-left: 2px solid var(--color-svetlo);
+}
+
+.ishod:focus {
+  outline: none;
+}
+
+.dugmad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}

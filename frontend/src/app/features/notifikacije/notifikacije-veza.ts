@@ -1,4 +1,4 @@
-import { inject, Service } from '@angular/core';
+import { DOCUMENT, inject, Service } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize, Observable, Subscription, switchMap, timer } from 'rxjs';
 import { io } from 'socket.io-client';
@@ -10,6 +10,7 @@ import { Notifikacija } from './notifikacija-models';
 
 const DOGADJAJ_NOTIFIKACIJA = 'notifikacija';
 const DOGADJAJ_NOV_OGLAS = 'nov-oglas';
+const DOGADJAJ_VIDLJIVOST = 'vidljivost';
 const PRVA_PAUZA_MS = 1000;
 const NAJDUZA_PAUZA_MS = 30_000;
 
@@ -21,12 +22,20 @@ export class NotifikacijeVeza {
   private authStore = inject(AuthStore);
   private tokenRefresh = inject(TokenRefresh);
   private router = inject(Router);
+  private document = inject(DOCUMENT);
 
   dogadjaji(): Observable<DogadjajVeze> {
     return new Observable<DogadjajVeze>((pretplatnik) => {
+      const vidljiv = () => this.document.visibilityState === 'visible';
       const socket = io(`${environment.apiUrl}/notifikacije`, {
-        auth: (posalji) => posalji({ token: this.authStore.accessToken() }),
+        auth: (posalji) => posalji({ token: this.authStore.accessToken(), vidljiv: vidljiv() }),
       });
+      const javiVidljivost = () => {
+        if (socket.connected) {
+          socket.emit(DOGADJAJ_VIDLJIVOST, vidljiv());
+        }
+      };
+      this.document.addEventListener('visibilitychange', javiVidljivost);
       const osvezavanje = new Subscription();
       let pokusaj = 0;
       let ceka = false;
@@ -72,6 +81,7 @@ export class NotifikacijeVeza {
       });
 
       return () => {
+        this.document.removeEventListener('visibilitychange', javiVidljivost);
         osvezavanje.unsubscribe();
         socket.disconnect();
       };

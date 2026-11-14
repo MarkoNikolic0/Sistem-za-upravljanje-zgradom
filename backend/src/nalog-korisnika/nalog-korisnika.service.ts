@@ -19,6 +19,7 @@ import { RefreshTokenService } from '../auth/refresh-token/refresh-token.service
 import { LozinkaService } from '../auth/token-lozinke/lozinka.service.js';
 import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { PushService } from '../notifikacija/push/push.service.js';
 
 @Injectable()
 export class NalogKorisnikaService {
@@ -31,6 +32,7 @@ export class NalogKorisnikaService {
     private refreshTokenService: RefreshTokenService,
     private lozinkaService: LozinkaService,
     private notifikacije: NotifikacijaService,
+    private pushService: PushService,
   ) {}
 
   async promeniUlogu(id: number, adminId: number, dto: PromeniUloguDto) {
@@ -87,6 +89,7 @@ export class NalogKorisnikaService {
       }
       await this.kvarAkcijeService.vratiKvaroveServisera(manager, id, adminId);
       await this.refreshTokenService.opozoviSveSesije(manager, id);
+      await this.pushService.obrisiSve(manager, id);
       await this.lozinkaService.obrisiLinkove(manager, id);
       await manager.update(Korisnik, id, { deaktiviran: new Date() });
     });

@@ -2,6 +2,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -17,12 +18,17 @@ import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisni
 import { NotifikacijaService } from './notifikacija.service.js';
 import { NotifikacijaUpitDto } from './dto/notifikacija-upit.dto.js';
 import { ProcitanoDto } from './dto/procitano.dto.js';
+import { OdjavaPushDto, PushPretplataDto } from './dto/push-pretplata.dto.js';
+import { PushService } from './push/push.service.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('notifikacija')
 export class NotifikacijaController {
-  constructor(private readonly notifikacijaService: NotifikacijaService) {}
+  constructor(
+    private readonly notifikacijaService: NotifikacijaService,
+    private readonly pushService: PushService,
+  ) {}
 
   @Get()
   findAll(
@@ -44,6 +50,29 @@ export class NotifikacijaController {
     @Body() dto: ProcitanoDto,
   ) {
     return this.notifikacijaService.procitajSve(korisnik.id, dto.link);
+  }
+
+  @Get('push-kljuc')
+  pushKljuc() {
+    return this.pushService.javniKljuc();
+  }
+
+  @Put('push-pretplata')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  sacuvajPretplatu(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: PushPretplataDto,
+  ) {
+    return this.pushService.sacuvaj(korisnik.id, dto);
+  }
+
+  @Delete('push-pretplata')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  obrisiPretplatu(
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: OdjavaPushDto,
+  ) {
+    return this.pushService.obrisi(korisnik.id, dto.endpoint);
   }
 
   @Put(':id/procitano')

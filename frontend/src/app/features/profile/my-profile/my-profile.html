@@ -192,6 +192,8 @@
         }
       </section>
     }
+    <app-instalacija-aplikacije />
+    <app-obavestenja-na-uredjaju />
   } @else if (profil.error()) {
     <p-message severity="error">Profil trenutno nije moguće učitati.</p-message>
     <button pButton type="button" outlined class="mt-4" (click)="profil.reload()">

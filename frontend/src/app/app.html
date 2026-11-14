@@ -1,1 +1,13 @@
 <router-outlet></router-outlet>
+<p-toast [key]="kljucVerzije" position="top-center">
+  <ng-template #message let-poruka>
+    <div class="nova-verzija">
+      <i class="pi pi-refresh" aria-hidden="true"></i>
+      <div class="min-w-0 flex-1">
+        <p class="naslov">{{ poruka.summary }}</p>
+        <p class="opis">{{ poruka.detail }}</p>
+      </div>
+      <button pButton type="button" size="small" (click)="osvezi()">Osveži</button>
+    </div>
+  </ng-template>
+</p-toast>

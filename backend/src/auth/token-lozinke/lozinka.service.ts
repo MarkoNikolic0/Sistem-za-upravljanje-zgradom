@@ -32,6 +32,7 @@ import {
 import { TokenLozinke } from './token-lozinke.entity.js';
 import { mailLozinkaPromenjena, mailNovaLozinka } from './mailovi-lozinke.js';
 import { NotifikacijaService } from '../../notifikacija/notifikacija.service.js';
+import { PushService } from '../../notifikacija/push/push.service.js';
 
 @Injectable()
 export class LozinkaService {
@@ -48,6 +49,7 @@ export class LozinkaService {
     private mailService: MailService,
     private config: ConfigService,
     private notifikacije: NotifikacijaService,
+    private pushService: PushService,
   ) {}
 
   async posaljiLink(email: string): Promise<void> {
@@ -100,6 +102,7 @@ export class LozinkaService {
       await this.obrisiLinkove(manager, korisnik.id);
       await this.neuspelePrijaveService.obrisiSve(manager, korisnik.id);
       await this.refreshTokenService.opozoviSveSesije(manager, korisnik.id);
+      await this.pushService.obrisiSve(manager, korisnik.id);
       return korisnik;
     });
     this.notifikacije.prekiniVeze(id);
@@ -147,6 +150,7 @@ export class LozinkaService {
         korisnikId,
         refreshToken,
       );
+      await this.pushService.obrisiSve(manager, korisnikId);
     });
     this.notifikacije.prekiniVeze(korisnikId);
 

@@ -30,6 +30,7 @@ import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { BrojStanaraPipe } from '../broj-stanara-pipe';
 import { Store } from '@ngrx/store';
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
+import { PozivObavestenja } from '../../notifikacije/poziv-obavestenja/poziv-obavestenja';
 import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
 
 @Component({
@@ -46,6 +47,7 @@ import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obaves
     RouterLink,
     Paginacija,
     BrojStanaraPipe,
+    PozivObavestenja,
   ],
   selector: 'app-lista-kvarova',
   styleUrl: './lista-kvarova.scss',

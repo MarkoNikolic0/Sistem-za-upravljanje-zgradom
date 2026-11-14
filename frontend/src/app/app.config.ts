@@ -4,6 +4,7 @@ import {
   provideBrowserGlobalErrorListeners,
   inject,
   provideAppInitializer,
+  isDevMode,
 } from '@angular/core';
 import {
   provideRouter,
@@ -29,6 +30,7 @@ import { neprocitaniOglasiFeature } from './features/oglasi/neprocitani-oglasi-s
 import * as neprocitaniOglasiEffects from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-effects';
 import { cekaGlasFeature } from './features/glasanje/ceka-glas-store/ceka-glas-reducer';
 import * as cekaGlasEffects from './features/glasanje/ceka-glas-store/ceka-glas-effects';
+import { provideServiceWorker } from '@angular/service-worker';
 
 registerLocaleData(localeSrLatn);
 
@@ -65,6 +67,10 @@ export const appConfig: ApplicationConfig = {
           },
         },
       },
+    }),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
     }),
   ],
 };

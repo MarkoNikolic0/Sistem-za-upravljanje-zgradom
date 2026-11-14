@@ -1,0 +1,23 @@
+.nova-verzija {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+
+  .pi {
+    color: var(--color-svetlo);
+  }
+
+  .naslov {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-naslov);
+  }
+
+  .opis {
+    margin-top: 0.125rem;
+    font-size: 0.8125rem;
+    color: var(--color-priguseno);
+  }
+}

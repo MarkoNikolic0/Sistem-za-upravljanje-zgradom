@@ -16,6 +16,8 @@ import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { MAX_DUZINA_IMENA, PRAVILA_IMENA } from '../../auth/pravila-naloga';
 import { TagModule } from 'primeng/tag';
+import { InstalacijaAplikacije } from '../../pwa/instalacija-aplikacije/instalacija-aplikacije';
+import { ObavestenjaNaUredjaju } from '../../notifikacije/obavestenja-na-uredjaju/obavestenja-na-uredjaju';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
@@ -30,6 +32,8 @@ type Polje = 'ime' | 'prezime' | 'telefon';
     ChangePassword,
     RouterLink,
     SpratPipe,
+    InstalacijaAplikacije,
+    ObavestenjaNaUredjaju,
   ],
   selector: 'app-my-profile',
   styleUrl: './my-profile.scss',

@@ -20,6 +20,7 @@ import { Danas } from '../danas/danas';
 import { VazniKontakti } from '../../kontakti/vazni-kontakti/vazni-kontakti';
 import { DokumentiUkratko } from '../../dokumenti/dokumenti-ukratko/dokumenti-ukratko';
 import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
+import { PozivObavestenja } from '../../notifikacije/poziv-obavestenja/poziv-obavestenja';
 
 // Prvi korak za stanara koji jos nema stan
 type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
@@ -35,6 +36,7 @@ type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
     Danas,
     VazniKontakti,
     DokumentiUkratko,
+    PozivObavestenja,
   ],
   selector: 'app-home',
   styleUrl: './home.scss',

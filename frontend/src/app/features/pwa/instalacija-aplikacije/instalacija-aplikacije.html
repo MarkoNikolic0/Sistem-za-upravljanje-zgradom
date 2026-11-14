@@ -1,0 +1,29 @@
+@if (instalacija.mozeDaSeInstalira() || instalacija.trebaUputstvo()) {
+  <section class="odeljak" aria-labelledby="instalacija-aplikacije">
+    <div class="zaglavlje-odeljka">
+      <h2 id="instalacija-aplikacije" class="naslov-odeljka">Aplikacija na telefonu</h2>
+      @if (instalacija.mozeDaSeInstalira()) {
+        <button pButton type="button" size="small" (click)="instalacija.instaliraj()">
+          Instaliraj
+        </button>
+      }
+    </div>
+    @if (instalacija.mozeDaSeInstalira()) {
+      <p class="text-priguseno">
+        Instaliraj aplikaciju da se otvara sa početnog ekrana, u svom prozoru, kao i ostale
+        aplikacije.
+      </p>
+    } @else {
+      <p class="text-priguseno">Dodaj aplikaciju na početni ekran iPhone-a:</p>
+      <ol class="koraci">
+        <li>
+          Dodirni dugme Deli
+          <i class="pi pi-upload" aria-hidden="true"></i>
+          u pregledaču.
+        </li>
+        <li>Izaberi Dodaj na početni ekran.</li>
+        <li>Otvori aplikaciju sa početnog ekrana i ovde uključi obaveštenja.</li>
+      </ol>
+    }
+  </section>
+}

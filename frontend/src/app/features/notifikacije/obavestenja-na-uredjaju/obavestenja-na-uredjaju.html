@@ -1,0 +1,48 @@
+@let stanje = push.stanje();
+<section class="odeljak" aria-labelledby="obavestenja-na-uredjaju">
+  <div class="zaglavlje-odeljka">
+    <h2 id="obavestenja-na-uredjaju" class="naslov-odeljka">Obaveštenja na ovom uređaju</h2>
+    @if (stanje === 'ukljuceno' || stanje === 'iskljuceno') {
+      <button
+        pButton
+        type="button"
+        size="small"
+        [outlined]="stanje === 'ukljuceno'"
+        [attr.aria-disabled]="radi()"
+        (click)="promeni()"
+      >
+        @if (radi()) {
+          <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+        }
+        {{ stanje === 'ukljuceno' ? 'Isključi' : 'Uključi' }}
+      </button>
+    }
+  </div>
+  <p class="text-priguseno" aria-live="polite">
+    @switch (stanje) {
+      @case ('ukljuceno') {
+        Uključeno. Obaveštenja stižu na ovaj uređaj i kad aplikacija nije otvorena.
+      }
+      @case ('iskljuceno') {
+        Uključi da bi obaveštenja o kvarovima, sastancima i glasanju stizala i kad aplikacija nije
+        otvorena.
+      }
+      @case ('odbijeno') {
+        Obaveštenja su blokirana za ovaj sajt. Dozvoli ih u podešavanjima pregledača, pa se vrati
+        ovde.
+      }
+      @case ('potrebna-instalacija') {
+        Na iPhone-u obaveštenja rade tek kad dodaš aplikaciju na početni ekran.
+      }
+      @default {
+        Ovaj pregledač ne podržava obaveštenja kad aplikacija nije otvorena. Obaveštenja i dalje
+        stižu u aplikaciji.
+      }
+    }
+  </p>
+  @if (greska()) {
+    <p-message severity="error" styleClass="mt-4">
+      Uključivanje nije uspelo. Proveri internet vezu i pokušaj ponovo.
+    </p-message>
+  }
+</section>

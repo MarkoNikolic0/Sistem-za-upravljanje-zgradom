@@ -1,7 +1,10 @@
 import { JwtService } from '@nestjs/jwt';
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
@@ -11,6 +14,7 @@ import { Notifikacija } from './notifikacija.entity.js';
 import {
   DOGADJAJ_NOTIFIKACIJA,
   DOGADJAJ_NOV_OGLAS,
+  DOGADJAJ_VIDLJIVOST,
   SOBA_KORISNIKA,
 } from './notifikacija.constants.js';
 
@@ -44,6 +48,28 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
     }
   }
 
+  @SubscribeMessage(DOGADJAJ_VIDLJIVOST)
+  promeniVidljivost(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() vidljiv: unknown,
+  ) {
+    socket.data.vidljiv = vidljiv === true;
+  }
+
+  async vidljiviKorisnici(korisnici: number[]): Promise<Set<number>> {
+    if (korisnici.length === 0) {
+      return new Set();
+    }
+    const soketi = await this.server
+      .in([...new Set(korisnici)].map(SOBA_KORISNIKA))
+      .fetchSockets();
+    return new Set(
+      soketi
+        .filter((socket) => socket.data.vidljiv === true)
+        .map((socket) => socket.data.korisnikId as number),
+    );
+  }
+
   javiNovOglas(korisnici: number[]) {
     if (korisnici.length > 0) {
       this.server
@@ -57,12 +83,16 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   private async prijavi(socket: Socket) {
-    const { token } = socket.handshake.auth as { token?: unknown };
+    const { token, vidljiv } = socket.handshake.auth as {
+      token?: unknown;
+      vidljiv?: unknown;
+    };
     if (typeof token !== 'string') {
       throw new Error('Nema tokena.');
     }
     const payload = await this.jwtService.verifyAsync<{ sub: number }>(token);
     const korisnik = await this.jwtStrategy.validate(payload);
     socket.data.korisnikId = korisnik.id;
+    socket.data.vidljiv = vidljiv === true;
   }
 }
