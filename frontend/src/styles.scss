@@ -596,7 +596,7 @@ a.plocica-fajla:hover {
   }
 }
 
-// Broj nepročitanih: žut broj bez kruga (zvonce, stavke menija)
+// Broj nepročitanih na zvoncu: žut broj bez kruga
 .broj-neprocitanih {
   display: block;
   font-size: 0.75rem;
@@ -608,17 +608,6 @@ a.plocica-fajla:hover {
     0 0 2px var(--color-pozadina),
     0 0 2px var(--color-pozadina);
   pointer-events: none;
-}
-
-// Broj u padajućem meniju Više (PrimeNG Badge) bez kruga
-.p-menu .broj-neprocitanih {
-  min-width: 0;
-  height: auto;
-  padding: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  background: none;
-  text-shadow: none;
 }
 
 // Tačka bez broja: ima novih obaveštenja u tom delu menija (Material 3 small badge)

@@ -111,32 +111,13 @@ p-sidebar-group-label.oznaka {
   transition: background-color 150ms;
 }
 
-// Broj u gornjem desnom uglu ikonice (Material 3 navigation bar badge)
-.ikonica .broj-neprocitanih {
-  position: absolute;
-  top: 0.3125rem;
-  left: calc(50% + 0.5rem);
-}
-
-// Broj u sidebaru bez kruga PrimeNG značke, po sredini stavke
-p-sidebar-menu-badge.broj-neprocitanih {
-  top: calc(50% - 0.5rem);
-  height: 1rem;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-shadow: none;
-}
-
-// Tačka po sredini stavke, ispod sredine broja
+// Tačka po sredini stavke, uz desnu ivicu
 p-sidebar-menu-badge.tacka-meni {
   top: calc(50% - 0.1875rem);
-  right: 0.3125rem;
+  right: 0.75rem;
 }
 
+// Tačka u gornjem desnom uglu ikonice (Material 3 navigation bar badge)
 .ikonica .tacka-meni {
   position: absolute;
   top: 0.25rem;

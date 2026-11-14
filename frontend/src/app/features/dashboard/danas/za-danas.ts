@@ -1,4 +1,5 @@
 import { Glasanje } from '../../glasanje/glasanje-models';
+import { cekaGlas } from '../../glasanje/pravila-glasanja';
 import { Oglas } from '../../oglasi/oglas-models';
 import { Sastanak, VRSTE_SASTANKA } from '../../sastanci/sastanak-models';
 import { kadaJe } from '../../sastanci/pravila-sastanka';
@@ -27,10 +28,6 @@ export interface PodaciDanas {
 // Sastanak se ističe kad je za najviše 7 dana, obaveštenje dok je novije od 3 dana
 const DANA_DO_SASTANKA = 7;
 const DANA_OBAVESTENJA = 3;
-
-export function cekaMojGlas(g: Glasanje): boolean {
-  return g.smeDaGlasa && g.mojGlas === null && g.glasaliSuvlasnici.length === 0;
-}
 
 export function predstoji(s: Pick<Sastanak, 'pocetak'>, sada = new Date()): boolean {
   return new Date(s.pocetak).getTime() > sada.getTime();
@@ -81,7 +78,7 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
     });
   }
 
-  const zaGlas = glasanja.filter(cekaMojGlas);
+  const zaGlas = glasanja.filter(cekaGlas);
   if (zaGlas.length > 0) {
     const prvo = zaGlas[0];
     const istice = danaDo(prvo.rok);

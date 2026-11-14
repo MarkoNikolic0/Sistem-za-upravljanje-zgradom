@@ -27,6 +27,8 @@ import { notifikacijeFeature } from './features/notifikacije/notifikacija-store/
 import * as notifikacijeEffects from './features/notifikacije/notifikacija-store/notifikacije-effects';
 import { neprocitaniOglasiFeature } from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
 import * as neprocitaniOglasiEffects from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-effects';
+import { cekaGlasFeature } from './features/glasanje/ceka-glas-store/ceka-glas-reducer';
+import * as cekaGlasEffects from './features/glasanje/ceka-glas-store/ceka-glas-effects';
 
 registerLocaleData(localeSrLatn);
 
@@ -45,7 +47,8 @@ export const appConfig: ApplicationConfig = {
     provideStore(),
     provideState(notifikacijeFeature),
     provideState(neprocitaniOglasiFeature),
-    provideEffects(notifikacijeEffects, neprocitaniOglasiEffects),
+    provideState(cekaGlasFeature),
+    provideEffects(notifikacijeEffects, neprocitaniOglasiEffects, cekaGlasEffects),
     MessageService,
     providePrimeNG({
       license:

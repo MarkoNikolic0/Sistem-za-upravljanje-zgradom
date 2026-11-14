@@ -39,7 +39,9 @@
   }
 
   .broj {
-    animation: iskoci 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation:
+      iskoci 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      sjaj 1200ms ease-out;
   }
 }
 
@@ -62,6 +64,15 @@
   }
   75% {
     rotate: 4deg;
+  }
+}
+
+@keyframes sjaj {
+  from {
+    text-shadow:
+      0 0 6px var(--color-svetlo),
+      0 0 14px var(--color-svetlo),
+      0 0 2px var(--color-pozadina);
   }
 }
 

@@ -15,6 +15,7 @@ import { injectZgradeKorisnika } from '../../zgrade/zgrade-korisnika';
 import { Glasanje, StanjeGlasanja } from '../glasanje-models';
 import { ListaGlasanjaStore } from '../lista-glasanja-store';
 import { KarticaGlasanja } from '../kartica-glasanja/kartica-glasanja';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [
@@ -64,6 +65,10 @@ export class ListaGlasanja {
   });
 
   constructor() {
+    osveziNaNotifikaciju(
+      () => '/glasanje',
+      () => this.store.ucitaj(),
+    );
     const navigacija = this.router.currentNavigation();
     const stanje = navigacija?.extras.state as StanjeNavigacije | undefined;
     if (navigacija?.trigger === 'imperative' && stanje?.poruka) {

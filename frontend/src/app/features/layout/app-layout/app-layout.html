@@ -29,17 +29,11 @@
                       >
                         <i [class]="stavka.ikonica" aria-hidden="true"></i>
                         <span>{{ stavka.naziv }}</span>
-                        @if (stavka.broj) {
-                          <span class="sr-only">, {{ opisBroja(stavka.broj) }}</span>
-                        } @else if (stavka.tacka) {
+                        @if (stavka.tacka) {
                           <span class="sr-only">, {{ opisTacke }}</span>
                         }
                       </a>
-                      @if (stavka.broj) {
-                        <p-sidebar-menu-badge class="broj-neprocitanih" aria-hidden="true">
-                          {{ prikazBroja(stavka.broj) }}
-                        </p-sidebar-menu-badge>
-                      } @else if (stavka.tacka) {
+                      @if (stavka.tacka) {
                         <p-sidebar-menu-badge class="tacka-meni" aria-hidden="true" />
                       }
                     </p-sidebar-menu-item>
@@ -118,18 +112,12 @@
           >
             <span class="ikonica">
               <i [class]="stavka.ikonica" aria-hidden="true"></i>
-              @if (stavka.broj) {
-                <span class="broj-neprocitanih" aria-hidden="true">{{
-                  prikazBroja(stavka.broj)
-                }}</span>
-              } @else if (stavka.tacka) {
+              @if (stavka.tacka) {
                 <span class="tacka-meni" aria-hidden="true"></span>
               }
             </span>
             <span class="naziv">{{ stavka.naziv }}</span>
-            @if (stavka.broj) {
-              <span class="sr-only">, {{ opisBroja(stavka.broj) }}</span>
-            } @else if (stavka.tacka) {
+            @if (stavka.tacka) {
               <span class="sr-only">, {{ opisTacke }}</span>
             }
           </a>
@@ -144,18 +132,12 @@
           >
             <span class="ikonica">
               <i class="pi pi-ellipsis-h" aria-hidden="true"></i>
-              @if (brojVise()) {
-                <span class="broj-neprocitanih" aria-hidden="true">{{
-                  prikazBroja(brojVise())
-                }}</span>
-              } @else if (tackaVise()) {
+              @if (tackaVise()) {
                 <span class="tacka-meni" aria-hidden="true"></span>
               }
             </span>
             <span class="naziv">Više</span>
-            @if (brojVise()) {
-              <span class="sr-only">, {{ opisBroja(brojVise()) }}</span>
-            } @else if (tackaVise()) {
+            @if (tackaVise()) {
               <span class="sr-only">, {{ opisTacke }}</span>
             }
           </button>

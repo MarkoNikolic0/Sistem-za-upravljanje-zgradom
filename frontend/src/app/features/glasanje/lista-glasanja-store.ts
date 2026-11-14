@@ -13,7 +13,9 @@ import {
 import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
 import { withAkcije } from '../../shared/stanje/with-akcije';
 import { porukaServera } from '../../shared/forme/greske-servera';
+import { Store } from '@ngrx/store';
 import { Glasanje, StanjeGlasanja } from './glasanje-models';
+import { CekaGlasActions } from './ceka-glas-store/ceka-glas-actions';
 import { GlasanjeService } from './glasanje-service';
 
 const GLASANJA_PO_STRANI = 10;
@@ -39,7 +41,7 @@ export const ListaGlasanjaStore = signalStore(
   withRequestStatus(),
   withAkcije(),
   withPaginacija(GLASANJA_PO_STRANI),
-  withMethods((store, glasanjeService = inject(GlasanjeService)) => {
+  withMethods((store, glasanjeService = inject(GlasanjeService), globalniStore = inject(Store)) => {
     const ucitaj = rxMethod<void>(
       pipe(
         tap(() => patchState(store, setPending())),
@@ -60,6 +62,7 @@ export const ListaGlasanjaStore = signalStore(
                     return;
                   }
                   patchState(store, { glasanja: stavke, ukupno }, setFulfilled());
+                  globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
                 },
                 error: () =>
                   patchState(store, setError('Glasanja trenutno ne mogu da se učitaju.')),
@@ -81,6 +84,7 @@ export const ListaGlasanjaStore = signalStore(
           glasanja: store.glasanja().map((g) => (g.id === id ? glasanje : g)),
           najava,
         });
+        globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
         return true;
       } catch (err) {
         const greska = err instanceof HttpErrorResponse ? err : null;

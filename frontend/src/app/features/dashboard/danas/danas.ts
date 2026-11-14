@@ -11,7 +11,8 @@ import { GlasanjeService } from '../../glasanje/glasanje-service';
 import { SastanakService } from '../../sastanci/sastanak-service';
 import { OglasService } from '../../oglasi/oglas-service';
 import { uMnozini } from '../../../shared/tekst/mnozina';
-import { cekaMojGlas, predstoji, zaDanas } from './za-danas';
+import { predstoji, zaDanas } from './za-danas';
+import { cekaGlas } from '../../glasanje/pravila-glasanja';
 
 const NAJVISE_AKTIVNIH = 50;
 const BROJ_SASTANAKA = 3;
@@ -63,7 +64,7 @@ export class Danas {
   protected readonly sporedne = computed(() => this.stavke().slice(1));
 
   protected readonly zaGlas = computed(() =>
-    this.glasanja.hasValue() ? this.glasanja.value().stavke.filter(cekaMojGlas).length : 0,
+    this.glasanja.hasValue() ? this.glasanja.value().stavke.filter(cekaGlas).length : 0,
   );
   protected readonly sledeciSastanak = computed(() =>
     this.sastanci.hasValue() ? this.sastanci.value().stavke.find((s) => predstoji(s)) : undefined,

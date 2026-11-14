@@ -3,6 +3,7 @@
   class="anketa"
   [id]="'anketa-' + g.id"
   [class.zavrsena]="g.zavrseno"
+  [class.neprocitano]="cekaGlas()"
   [class.rezultati]="vidiRezultate()"
   [attr.aria-labelledby]="'pitanje-' + g.id"
 >
@@ -18,6 +19,11 @@
         <span class="tacka" aria-hidden="true"></span>
         {{ istice() }}
       </span>
+    }
+    @if (cekaGlas()) {
+      <span class="ceka-glas"
+        ><span class="tacka-novo" aria-hidden="true"></span>Čeka tvoj glas</span
+      >
     }
     @if (prikaziZgradu()) {
       <span class="zgrada">{{ g.zgrada.naziv }}</span>

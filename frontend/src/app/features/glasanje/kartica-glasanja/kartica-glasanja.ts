@@ -6,6 +6,7 @@ import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { formatRoka } from '../../../shared/tekst/datum';
 import { Glasanje, OpcijaGlasanja, VECINE_ODLUKE } from '../glasanje-models';
 import {
+  cekaGlas,
   glasaliSuvlasnici,
   glasova,
   istice,
@@ -50,6 +51,8 @@ export class KarticaGlasanja {
   protected readonly ucesce = computed(() =>
     udeo(this.glasanje().brojGlasaca, this.glasanje().ukupnoGlasaca),
   );
+
+  protected readonly cekaGlas = computed(() => cekaGlas(this.glasanje()));
 
   protected readonly suvlasnici = computed(() => {
     const stanovi = this.glasanje().glasaliSuvlasnici;

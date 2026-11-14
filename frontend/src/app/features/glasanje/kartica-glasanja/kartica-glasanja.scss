@@ -19,6 +19,25 @@
     background: var(--color-panel);
     box-shadow: none;
   }
+
+  &.neprocitano {
+    background: color-mix(in srgb, var(--color-svetlo) 6%, var(--color-povrsina));
+    border-color: color-mix(in srgb, var(--color-svetlo) 22%, transparent);
+  }
+}
+
+.ceka-glas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-svetlo);
+
+  .tacka-novo {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
 }
 
 .zaglavlje {

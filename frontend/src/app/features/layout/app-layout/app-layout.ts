@@ -20,9 +20,8 @@ import {
   VezaActions,
 } from '../../notifikacije/notifikacija-store/notifikacije-actions';
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
+import { cekaGlasFeature } from '../../glasanje/ceka-glas-store/ceka-glas-reducer';
 import { neprocitaniOglasiFeature } from '../../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
-import { uMnozini } from '../../../shared/tekst/mnozina';
-import { prikazBroja } from '../../../shared/tekst/prikaz-broja';
 
 const NAJMANJE_U_TRACI = 3;
 const NAJVISE_U_TRACI = 5;
@@ -51,9 +50,9 @@ export class AppLayout {
   private messageService = inject(MessageService);
   private readonly fokusiraj = fokusPosleCrtanja();
   protected readonly kljucToasta = KLJUC_TOASTA;
-  protected readonly prikazBroja = prikazBroja;
-  protected readonly opisTacke = 'ima novih obaveštenja';
+  protected readonly opisTacke = 'ima novo';
   private readonly brojOglasa = this.store.selectSignal(neprocitaniOglasiFeature.selectBroj);
+  private readonly cekaGlas = this.store.selectSignal(cekaGlasFeature.selectIma);
   private readonly odeljciNeprocitanih = this.store.selectSignal(
     notifikacijeFeature.selectOdeljciNeprocitanih,
   );
@@ -83,19 +82,18 @@ export class AppLayout {
     this.fokusiraj('#sadrzaj');
   }
 
-  protected opisBroja(broj: number): string {
-    return uMnozini(broj, 'nepročitan', 'nepročitana', 'nepročitanih');
-  }
-
   protected readonly stavke = computed(() => {
     const uloga = this.authStore.korisnik()?.uloga;
-    const brojOglasa = this.brojOglasa();
+    const imaNovihOglasa = this.brojOglasa() > 0;
+    const cekaGlas = this.cekaGlas();
     const odeljci = this.odeljciNeprocitanih();
     return uloga
       ? STAVKE_NAVIGACIJE.filter((s) => s.uloge.includes(uloga)).map((s) => ({
           ...s,
-          broj: s.putanja === '/oglasi' ? brojOglasa : 0,
-          tacka: odeljci.has(s.putanja),
+          tacka:
+            odeljci.has(s.putanja) ||
+            (s.putanja === '/oglasi' && imaNovihOglasa) ||
+            (s.putanja === '/glasanje' && cekaGlas),
         }))
       : [];
   });
@@ -109,10 +107,6 @@ export class AppLayout {
 
   private readonly ostaleStavke = computed(() => this.stavke().slice(this.stavkeTrake().length));
 
-  protected readonly brojVise = computed(() =>
-    this.ostaleStavke().reduce((zbir, stavka) => zbir + stavka.broj, 0),
-  );
-
   protected readonly tackaVise = computed(() => this.ostaleStavke().some((stavka) => stavka.tacka));
 
   protected readonly stavkeVise = computed((): MenuItem[] =>
@@ -120,9 +114,7 @@ export class AppLayout {
       label: stavka.naziv,
       icon: stavka.ikonica,
       routerLink: stavka.putanja,
-      badge: stavka.broj ? prikazBroja(stavka.broj) : undefined,
-      badgeStyleClass: 'broj-neprocitanih',
-      styleClass: stavka.tacka && !stavka.broj ? 'ima-novo' : undefined,
+      styleClass: stavka.tacka ? 'ima-novo' : undefined,
     })),
   );
 
