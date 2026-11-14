@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Korisnik } from './korisnik.entity.js';
+import { POTVRDJEN_EMAIL } from './aktivan-korisnik.js';
 import { Brackets, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
@@ -124,7 +125,7 @@ export class KorisnikService {
           ? 'korisnik.deaktiviran IS NULL'
           : 'korisnik.deaktiviran IS NOT NULL',
       )
-      .andWhere('korisnik.emailPotvrdjen IS NOT NULL')
+      .andWhere(POTVRDJEN_EMAIL)
       .orderBy('korisnik.prezime')
       .addOrderBy('korisnik.ime')
       .addOrderBy('korisnik.id');

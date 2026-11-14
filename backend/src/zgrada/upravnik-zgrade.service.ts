@@ -9,6 +9,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
 import { AKTIVNA_ZGRADA, proveriAktivnu } from './aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
@@ -43,11 +44,11 @@ export class UpravnikZgradeService {
       await this.zakljucajZgradu(manager, zgradaId);
 
       const korisnik = await manager.findOne(Korisnik, {
-        where: { id: korisnikId },
+        where: { id: korisnikId, ...AKTIVAN_KORISNIK },
         relations: { zgrada: true },
         lock: { mode: 'pessimistic_write', tables: ['korisnik'] },
       });
-      if (!korisnik || korisnik.deaktiviran || !korisnik.emailPotvrdjen) {
+      if (!korisnik) {
         throw new NotFoundException('Korisnik ne postoji.');
       }
       if (

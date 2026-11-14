@@ -24,13 +24,12 @@ export class PotvrdaEmailaService {
 
   async registruj(dto: RegisterDto): Promise<void> {
     try {
-      const lozinka = await bcrypt.hash(dto.lozinka, 10);
-      const podaci = {
+      const podaci = async () => ({
         ime: dto.ime,
         prezime: dto.prezime,
         telefon: parsePhoneNumberWithError(dto.telefon, 'RS').number,
-        lozinka,
-      };
+        lozinka: await bcrypt.hash(dto.lozinka, 10),
+      });
 
       const poslati = await this.dataSource.transaction(async (manager) => {
         await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -53,22 +52,27 @@ export class PotvrdaEmailaService {
           return token && { svrha: SvrhaTokena.LOZINKA, token };
         }
 
-        let id = postojeci?.id;
-        if (!id) {
+        if (!postojeci) {
           const { identifiers } = await manager.insert(Korisnik, {
-            ...podaci,
+            ...(await podaci()),
             email: dto.email,
           });
-          id = (identifiers[0] as { id: number }).id;
+          const token = await this.tokenNaloga.napravi(
+            manager,
+            (identifiers[0] as { id: number }).id,
+            SvrhaTokena.POTVRDA,
+          );
+          return token && { svrha: SvrhaTokena.POTVRDA, token };
         }
+
         const token = await this.tokenNaloga.napravi(
           manager,
-          id,
+          postojeci.id,
           SvrhaTokena.POTVRDA,
         );
-        if (token && postojeci) {
-          await manager.update(Korisnik, id, {
-            ...podaci,
+        if (token) {
+          await manager.update(Korisnik, postojeci.id, {
+            ...(await podaci()),
             kreiranDatum: new Date(),
           });
         }
@@ -88,25 +92,13 @@ export class PotvrdaEmailaService {
     }
   }
 
-  async posaljiPonovo(email: string): Promise<void> {
-    try {
-      const token = await this.dataSource.transaction(async (manager) => {
-        const korisnik = await manager.findOne(Korisnik, {
-          where: { email, deaktiviran: IsNull(), emailPotvrdjen: IsNull() },
-          select: { id: true },
-          lock: { mode: 'for_no_key_update' },
-        });
-        return korisnik
-          ? this.tokenNaloga.napravi(manager, korisnik.id, SvrhaTokena.POTVRDA)
-          : null;
-      });
-      if (token) {
-        const link = this.tokenNaloga.link(SvrhaTokena.POTVRDA, token);
-        await this.tokenNaloga.posalji(mailPotvrda(email, link), token);
-      }
-    } catch (greska) {
-      this.logger.error('Link za aktivaciju nije napravljen.', greska);
-    }
+  posaljiPonovo(email: string): Promise<void> {
+    return this.tokenNaloga.posaljiLink(
+      email,
+      SvrhaTokena.POTVRDA,
+      { deaktiviran: IsNull(), emailPotvrdjen: IsNull() },
+      mailPotvrda,
+    );
   }
 
   async potvrdi(token: string): Promise<void> {

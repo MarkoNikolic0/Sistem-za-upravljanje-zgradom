@@ -1,8 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, LessThan, MoreThan, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  type FindOptionsWhere,
+  LessThan,
+  MoreThan,
+  Repository,
+} from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { MailService, type Mail } from '../../shared/mail/mail.service.js';
 import { generisiToken, hesirajToken } from '../token.util.js';
@@ -25,12 +32,38 @@ const PUTANJA: Record<SvrhaTokena, string> = {
 
 @Injectable()
 export class TokenNalogaService {
+  private readonly logger = new Logger(TokenNalogaService.name);
+
   constructor(
     @InjectRepository(TokenNaloga)
     private tokenRepository: Repository<TokenNaloga>,
+    private dataSource: DataSource,
     private mailService: MailService,
     private config: ConfigService,
   ) {}
+
+  async posaljiLink(
+    email: string,
+    svrha: SvrhaTokena,
+    uslov: FindOptionsWhere<Korisnik>,
+    napraviMail: (za: string, link: string) => Mail,
+  ): Promise<void> {
+    try {
+      const token = await this.dataSource.transaction(async (manager) => {
+        const korisnik = await manager.findOne(Korisnik, {
+          where: { email, ...uslov },
+          select: { id: true },
+          lock: { mode: 'for_no_key_update' },
+        });
+        return korisnik ? this.napravi(manager, korisnik.id, svrha) : null;
+      });
+      if (token) {
+        await this.posalji(napraviMail(email, this.link(svrha, token)), token);
+      }
+    } catch (greska) {
+      this.logger.error(`Link (${svrha}) nije poslat.`, greska);
+    }
+  }
 
   async napravi(
     manager: EntityManager,

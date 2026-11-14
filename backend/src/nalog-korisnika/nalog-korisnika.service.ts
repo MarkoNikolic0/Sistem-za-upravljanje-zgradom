@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { POTVRDJEN_EMAIL } from '../korisnik/aktivan-korisnik.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
@@ -108,11 +109,11 @@ export class NalogKorisnikaService {
       throw new ForbiddenException('Svoj nalog ne možeš da menjaš ovde.');
     }
     const korisnik = await manager.findOne(Korisnik, {
-      where: { id },
+      where: { id, ...POTVRDJEN_EMAIL },
       relations: { zgrada: true },
       lock: { mode: 'for_no_key_update', tables: ['korisnik'] },
     });
-    if (!korisnik?.emailPotvrdjen) {
+    if (!korisnik) {
       throw new NotFoundException(`Korisnik sa id-jem ${id} ne postoji!`);
     }
     if (korisnik.uloga === Uloga.ADMIN) {

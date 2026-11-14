@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,8 +23,6 @@ import { PushService } from '../../notifikacija/push/push.service.js';
 
 @Injectable()
 export class LozinkaService {
-  private readonly logger = new Logger(LozinkaService.name);
-
   constructor(
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
@@ -38,25 +35,13 @@ export class LozinkaService {
     private pushService: PushService,
   ) {}
 
-  async posaljiLink(email: string): Promise<void> {
-    try {
-      const token = await this.dataSource.transaction(async (manager) => {
-        const korisnik = await manager.findOne(Korisnik, {
-          where: { email, ...AKTIVAN_KORISNIK },
-          select: { id: true },
-          lock: { mode: 'for_no_key_update' },
-        });
-        return korisnik
-          ? this.tokenNaloga.napravi(manager, korisnik.id, SvrhaTokena.LOZINKA)
-          : null;
-      });
-      if (token) {
-        const link = this.tokenNaloga.link(SvrhaTokena.LOZINKA, token);
-        await this.tokenNaloga.posalji(mailNovaLozinka(email, link), token);
-      }
-    } catch (greska) {
-      this.logger.error('Link za novu lozinku nije napravljen.', greska);
-    }
+  posaljiLink(email: string): Promise<void> {
+    return this.tokenNaloga.posaljiLink(
+      email,
+      SvrhaTokena.LOZINKA,
+      AKTIVAN_KORISNIK,
+      mailNovaLozinka,
+    );
   }
 
   async postaviNovu(dto: NovaLozinkaDto): Promise<void> {

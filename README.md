@@ -109,6 +109,7 @@ Ostali nalozi su na početku `backend/seed/seed.sql`.
 - **Backend ne može da se poveže na bazu** — proveri da li Docker radi (`docker compose ps`) i da port 5432 ne zauzima lokalno instaliran PostgreSQL.
 - **Slike se ne otpremaju** — nije urađen korak 3.
 - **Seed javlja da tabela ne postoji** — backend nije pokrenut bar jednom; pokreni ga pa ponovi korak 5.
+- **Posle preuzimanja nove verzije niko ne može da se prijavi ili backend ne startuje** — baza je napravljena pre potvrde emaila. Iz foldera `backend` pokreni `docker cp seed/nadogradnja-potvrda-emaila.sql zgrada_container:/tmp/nadogradnja.sql` i `docker exec zgrada_container sh -c 'psql -q -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/nadogradnja.sql'`, pa ponovo pokreni backend.
 - **Git Bash umesto PowerShell-a** — ispred `docker exec ... /garage` komandi dodaj `MSYS_NO_PATHCONV=1`.
 - **Brisanje svih podataka i početak iz nule** — `docker compose down -v`, pa ponovo od koraka 2.
 
