@@ -114,21 +114,27 @@ p-sidebar-group-label.oznaka {
 // Broj u gornjem desnom uglu ikonice (Material 3 navigation bar badge)
 .ikonica .broj-neprocitanih {
   position: absolute;
-  top: 0;
-  left: calc(50% + 0.375rem);
+  top: 0.3125rem;
+  left: calc(50% + 0.5rem);
 }
 
-// Broj u sidebaru ne preklapa ikonicu: bez okvira i prstena, po sredini stavke
+// Broj u sidebaru bez kruga PrimeNG značke, po sredini stavke
 p-sidebar-menu-badge.broj-neprocitanih {
   top: calc(50% - 0.5rem);
+  height: 1rem;
+  min-width: 0;
+  padding: 0;
   border: 0;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--color-svetlo) 45%, transparent);
+  background: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-shadow: none;
 }
 
 // Tačka po sredini stavke, ispod sredine broja
 p-sidebar-menu-badge.tacka-meni {
   top: calc(50% - 0.1875rem);
-  right: 0.5625rem;
+  right: 0.3125rem;
 }
 
 .ikonica .tacka-meni {
