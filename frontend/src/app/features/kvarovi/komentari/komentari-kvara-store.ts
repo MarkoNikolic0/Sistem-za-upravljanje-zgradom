@@ -3,7 +3,7 @@ import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { on, withReducer } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { EMPTY, exhaustMap, filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, exhaustMap, filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
 import {
   setError,
   setFulfilled,
@@ -75,6 +75,26 @@ export const KomentariKvaraStore = signalStore(
                 }),
               error: () => patchState(store, { ucitavaStarije: false }),
             }),
+          );
+        }),
+      ),
+    ),
+    osveziNove: rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          const kvarId = store.kvarId();
+          if (kvarId === null || !store.isFulfilled()) {
+            return EMPTY;
+          }
+          return komentariKvaraService.komentari(kvarId, KOMENTARA_PO_STRANI).pipe(
+            tap(({ stavke }) => {
+              const poslednjiId = store.komentari().at(-1)?.id ?? 0;
+              const novi = stavke.filter((k) => k.id > poslednjiId).reverse();
+              if (novi.length > 0) {
+                patchState(store, { komentari: [...store.komentari(), ...novi] });
+              }
+            }),
+            catchError(() => EMPTY),
           );
         }),
       ),

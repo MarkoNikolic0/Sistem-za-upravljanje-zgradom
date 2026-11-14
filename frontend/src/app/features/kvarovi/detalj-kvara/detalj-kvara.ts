@@ -35,6 +35,7 @@ import { PovlacenjeKvara } from '../akcije/povlacenje-kvara/povlacenje-kvara';
 import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
 import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
 import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [
@@ -112,6 +113,13 @@ export class DetaljKvara {
     }
     this.store.ucitaj(this.id);
     this.komentariStore.ucitaj(this.id);
+    osveziNaNotifikaciju(
+      () => `/kvarovi/${this.id()}`,
+      () => {
+        this.store.osvezi(this.id());
+        this.komentariStore.osveziNove();
+      },
+    );
     afterRenderEffect(() => {
       if (this.store.porukaAkcije()?.fokus) {
         this.porukaAkcije().nativeElement.focus();

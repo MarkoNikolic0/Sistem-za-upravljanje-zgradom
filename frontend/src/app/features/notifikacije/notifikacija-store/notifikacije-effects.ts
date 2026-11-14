@@ -176,7 +176,10 @@ export const prikaziToast = createEffect(
           key: KLJUC_TOASTA,
           severity: 'info',
           detail: notifikacija.tekst,
-          data: notifikacija,
+          data:
+            notifikacija.link === putanjaAdrese(router.url)
+              ? { ...notifikacija, link: null }
+              : notifikacija,
           life: TRAJANJE_TOASTA_MS,
         }),
       ),

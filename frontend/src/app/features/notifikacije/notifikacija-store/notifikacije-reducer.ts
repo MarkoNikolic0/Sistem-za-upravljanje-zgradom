@@ -13,7 +13,7 @@ interface NotifikacijeState {
   status: StatusListe;
   ucitavaStarije: boolean;
   greska: string | null;
-  poslednjaStigla: number | null;
+  poslednjaStigla: Notifikacija | null;
 }
 
 const pocetnoStanje: NotifikacijeState = {
@@ -72,7 +72,7 @@ export const notifikacijeFeature = createFeature({
       ...stanje,
       brojNeprocitanih: stanje.brojNeprocitanih + 1,
       linkovi: dodajNeprocitanu(stanje.linkovi, notifikacija),
-      poslednjaStigla: notifikacija.id,
+      poslednjaStigla: notifikacija,
       stavke:
         stanje.status === 'ucitano' ? bezDuplikata([notifikacija], stanje.stavke) : stanje.stavke,
     })),

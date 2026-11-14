@@ -20,6 +20,7 @@ import { OznakeSastanka } from '../oznake-sastanka/oznake-sastanka';
 import { SastanakService } from '../sastanak-service';
 import { kadaJe, poceo } from '../pravila-sastanka';
 import { PregledPrisustva } from '../sastanak-models';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [
@@ -67,6 +68,10 @@ export class DetaljSastanka {
     if (navigacija?.trigger === 'imperative' && stanje?.poruka) {
       this.poruka.set(stanje.poruka);
     }
+    osveziNaNotifikaciju(
+      () => `/sastanci/${this.id()}`,
+      () => this.sastanak.reload(),
+    );
   }
 
   protected azurirajPrisustvo(prisustvo: PregledPrisustva): void {

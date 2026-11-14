@@ -193,6 +193,7 @@ export const DetaljKvaraStore = signalStore(
 
       return {
         ucitaj,
+        osvezi,
         prikaziPosleUcitavanja(poruka: PorukaAkcije | undefined): void {
           patchState(store, { porukaPosleUcitavanja: poruka ?? null });
         },
