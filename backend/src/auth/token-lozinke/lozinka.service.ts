@@ -150,7 +150,6 @@ export class LozinkaService {
         korisnikId,
         refreshToken,
       );
-      await this.pushService.obrisiSve(manager, korisnikId);
     });
     this.notifikacije.prekiniVeze(korisnikId);
 
