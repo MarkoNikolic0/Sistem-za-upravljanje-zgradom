@@ -16,7 +16,7 @@ import { PushObavestenja } from '../push-obavestenja';
 
 const KLJUC_ZATVOREN = 'poziv-obavestenja-zatvoren';
 
-type Ishod = 'ukljuceno' | 'odbijeno' | 'greska';
+type Ishod = 'ukljuceno' | 'odbijeno';
 
 @Component({
   imports: [RouterLink, ButtonModule, MessageModule],
@@ -34,6 +34,7 @@ export class PozivObavestenja {
   private readonly zatvoren = signal(this.skladiste.procitaj(KLJUC_ZATVOREN) === '1');
   protected readonly radi = signal(false);
   protected readonly ishod = signal<Ishod | null>(null);
+  protected readonly greska = signal<string | null>(null);
 
   protected readonly stanje = this.push.stanje;
   protected readonly prikazan = computed(
@@ -47,6 +48,7 @@ export class PozivObavestenja {
       return;
     }
     this.radi.set(true);
+    this.greska.set(null);
     try {
       await this.push.ukljuci();
       const stanje = this.push.stanje();
@@ -54,8 +56,8 @@ export class PozivObavestenja {
         this.ishod.set(stanje);
         this.fokusiraj('#ishod-poziva');
       }
-    } catch {
-      this.ishod.set('greska');
+    } catch (greska) {
+      this.greska.set(this.push.porukaGreske(greska));
     } finally {
       this.radi.set(false);
     }

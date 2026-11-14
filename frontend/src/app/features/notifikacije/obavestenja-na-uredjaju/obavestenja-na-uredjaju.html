@@ -40,9 +40,7 @@
       }
     }
   </p>
-  @if (greska()) {
-    <p-message severity="error" styleClass="mt-4">
-      Uključivanje nije uspelo. Proveri internet vezu i pokušaj ponovo.
-    </p-message>
+  @if (greska(); as poruka) {
+    <p-message severity="error" styleClass="mt-4">{{ poruka }}</p-message>
   }
 </section>

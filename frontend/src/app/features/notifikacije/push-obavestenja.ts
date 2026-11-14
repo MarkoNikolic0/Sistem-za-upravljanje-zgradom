@@ -12,6 +12,16 @@ export type StanjePusha =
 
 const KLJUC_VLASNIKA = 'push-korisnik';
 
+const PORUKE_GRESKE = {
+  veza: 'Uključivanje nije uspelo. Proveri internet vezu i pokušaj ponovo.',
+  brave:
+    'Brave blokira obaveštenja. U podešavanjima Brave-a, u delu Privatnost i bezbednost, uključi Use Google services for push messaging, ponovo pokreni Brave i klikni Uključi.',
+  pregledac:
+    'Pregledač nije uspeo da uključi obaveštenja. Pokušaj ponovo ili koristi Chrome ili Edge.',
+};
+
+class GreskaPregledaca extends Error {}
+
 @Service()
 export class PushObavestenja {
   private swPush = inject(SwPush);
@@ -49,6 +59,13 @@ export class PushObavestenja {
     return this.redom(() => this.pretplati());
   }
 
+  porukaGreske(greska: unknown): string {
+    if (!(greska instanceof GreskaPregledaca)) {
+      return PORUKE_GRESKE.veza;
+    }
+    return 'brave' in this.prozor.navigator ? PORUKE_GRESKE.brave : PORUKE_GRESKE.pregledac;
+  }
+
   iskljuci(): Promise<void> {
     return this.redom(() => this.ukiniPretplatu());
   }
@@ -65,7 +82,11 @@ export class PushObavestenja {
 
   private async pretplati(): Promise<void> {
     const { kljuc } = await firstValueFrom(this.notifikacijaService.pushKljuc());
-    const pretplata = await this.swPush.requestSubscription({ serverPublicKey: kljuc });
+    const pretplata = await this.swPush
+      .requestSubscription({ serverPublicKey: kljuc })
+      .catch((greska: unknown) => {
+        throw new GreskaPregledaca('Pretplata u pregledaču nije uspela.', { cause: greska });
+      });
     try {
       await this.sacuvaj(pretplata);
     } catch (greska) {

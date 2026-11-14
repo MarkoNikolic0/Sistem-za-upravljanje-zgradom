@@ -12,22 +12,22 @@ import { PushObavestenja } from '../push-obavestenja';
 export class ObavestenjaNaUredjaju {
   protected readonly push = inject(PushObavestenja);
   protected readonly radi = signal(false);
-  protected readonly greska = signal(false);
+  protected readonly greska = signal<string | null>(null);
 
   protected async promeni(): Promise<void> {
     if (this.radi()) {
       return;
     }
     this.radi.set(true);
-    this.greska.set(false);
+    this.greska.set(null);
     try {
       if (this.push.stanje() === 'ukljuceno') {
         await this.push.iskljuci();
       } else {
         await this.push.ukljuci();
       }
-    } catch {
-      this.greska.set(true);
+    } catch (greska) {
+      this.greska.set(this.push.porukaGreske(greska));
     } finally {
       this.radi.set(false);
     }
