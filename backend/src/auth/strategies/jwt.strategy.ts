@@ -32,6 +32,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<TrenutniKorisnikPodaci> {
+    if (typeof payload.sid !== 'string') {
+      throw new UnauthorizedException();
+    }
     const korisnik = await this.korisnikRepository.findOne({
       where: { id: payload.sub, ...AKTIVAN_KORISNIK },
       select: { id: true, email: true, uloga: true },
