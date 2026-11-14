@@ -12,9 +12,8 @@ import { SastanakService } from '../../sastanci/sastanak-service';
 import { OglasService } from '../../oglasi/oglas-service';
 import { uMnozini } from '../../../shared/tekst/mnozina';
 import { predstoji, zaDanas } from './za-danas';
-import { cekaGlas } from '../../glasanje/pravila-glasanja';
+import { cekaGlas, NAJVISE_AKTIVNIH } from '../../glasanje/pravila-glasanja';
 
-const NAJVISE_AKTIVNIH = 50;
 const BROJ_SASTANAKA = 3;
 const BROJ_OGLASA = 3;
 const RED_PALJENJA = [4, 9, 1, 7, 11, 2, 6, 10, 0, 5, 8, 3];

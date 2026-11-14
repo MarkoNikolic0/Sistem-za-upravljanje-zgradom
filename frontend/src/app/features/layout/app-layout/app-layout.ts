@@ -88,13 +88,15 @@ export class AppLayout {
     const cekaGlas = this.cekaGlas();
     const odeljci = this.odeljciNeprocitanih();
     return uloga
-      ? STAVKE_NAVIGACIJE.filter((s) => s.uloge.includes(uloga)).map((s) => ({
-          ...s,
-          tacka:
-            odeljci.has(s.putanja) ||
-            (s.putanja === '/oglasi' && imaNovihOglasa) ||
-            (s.putanja === '/glasanje' && cekaGlas),
-        }))
+      ? STAVKE_NAVIGACIJE.filter((s) => s.uloge.includes(uloga)).map((s) => {
+          const cekaTvojGlas = s.putanja === '/glasanje' && cekaGlas;
+          return {
+            ...s,
+            tacka:
+              cekaTvojGlas || odeljci.has(s.putanja) || (s.putanja === '/oglasi' && imaNovihOglasa),
+            opisTacke: cekaTvojGlas ? 'čeka tvoj glas' : this.opisTacke,
+          };
+        })
       : [];
   });
 

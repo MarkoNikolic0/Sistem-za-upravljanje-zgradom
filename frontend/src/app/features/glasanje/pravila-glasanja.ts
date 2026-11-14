@@ -21,6 +21,8 @@ export function isticeUskoro(rok: string): boolean {
   return danaDo(rok) <= 1;
 }
 
+export const NAJVISE_AKTIVNIH = 50;
+
 export function cekaGlas(glasanje: Glasanje): boolean {
   return glasanje.smeDaGlasa && glasanje.mojGlas === null;
 }

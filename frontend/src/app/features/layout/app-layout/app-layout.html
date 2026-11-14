@@ -30,7 +30,7 @@
                         <i [class]="stavka.ikonica" aria-hidden="true"></i>
                         <span>{{ stavka.naziv }}</span>
                         @if (stavka.tacka) {
-                          <span class="sr-only">, {{ opisTacke }}</span>
+                          <span class="sr-only">, {{ stavka.opisTacke }}</span>
                         }
                       </a>
                       @if (stavka.tacka) {
@@ -118,7 +118,7 @@
             </span>
             <span class="naziv">{{ stavka.naziv }}</span>
             @if (stavka.tacka) {
-              <span class="sr-only">, {{ opisTacke }}</span>
+              <span class="sr-only">, {{ stavka.opisTacke }}</span>
             }
           </a>
         }

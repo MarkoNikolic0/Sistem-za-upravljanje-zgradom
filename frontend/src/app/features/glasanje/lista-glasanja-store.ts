@@ -62,7 +62,6 @@ export const ListaGlasanjaStore = signalStore(
                     return;
                   }
                   patchState(store, { glasanja: stavke, ukupno }, setFulfilled());
-                  globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
                 },
                 error: () =>
                   patchState(store, setError('Glasanja trenutno ne mogu da se učitaju.')),
@@ -137,6 +136,7 @@ export const ListaGlasanjaStore = signalStore(
         return store.izvrsi(
           async () => {
             await firstValueFrom(glasanjeService.zatvori(id));
+            globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
             ucitaj();
           },
           'Anketa je zatvorena. Rezultati su u Završenim.',
@@ -149,6 +149,7 @@ export const ListaGlasanjaStore = signalStore(
         return store.izvrsi(
           async () => {
             await firstValueFrom(glasanjeService.obrisi(glasanje.id));
+            globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
             ucitaj();
           },
           `${naziv} je obrisana.`,
