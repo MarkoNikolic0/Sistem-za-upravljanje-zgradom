@@ -13,7 +13,7 @@ interface NotifikacijeState {
   status: StatusListe;
   ucitavaStarije: boolean;
   greska: string | null;
-  poslednjaStigla: Notifikacija | null;
+  poslednjaStigla: { notifikacija: Notifikacija; naStranici: boolean } | null;
 }
 
 const pocetnoStanje: NotifikacijeState = {
@@ -68,14 +68,16 @@ export const notifikacijeFeature = createFeature({
         linkovi,
       }),
     ),
-    on(VezaActions.stigla, (stanje, { notifikacija }): NotifikacijeState => ({
-      ...stanje,
-      brojNeprocitanih: stanje.brojNeprocitanih + 1,
-      linkovi: dodajNeprocitanu(stanje.linkovi, notifikacija),
-      poslednjaStigla: notifikacija,
-      stavke:
-        stanje.status === 'ucitano' ? bezDuplikata([notifikacija], stanje.stavke) : stanje.stavke,
-    })),
+    on(VezaActions.stigla, (stanje, { notifikacija, naStranici }): NotifikacijeState => {
+      const prikaz = naStranici ? { ...notifikacija, procitano: true } : notifikacija;
+      return {
+        ...stanje,
+        brojNeprocitanih: naStranici ? stanje.brojNeprocitanih : stanje.brojNeprocitanih + 1,
+        linkovi: naStranici ? stanje.linkovi : dodajNeprocitanu(stanje.linkovi, notifikacija),
+        poslednjaStigla: { notifikacija, naStranici },
+        stavke: stanje.status === 'ucitano' ? bezDuplikata([prikaz], stanje.stavke) : stanje.stavke,
+      };
+    }),
     on(NotifikacijeActions.listaOtvorena, (stanje, { samoNeprocitane }): NotifikacijeState => ({
       ...stanje,
       samoNeprocitane,

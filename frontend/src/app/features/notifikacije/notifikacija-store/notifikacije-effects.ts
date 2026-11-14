@@ -36,7 +36,11 @@ const krajListe = (actions$: Actions) =>
   );
 
 export const veza = createEffect(
-  (actions$ = inject(Actions), notifikacijeVeza = inject(NotifikacijeVeza)) =>
+  (
+    actions$ = inject(Actions),
+    notifikacijeVeza = inject(NotifikacijeVeza),
+    router = inject(Router),
+  ) =>
     actions$.pipe(
       ofType(VezaActions.pokreni),
       switchMap(() =>
@@ -48,7 +52,10 @@ export const veza = createEffect(
               case 'nov-oglas':
                 return VezaActions.novOglas();
               case 'notifikacija':
-                return VezaActions.stigla({ notifikacija: dogadjaj.notifikacija });
+                return VezaActions.stigla({
+                  notifikacija: dogadjaj.notifikacija,
+                  naStranici: dogadjaj.notifikacija.link === putanjaAdrese(router.url),
+                });
             }
           }),
           takeUntil(actions$.pipe(ofType(VezaActions.zaustavi))),
@@ -62,6 +69,7 @@ export const neprocitane = createEffect(
   (actions$ = inject(Actions), service = inject(NotifikacijaService)) =>
     actions$.pipe(
       ofType(VezaActions.povezan, VezaActions.stigla),
+      filter((akcija) => !('naStranici' in akcija && akcija.naStranici)),
       switchMap(() =>
         service.neprocitane().pipe(
           map((neprocitane) => NotifikacijeApiActions.neprocitaneUcitane(neprocitane)),
@@ -70,6 +78,18 @@ export const neprocitane = createEffect(
       ),
     ),
   { functional: true },
+);
+
+export const procitajNaOtvorenojStranici = createEffect(
+  (actions$ = inject(Actions), service = inject(NotifikacijaService)) =>
+    actions$.pipe(
+      ofType(VezaActions.stigla),
+      filter(({ naStranici }) => naStranici),
+      mergeMap(({ notifikacija }) =>
+        service.procitaj(notifikacija.id).pipe(catchError(() => EMPTY)),
+      ),
+    ),
+  { functional: true, dispatch: false },
 );
 
 export const ucitajListu = createEffect(
@@ -171,14 +191,11 @@ export const prikaziToast = createEffect(
     actions$.pipe(
       ofType(VezaActions.stigla),
       filter(() => !router.url.startsWith('/notifikacije')),
-      tap(({ notifikacija }) =>
+      tap(({ notifikacija, naStranici }) =>
         messageService.add({
           key: KLJUC_TOASTA,
           detail: notifikacija.tekst,
-          data:
-            notifikacija.link === putanjaAdrese(router.url)
-              ? { ...notifikacija, link: null }
-              : notifikacija,
+          data: naStranici ? { ...notifikacija, link: null } : notifikacija,
           life: TRAJANJE_TOASTA_MS,
         }),
       ),

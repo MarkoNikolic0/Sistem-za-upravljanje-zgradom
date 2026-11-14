@@ -19,7 +19,7 @@ export const VezaActions = createActionGroup({
     Pokreni: emptyProps(),
     Zaustavi: emptyProps(),
     Povezan: emptyProps(),
-    Stigla: props<{ notifikacija: Notifikacija }>(),
+    Stigla: props<{ notifikacija: Notifikacija; naStranici: boolean }>(),
     'Nov oglas': emptyProps(),
   },
 });

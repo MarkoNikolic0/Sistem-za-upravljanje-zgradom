@@ -6,10 +6,10 @@ export function osveziNaNotifikaciju(link: () => string, osvezi: () => void): vo
   const stigla = inject(Store).selectSignal(notifikacijeFeature.selectPoslednjaStigla);
   const stiglaPreOtvaranja = untracked(stigla);
   effect(() => {
-    const notifikacija = stigla();
+    const notifikacija = stigla()?.notifikacija;
     if (
       notifikacija &&
-      notifikacija !== stiglaPreOtvaranja &&
+      notifikacija !== stiglaPreOtvaranja?.notifikacija &&
       notifikacija.link === untracked(link)
     ) {
       untracked(osvezi);

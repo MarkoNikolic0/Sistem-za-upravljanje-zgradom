@@ -31,7 +31,7 @@ export class Zvonce {
 
   constructor() {
     effect(() => {
-      if (this.poslednjaStigla() !== null) {
+      if (this.poslednjaStigla()?.naStranici === false) {
         this.zvoni.set(true);
       }
     });
