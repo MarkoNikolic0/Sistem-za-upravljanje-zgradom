@@ -174,7 +174,6 @@ export const prikaziToast = createEffect(
       tap(({ notifikacija }) =>
         messageService.add({
           key: KLJUC_TOASTA,
-          severity: 'info',
           detail: notifikacija.tekst,
           data:
             notifikacija.link === putanjaAdrese(router.url)

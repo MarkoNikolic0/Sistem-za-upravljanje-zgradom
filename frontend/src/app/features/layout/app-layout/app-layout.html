@@ -176,9 +176,9 @@
 <p-toast [key]="kljucToasta" position="top-right">
   <ng-template #message let-poruka>
     <div class="toast-notifikacije">
-      <i class="pi pi-bell" aria-hidden="true"></i>
+      <app-ikonica-notifikacije [tip]="poruka.data.tip" />
       <div class="min-w-0 flex-1">
-        <p>{{ poruka.detail }}</p>
+        <p class="tekst">{{ poruka.detail }}</p>
         @if (poruka.data.link; as link) {
           <a [routerLink]="link" class="otvori" (click)="otvori(poruka.data)">Otvori</a>
         }

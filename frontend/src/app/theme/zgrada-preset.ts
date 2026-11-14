@@ -51,6 +51,21 @@ export const ZgradaPreset = definePreset(Aura, {
         }
       `,
     },
+    toast: {
+      normal: {
+        background: 'color-mix(in srgb, {surface.900}, transparent 4%)',
+        borderColor: 'rgb(255 255 255 / 0.1)',
+        color: '{surface.100}',
+        detailColor: '{surface.300}',
+        shadow: '0 16px 40px rgb(0 0 0 / 0.55)',
+        closeButton: {
+          hoverBackground: 'rgb(255 255 255 / 0.06)',
+          focusRing: {
+            color: '{primary.color}',
+          },
+        },
+      },
+    },
     sidebar: {
       root: {
         borderColor: 'rgb(255 255 255 / 0.06)',

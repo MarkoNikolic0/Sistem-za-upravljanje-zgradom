@@ -14,6 +14,7 @@ import { Store } from '@ngrx/store';
 import { ToastModule } from 'primeng/toast';
 import { Zvonce } from '../../notifikacije/zvonce/zvonce';
 import { KLJUC_TOASTA, Notifikacija } from '../../notifikacije/notifikacija-models';
+import { IkonicaNotifikacije } from '../../notifikacije/ikonica-notifikacije/ikonica-notifikacije';
 import {
   NotifikacijeActions,
   VezaActions,
@@ -37,6 +38,7 @@ const NAJVISE_U_TRACI = 5;
     ToastModule,
     Logo,
     Zvonce,
+    IkonicaNotifikacije,
   ],
   selector: 'app-app-layout',
   styleUrl: './app-layout.scss',

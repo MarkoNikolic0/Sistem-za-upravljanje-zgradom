@@ -20,13 +20,8 @@ import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import {
-  BOJE_NOTIFIKACIJA,
-  doPonoci,
-  IKONICE_NOTIFIKACIJA,
-  Notifikacija,
-  poDanima,
-} from '../notifikacija-models';
+import { doPonoci, Notifikacija, poDanima } from '../notifikacija-models';
+import { IkonicaNotifikacije } from '../ikonica-notifikacije/ikonica-notifikacije';
 import { notifikacijeFeature } from '../notifikacija-store/notifikacije-reducer';
 import { NotifikacijeActions } from '../notifikacija-store/notifikacije-actions';
 
@@ -40,6 +35,7 @@ import { NotifikacijeActions } from '../notifikacija-store/notifikacije-actions'
     MessageModule,
     SelectButtonModule,
     SkeletonModule,
+    IkonicaNotifikacije,
   ],
   templateUrl: './notifikacije.html',
   styleUrl: './notifikacije.scss',
@@ -51,8 +47,6 @@ export class Notifikacije {
   private readonly fokusiraj = fokusPosleCrtanja();
   private poslednjiPreUcitavanja: number | null = null;
 
-  protected readonly ikonice = IKONICE_NOTIFIKACIJA;
-  protected readonly boje = BOJE_NOTIFIKACIJA;
   protected readonly filteri = [
     { label: 'Sve', value: false },
     { label: 'Nepročitana', value: true },
