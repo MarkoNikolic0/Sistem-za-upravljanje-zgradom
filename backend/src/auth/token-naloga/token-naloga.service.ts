@@ -1,0 +1,118 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, LessThan, MoreThan, Repository } from 'typeorm';
+import { Korisnik } from '../../korisnik/korisnik.entity.js';
+import { MailService, type Mail } from '../../shared/mail/mail.service.js';
+import { generisiToken, hesirajToken } from '../token.util.js';
+import {
+  RAZMAK_MAILOVA_S,
+  TRAJANJE_LINKA_MIN,
+  TRAJANJE_POTVRDE_SATI,
+} from '../auth.constants.js';
+import { SvrhaTokena, TokenNaloga } from './token-naloga.entity.js';
+
+const TRAJANJE_MS: Record<SvrhaTokena, number> = {
+  [SvrhaTokena.LOZINKA]: TRAJANJE_LINKA_MIN * 60 * 1000,
+  [SvrhaTokena.POTVRDA]: TRAJANJE_POTVRDE_SATI * 60 * 60 * 1000,
+};
+
+const PUTANJA: Record<SvrhaTokena, string> = {
+  [SvrhaTokena.LOZINKA]: '/nova-lozinka',
+  [SvrhaTokena.POTVRDA]: '/potvrda-emaila',
+};
+
+@Injectable()
+export class TokenNalogaService {
+  constructor(
+    @InjectRepository(TokenNaloga)
+    private tokenRepository: Repository<TokenNaloga>,
+    private mailService: MailService,
+    private config: ConfigService,
+  ) {}
+
+  async napravi(
+    manager: EntityManager,
+    korisnikId: number,
+    svrha: SvrhaTokena,
+  ): Promise<string | null> {
+    const sada = Date.now();
+    const nedavno = await manager.existsBy(TokenNaloga, {
+      korisnik: { id: korisnikId },
+      svrha,
+      datumKreiranja: MoreThan(new Date(sada - RAZMAK_MAILOVA_S * 1000)),
+    });
+    if (nedavno) {
+      return null;
+    }
+
+    const token = generisiToken();
+    await this.obrisi(manager, korisnikId, svrha);
+    await manager.insert(TokenNaloga, {
+      tokenHash: hesirajToken(token),
+      svrha,
+      korisnik: { id: korisnikId },
+      datumIsteka: new Date(sada + TRAJANJE_MS[svrha]),
+    });
+    return token;
+  }
+
+  async iskoristi(
+    manager: EntityManager,
+    token: string,
+    svrha: SvrhaTokena,
+  ): Promise<number | undefined> {
+    const nadjen = await manager.findOne(TokenNaloga, {
+      where: {
+        tokenHash: hesirajToken(token),
+        svrha,
+        datumIsteka: MoreThan(new Date()),
+      },
+      relations: { korisnik: true },
+      select: { id: true, korisnik: { id: true } },
+    });
+    if (!nadjen) {
+      return undefined;
+    }
+    await manager.findOne(Korisnik, {
+      where: { id: nadjen.korisnik.id },
+      select: { id: true },
+      lock: { mode: 'for_no_key_update' },
+    });
+    const { affected } = await manager.delete(TokenNaloga, { id: nadjen.id });
+    return affected ? nadjen.korisnik.id : undefined;
+  }
+
+  async obrisi(
+    manager: EntityManager,
+    korisnikId: number,
+    svrha?: SvrhaTokena,
+  ) {
+    await manager.delete(TokenNaloga, {
+      korisnik: { id: korisnikId },
+      ...(svrha && { svrha }),
+    });
+  }
+
+  link(svrha: SvrhaTokena, token: string): string {
+    const link = new URL(
+      PUTANJA[svrha],
+      this.config.get<string>('FRONTEND_URL'),
+    );
+    link.searchParams.set('token', token);
+    return link.href;
+  }
+
+  async posalji(mail: Mail, token: string): Promise<void> {
+    const poslat = await this.mailService.posalji(mail);
+    if (!poslat) {
+      await this.tokenRepository.delete({ tokenHash: hesirajToken(token) });
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async obrisiIstekle() {
+    await this.tokenRepository.delete({ datumIsteka: LessThan(new Date()) });
+  }
+}

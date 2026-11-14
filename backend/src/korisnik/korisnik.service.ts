@@ -124,6 +124,7 @@ export class KorisnikService {
           ? 'korisnik.deaktiviran IS NULL'
           : 'korisnik.deaktiviran IS NOT NULL',
       )
+      .andWhere('korisnik.emailPotvrdjen IS NOT NULL')
       .orderBy('korisnik.prezime')
       .addOrderBy('korisnik.ime')
       .addOrderBy('korisnik.id');

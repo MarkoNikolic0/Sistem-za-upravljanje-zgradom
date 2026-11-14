@@ -20,11 +20,24 @@ export const routes: Routes = [
   {
     path: 'zaboravljena-lozinka',
     loadComponent: () =>
-      import('./features/auth/zaboravljena-lozinka/zaboravljena-lozinka').then(
-        (m) => m.ZaboravljenaLozinka,
-      ),
+      import('./features/auth/zahtev-linka/zahtev-linka').then((m) => m.ZahtevLinka),
     canActivate: [gostGuard],
+    data: { vrsta: 'lozinka' },
     title: 'Zaboravljena lozinka | Upravljanje zgradom',
+  },
+  {
+    path: 'ponovna-aktivacija',
+    loadComponent: () =>
+      import('./features/auth/zahtev-linka/zahtev-linka').then((m) => m.ZahtevLinka),
+    canActivate: [gostGuard],
+    data: { vrsta: 'aktivacija' },
+    title: 'Nov link za aktivaciju | Upravljanje zgradom',
+  },
+  {
+    path: 'potvrda-emaila',
+    loadComponent: () =>
+      import('./features/auth/potvrda-emaila/potvrda-emaila').then((m) => m.PotvrdaEmaila),
+    title: 'Aktivacija naloga | Upravljanje zgradom',
   },
   {
     path: 'nova-lozinka',

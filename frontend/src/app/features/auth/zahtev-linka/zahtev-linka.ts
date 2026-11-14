@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -7,11 +7,14 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { AuthLayout } from '../auth-layout/auth-layout';
+import { ProveriMejl } from '../proveri-mejl/proveri-mejl';
 import { AuthService } from '../auth-service';
 import { StanjePrijave } from '../auth-models';
 import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
-import { TRAJANJE_LINKA_MIN } from '../pravila-naloga';
+import { TRAJANJE_LINKA_MIN, TRAJANJE_POTVRDE_SATI } from '../pravila-naloga';
+
+export type VrstaLinka = 'lozinka' | 'aktivacija';
 
 @Component({
   imports: [
@@ -21,18 +24,22 @@ import { TRAJANJE_LINKA_MIN } from '../pravila-naloga';
     MessageModule,
     RouterLink,
     AuthLayout,
+    ProveriMejl,
   ],
-  selector: 'app-zaboravljena-lozinka',
-  templateUrl: './zaboravljena-lozinka.html',
+  selector: 'app-zahtev-linka',
+  templateUrl: './zahtev-linka.html',
 })
-export class ZaboravljenaLozinka {
+export class ZahtevLinka {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   private stanje = inject(Router).currentNavigation()?.extras.state as StanjePrijave | undefined;
 
+  readonly vrsta = input.required<VrstaLinka>();
+
   protected readonly trajanjeLinka = TRAJANJE_LINKA_MIN;
+  protected readonly trajanjePotvrde = TRAJANJE_POTVRDE_SATI;
   protected readonly salje = signal(false);
   protected readonly greska = signal('');
   protected readonly poslato = signal('');
@@ -57,16 +64,17 @@ export class ZaboravljenaLozinka {
     this.greska.set('');
     this.salje.set(true);
 
-    this.authService
-      .zaboravljenaLozinka(email)
-      .pipe(finalize(() => this.salje.set(false)))
-      .subscribe({
-        next: () => {
-          this.poslato.set(email.trim());
-          this.fokusiraj('#poslato');
-        },
-        error: (err: HttpErrorResponse) => this.obradiGresku(err),
-      });
+    const zahtev =
+      this.vrsta() === 'lozinka'
+        ? this.authService.zaboravljenaLozinka(email)
+        : this.authService.ponovoPotvrda(email);
+    zahtev.pipe(finalize(() => this.salje.set(false))).subscribe({
+      next: () => {
+        this.poslato.set(email.trim());
+        this.fokusiraj('#poslato');
+      },
+      error: (err: HttpErrorResponse) => this.obradiGresku(err),
+    });
   }
 
   protected stanjeZaPrijavu(): StanjePrijave {

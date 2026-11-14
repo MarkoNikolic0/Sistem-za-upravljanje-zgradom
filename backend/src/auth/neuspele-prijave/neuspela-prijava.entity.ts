@@ -1,20 +1,13 @@
-import {
-  Column,
-  Entity,
-  Index,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { Korisnik } from '../../korisnik/korisnik.entity.js';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-@Index(['korisnik', 'ip'], { unique: true })
+@Index(['email', 'ip'], { unique: true })
 @Entity()
 export class NeuspelaPrijava {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Korisnik, { onDelete: 'CASCADE', nullable: false })
-  korisnik: Korisnik;
+  @Column()
+  email: string;
 
   @Column()
   ip: string;

@@ -114,11 +114,12 @@ JOIN zgrada z ON z.adresa = v.adresa
 WHERE NOT EXISTS (SELECT 1 FROM stan s WHERE s."zgradaId" = z.id AND s.broj = v.broj);
 
 -- KORISNICI (lozinka za sve: Zgrada123!) ----------------------------------------------------
-INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, "zgradaId")
+INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, "zgradaId", "emailPotvrdjen")
 SELECT v.ime, v.prezime, v.email, v.telefon,
        '$2b$10$vA3jA/dFn0F49Jati8I25etyp5KMizffmKsZr3odS8BDAhmdnk44i',
        v.uloga::korisnik_uloga_enum,
-       (SELECT id FROM zgrada WHERE adresa = v.zgrada)
+       (SELECT id FROM zgrada WHERE adresa = v.zgrada),
+       now()
 FROM (VALUES
   -- prvi nalozi napravljeni rucno (zadrzavaju svoju lozinku ako vec postoje)
   ('Marko', 'Nikolic', 'markonikolic287@gmail.com', '+381600000001', 'admin', NULL),
@@ -166,11 +167,12 @@ ON CONFLICT (email) DO NOTHING;
 
 -- DEAKTIVIRANI NALOZI (filter Deaktivirani na stranici Korisnici; ne mogu da se prijave) ----
 -- Datum deaktivacije se upisuje samo kad skripta pravi nalog, pa rucna aktivacija ostaje
-INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, deaktiviran)
+INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, deaktiviran, "emailPotvrdjen")
 SELECT v.ime, v.prezime, v.email, v.telefon,
        '$2b$10$vA3jA/dFn0F49Jati8I25etyp5KMizffmKsZr3odS8BDAhmdnk44i',
        v.uloga::korisnik_uloga_enum,
-       now() - v.pre::interval
+       now() - v.pre::interval,
+       now() - v.pre::interval - interval '1 year'
 FROM (VALUES
   -- bivsi stanar koji se odselio
   ('Lazar', 'Petković', 'lazar.petkovic@example.com', '+381641234531', 'stanar', '3 weeks'),

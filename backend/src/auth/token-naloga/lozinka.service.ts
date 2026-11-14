@@ -4,33 +4,21 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import {
-  DataSource,
-  EntityManager,
-  LessThan,
-  MoreThan,
-  Repository,
-} from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../../korisnik/aktivan-korisnik.js';
 import { MailService } from '../../shared/mail/mail.service.js';
 import { greskaPolja } from '../../shared/greske-validacije.js';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
 import { NeuspelePrijaveService } from '../neuspele-prijave/neuspele-prijave.service.js';
-import { generisiToken, hesirajToken } from '../token.util.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
 import { NovaLozinkaDto } from '../dto/nova-lozinka.dto.js';
-import {
-  PORUKA_LINK,
-  RAZMAK_MAILOVA_S,
-  TRAJANJE_LINKA_MIN,
-} from '../auth.constants.js';
-import { TokenLozinke } from './token-lozinke.entity.js';
-import { mailLozinkaPromenjena, mailNovaLozinka } from './mailovi-lozinke.js';
+import { PORUKA_LINK } from '../auth.constants.js';
+import { SvrhaTokena } from './token-naloga.entity.js';
+import { TokenNalogaService } from './token-naloga.service.js';
+import { mailLozinkaPromenjena, mailNovaLozinka } from './mailovi-naloga.js';
 import { NotifikacijaService } from '../../notifikacija/notifikacija.service.js';
 import { PushService } from '../../notifikacija/push/push.service.js';
 
@@ -41,33 +29,30 @@ export class LozinkaService {
   constructor(
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
-    @InjectRepository(TokenLozinke)
-    private tokenRepository: Repository<TokenLozinke>,
     private dataSource: DataSource,
+    private tokenNaloga: TokenNalogaService,
     private refreshTokenService: RefreshTokenService,
     private neuspelePrijaveService: NeuspelePrijaveService,
     private mailService: MailService,
-    private config: ConfigService,
     private notifikacije: NotifikacijaService,
     private pushService: PushService,
   ) {}
 
   async posaljiLink(email: string): Promise<void> {
     try {
-      const token = await this.napraviToken(email);
-      if (!token) {
-        return;
-      }
-      const link = new URL(
-        '/nova-lozinka',
-        this.config.get<string>('FRONTEND_URL'),
-      );
-      link.searchParams.set('token', token);
-      const poslat = await this.mailService.posalji(
-        mailNovaLozinka(email, link.href),
-      );
-      if (!poslat) {
-        await this.tokenRepository.delete({ tokenHash: hesirajToken(token) });
+      const token = await this.dataSource.transaction(async (manager) => {
+        const korisnik = await manager.findOne(Korisnik, {
+          where: { email, ...AKTIVAN_KORISNIK },
+          select: { id: true },
+          lock: { mode: 'for_no_key_update' },
+        });
+        return korisnik
+          ? this.tokenNaloga.napravi(manager, korisnik.id, SvrhaTokena.LOZINKA)
+          : null;
+      });
+      if (token) {
+        const link = this.tokenNaloga.link(SvrhaTokena.LOZINKA, token);
+        await this.tokenNaloga.posalji(mailNovaLozinka(email, link), token);
       }
     } catch (greska) {
       this.logger.error('Link za novu lozinku nije napravljen.', greska);
@@ -76,17 +61,11 @@ export class LozinkaService {
 
   async postaviNovu(dto: NovaLozinkaDto): Promise<void> {
     const { id, email } = await this.dataSource.transaction(async (manager) => {
-      const { raw } = await manager
-        .createQueryBuilder()
-        .delete()
-        .from(TokenLozinke)
-        .where('"tokenHash" = :tokenHash AND "datumIsteka" > now()', {
-          tokenHash: hesirajToken(dto.token),
-        })
-        .returning('"korisnikId"')
-        .execute();
-      const korisnikId = (raw as { korisnikId: number }[])[0]?.korisnikId;
-
+      const korisnikId = await this.tokenNaloga.iskoristi(
+        manager,
+        dto.token,
+        SvrhaTokena.LOZINKA,
+      );
       const korisnik = korisnikId
         ? await manager.findOne(Korisnik, {
             where: { id: korisnikId, ...AKTIVAN_KORISNIK },
@@ -99,8 +78,8 @@ export class LozinkaService {
 
       const hes = await bcrypt.hash(dto.lozinka, 10);
       await manager.update(Korisnik, korisnik.id, { lozinka: hes });
-      await this.obrisiLinkove(manager, korisnik.id);
-      await this.neuspelePrijaveService.obrisiSve(manager, korisnik.id);
+      await this.tokenNaloga.obrisi(manager, korisnik.id);
+      await this.neuspelePrijaveService.obrisiSve(manager, korisnik.email);
       await this.refreshTokenService.opozoviSveSesije(manager, korisnik.id);
       await this.pushService.obrisiSve(manager, korisnik.id);
       return korisnik;
@@ -144,55 +123,16 @@ export class LozinkaService {
     const hes = await bcrypt.hash(dto.novaLozinka, 10);
     await this.dataSource.transaction(async (manager) => {
       await manager.update(Korisnik, korisnikId, { lozinka: hes });
-      await this.obrisiLinkove(manager, korisnikId);
+      await this.tokenNaloga.obrisi(manager, korisnikId, SvrhaTokena.LOZINKA);
       await this.refreshTokenService.opozoviOstaleSesije(
         manager,
         korisnikId,
         refreshToken,
       );
+      await this.pushService.obrisiSve(manager, korisnikId);
     });
     this.notifikacije.prekiniVeze(korisnikId);
 
     void this.mailService.posalji(mailLozinkaPromenjena(korisnik.email));
-  }
-
-  async obrisiLinkove(manager: EntityManager, korisnikId: number) {
-    await manager.delete(TokenLozinke, { korisnik: { id: korisnikId } });
-  }
-
-  @Cron(CronExpression.EVERY_DAY_AT_3AM)
-  async obrisiIstekle() {
-    await this.tokenRepository.delete({ datumIsteka: LessThan(new Date()) });
-  }
-
-  private napraviToken(email: string): Promise<string | null> {
-    return this.dataSource.transaction(async (manager) => {
-      const korisnik = await manager.findOne(Korisnik, {
-        where: { email, ...AKTIVAN_KORISNIK },
-        select: { id: true },
-        lock: { mode: 'for_no_key_update' },
-      });
-      if (!korisnik) {
-        return null;
-      }
-
-      const sada = Date.now();
-      const nedavno = await manager.existsBy(TokenLozinke, {
-        korisnik: { id: korisnik.id },
-        datumKreiranja: MoreThan(new Date(sada - RAZMAK_MAILOVA_S * 1000)),
-      });
-      if (nedavno) {
-        return null;
-      }
-
-      const token = generisiToken();
-      await this.obrisiLinkove(manager, korisnik.id);
-      await manager.insert(TokenLozinke, {
-        tokenHash: hesirajToken(token),
-        korisnik: { id: korisnik.id },
-        datumIsteka: new Date(sada + TRAJANJE_LINKA_MIN * 60 * 1000),
-      });
-      return token;
-    });
   }
 }

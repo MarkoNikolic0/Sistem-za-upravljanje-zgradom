@@ -1,3 +1,6 @@
-import { IsNull } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 
-export const AKTIVAN_KORISNIK = { deaktiviran: IsNull() };
+export const AKTIVAN_KORISNIK = {
+  deaktiviran: IsNull(),
+  emailPotvrdjen: Not(IsNull()),
+};

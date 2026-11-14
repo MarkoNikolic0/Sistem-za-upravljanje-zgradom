@@ -16,7 +16,7 @@ import { UpravnikZgradeService } from '../zgrada/upravnik-zgrade.service.js';
 import { KvarAkcijeService } from '../kvar/kvar-akcije.service.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { RefreshTokenService } from '../auth/refresh-token/refresh-token.service.js';
-import { LozinkaService } from '../auth/token-lozinke/lozinka.service.js';
+import { TokenNalogaService } from '../auth/token-naloga/token-naloga.service.js';
 import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { PushService } from '../notifikacija/push/push.service.js';
@@ -30,7 +30,7 @@ export class NalogKorisnikaService {
     private kvarAkcijeService: KvarAkcijeService,
     private oglasService: OglasService,
     private refreshTokenService: RefreshTokenService,
-    private lozinkaService: LozinkaService,
+    private tokenNaloga: TokenNalogaService,
     private notifikacije: NotifikacijaService,
     private pushService: PushService,
   ) {}
@@ -90,7 +90,7 @@ export class NalogKorisnikaService {
       await this.kvarAkcijeService.vratiKvaroveServisera(manager, id, adminId);
       await this.refreshTokenService.opozoviSveSesije(manager, id);
       await this.pushService.obrisiSve(manager, id);
-      await this.lozinkaService.obrisiLinkove(manager, id);
+      await this.tokenNaloga.obrisi(manager, id);
       await manager.update(Korisnik, id, { deaktiviran: new Date() });
     });
     this.notifikacije.prekiniVeze(id);
@@ -112,7 +112,7 @@ export class NalogKorisnikaService {
       relations: { zgrada: true },
       lock: { mode: 'for_no_key_update', tables: ['korisnik'] },
     });
-    if (!korisnik) {
+    if (!korisnik?.emailPotvrdjen) {
       throw new NotFoundException(`Korisnik sa id-jem ${id} ne postoji!`);
     }
     if (korisnik.uloga === Uloga.ADMIN) {

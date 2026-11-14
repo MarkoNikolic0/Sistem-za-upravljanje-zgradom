@@ -94,11 +94,6 @@ export class Login {
       return;
     }
 
-    if (err.status === 403) {
-      this.greska.set(porukaServera(err) ?? 'Nalog je deaktiviran.');
-      return;
-    }
-
     this.greska.set(
       err.status === 401
         ? 'Email ili lozinka nisu ispravni.'
@@ -106,7 +101,7 @@ export class Login {
     );
   }
 
-  stanjeZaLozinku(): StanjePrijave {
+  stanjeZaLinkove(): StanjePrijave {
     return { email: this.loginForm.controls.email.value.trim() };
   }
 }

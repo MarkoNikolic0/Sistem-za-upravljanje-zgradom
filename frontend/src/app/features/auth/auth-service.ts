@@ -2,12 +2,7 @@ import { inject, Service } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {
-  ChangePasswordRequest,
-  KorisnikResponse,
-  LoginResponse,
-  RegisterRequest,
-} from './auth-models';
+import { ChangePasswordRequest, LoginResponse, RegisterRequest } from './auth-models';
 
 @Service()
 export class AuthService {
@@ -22,8 +17,16 @@ export class AuthService {
     );
   }
 
-  register(podaci: RegisterRequest): Observable<KorisnikResponse> {
-    return this.http.post<KorisnikResponse>(`${this.apiUrl}/register`, podaci);
+  register(podaci: RegisterRequest): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/register`, podaci);
+  }
+
+  potvrdiEmail(token: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/potvrda-emaila`, { token });
+  }
+
+  ponovoPotvrda(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/ponovo-potvrda`, { email });
   }
 
   refresh(): Observable<LoginResponse> {

@@ -1,6 +1,4 @@
 import {
-  ConflictException,
-  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -9,13 +7,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { Repository } from 'typeorm';
-import { RegisterDto } from './dto/register.dto.js';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
-import { parsePhoneNumberWithError } from 'libphonenumber-js/min';
-import { PORUKA_DEAKTIVIRAN, PORUKA_ZAKLJUCAN } from './auth.constants.js';
+import { PORUKA_PRIJAVA, PORUKA_ZAKLJUCAN } from './auth.constants.js';
 import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.service.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 
@@ -31,31 +27,6 @@ export class AuthService {
     private neuspelePrijaveService: NeuspelePrijaveService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const postojeciKorisnik = await this.korisnikRepository.findOne({
-      where: { email: dto.email },
-    });
-
-    if (postojeciKorisnik) {
-      throw new ConflictException('Nalog sa ovom email adresom već postoji.');
-    }
-
-    const hesiranaLozinka = await bcrypt.hash(dto.lozinka, 10);
-
-    const noviKorisnik = this.korisnikRepository.create({
-      ime: dto.ime,
-      prezime: dto.prezime,
-      email: dto.email,
-      telefon: parsePhoneNumberWithError(dto.telefon, 'RS').number,
-      lozinka: hesiranaLozinka,
-    });
-
-    const sacuvanKorisnik = await this.korisnikRepository.save(noviKorisnik);
-
-    const { lozinka: _lozinka, ...rezultat } = sacuvanKorisnik;
-    return rezultat;
-  }
-
   async login(dto: LoginDto, ip: string) {
     const korisnik = await this.korisnikRepository.findOne({
       where: { email: dto.email },
@@ -64,25 +35,21 @@ export class AuthService {
       dto.lozinka,
       korisnik?.lozinka ?? LAZNI_HES,
     );
-    if (!korisnik) {
-      throw new UnauthorizedException('Neispravan email ili lozinka.');
-    }
-    if (await this.neuspelePrijaveService.zakljucan(korisnik.id, ip)) {
+    if (await this.neuspelePrijaveService.zakljucan(dto.email, ip)) {
       throw new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS);
     }
-    if (!lozinkaValidna) {
+    const dozvoljen =
+      korisnik?.emailPotvrdjen && !korisnik.deaktiviran && lozinkaValidna;
+    if (!dozvoljen) {
       const zakljucan = await this.neuspelePrijaveService.zabelezi(
-        korisnik.id,
+        dto.email,
         ip,
       );
       throw zakljucan
         ? new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS)
-        : new UnauthorizedException('Neispravan email ili lozinka.');
+        : new UnauthorizedException(PORUKA_PRIJAVA);
     }
-    await this.neuspelePrijaveService.obrisi(korisnik.id, ip);
-    if (korisnik.deaktiviran) {
-      throw new ForbiddenException(PORUKA_DEAKTIVIRAN);
-    }
+    await this.neuspelePrijaveService.obrisi(dto.email, ip);
 
     const {
       token: refreshToken,

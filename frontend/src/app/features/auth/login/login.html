@@ -77,11 +77,14 @@
     </button>
   </form>
 
-  <p class="mt-4 text-center">
-    <a routerLink="/zaboravljena-lozinka" [state]="stanjeZaLozinku()" class="tekst-link text-sm"
+  <div class="mt-4 flex flex-col items-center gap-2">
+    <a routerLink="/zaboravljena-lozinka" [state]="stanjeZaLinkove()" class="tekst-link text-sm"
       >Zaboravljena lozinka?</a
     >
-  </p>
+    <a routerLink="/ponovna-aktivacija" [state]="stanjeZaLinkove()" class="tekst-link text-sm"
+      >Nisi dobio mejl za aktivaciju?</a
+    >
+  </div>
 
   <p class="mt-6 text-center text-priguseno">
     Nemaš nalog?

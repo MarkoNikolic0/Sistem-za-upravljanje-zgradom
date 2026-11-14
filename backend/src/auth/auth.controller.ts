@@ -28,8 +28,10 @@ import {
 } from './decorators/trenutni-korisnik.decorator.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { LozinkaService } from './token-lozinke/lozinka.service.js';
-import { ZaboravljenaLozinkaDto } from './dto/zaboravljena-lozinka.dto.js';
+import { LozinkaService } from './token-naloga/lozinka.service.js';
+import { PotvrdaEmailaService } from './token-naloga/potvrda-emaila.service.js';
+import { EmailDto } from './dto/email.dto.js';
+import { PotvrdaEmailaDto } from './dto/potvrda-emaila.dto.js';
 import { NovaLozinkaDto } from './dto/nova-lozinka.dto.js';
 
 @Controller('auth')
@@ -37,13 +39,29 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly lozinkaService: LozinkaService,
+    private readonly potvrdaEmaila: PotvrdaEmailaService,
     private readonly config: ConfigService,
   ) {}
 
   @UseGuards(ThrottlerGuard)
   @Post('register')
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  @HttpCode(HttpStatus.ACCEPTED)
+  register(@Body() dto: RegisterDto) {
+    void this.potvrdaEmaila.registruj(dto);
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Post('potvrda-emaila')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async potvrdiEmail(@Body() dto: PotvrdaEmailaDto) {
+    await this.potvrdaEmaila.potvrdi(dto.token);
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Post('ponovo-potvrda')
+  @HttpCode(HttpStatus.ACCEPTED)
+  ponovoPotvrda(@Body() dto: EmailDto) {
+    void this.potvrdaEmaila.posaljiPonovo(dto.email);
   }
 
   @UseGuards(ThrottlerGuard)
@@ -122,7 +140,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Post('zaboravljena-lozinka')
   @HttpCode(HttpStatus.ACCEPTED)
-  zaboravljenaLozinka(@Body() dto: ZaboravljenaLozinkaDto) {
+  zaboravljenaLozinka(@Body() dto: EmailDto) {
     void this.lozinkaService.posaljiLink(dto.email);
   }
 
