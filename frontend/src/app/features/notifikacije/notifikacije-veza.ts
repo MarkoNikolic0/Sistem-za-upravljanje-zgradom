@@ -29,6 +29,7 @@ export class NotifikacijeVeza {
       const vidljiv = () => this.document.visibilityState === 'visible';
       const socket = io(`${environment.apiUrl}/notifikacije`, {
         auth: (posalji) => posalji({ token: this.authStore.accessToken(), vidljiv: vidljiv() }),
+        closeOnBeforeunload: true,
       });
       const javiVidljivost = () => {
         if (socket.connected) {
