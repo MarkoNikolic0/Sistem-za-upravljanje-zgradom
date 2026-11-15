@@ -22,7 +22,7 @@ import {
   type Svet,
   useli,
 } from './pomoc/podaci.js';
-import { sveRute } from './pomoc/rute.js';
+import { sveRute, zahtevZaRutu } from './pomoc/rute.js';
 
 const { STANAR, UPRAVNIK, SERVISER, ADMIN } = Uloga;
 
@@ -159,16 +159,16 @@ describe('prava pristupa', () => {
   let sadrzaj: Sadrzaj;
   let poUlozi: Record<Uloga, Akter>;
 
-  const zahtev = (ruta: string, akter?: Akter) => {
-    const [metoda, putanja] = ruta.split(' ');
-    return kao(t, akter)[
-      metoda.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete'
-    ](
-      putanja
+  const zahtev = (ruta: string, akter?: Akter) =>
+    zahtevZaRutu(
+      t,
+      ruta,
+      akter,
+      ruta
+        .split(' ')[1]
         .replace(':kategorija', 'vodovod')
         .replace(/:\w+/g, NEPOSTOJECI_ID),
     );
-  };
 
   beforeAll(async () => {
     t = await pokreniAplikaciju();
@@ -183,7 +183,7 @@ describe('prava pristupa', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   describe('ko sme da pozove rutu', () => {

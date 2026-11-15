@@ -119,23 +119,24 @@ export class ObavestenjaKvaraService {
   }
 
   private async stanari(manager: EntityManager, kvar: Kvar) {
-    const [pratioci, prijavioStanuje] = await Promise.all([
+    const [pratioci, stanari] = await Promise.all([
       manager.find(PratilacKvara, {
         where: { kvar: { id: kvar.id } },
         relations: { korisnik: true },
         select: { id: true, korisnik: { id: true } },
       }),
-      manager.existsBy(StanarStana, {
-        korisnik: { id: kvar.korisnik.id },
-        stan: kvar.stan
-          ? { id: kvar.stan.id }
-          : { zgrada: { id: kvar.zgrada.id } },
+      manager.find(StanarStana, {
+        where: kvar.stan
+          ? { stan: { id: kvar.stan.id } }
+          : {
+              korisnik: { id: kvar.korisnik.id },
+              stan: { zgrada: { id: kvar.zgrada.id } },
+            },
+        relations: { korisnik: true },
+        select: { id: true, korisnik: { id: true } },
       }),
     ]);
-    return [
-      ...(prijavioStanuje ? [kvar.korisnik.id] : []),
-      ...pratioci.map((p) => p.korisnik.id),
-    ];
+    return [...stanari, ...pratioci].map((veza) => veza.korisnik.id);
   }
 
   private posiljalac(manager: EntityManager, kvar: Kvar, akterId: number) {

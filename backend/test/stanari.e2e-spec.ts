@@ -25,7 +25,7 @@ import {
   type ZgradaSveta,
 } from './pomoc/podaci.js';
 
-const { ZAJEDNICKI_PROSTOR } = LokacijaTip;
+const { PRIVATNI_STAN, ZAJEDNICKI_PROSTOR } = LokacijaTip;
 
 describe('stanari, nalozi i zgrade', () => {
   let t: TestAplikacija;
@@ -65,7 +65,7 @@ describe('stanari, nalozi i zgrade', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   describe('zahtev za povezivanje sa stanom', () => {
@@ -262,6 +262,42 @@ describe('stanari, nalozi i zgrade', () => {
         .expect(201);
 
       expect(await obavestenja(z.sused)).toEqual(pre);
+    });
+
+    it('posle iseljenja prijavioca, o kvaru u stanu se obaveštavaju oni koji ostaju u stanu', async () => {
+      const z = await novaZgrada();
+      const serviser = await napraviServisera(t, 'Popravlja');
+      const kvar = await id(
+        kao(t, z.vlasnik)
+          .post('/kvar')
+          .send(noviKvar(z.stanovi[0], PRIVATNI_STAN))
+          .expect(201),
+      );
+      await kao(t, z.upravnik).patch(`/kvar/${kvar}/prihvati`).expect(200);
+      const prihvacen = 'Upravnik je prihvatio prijavu kvara „Curi cev“.';
+      expect(await obavestenja(z.ukucanin)).toContain(prihvacen);
+      expect(await obavestenja(z.sused)).not.toContain(prihvacen);
+
+      await kao(t, z.upravnik)
+        .delete(`/zgrada/${z.id}/stanar/${z.vezaVlasnika}`)
+        .expect(204);
+      const pre = await obavestenja(z.vlasnik);
+      await kao(t, z.upravnik)
+        .patch(`/kvar/${kvar}/dodeli`)
+        .send({ serviserId: serviser.id })
+        .expect(200);
+      for (const status of ['u_toku', 'resen']) {
+        await kao(t, serviser)
+          .patch(`/kvar/${kvar}/status`)
+          .send({ status })
+          .expect(200);
+      }
+
+      expect(await obavestenja(z.ukucanin)).toContain(
+        'Kvar „Curi cev“ je rešen. Potvrdi da je sve u redu ili javi da nije.',
+      );
+      expect(await obavestenja(z.vlasnik)).toEqual(pre);
+      await kao(t, z.ukucanin).patch(`/kvar/${kvar}/potvrdi`).expect(200);
     });
 
     it('ko ima još jedan stan u zgradi ostaje stanar i gubi samo glas tog stana', async () => {

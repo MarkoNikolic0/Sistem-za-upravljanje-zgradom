@@ -50,6 +50,24 @@ describe('nalog i prijava', () => {
       .expect(202, {});
   };
 
+  const posleSlanja = async (posalji: () => PromiseLike<unknown>) => {
+    const spijuni = [
+      vi.spyOn(t.app.get(PotvrdaEmailaService), 'registruj'),
+      vi.spyOn(t.app.get(PotvrdaEmailaService), 'posaljiPonovo'),
+      vi.spyOn(t.app.get(LozinkaService), 'posaljiLink'),
+    ];
+    try {
+      await posalji();
+      await Promise.all(
+        spijuni.flatMap((spijun) => spijun.mock.results.map((r) => r.value)),
+      );
+    } finally {
+      for (const spijun of spijuni) {
+        spijun.mockRestore();
+      }
+    }
+  };
+
   const registrujIAktiviraj = async (ime: string) => {
     const email = novEmail(ime);
     await registruj(email);
@@ -80,7 +98,7 @@ describe('nalog i prijava', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   describe('registracija i potvrda emaila', () => {
@@ -195,8 +213,10 @@ describe('nalog i prijava', () => {
       const email = novEmail('Jovana');
       await registruj(email);
       await t.posta.sacekaj(email, 'Aktivacija naloga');
-      await t.app.get(PotvrdaEmailaService).registruj(registracija(email));
-      await t.app.get(PotvrdaEmailaService).posaljiPonovo(email);
+      await posleSlanja(() => registruj(email));
+      await posleSlanja(() =>
+        javno().post('/auth/ponovo-potvrda').send({ email }).expect(202, {}),
+      );
       expect(t.posta.za(email)).toEqual([]);
     });
 
@@ -227,11 +247,9 @@ describe('nalog i prijava', () => {
       const aktiviran = await registrujIAktiviraj('Jovana');
       const nepoznat = novEmail('Nepoznat');
       for (const email of [aktiviran, nepoznat]) {
-        await javno()
-          .post('/auth/ponovo-potvrda')
-          .send({ email })
-          .expect(202, {});
-        await t.app.get(PotvrdaEmailaService).posaljiPonovo(email);
+        await posleSlanja(() =>
+          javno().post('/auth/ponovo-potvrda').send({ email }).expect(202, {}),
+        );
         expect(t.posta.za(email)).toEqual([]);
       }
     });
@@ -565,9 +583,8 @@ describe('nalog i prijava', () => {
       const korisnik = await napraviKorisnika(t, 'Zaboravio');
       const nepoznat = novEmail('Nepoznat');
       await zatrazi(korisnik.email).expect(202, {});
-      await zatrazi(nepoznat).expect(202, {});
+      await posleSlanja(() => zatrazi(nepoznat).expect(202, {}));
       await t.posta.sacekaj(korisnik.email, 'Promena lozinke');
-      await t.app.get(LozinkaService).posaljiLink(nepoznat);
       expect(t.posta.za(nepoznat)).toEqual([]);
     });
 
@@ -645,8 +662,7 @@ describe('nalog i prijava', () => {
         .put(`/korisnik/${deaktiviran.id}/deaktivacija`)
         .expect(204);
       for (const email of [neaktiviran, deaktiviran.email]) {
-        await zatrazi(email).expect(202, {});
-        await t.app.get(LozinkaService).posaljiLink(email);
+        await posleSlanja(() => zatrazi(email).expect(202, {}));
         expect(t.posta.za(email)).toEqual([]);
       }
     });
@@ -688,10 +704,9 @@ describe('nalog i prijava', () => {
       await kao(t, admin)
         .put(`/korisnik/${korisnik.id}/deaktivacija`)
         .expect(204);
-      await registruj(korisnik.email, { lozinka: NOVA_LOZINKA });
-      await t.app
-        .get(PotvrdaEmailaService)
-        .registruj(registracija(korisnik.email));
+      await posleSlanja(() =>
+        registruj(korisnik.email, { lozinka: NOVA_LOZINKA }),
+      );
       expect(t.posta.za(korisnik.email)).toEqual([]);
       expect(await korisnici().countBy({ email: korisnik.email })).toBe(1);
     });
@@ -709,7 +724,7 @@ describe('ograničenje broja zahteva', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   it('šesti pokušaj prijave u minutu se odbija pre provere lozinke', async () => {

@@ -24,7 +24,7 @@ import {
   zaDana,
   type ZgradaSveta,
 } from './pomoc/podaci.js';
-import { otisakBaze, sveRute } from './pomoc/rute.js';
+import { otisakBaze, sveRute, zahtevZaRutu } from './pomoc/rute.js';
 
 interface Meta {
   zgrada: ZgradaSveta;
@@ -409,9 +409,7 @@ describe('izolacija podataka po zgradi', () => {
   let fajlovi: { slika: Buffer; pdf: Buffer };
 
   const posalji = (akter: Akter, ruta: string, proba: Proba, m: Meta) => {
-    const metoda = ruta.split(' ')[0].toLowerCase() as
-      'get' | 'post' | 'put' | 'patch' | 'delete';
-    const zahtev = kao(t, akter)[metoda](proba.putanja(m));
+    const zahtev = zahtevZaRutu(t, ruta, akter, proba.putanja(m));
     if (proba.fajl) {
       for (const [polje, vrednost] of Object.entries(proba.fajl.polja ?? {})) {
         void zahtev.field(polje, vrednost);
@@ -439,7 +437,7 @@ describe('izolacija podataka po zgradi', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   it('svaka ruta je ili u tabeli izolacije ili ima razlog zašto nije', () => {

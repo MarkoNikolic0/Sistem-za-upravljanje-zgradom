@@ -8,9 +8,11 @@ import { podesiAplikaciju } from '../../src/podesi-aplikaciju.js';
 import { MailService } from '../../src/shared/mail/mail.service.js';
 import { SkladisteService } from '../../src/shared/skladiste/skladiste.service.js';
 import { LaznaPosta, LaznoSkladiste } from './lazni-servisi.js';
-import { TEST_BAZA } from './test-baza.js';
+import { PREFIKS_TEST_BAZE } from './test-baza.js';
 
 type App = Parameters<typeof request>[0];
+
+const PORUKA_BAZA = `Testovi rade samo nad bazom koja počinje sa ${PREFIKS_TEST_BAZE}.`;
 
 export interface TestAplikacija {
   app: INestApplication<App>;
@@ -27,8 +29,8 @@ export interface Akter {
 }
 
 export async function pokreniAplikaciju({ ogranicenjeZahteva = false } = {}) {
-  if (process.env.DATABASE_NAME !== TEST_BAZA) {
-    throw new Error(`Testovi rade samo nad bazom ${TEST_BAZA}.`);
+  if (!process.env.DATABASE_NAME?.startsWith(PREFIKS_TEST_BAZE)) {
+    throw new Error(PORUKA_BAZA);
   }
   const posta = new LaznaPosta();
   const skladiste = new LaznoSkladiste();
@@ -47,9 +49,9 @@ export async function pokreniAplikaciju({ ogranicenjeZahteva = false } = {}) {
   podesiAplikaciju(app);
   await app.listen(0);
   const baza = app.get(DataSource);
-  if (baza.options.database !== TEST_BAZA) {
+  if (!String(baza.options.database).startsWith(PREFIKS_TEST_BAZE)) {
     await app.close();
-    throw new Error(`Testovi rade samo nad bazom ${TEST_BAZA}.`);
+    throw new Error(PORUKA_BAZA);
   }
   const t: TestAplikacija = {
     app,
@@ -61,7 +63,7 @@ export async function pokreniAplikaciju({ ogranicenjeZahteva = false } = {}) {
   return t;
 }
 
-type Metoda = 'get' | 'post' | 'put' | 'patch' | 'delete';
+export type Metoda = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export function kao(t: TestAplikacija, akter?: Akter) {
   const posalji = (metoda: Metoda) => (putanja: string) => {

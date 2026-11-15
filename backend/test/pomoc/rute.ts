@@ -1,4 +1,19 @@
-import type { TestAplikacija } from './aplikacija.js';
+import {
+  type Akter,
+  kao,
+  type Metoda,
+  type TestAplikacija,
+} from './aplikacija.js';
+
+export function zahtevZaRutu(
+  t: TestAplikacija,
+  ruta: string,
+  akter?: Akter,
+  putanja = ruta.split(' ')[1],
+) {
+  const metoda = ruta.split(' ')[0].toLowerCase() as Metoda;
+  return kao(t, akter)[metoda](putanja);
+}
 
 interface SlojRutera {
   route?: { path: string; methods: Record<string, boolean> };

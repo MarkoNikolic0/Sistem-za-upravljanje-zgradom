@@ -19,7 +19,7 @@ export default defineConfig({
           name: 'e2e',
           include: ['test/**/*.e2e-spec.ts'],
           globalSetup: ['./test/pomoc/test-baza.ts'],
-          env: { DATABASE_NAME: 'zgrada_e2e' },
+          setupFiles: ['reflect-metadata', './test/pomoc/izaberi-bazu.ts'],
           fileParallelism: false,
           testTimeout: 20000,
           hookTimeout: 60000,

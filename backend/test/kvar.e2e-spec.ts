@@ -90,7 +90,7 @@ describe('kvarovi', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   describe('životni put kvara', () => {

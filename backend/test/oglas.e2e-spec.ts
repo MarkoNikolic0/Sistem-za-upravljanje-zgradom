@@ -44,7 +44,7 @@ describe('oglasi, dokumenti i kontakti', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   describe('oglasi', () => {

@@ -92,7 +92,7 @@ describe('sastanci', () => {
   });
 
   afterAll(async () => {
-    await t.app.close();
+    await t?.app.close();
   });
 
   describe('zakazivanje', () => {
