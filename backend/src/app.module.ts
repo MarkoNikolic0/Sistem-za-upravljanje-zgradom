@@ -3,8 +3,6 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { AuthModule } from './auth/auth.module.js';
 import { ZgradaModule } from './zgrada/zgrada.module.js';
 import { StanModule } from './stan/stan.module.js';
@@ -26,9 +24,6 @@ import { NalogKorisnikaModule } from './nalog-korisnika/nalog-korisnika.module.j
 import { DokumentZgradeModule } from './dokument-zgrade/dokument-zgrade.module.js';
 import { NotifikacijaModule } from './notifikacija/notifikacija.module.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,7 +43,7 @@ const __dirname = dirname(__filename);
         username: configService.get<string>('DATABASE_USER'),
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        autoLoadEntities: true,
         synchronize: true, //samo za razvoj na true
       }),
     }),

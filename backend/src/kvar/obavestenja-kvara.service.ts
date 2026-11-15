@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { EntityManager } from 'typeorm';
 import { Kvar } from './kvar.entity.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
+import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { StatusKvara } from '../shared/enums/kvar.enums.js';
 import { danISat } from '../shared/vreme.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
@@ -118,12 +119,23 @@ export class ObavestenjaKvaraService {
   }
 
   private async stanari(manager: EntityManager, kvar: Kvar) {
-    const pratioci = await manager.find(PratilacKvara, {
-      where: { kvar: { id: kvar.id } },
-      relations: { korisnik: true },
-      select: { id: true, korisnik: { id: true } },
-    });
-    return [kvar.korisnik.id, ...pratioci.map((p) => p.korisnik.id)];
+    const [pratioci, prijavioStanuje] = await Promise.all([
+      manager.find(PratilacKvara, {
+        where: { kvar: { id: kvar.id } },
+        relations: { korisnik: true },
+        select: { id: true, korisnik: { id: true } },
+      }),
+      manager.existsBy(StanarStana, {
+        korisnik: { id: kvar.korisnik.id },
+        stan: kvar.stan
+          ? { id: kvar.stan.id }
+          : { zgrada: { id: kvar.zgrada.id } },
+      }),
+    ]);
+    return [
+      ...(prijavioStanuje ? [kvar.korisnik.id] : []),
+      ...pratioci.map((p) => p.korisnik.id),
+    ];
   }
 
   private posiljalac(manager: EntityManager, kvar: Kvar, akterId: number) {

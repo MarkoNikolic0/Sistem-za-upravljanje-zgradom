@@ -114,25 +114,20 @@ export class SlikaKvaraService {
     korisnikId: number,
     uloga: Uloga,
   ): Promise<void> {
+    const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
     const slika = await this.slikaRepository.findOne({
       where: { id, kvar: { id: kvarId } },
-      relations: { korisnik: true, kvar: { zgrada: true } },
+      relations: { korisnik: true },
     });
     if (!slika) {
       throw new NotFoundException(`Slika sa id-jem ${id} ne postoji!`);
     }
 
-    if (
-      !(await this.kvarPravaService.smeDaUpravlja(
-        slika.kvar,
-        korisnikId,
-        uloga,
-      ))
-    ) {
+    if (!(await this.kvarPravaService.smeDaUpravlja(kvar, korisnikId, uloga))) {
       if (slika.korisnik?.id !== korisnikId) {
         throw new ForbiddenException('Možete brisati samo svoje slike!');
       }
-      if (jeZavrsen(slika.kvar.status)) {
+      if (jeZavrsen(kvar.status)) {
         throw new ConflictException(
           'Kvar je završen, pa slike više ne mogu da se brišu.',
         );

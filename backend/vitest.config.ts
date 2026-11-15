@@ -1,13 +1,30 @@
 import { defineConfig } from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  // Resolves the path aliases declared in tsconfig.json, including the ones
-  // added by `nest g library`.
-  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     root: './',
-    include: ['**/*.spec.ts'],
+    setupFiles: ['reflect-metadata'],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.spec.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'e2e',
+          include: ['test/**/*.e2e-spec.ts'],
+          globalSetup: ['./test/pomoc/test-baza.ts'],
+          env: { DATABASE_NAME: 'zgrada_e2e' },
+          fileParallelism: false,
+          testTimeout: 20000,
+          hookTimeout: 60000,
+        },
+      },
+    ],
   },
 });

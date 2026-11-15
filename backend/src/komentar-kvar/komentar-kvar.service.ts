@@ -92,9 +92,10 @@ export class KomentarKvarService {
     korisnikId: number,
     uloga: Uloga,
   ): Promise<void> {
+    const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
     const komentar = await this.komentarKvarRepository.findOne({
       where: { id: komentarId, kvar: { id: kvarId } },
-      relations: { korisnik: true, kvar: { zgrada: true } },
+      relations: { korisnik: true },
     });
     if (!komentar) {
       throw new NotFoundException(
@@ -102,17 +103,11 @@ export class KomentarKvarService {
       );
     }
 
-    if (
-      !(await this.kvarPravaService.smeDaUpravlja(
-        komentar.kvar,
-        korisnikId,
-        uloga,
-      ))
-    ) {
+    if (!(await this.kvarPravaService.smeDaUpravlja(kvar, korisnikId, uloga))) {
       if (komentar.korisnik.id !== korisnikId) {
         throw new ForbiddenException(`Možete brisati samo svoje komentare!`);
       }
-      if (jeZavrsen(komentar.kvar.status)) {
+      if (jeZavrsen(kvar.status)) {
         throw new ConflictException(
           'Kvar je završen, pa komentari više ne mogu da se brišu.',
         );

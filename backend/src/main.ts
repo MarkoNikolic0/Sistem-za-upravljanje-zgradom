@@ -1,18 +1,15 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
-import cookieParser from 'cookie-parser';
-import { KontaktSerializerInterceptor } from './korisnik/kontakt-serializer.interceptor.js';
-import { greskeValidacije } from './shared/greske-validacije.js';
+import { podesiAplikaciju } from './podesi-aplikaciju.js';
 import { SocketIoAdapter } from './shared/socket-io.adapter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.use(cookieParser());
+  podesiAplikaciju(app);
 
   app.enableCors({
     origin: configService.get<string>('FRONTEND_URL'),
@@ -21,18 +18,6 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(
     new SocketIoAdapter(app, configService.get<string>('FRONTEND_URL')),
-  );
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      exceptionFactory: greskeValidacije,
-    }),
-  );
-  app.useGlobalInterceptors(
-    new KontaktSerializerInterceptor(app.get(Reflector)),
   );
 
   const config = new DocumentBuilder()
