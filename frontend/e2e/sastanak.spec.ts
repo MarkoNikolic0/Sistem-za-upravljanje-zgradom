@@ -18,12 +18,14 @@ async function zakazi(page: Page, naslov: string, vrsta?: string) {
   await page.getByRole('button', { name: 'Zakaži sastanak' }).click();
   await expect(page).toHaveURL(/\/sastanci\/\d+$/);
   await expect(page.getByRole('heading', { name: naslov })).toBeVisible();
-  return new URL(page.url()).pathname;
+  const adresa = new URL(page.url()).pathname;
+  return { adresa, id: Number(adresa.split('/').at(-1)) };
 }
 
 test.describe.serial('skupština', () => {
   let naslov = '';
   let adresa = '';
+  let id = 0;
   test.beforeAll(() => {
     naslov = `Redovna skupština ${Date.now()}`;
   });
@@ -31,7 +33,7 @@ test.describe.serial('skupština', () => {
   test('upravnik zakaže skupštinu sa dnevnim redom', async ({ page }) => {
     const { a } = await ucitajSvet();
     await prijavi(page, a.upravnik.email);
-    adresa = await zakazi(page, naslov);
+    ({ adresa, id } = await zakazi(page, naslov));
     await expect(page.getByText('Zamena ulaznih vrata')).toBeVisible();
   });
 
@@ -55,7 +57,7 @@ test.describe.serial('skupština', () => {
 
   test('posle početka upravnik evidentira prisustvo i okači zapisnik', async ({ page }) => {
     const { a } = await ucitajSvet();
-    await pomeriUProslost('sastanak', Number(adresa.split('/').at(-1)));
+    await pomeriUProslost('sastanak', id);
     await prijavi(page, a.upravnik.email);
     await page.goto(adresa);
 
@@ -90,7 +92,7 @@ test.describe.serial('zbor stanara', () => {
   test('upravnik zakaže zbor i otkaže ga sa razlogom', async ({ page }) => {
     const { a } = await ucitajSvet();
     await prijavi(page, a.upravnik.email);
-    adresa = await zakazi(page, `Zbor o dvorištu ${Date.now()}`, 'Zbor stanara');
+    ({ adresa } = await zakazi(page, `Zbor o dvorištu ${Date.now()}`, 'Zbor stanara'));
     await page.getByRole('button', { name: 'Otkaži sastanak' }).click();
     await page.getByLabel('Razlog otkazivanja').fill(razlog);
     await page.getByRole('button', { name: 'Otkaži sastanak' }).click();

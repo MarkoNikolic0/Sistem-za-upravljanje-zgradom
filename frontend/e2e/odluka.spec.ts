@@ -19,11 +19,13 @@ test.describe.serial('odluka', () => {
     await page.getByText('Odluka', { exact: true }).click();
     await page.getByLabel('Pitanje').fill(pitanje);
     await page.getByText('Obična većina', { exact: true }).click();
+    const napravljeno = page.waitForResponse(
+      (odgovor) =>
+        odgovor.request().method() === 'POST' && new URL(odgovor.url()).pathname === '/glasanje',
+    );
     await page.getByRole('button', { name: 'Pokreni glasanje o odluci' }).click();
-    const naslov = page.getByRole('heading', { name: pitanje });
-    await expect(naslov).toBeVisible();
-    id = Number((await naslov.getAttribute('id'))?.replace('pitanje-', ''));
-    expect(id).toBeGreaterThan(0);
+    ({ id } = (await (await napravljeno).json()) as { id: number });
+    await expect(page.getByRole('heading', { name: pitanje })).toBeVisible();
   });
 
   test('vlasnici glasaju Za, a ukućanin ne vidi odluku', async ({ page }) => {

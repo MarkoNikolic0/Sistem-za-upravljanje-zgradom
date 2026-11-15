@@ -23,6 +23,7 @@ export interface Svet {
   admin: Akter;
   serviser: Akter;
   bezStana: Akter;
+  zaboravni: Akter;
 }
 
 let svet: Promise<Svet> | undefined;
