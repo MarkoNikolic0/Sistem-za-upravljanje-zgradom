@@ -1,14 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { prijavi } from './pomoc/prijava';
+import { popuniPrijavu, prijavi } from './pomoc/prijava';
 import { ucitajSvet } from './pomoc/svet';
 
 test('gost sa zaštićene stranice ide na prijavu i posle prijave se vraća', async ({ page }) => {
   const { a } = await ucitajSvet();
   await page.goto('/oglasi');
   await expect(page).toHaveURL(/\/login\?returnUrl=%2Foglasi/);
-  await page.getByLabel('Email').fill(a.vlasnik.email);
-  await page.getByLabel('Lozinka', { exact: true }).fill((await ucitajSvet()).lozinka);
-  await page.getByRole('button', { name: 'Prijavi se' }).click();
+  await popuniPrijavu(page, a.vlasnik.email);
   await expect(page).toHaveURL(/\/oglasi$/);
 });
 

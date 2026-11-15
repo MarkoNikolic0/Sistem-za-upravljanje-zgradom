@@ -79,7 +79,11 @@ describe('authInterceptor', () => {
     const odgovori = putanje.map((p) => firstValueFrom(http.get(`${API}/${p}`)));
     putanje.forEach((p) => server.expectOne(`${API}/${p}`).flush(null, NEOVLASCEN));
     server.expectOne(`${API}/auth/refresh`).flush({ accessToken: tokenZa('stanar', 3) });
-    putanje.forEach((p) => server.expectOne(`${API}/${p}`).flush(p));
+    putanje.forEach((p) => {
+      const ponovljen = server.expectOne(`${API}/${p}`);
+      expect(ponovljen.request.headers.get('Authorization')).toBe(`Bearer ${tokenZa('stanar', 3)}`);
+      ponovljen.flush(p);
+    });
     expect(await Promise.all(odgovori)).toEqual(putanje);
   });
 

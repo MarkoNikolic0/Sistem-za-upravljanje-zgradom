@@ -32,7 +32,7 @@ test.describe.serial('kvar od prijave do zatvaranja', () => {
     await prijavi(page, b.vlasnik.email);
     await page.goto(adresaKvara);
     await expect(page.getByRole('heading', { name: naslov })).toHaveCount(0);
-    await expect(page.getByText(/ne postoji|nije pronađen|nemaš pristup/i)).toBeVisible();
+    await expect(page.getByText('Kvar ne postoji ili nemaš pristup njemu.')).toBeVisible();
   });
 
   test('upravnik prihvati kvar i dodeli ga serviseru', async ({ page }) => {

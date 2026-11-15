@@ -25,7 +25,7 @@ test.describe.serial('nov stanar', () => {
     await page.getByRole('combobox', { name: 'Zgrada' }).click();
     await page.getByRole('option', { name: /Alfa/ }).click();
     await page.getByRole('combobox', { name: 'Stan' }).click();
-    await page.getByRole('option', { name: /3/ }).click();
+    await page.getByRole('option', { name: /^Stan 3 ·/ }).click();
     await page.getByRole('button', { name: 'Pošalji zahtev' }).click();
     await expect(page.getByText('Zahtev je poslat upravniku zgrade.')).toBeVisible();
   });

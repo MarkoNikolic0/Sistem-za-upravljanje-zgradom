@@ -28,7 +28,17 @@ export interface Svet {
 let svet: Promise<Svet> | undefined;
 
 export function ucitajSvet(): Promise<Svet> {
-  svet ??= fetch(`${ADRESA_POMOCI}/svet`).then((odgovor) => odgovor.json() as Promise<Svet>);
+  svet ??= fetch(`${ADRESA_POMOCI}/svet`)
+    .then((odgovor) => {
+      if (!odgovor.ok) {
+        throw new Error(`Pomoćni server je vratio ${odgovor.status}.`);
+      }
+      return odgovor.json() as Promise<Svet>;
+    })
+    .catch((greska: unknown) => {
+      svet = undefined;
+      throw greska;
+    });
   return svet;
 }
 
@@ -45,7 +55,7 @@ export async function linkIzMejla(email: string): Promise<string> {
       { message: `Za ${email} nije stigao mejl.` },
     )
     .not.toBe('');
-  const link = /https?:\/\/\S+/.exec(tekst)?.[0];
+  const link = /https?:\/\/\S+/.exec(tekst)?.[0].replace(/[.,;:!?)]+$/, '');
   if (!link) {
     throw new Error(`Mejl za ${email} nema link.`);
   }
