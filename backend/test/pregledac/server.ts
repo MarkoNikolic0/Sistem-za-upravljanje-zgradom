@@ -6,6 +6,10 @@ import { napraviBazu, PREFIKS_TEST_BAZE } from '../pomoc/test-baza.js';
 const PORT_API = 3100;
 const PORT_POMOCI = 3101;
 const FRONTEND = 'http://localhost:4300';
+const PROSLO: Record<string, string> = {
+  sastanak: `UPDATE sastanak SET pocetak = now() - interval '1 hour' WHERE id = $1`,
+  glasanje: `UPDATE glasanje SET rok = now() - interval '1 second' WHERE id = $1`,
+};
 
 const imeBaze = `${PREFIKS_TEST_BAZE}${process.pid}`;
 const obrisiBazu = await napraviBazu(imeBaze);
@@ -45,6 +49,9 @@ function napraviPomoc(aplikacija: TestAplikacija, svet: object) {
       odgovor.writeHead(status, { 'Content-Type': 'application/json' });
       odgovor.end(telo === undefined ? undefined : JSON.stringify(telo));
     };
+    const proslo = /^\/(sastanak|glasanje)\/(\d+)\/proslo$/.exec(
+      adresa.pathname,
+    );
     if (zahtev.method === 'GET' && adresa.pathname === '/svet') {
       posalji(200, { lozinka: LOZINKA, ...svet });
     } else if (zahtev.method === 'GET' && adresa.pathname === '/mejl') {
@@ -52,6 +59,11 @@ function napraviPomoc(aplikacija: TestAplikacija, svet: object) {
         .za(adresa.searchParams.get('za') ?? '')
         .at(-1);
       posalji(mejl ? 200 : 404, mejl);
+    } else if (zahtev.method === 'POST' && proslo) {
+      aplikacija.baza.query(PROSLO[proslo[1]], [Number(proslo[2])]).then(
+        () => posalji(204),
+        (greska: unknown) => posalji(500, String(greska)),
+      );
     } else if (zahtev.method === 'POST' && adresa.pathname === '/kraj') {
       pocisti().then(
         () => odgovor.writeHead(204).end(() => process.exit(0)),

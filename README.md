@@ -152,6 +152,10 @@ E2e testovi sami pokrenu backend na portu 3100 (nad privremenom bazom `zgrada_e2
 | `nalog.spec.ts` | registracija, aktivacija iz mejla, prijava, zahtev za stan i odobrenje |
 | `kvar.spec.ts` | stanar prijavi kvar, upravnik ga prihvati i dodeli, serviser reši, stanar potvrdi; druga zgrada ga ne vidi |
 | `glasanje.spec.ts`, `oglas.spec.ts` | anketa i glasanje, objava oglasa, šta vide komšije i druga zgrada |
+| `sastanak.spec.ts` | skupština: zakazivanje, najava dolaska, evidencija prisustva, kvorum i zapisnik; otkazivanje zbora; druga zgrada je ne vidi |
+| `odluka.spec.ts` | glasanje vlasnika o odluci, ishod posle roka i objava na tabli; ukućanin je ne vidi |
+| `lozinka.spec.ts` | zaboravljena lozinka preko linka iz mejla |
+| `obavestenja.spec.ts` | obaveštenje stiže odmah, bez osvežavanja stranice |
 | `pristup.spec.ts` | preusmeravanje gosta i uloga koje nemaju pravo na stranicu |
 
 ## Ako nešto ne radi
