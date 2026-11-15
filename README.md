@@ -8,6 +8,7 @@ Diplomski rad — veb aplikacija za upravljanje stambenom zgradom: kvarovi, ogla
 backend/             NestJS API (port 3000), seed/seed.sql = test podaci
 backend/test/        e2e testovi backenda (jedinični su uz kod, src/**/*.spec.ts)
 frontend/            Angular aplikacija (port 4200)
+frontend/e2e/        e2e testovi kroz pregledač (jedinični su uz kod, src/**/*.spec.ts)
 docker-compose.yml   PostgreSQL i Garage
 ```
 
@@ -134,6 +135,24 @@ E2e testovi sami naprave privremenu bazu čije ime počinje sa `zgrada_e2e_` i o
 | `kvar`, `glasanje`, `sastanak`, `oglas`, `stanari` | glavni tokovi: statusi kvara, kvorum i većine, iseljenje |
 | `sema.e2e-spec.ts` | oblik baze |
 | `pomoc/` | pomoćni fajlovi: pokretanje aplikacije, test baza, test podaci, spisak ruta, lažni servisi |
+| `pregledac/server.ts` | backend za e2e testove frontenda (vidi niže) |
+
+Testovi frontenda se pokreću iz foldera `frontend`. Pre prvog pokretanja e2e testova jednom treba preuzeti pregledač: `npx playwright install chromium`.
+
+| Komanda | Šta pokreće |
+| --- | --- |
+| `npm run test:sve` | sve testove frontenda, oko minut i po |
+| `npm test` | jedinične testove: pravila, store-ovi, sesija i tokeni, pristup stranicama, notifikacije (`src/**/*.spec.ts`) |
+| `npm run e2e` | e2e testove kroz pravi pregledač na ekranu telefona od 375px (`e2e/*.spec.ts`) |
+
+E2e testovi sami pokrenu backend na portu 3100 (nad privremenom bazom `zgrada_e2e_`, sa lažnim mailom i skladištem) i frontend na portu 4300, pa mogu da rade dok su 3000 i 4200 pokrenuti. Na kraju se baza briše. Izveštaj o neuspelom testu je u `frontend/playwright-report` (`npx playwright show-report`).
+
+| Fajl u `frontend/e2e/` | Šta proverava |
+| --- | --- |
+| `nalog.spec.ts` | registracija, aktivacija iz mejla, prijava, zahtev za stan i odobrenje |
+| `kvar.spec.ts` | stanar prijavi kvar, upravnik ga prihvati i dodeli, serviser reši, stanar potvrdi; druga zgrada ga ne vidi |
+| `glasanje.spec.ts`, `oglas.spec.ts` | anketa i glasanje, objava oglasa, šta vide komšije i druga zgrada |
+| `pristup.spec.ts` | preusmeravanje gosta i uloga koje nemaju pravo na stranicu |
 
 ## Ako nešto ne radi
 
@@ -150,6 +169,7 @@ E2e testovi sami naprave privremenu bazu čije ime počinje sa `zgrada_e2e_` i o
 | Folder | Komanda | Opis |
 | --- | --- | --- |
 | backend | `npm test` | testovi (vidi Testovi) |
+| frontend | `npm run test:sve` | testovi (vidi Testovi) |
 | frontend | `npx ng serve --configuration production` | pokretanje sa service worker-om (obaveštenja, instalacija) |
 | backend / frontend | `npm run lint` | linter |
 | backend / frontend | `npm run build` | produkcijski build |

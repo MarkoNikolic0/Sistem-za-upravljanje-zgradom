@@ -10,11 +10,10 @@ declare module 'vitest' {
   }
 }
 
-export default async function napraviTestBazu(projekat: TestProject) {
+export async function napraviBazu(ime: string) {
   if (existsSync('.env')) {
     process.loadEnvFile('.env');
   }
-  const ime = `${PREFIKS_TEST_BAZE}${process.pid}`;
   const server = new DataSource({
     type: 'postgres',
     host: process.env.DATABASE_HOST,
@@ -26,9 +25,15 @@ export default async function napraviTestBazu(projekat: TestProject) {
   await server.initialize();
   await server.query(`DROP DATABASE IF EXISTS ${ime} WITH (FORCE)`);
   await server.query(`CREATE DATABASE ${ime}`);
-  projekat.provide('testBaza', ime);
   return async () => {
     await server.query(`DROP DATABASE IF EXISTS ${ime} WITH (FORCE)`);
     await server.destroy();
   };
+}
+
+export default async function napraviTestBazu(projekat: TestProject) {
+  const ime = `${PREFIKS_TEST_BAZE}${process.pid}`;
+  const obrisi = await napraviBazu(ime);
+  projekat.provide('testBaza', ime);
+  return obrisi;
 }

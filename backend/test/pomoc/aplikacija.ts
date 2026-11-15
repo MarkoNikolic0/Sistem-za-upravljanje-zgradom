@@ -28,7 +28,10 @@ export interface Akter {
   token: string;
 }
 
-export async function pokreniAplikaciju({ ogranicenjeZahteva = false } = {}) {
+export async function pokreniAplikaciju({
+  ogranicenjeZahteva = false,
+  port = 0,
+} = {}) {
   if (!process.env.DATABASE_NAME?.startsWith(PREFIKS_TEST_BAZE)) {
     throw new Error(PORUKA_BAZA);
   }
@@ -47,7 +50,7 @@ export async function pokreniAplikaciju({ ogranicenjeZahteva = false } = {}) {
   const modul = await graditelj.compile();
   const app = modul.createNestApplication<INestApplication<App>>();
   podesiAplikaciju(app);
-  await app.listen(0);
+  await app.listen(port);
   const baza = app.get(DataSource);
   if (!String(baza.options.database).startsWith(PREFIKS_TEST_BAZE)) {
     await app.close();
