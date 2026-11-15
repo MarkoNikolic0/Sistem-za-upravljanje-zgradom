@@ -6,6 +6,7 @@ Diplomski rad — veb aplikacija za upravljanje stambenom zgradom: kvarovi, ogla
 
 ```
 backend/             NestJS API (port 3000), seed/seed.sql = test podaci
+backend/test/        e2e testovi backenda (jedinični su uz kod, src/**/*.spec.ts)
 frontend/            Angular aplikacija (port 4200)
 docker-compose.yml   PostgreSQL i Garage
 ```
@@ -103,6 +104,37 @@ Lozinka za sve: **`Zgrada123!`**
 
 Ostali nalozi su na početku `backend/seed/seed.sql`.
 
+## Obaveštenja na uređaju i instalacija aplikacije
+
+Uz običan `npm start` aplikacija radi, ali bez service worker-a: nema obaveštenja na uređaju (push), dugmeta „Instaliraj“ ni poruke o novoj verziji. Da bi se to probalo, frontend se pokreće u produkcijskoj konfiguraciji (iz foldera `frontend`, umesto koraka 6):
+
+```powershell
+npx ng serve --configuration production
+```
+
+Adresa ostaje http://localhost:4200. Obaveštenja se uključuju na stranici **Moj profil**. Pregledač ih dozvoljava samo na `localhost` ili preko HTTPS-a, pa za probu na telefonu treba USB prosleđivanje porta (Chrome, `chrome://inspect`) ili postavljena aplikacija.
+
+## Testovi
+
+Testovi backenda se pokreću iz foldera `backend`. Docker mora da radi (korak 2), backend ne mora.
+
+| Komanda | Šta pokreće |
+| --- | --- |
+| `npm test` | sve testove |
+| `npm run test:unit` | jedinične testove: male funkcije same za sebe, bez baze (`src/**/*.spec.ts`, uz kod koji proveravaju) |
+| `npm run test:e2e` | e2e testove: ceo backend preko pravih zahteva (`test/*.e2e-spec.ts`) |
+
+E2e testovi sami naprave privremenu bazu čije ime počinje sa `zgrada_e2e_` i odbijaju da rade nad bilo kojom drugom, pa se podaci iz razvojne baze ne diraju. Mailovi i skladište fajlova su u testu zamenjeni lažnim servisima.
+
+| Fajl u `backend/test/` | Šta proverava |
+| --- | --- |
+| `izolacija.e2e-spec.ts` | korisnik jedne zgrade ne može da vidi ni izmeni podatke druge zgrade, za sve rute |
+| `prava.e2e-spec.ts` | svaka uloga sme samo ono što joj pripada |
+| `auth.e2e-spec.ts` | prijava, tokeni, zaključavanje, lozinka, potvrda emaila |
+| `kvar`, `glasanje`, `sastanak`, `oglas`, `stanari` | glavni tokovi: statusi kvara, kvorum i većine, iseljenje |
+| `sema.e2e-spec.ts` | oblik baze |
+| `pomoc/` | pomoćni fajlovi: pokretanje aplikacije, test baza, test podaci, spisak ruta, lažni servisi |
+
 ## Ako nešto ne radi
 
 - **Na računaru već postoji fajl `garage.toml` kao folder** — desi se kad se `docker compose up` pokrene pre koraka 1. Obriši folder, uradi `cp garage.toml.example garage.toml` i ponovo `docker compose up -d`.
@@ -117,7 +149,8 @@ Ostali nalozi su na početku `backend/seed/seed.sql`.
 
 | Folder | Komanda | Opis |
 | --- | --- | --- |
-| backend / frontend | `npm test` | testovi |
+| backend | `npm test` | testovi (vidi Testovi) |
+| frontend | `npx ng serve --configuration production` | pokretanje sa service worker-om (obaveštenja, instalacija) |
 | backend / frontend | `npm run lint` | linter |
 | backend / frontend | `npm run build` | produkcijski build |
 | koren | `docker compose down` | zaustavlja kontejnere (podaci ostaju) |
