@@ -59,7 +59,7 @@ export class NovoGlasanje {
   private readonly zgradeKorisnika = injectZgradeKorisnika();
   protected readonly ucitano = this.zgradeKorisnika.ucitano;
   protected readonly greskaUcitavanja = this.zgradeKorisnika.greska;
-  // Upravnik pravi anketu samo u zgradi kojom upravlja, admin u bilo kojoj
+  // Upravnik pravi anketu samo u zgradama kojima upravlja, admin u bilo kojoj
   protected readonly zgrade = computed(() => {
     const profil = this.zgradeKorisnika.profil;
     if (!profil.hasValue()) {

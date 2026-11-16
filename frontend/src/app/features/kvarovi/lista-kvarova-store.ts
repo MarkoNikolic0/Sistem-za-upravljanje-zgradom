@@ -15,6 +15,7 @@ import { KategorijaKvara, Kvar, PrioritetKvara, StanjeKvara } from './kvar-model
 import { KvarService } from './kvar-service';
 import { jeZavrsen, KVAROVA_PO_STRANI } from './pravila-kvara';
 import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
 
 interface ListaKvarovaState {
   kvarovi: Kvar[];
@@ -25,13 +26,13 @@ interface ListaKvarovaState {
 }
 
 export const ListaKvarovaStore = signalStore(
-  withState<ListaKvarovaState>({
+  withState<ListaKvarovaState>(() => ({
     kvarovi: [],
     stanje: 'aktivni',
     kategorija: null,
     prioritet: null,
-    zgradaId: null,
-  }),
+    zgradaId: zgradaIzAdrese(),
+  })),
   withRequestStatus(),
   withPaginacija(KVAROVA_PO_STRANI),
   withMethods((store, kvarService = inject(KvarService)) => {

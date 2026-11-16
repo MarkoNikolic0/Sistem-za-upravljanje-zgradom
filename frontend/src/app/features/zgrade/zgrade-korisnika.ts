@@ -1,10 +1,11 @@
 import { computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { ProfileResponse } from '../profile/profile-models';
 import { ProfileService } from '../profile/profile-service';
 import { ZgradaOsnovno } from './zgrada-models';
 import { ZgradaService } from './zgrada-service';
 
-// Zgrade u kojima korisnik stanuje i zgrada kojom upravlja (admin dobija sve zgrade posebno)
+// Zgrade u kojima korisnik stanuje i kojima upravlja (admin dobija sve zgrade posebno)
 export function zgradeIzProfila(profil: ProfileResponse): ZgradaOsnovno[] {
   const zgrade = new Map<number, ZgradaOsnovno>();
   for (const zgrada of profil.upravlja) {
@@ -50,4 +51,11 @@ export function injectZgradeKorisnika() {
 // Zgrade kojima korisnik upravlja (kontakti, stanari)
 export function injectZgradeUpravnika() {
   return injectZgrade((profil) => profil.upravlja);
+}
+
+export function zgradaIzAdrese(): number | null {
+  const router = inject(Router);
+  const adresa = router.currentNavigation()?.finalUrl ?? router.parseUrl(router.url);
+  const zgrada = Number(adresa.queryParamMap.get('zgrada'));
+  return Number.isInteger(zgrada) && zgrada > 0 ? zgrada : null;
 }

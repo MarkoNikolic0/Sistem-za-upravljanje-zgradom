@@ -12,6 +12,7 @@ import {
 import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
 import { Sastanak, StanjeSastanka } from './sastanak-models';
 import { SastanakService } from './sastanak-service';
+import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
 
 const SASTANAKA_PO_STRANI = 10;
 
@@ -22,11 +23,11 @@ interface ListaSastanakaState {
 }
 
 export const ListaSastanakaStore = signalStore(
-  withState<ListaSastanakaState>({
+  withState<ListaSastanakaState>(() => ({
     sastanci: [],
     stanje: 'predstojeci',
-    zgradaId: null,
-  }),
+    zgradaId: zgradaIzAdrese(),
+  })),
   withRequestStatus(),
   withPaginacija(SASTANAKA_PO_STRANI),
   withMethods((store, sastanakService = inject(SastanakService)) => {

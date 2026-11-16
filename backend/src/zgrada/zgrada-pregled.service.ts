@@ -131,11 +131,7 @@ export class ZgradaPregledService {
         order: { naziv: 'ASC' },
       });
     }
-    return await this.zgradaRepository.find({
-      select: { id: true, naziv: true, adresa: true },
-      where: { upravnikId: korisnikId, ...AKTIVNA_ZGRADA },
-      order: { naziv: 'ASC' },
-    });
+    return await this.korisnikService.upravljaneZgrade(korisnikId);
   }
 
   private async sastanakPoZgradi(

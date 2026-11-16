@@ -14,6 +14,7 @@ import { Oglas, VrstaOglasa } from './oglas-models';
 import { OglasService } from './oglas-service';
 import { OGLASA_PO_STRANI } from './pravila-oglasa';
 import { withAkcije } from '../../shared/stanje/with-akcije';
+import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
 
 interface ListaOglasaState {
   oglasi: Oglas[];
@@ -22,11 +23,11 @@ interface ListaOglasaState {
 }
 
 export const ListaOglasaStore = signalStore(
-  withState<ListaOglasaState>({
+  withState<ListaOglasaState>(() => ({
     oglasi: [],
     vrsta: null,
-    zgradaId: null,
-  }),
+    zgradaId: zgradaIzAdrese(),
+  })),
   withRequestStatus(),
   withAkcije(),
   withPaginacija(OGLASA_PO_STRANI),

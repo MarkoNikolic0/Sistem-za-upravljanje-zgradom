@@ -591,6 +591,14 @@ describe('stanari, nalozi i zgrade', () => {
         .expect(400);
     });
 
+    it('upravnik bez ijedne zgrade može da postane stanar', async () => {
+      const bezZgrade = await napraviKorisnika(t, 'UpravnikBezZgrade', {
+        uloga: Uloga.UPRAVNIK,
+      });
+      await promeni(bezZgrade, 'stanar').expect(204);
+      expect((await uBazi(bezZgrade)).uloga).toBe(Uloga.STANAR);
+    });
+
     it('upravnik se ne menja ovde nego razrešenjem na zgradi', async () => {
       const z = await novaZgrada();
       const druga = await novaZgrada();
@@ -641,6 +649,22 @@ describe('stanari, nalozi i zgrade', () => {
       await kao(t, z.upravnik).get(`/zgrada/${z.id}/stanar`).expect(403);
       await kao(t, z.sused).get(`/zgrada/${z.id}/stanar`).expect(200);
       await postavi(z.id, z.sused).expect(200);
+    });
+
+    it('istovremena deaktivacija i smena upravnika se ne zaglave', async () => {
+      for (let i = 0; i < 5; i++) {
+        const z = await novaZgrada();
+        const [deaktivacija, smena] = await Promise.all([
+          kao(t, admin).put(`/korisnik/${z.upravnik.id}/deaktivacija`),
+          postavi(z.id, z.sused),
+        ]);
+        expect([deaktivacija.status, smena.status]).toEqual([204, 200]);
+        expect(await uBazi(z.upravnik)).toEqual({
+          uloga: Uloga.STANAR,
+          zgrade: [],
+        });
+        expect((await uBazi(z.sused)).zgrade).toEqual([z.id]);
+      }
     });
 
     it('serviser, admin i deaktiviran nalog ne mogu biti postavljeni', async () => {

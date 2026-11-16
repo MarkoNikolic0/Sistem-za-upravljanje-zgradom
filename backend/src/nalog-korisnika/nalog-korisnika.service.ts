@@ -52,10 +52,12 @@ export class NalogKorisnikaService {
           select: { id: true, naziv: true },
           order: { naziv: 'ASC' },
         });
-        const nazivi = zgrade.map((z) => `„${z.naziv}“`).join(', ');
-        throw new ConflictException(
-          `${korisnik.ime} ${korisnik.prezime} upravlja ${zgrade.length === 1 ? 'zgradom' : 'zgradama'} ${nazivi}. Upravnik se razrešava na stranici zgrade.`,
-        );
+        if (zgrade.length > 0) {
+          const nazivi = zgrade.map((z) => `„${z.naziv}“`).join(', ');
+          throw new ConflictException(
+            `${korisnik.ime} ${korisnik.prezime} upravlja ${zgrade.length === 1 ? 'zgradom' : 'zgradama'} ${nazivi}. Upravnik se razrešava na stranici zgrade.`,
+          );
+        }
       }
 
       if (dto.uloga === Uloga.SERVISER) {
@@ -81,6 +83,7 @@ export class NalogKorisnikaService {
 
   async deaktiviraj(id: number, adminId: number) {
     await this.dataSource.transaction(async (manager) => {
+      await this.upravnikService.zakljucajZgradeUpravnika(manager, id);
       const korisnik = await this.zakljucaj(manager, id, adminId);
       if (korisnik.deaktiviran) {
         return;

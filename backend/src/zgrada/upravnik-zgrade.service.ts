@@ -94,6 +94,15 @@ export class UpravnikZgradeService {
     await this.ukloni(manager, zgradaId, zgrada.upravnikId);
   }
 
+  async zakljucajZgradeUpravnika(manager: EntityManager, korisnikId: number) {
+    await manager.find(Zgrada, {
+      where: { upravnikId: korisnikId },
+      select: { id: true },
+      order: { id: 'ASC' },
+      lock: { mode: 'pessimistic_write' },
+    });
+  }
+
   async razresiSvuda(manager: EntityManager, korisnikId: number) {
     await manager.update(
       Zgrada,

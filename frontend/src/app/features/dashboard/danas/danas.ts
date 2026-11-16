@@ -29,6 +29,11 @@ export class Danas {
   readonly zgrade = input.required<ZgradaOsnovno[]>();
   readonly zgrada = input<number | null>(null);
 
+  protected readonly upitZgrade = computed(() => {
+    const zgrada = this.zgrada();
+    return zgrada === null ? null : { zgrada };
+  });
+
   private readonly upravnik = computed(() => this.profil().uloga === 'upravnik');
 
   protected readonly pregled = inject(ZgradaService).pregled(this.upravnik);

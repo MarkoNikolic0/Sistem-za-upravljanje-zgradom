@@ -60,7 +60,7 @@ export class ListaSastanaka {
       !this.zgradeKorisnika.admin() &&
       this.zgrade().length === 0,
   );
-  // Sastanak zakazuje upravnik (zgrada u profilu je samo zgrada kojom upravlja) i admin
+  // Sastanak zakazuje upravnik i admin
   protected readonly zakazuje = computed(() => {
     const profil = this.zgradeKorisnika.profil;
     return (

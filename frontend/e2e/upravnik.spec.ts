@@ -20,6 +20,10 @@ test('upravnik dve zgrade bira zgradu na početnoj i kod stanara', async ({ page
   await expect(page).toHaveURL(new RegExp(`zgrada=${dveZgrade.zgrade[1]}`));
   await expect(page.getByRole('heading', { name: 'Za tebe danas' })).toBeVisible();
   await expect(page.getByText(/^Zeta/)).toBeVisible();
+  await expect(page.locator('app-danas a.brojac').first()).toHaveAttribute(
+    'href',
+    new RegExp(`zgrada=${dveZgrade.zgrade[1]}`),
+  );
   await page.getByRole('link', { name: 'Sve zgrade' }).click();
   await expect(zeta).toBeVisible();
 

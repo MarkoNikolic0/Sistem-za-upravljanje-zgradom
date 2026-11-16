@@ -17,6 +17,7 @@ import { Store } from '@ngrx/store';
 import { Glasanje, StanjeGlasanja } from './glasanje-models';
 import { CekaGlasActions } from './ceka-glas-store/ceka-glas-actions';
 import { GlasanjeService } from './glasanje-service';
+import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
 
 const GLASANJA_PO_STRANI = 10;
 
@@ -30,14 +31,14 @@ interface ListaGlasanjaState {
 }
 
 export const ListaGlasanjaStore = signalStore(
-  withState<ListaGlasanjaState>({
+  withState<ListaGlasanjaState>(() => ({
     glasanja: [],
     stanje: 'aktivna',
-    zgradaId: null,
+    zgradaId: zgradaIzAdrese(),
     glasUToku: false,
     greskaGlasa: null,
     najava: '',
-  }),
+  })),
   withRequestStatus(),
   withAkcije(),
   withPaginacija(GLASANJA_PO_STRANI),

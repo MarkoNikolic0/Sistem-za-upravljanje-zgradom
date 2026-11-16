@@ -46,11 +46,16 @@ export class KorisnikService {
     private readonly specijalnostRepository: Repository<ServiserSpecijalnost>,
   ) {}
 
-  async zgradeUpravnika(korisnikId: number): Promise<number[]> {
-    const zgrade = await this.zgradaRepository.find({
+  upravljaneZgrade(korisnikId: number) {
+    return this.zgradaRepository.find({
       where: { upravnikId: korisnikId, ...AKTIVNA_ZGRADA },
-      select: { id: true },
+      select: { id: true, naziv: true, adresa: true },
+      order: { naziv: 'ASC' },
     });
+  }
+
+  async zgradeUpravnika(korisnikId: number): Promise<number[]> {
+    const zgrade = await this.upravljaneZgrade(korisnikId);
     return zgrade.map((z) => z.id);
   }
 
@@ -220,11 +225,7 @@ export class KorisnikService {
         order: { stan: { broj: 'ASC' } },
       }),
       korisnik.uloga === Uloga.UPRAVNIK
-        ? this.zgradaRepository.find({
-            where: { upravnikId: korisnikId, ...AKTIVNA_ZGRADA },
-            select: { id: true, naziv: true, adresa: true },
-            order: { naziv: 'ASC' },
-          })
+        ? this.upravljaneZgrade(korisnikId)
         : [],
     ]);
 

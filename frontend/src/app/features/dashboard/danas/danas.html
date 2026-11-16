@@ -32,7 +32,12 @@
     <span class="sr-only">Učitavanje…</span>
   } @else {
     @if (glavna(); as g) {
-      <a class="glavna" [class.hitno]="g.hitno" [routerLink]="g.putanja">
+      <a
+        class="glavna"
+        [class.hitno]="g.hitno"
+        [routerLink]="g.putanja"
+        [queryParams]="g.putanja.length === 1 ? upitZgrade() : null"
+      >
         <span class="oznaka-stavke"
           ><i [class]="g.ikonica" aria-hidden="true"></i> {{ g.oznaka }}</span
         >
@@ -44,7 +49,11 @@
         <ul class="ulazak mt-2">
           @for (s of sporedne(); track s.kljuc) {
             <li>
-              <a class="stavka" [routerLink]="s.putanja">
+              <a
+                class="stavka"
+                [routerLink]="s.putanja"
+                [queryParams]="s.putanja.length === 1 ? upitZgrade() : null"
+              >
                 <i [class]="s.ikonica" class="ikonica-stavke" aria-hidden="true"></i>
                 <span class="tekst-stavke">
                   <span class="opis-stavke" [class.text-upozorenje]="s.hitno">{{ s.oznaka }}</span>
@@ -74,7 +83,7 @@
 </section>
 
 <section class="brojaci" aria-label="Pregled zgrade">
-  <a class="brojac" routerLink="/sastanci">
+  <a class="brojac" routerLink="/sastanci" [queryParams]="upitZgrade()">
     <span class="naziv-brojaca">Sastanci</span>
     <span class="broj">{{ sastanci.hasValue() ? sastanci.value().ukupno : '–' }}</span>
     <span class="opis-brojaca">
@@ -85,17 +94,17 @@
       }
     </span>
   </a>
-  <a class="brojac" routerLink="/glasanje" [class.ima]="zaGlas() > 0">
+  <a class="brojac" routerLink="/glasanje" [queryParams]="upitZgrade()" [class.ima]="zaGlas() > 0">
     <span class="naziv-brojaca">Glasanje</span>
     <span class="broj">{{ glasanja.hasValue() ? glasanja.value().ukupno : '–' }}</span>
     <span class="opis-brojaca">{{ zaGlas() > 0 ? zaGlas() + ' bez tvog glasa' : 'aktivnih' }}</span>
   </a>
-  <a class="brojac" routerLink="/kvarovi">
+  <a class="brojac" routerLink="/kvarovi" [queryParams]="upitZgrade()">
     <span class="naziv-brojaca">Kvarovi</span>
     <span class="broj">{{ kvarovi.hasValue() ? kvarovi.value().ukupno : '–' }}</span>
     <span class="opis-brojaca">aktivnih</span>
   </a>
-  <a class="brojac" routerLink="/oglasi">
+  <a class="brojac" routerLink="/oglasi" [queryParams]="upitZgrade()">
     <span class="naziv-brojaca">Oglasna tabla</span>
     <span class="broj">{{ oglasi.hasValue() ? oglasi.value().ukupno : '–' }}</span>
     <span class="opis-brojaca truncate">
