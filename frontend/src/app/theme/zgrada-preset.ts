@@ -52,12 +52,17 @@ export const ZgradaPreset = definePreset(Aura, {
       `,
     },
     toast: {
+      root: {
+        borderRadius: '12px',
+        transitionDuration: 'var(--trajanje-sporo)',
+        blur: '0',
+      },
       normal: {
-        background: 'color-mix(in srgb, {surface.900}, transparent 4%)',
-        borderColor: 'rgb(255 255 255 / 0.1)',
+        background: 'var(--color-povrsina)',
+        borderColor: 'var(--color-ivica)',
         color: '{surface.100}',
         detailColor: '{surface.300}',
-        shadow: '0 16px 40px rgb(0 0 0 / 0.55)',
+        shadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04), 0 8px 24px rgb(0 0 0 / 0.4)',
         closeButton: {
           hoverBackground: 'rgb(255 255 255 / 0.06)',
           focusRing: {

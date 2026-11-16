@@ -128,8 +128,8 @@
   border: 1px solid var(--color-ivica);
   border-radius: 10px;
   transition:
-    border-color 150ms,
-    background-color 150ms;
+    border-color var(--trajanje-brzo),
+    background-color var(--trajanje-brzo);
 
   &.moja {
     --boja-trake: color-mix(in srgb, var(--color-svetlo) 18%, transparent);
@@ -175,7 +175,7 @@ button.opcija {
   background: var(--boja-trake);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform var(--trajanje-trake) var(--kriva-ulaska);
 }
 
 .rezultati .traka {
@@ -246,7 +246,7 @@ button.opcija {
     background: var(--color-svetlo);
     transform: scaleX(var(--udeo));
     transform-origin: left;
-    transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform var(--trajanje-trake) var(--kriva-ulaska);
   }
 }
 
@@ -266,16 +266,5 @@ button.opcija {
   .rezultati .traka,
   .traka-ucesca span {
     transform: scaleX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .traka,
-  .traka-ucesca span {
-    transition: none;
-  }
-
-  .tacka {
-    animation: none;
   }
 }

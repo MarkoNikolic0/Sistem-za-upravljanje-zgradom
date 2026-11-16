@@ -28,9 +28,9 @@
   font-size: 0.8125rem;
   color: var(--color-priguseno);
   transition:
-    border-color 150ms,
-    color 150ms,
-    background-color 150ms;
+    border-color var(--trajanje-brzo),
+    color var(--trajanje-brzo),
+    background-color var(--trajanje-brzo);
 
   &:hover {
     border-color: var(--color-priguseno);

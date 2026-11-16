@@ -37,7 +37,7 @@
       transparent 60%
     ),
     var(--color-povrsina);
-  transition: border-color 150ms;
+  transition: border-color var(--trajanje-brzo);
 
   &.hitno {
     border-color: color-mix(in srgb, var(--color-upozorenje) 45%, transparent);
@@ -132,7 +132,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--color-naslov);
-  transition: color 150ms;
+  transition: color var(--trajanje-brzo);
 }
 
 .opis-stavke {
@@ -174,7 +174,7 @@
   gap: 0.25rem;
   padding: 1rem;
   background: var(--color-pozadina);
-  transition: background-color 150ms;
+  transition: background-color var(--trajanje-brzo);
 
   &:hover {
     background: var(--color-povrsina);
@@ -246,6 +246,15 @@
   .prozor {
     aspect-ratio: 6 / 7;
     background: var(--color-prozor);
+    transition:
+      background-color var(--trajanje-sporo),
+      box-shadow var(--trajanje-sporo);
+
+    @for $i from 2 through 9 {
+      &:nth-child(#{$i}) {
+        transition-delay: calc(#{$i - 1} * 2 * var(--razmak-ulaska));
+      }
+    }
 
     &.upaljen {
       background: var(--color-svetlo);

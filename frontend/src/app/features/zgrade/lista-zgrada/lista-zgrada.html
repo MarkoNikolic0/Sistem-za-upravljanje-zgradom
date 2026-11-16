@@ -61,7 +61,7 @@
         </p>
       </div>
     } @else {
-      <ul class="mreza">
+      <ul class="mreza ulazak">
         @for (z of aktivne(); track z.id) {
           <li>
             <a class="zgrada" [routerLink]="['/zgrade', z.id]">
@@ -96,7 +96,7 @@
       <p class="-mt-1 mb-4 text-sm text-priguseno">
         Ne vide se nigde u aplikaciji. Podaci su sačuvani i vraćaju se sa zgradom.
       </p>
-      <ul class="mreza">
+      <ul class="mreza ulazak">
         @for (z of arhivirane(); track z.id) {
           <li class="zgrada arhivirana">
             <span class="stanovi">

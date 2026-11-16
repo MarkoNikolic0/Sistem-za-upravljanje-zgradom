@@ -48,7 +48,7 @@
         <span class="dalje" aria-hidden="true">Otvori <i class="pi pi-arrow-right"></i></span>
       </a>
       @if (sporedne().length > 0) {
-        <ul class="mt-2">
+        <ul class="ulazak mt-2">
           @for (s of sporedne(); track s.kljuc) {
             <li>
               <a class="stavka" [routerLink]="s.putanja">

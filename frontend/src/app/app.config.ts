@@ -11,8 +11,10 @@ import {
   withAutoCleanupInjectors,
   withComponentInputBinding,
   withInMemoryScrolling,
+  withViewTransitions,
 } from '@angular/router';
 import { routes } from './app.routes';
+import { preskociNepotrebanPrelaz } from './shared/prelaz-stranice';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { ZgradaPreset } from './theme/zgrada-preset';
@@ -42,6 +44,10 @@ export const appConfig: ApplicationConfig = {
       withAutoCleanupInjectors(),
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+      withViewTransitions({
+        skipInitialTransition: true,
+        onViewTransitionCreated: preskociNepotrebanPrelaz,
+      }),
     ),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),

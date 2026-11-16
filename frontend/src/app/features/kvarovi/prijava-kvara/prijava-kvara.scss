@@ -76,8 +76,8 @@
   border-radius: 10px;
   cursor: pointer;
   transition:
-    border-color 150ms,
-    background-color 150ms;
+    border-color var(--trajanje-brzo),
+    background-color var(--trajanje-brzo);
 
   .pi {
     font-size: 0.8125rem;

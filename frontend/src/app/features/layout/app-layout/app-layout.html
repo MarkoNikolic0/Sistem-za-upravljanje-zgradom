@@ -165,6 +165,7 @@
           <a [routerLink]="link" class="otvori" (click)="otvori(poruka.data)">Otvori</a>
         }
       </div>
+      <span class="preostalo" aria-hidden="true" [style.animation-duration.ms]="poruka.life"></span>
     </div>
   </ng-template>
 </p-toast>

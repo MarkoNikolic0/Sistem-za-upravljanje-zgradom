@@ -41,7 +41,7 @@
       @case ('ucitano') {
         @for (grupa of grupe(); track grupa.naziv) {
           <h2 class="dan">{{ grupa.naziv }}</h2>
-          <ul class="lista">
+          <ul class="lista ulazak">
             @for (notifikacija of grupa.stavke; track notifikacija.id) {
               <li
                 class="notifikacija"

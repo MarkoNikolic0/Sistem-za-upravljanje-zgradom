@@ -116,7 +116,7 @@
 
         @for (grupa of meseci(); track grupa.mesec) {
           <h2 class="naslov-odeljka mt-8 mb-3">{{ grupa.mesec }}</h2>
-          <ul class="panel raspored">
+          <ul class="panel raspored ulazak">
             @for (s of grupa.sastanci; track s.id) {
               @let novo = neprocitane()['/sastanci/' + s.id];
               <li>

@@ -69,7 +69,7 @@
         </div>
         <span class="sr-only">Učitavanje oglasa…</span>
       } @else {
-        <div class="oglasi">
+        <div class="oglasi ulazak">
           @for (oglas of store.oglasi(); track oglas.id) {
             @let nov = jeNov(oglas);
             <article

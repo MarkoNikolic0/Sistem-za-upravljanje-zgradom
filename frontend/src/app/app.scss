@@ -5,8 +5,10 @@
   gap: 0.875rem;
   min-width: 0;
 
-  .pi {
-    color: var(--color-svetlo);
+  .plocica-ikonice {
+    --boja: var(--color-svetlo);
+
+    animation: pali-se var(--trajanje-sporo) var(--kriva-ulaska) var(--trajanje-brzo) backwards;
   }
 
   .naslov {

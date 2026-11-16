@@ -32,7 +32,7 @@
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 4px;
-  transition: text-decoration-color 150ms;
+  transition: text-decoration-color var(--trajanje-brzo);
 
   &:hover {
     text-decoration-color: var(--color-svetlo);

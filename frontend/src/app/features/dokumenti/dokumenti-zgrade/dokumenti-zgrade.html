@@ -153,7 +153,7 @@
             } @else {
               <h3 class="sr-only" [id]="'grupa-' + g.kategorija">{{ g.naziv }}</h3>
             }
-            <ul class="lista">
+            <ul class="lista ulazak">
               @for (d of g.dokumenti; track d.id) {
                 <li>
                   @if (forma() === d.id) {

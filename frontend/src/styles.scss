@@ -38,11 +38,146 @@
   --visina-gornje-trake: calc(3.5rem + env(safe-area-inset-top));
   --visina-donje-trake: calc(4.5rem + env(safe-area-inset-bottom));
   scroll-padding-top: var(--visina-gornje-trake);
+
+  --trajanje-brzo: 150ms;
+  --trajanje: 200ms;
+  --trajanje-sporo: 250ms;
+  --trajanje-trake: 700ms;
+  --trajanje-petlje: 1600ms;
+  --razmak-ulaska: 30ms;
+  --kasnjenje-ucitavanja: 300ms;
+  --kriva-ulaska: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --kriva-izlaska: cubic-bezier(0.4, 0, 1, 1);
+  --kriva-iskakanja: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @media (width < 64rem) {
   :root {
     scroll-padding-bottom: var(--visina-donje-trake);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --razmak-ulaska: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--trajanje);
+}
+
+::view-transition-old(root) {
+  animation: nestani var(--trajanje-brzo) var(--kriva-izlaska) both;
+}
+
+::view-transition-new(root) {
+  animation: ulazak var(--trajanje) var(--kriva-ulaska) both;
+}
+
+@keyframes ulazak {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+@keyframes nestani {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes iskoci {
+  from {
+    scale: 0.4;
+  }
+}
+
+@keyframes pali-se {
+  from {
+    color: var(--color-utisano);
+    background-color: var(--color-prozor);
+  }
+}
+
+.ulazak > * {
+  animation: ulazak var(--trajanje) var(--kriva-ulaska) backwards;
+
+  @for $i from 2 through 9 {
+    &:nth-child(#{$i}) {
+      animation-delay: calc(#{$i - 1} * var(--razmak-ulaska));
+    }
+  }
+
+  &:nth-child(n + 10) {
+    animation-delay: calc(9 * var(--razmak-ulaska));
+  }
+}
+
+@media (width >= 64rem) {
+  .p-toast-top-right,
+  .p-toast-top-center {
+    top: calc(var(--visina-gornje-trake) + 0.75rem) !important;
+  }
+}
+
+.plocica-ikonice {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  color: var(--boja);
+  background: color-mix(in srgb, var(--boja) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--boja) 18%, transparent);
+}
+
+.preostalo {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0;
+  left: 0.75rem;
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--color-svetlo);
+  transform-origin: left;
+  animation: preostalo linear forwards;
+}
+
+.p-toast-message[data-expanded] .preostalo {
+  animation-play-state: paused;
+}
+
+@keyframes preostalo {
+  to {
+    scale: 0 1;
+  }
+}
+
+.toast-verzije .p-toast-message {
+  border-color: color-mix(in srgb, var(--color-svetlo) 30%, transparent);
+}
+
+.p-button {
+  transition-property: background, color, border-color, outline-color, box-shadow, scale;
+
+  &:not(:disabled):active {
+    scale: 0.97;
   }
 }
 
@@ -120,7 +255,7 @@ body {
 
   .pi {
     font-size: 0.75rem;
-    transition: transform 150ms;
+    transition: transform var(--trajanje-brzo);
   }
 
   &:hover {
@@ -201,8 +336,8 @@ body {
   border-radius: 10px;
   cursor: pointer;
   transition:
-    border-color 150ms,
-    background-color 150ms;
+    border-color var(--trajanje-brzo),
+    background-color var(--trajanje-brzo);
 
   &:hover {
     border-color: var(--color-priguseno);
@@ -252,7 +387,7 @@ a.plocica-fajla:hover {
 }
 
 .ucitavanje {
-  animation: pojavi-se 200ms ease-out 300ms both;
+  animation: pojavi-se var(--trajanje) var(--kriva-ulaska) var(--kasnjenje-ucitavanja) both;
 }
 
 @keyframes pojavi-se {
@@ -323,6 +458,7 @@ a.plocica-fajla:hover {
   font-size: 1.25rem;
   color: var(--color-uspeh);
   background: color-mix(in srgb, var(--color-uspeh) 12%, transparent);
+  animation: pali-se var(--trajanje-sporo) var(--kriva-ulaska) var(--trajanje-brzo) backwards;
 
   &.neutralno {
     color: var(--color-priguseno);
@@ -334,8 +470,8 @@ a.plocica-fajla:hover {
   width: 100%;
   cursor: pointer;
   transition:
-    border-color 150ms,
-    background-color 150ms;
+    border-color var(--trajanje-brzo),
+    background-color var(--trajanje-brzo);
 
   &:hover {
     border-color: var(--color-svetlo);
@@ -608,6 +744,7 @@ a.plocica-fajla:hover {
     0 0 2px var(--color-pozadina),
     0 0 2px var(--color-pozadina);
   pointer-events: none;
+  animation: iskoci var(--trajanje-sporo) var(--kriva-iskakanja) backwards;
 }
 
 // Tačka bez broja: ima novih obaveštenja u tom delu menija (Material 3 small badge)
@@ -623,6 +760,7 @@ a.plocica-fajla:hover {
   background: var(--color-svetlo);
   box-shadow: 0 0 0 2px var(--color-pozadina);
   pointer-events: none;
+  animation: iskoci var(--trajanje-sporo) var(--kriva-iskakanja) backwards;
 }
 
 // Stavka padajućeg menija Više sa tačkom (PrimeNG Menu prikazuje značku samo sa tekstom)
@@ -657,4 +795,49 @@ a.plocica-fajla:hover {
   border-radius: 9999px;
   background: var(--color-svetlo);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-svetlo) 20%, transparent);
+  animation: iskoci var(--trajanje-sporo) var(--kriva-iskakanja) backwards;
+}
+
+.pokretanje {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  animation: pojavi-se var(--trajanje) var(--kriva-ulaska) var(--kasnjenje-ucitavanja) both;
+
+  svg {
+    width: 3rem;
+  }
+
+  .telo {
+    fill: var(--color-fasada);
+    stroke: var(--color-ivica);
+  }
+
+  .krov {
+    fill: var(--color-fasada-krov);
+  }
+
+  .prozor {
+    fill: var(--color-prozor);
+    animation: prozor-se-pali var(--trajanje-petlje) ease-in-out infinite;
+
+    @for $i from 1 through 9 {
+      &:nth-of-type(#{$i + 2}) {
+        animation-delay: calc(#{$i} * var(--trajanje-petlje) / 9);
+      }
+    }
+  }
+
+  .prozor.upaljen {
+    fill: var(--color-svetlo);
+    animation: none;
+  }
+}
+
+@keyframes prozor-se-pali {
+  40%,
+  60% {
+    fill: var(--color-svetlo);
+  }
 }

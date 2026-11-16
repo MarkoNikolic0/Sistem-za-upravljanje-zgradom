@@ -74,7 +74,7 @@
       }
     </div>
   } @else {
-    <ul>
+    <ul class="ulazak">
       @for (k of store.korisnici(); track k.id) {
         <li class="red korisnik" [class.deaktiviran]="k.deaktiviran">
           <span class="inicijali" aria-hidden="true">{{ k.ime[0] }}{{ k.prezime[0] }}</span>

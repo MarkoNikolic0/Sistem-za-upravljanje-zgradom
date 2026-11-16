@@ -3,8 +3,7 @@ import { BOJE_NOTIFIKACIJA, IKONICE_NOTIFIKACIJA, TipNotifikacije } from '../not
 
 @Component({
   selector: 'app-ikonica-notifikacije',
-  host: { 'aria-hidden': 'true', '[style.--boja]': 'boja()' },
-  styleUrl: './ikonica-notifikacije.scss',
+  host: { class: 'plocica-ikonice', 'aria-hidden': 'true', '[style.--boja]': 'boja()' },
   template: `<i [class]="ikonica()"></i>`,
 })
 export class IkonicaNotifikacije {

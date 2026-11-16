@@ -15,7 +15,7 @@
 }
 
 .sledeci {
-  transition: border-color 150ms;
+  transition: border-color var(--trajanje-brzo);
 
   &:hover {
     border-color: color-mix(in srgb, var(--color-svetlo) 50%, transparent);
@@ -58,7 +58,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.875rem 1.25rem;
-  transition: background-color 150ms;
+  transition: background-color var(--trajanje-brzo);
 
   &.neprocitano {
     background: color-mix(in srgb, var(--color-svetlo) 6%, transparent);

@@ -26,7 +26,7 @@
   border: 1px solid color-mix(in srgb, var(--color-greska) 30%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, var(--color-greska) 6%, var(--color-povrsina));
-  transition: border-color 150ms;
+  transition: border-color var(--trajanje-brzo);
 
   &:hover {
     border-color: var(--color-greska);

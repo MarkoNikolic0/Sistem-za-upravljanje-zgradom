@@ -117,7 +117,7 @@
         }
       </div>
     } @else {
-      <div class="panel-liste">
+      <div class="panel-liste ulazak">
         @for (kvar of store.kvarovi(); track kvar.id) {
           @let novo = neprocitane()['/kvarovi/' + kvar.id];
           <article

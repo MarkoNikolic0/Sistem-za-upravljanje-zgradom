@@ -10,8 +10,8 @@
   i {
     transform-origin: 50% 0.125rem;
     transition:
-      transform 200ms ease,
-      color 150ms;
+      transform var(--trajanje),
+      color var(--trajanje-brzo);
   }
 
   &:hover i {
@@ -40,7 +40,7 @@
 
   .broj {
     animation:
-      iskoci 400ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      iskoci var(--trajanje-sporo) var(--kriva-iskakanja),
       sjaj 1200ms ease-out;
   }
 }
@@ -73,29 +73,5 @@
       0 0 6px var(--color-svetlo),
       0 0 14px var(--color-svetlo),
       0 0 2px var(--color-pozadina);
-  }
-}
-
-@keyframes iskoci {
-  from {
-    scale: 0.4;
-  }
-  to {
-    scale: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zvonce i {
-    transition: none;
-  }
-
-  .zvonce:hover i {
-    transform: none;
-  }
-
-  .zvoni i,
-  .zvoni .broj {
-    animation: none;
   }
 }

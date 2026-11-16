@@ -66,7 +66,7 @@
         </div>
         <span class="sr-only">Učitavanje glasanja…</span>
       } @else {
-        <div class="ankete">
+        <div class="ankete ulazak">
           @for (glasanje of store.glasanja(); track glasanje.id) {
             <app-kartica-glasanja
               [glasanje]="glasanje"

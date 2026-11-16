@@ -6,6 +6,7 @@ test('zaboravljena lozinka: link iz mejla, nova lozinka i prijava njom', async (
   const nova = 'NovaLozinka123!';
   await page.goto('/login');
   await page.getByRole('link', { name: 'Zaboravljena lozinka?' }).click();
+  await expect(page.getByRole('heading', { name: 'Zaboravljena lozinka' })).toBeVisible();
   await page.getByLabel('Email').fill(zaboravni.email);
   await page.getByRole('button', { name: 'Pošalji link' }).click();
   await expect(page.getByRole('heading', { name: 'Proveri mejl' })).toBeVisible();
