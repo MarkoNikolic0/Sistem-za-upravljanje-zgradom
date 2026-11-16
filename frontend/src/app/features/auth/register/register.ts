@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -14,6 +14,8 @@ import { AuthLayout } from '../auth-layout/auth-layout';
 import { ProveriMejl } from '../proveri-mejl/proveri-mejl';
 import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { ispravanIdIzAdrese } from '../../../shared/ispravan-id';
+import { povratakNaPovezivanje } from '../pristup/poziv-u-zgradu';
 import {
   MAX_DUZINA_IMENA,
   MAX_DUZINA_LOZINKE,
@@ -45,6 +47,9 @@ export class Register {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private readonly fokusiraj = fokusPosleCrtanja();
+
+  readonly zgrada = input(undefined, { transform: ispravanIdIzAdrese });
+  protected readonly povratak = computed(() => povratakNaPovezivanje(this.zgrada()));
 
   greska = signal('');
   salje = signal(false);
@@ -79,7 +84,7 @@ export class Register {
     this.salje.set(true);
 
     this.authService
-      .register(podaci)
+      .register({ ...podaci, zgradaId: this.zgrada() })
       .pipe(finalize(() => this.salje.set(false)))
       .subscribe({
         next: () => {

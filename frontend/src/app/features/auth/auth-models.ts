@@ -38,6 +38,7 @@ export interface RegisterRequest {
   prezime: string;
   email: string;
   telefon: string;
+  zgradaId?: number;
   lozinka: string;
 }
 

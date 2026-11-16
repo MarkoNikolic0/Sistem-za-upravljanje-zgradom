@@ -16,7 +16,7 @@ import {
   pokreniAplikaciju,
   type TestAplikacija,
 } from './pomoc/aplikacija.js';
-import { tokenIzMejla } from './pomoc/lazni-servisi.js';
+import { linkIzMejla, tokenIzMejla } from './pomoc/lazni-servisi.js';
 import {
   kolacicSesije,
   LOZINKA,
@@ -168,9 +168,14 @@ describe('nalog i prijava', () => {
 
     it('registracija na postojeći nalog odgovara isto i ne menja nalog', async () => {
       const email = await registrujIAktiviraj('Jovana');
-      await registruj(email, { ime: 'Napadač', lozinka: NOVA_LOZINKA });
+      await registruj(email, {
+        ime: 'Napadač',
+        lozinka: NOVA_LOZINKA,
+        zgradaId: 1,
+      });
       const mejl = await t.posta.sacekaj(email, 'Nalog već postoji');
       expect(mejl.tekst).toContain('/nova-lozinka?token=');
+      expect(linkIzMejla(mejl).searchParams.has('zgrada')).toBe(false);
 
       expect(await korisnici().countBy({ email })).toBe(1);
       expect(await korisnici().findOneBy({ email })).toMatchObject({
@@ -286,6 +291,9 @@ describe('nalog i prijava', () => {
       ['telefon', { telefon: '12345' }],
       ['email', { email: 'nije-email' }],
       ['ime', { ime: '   ' }],
+      ['zgradaId', { zgradaId: 0 }],
+      ['zgradaId', { zgradaId: 1.5 }],
+      ['zgradaId', { zgradaId: '5' }],
     ])(
       'neispravno polje %s vraća grešku baš za to polje',
       async (polje, izmena) => {
@@ -296,6 +304,35 @@ describe('nalog i prijava', () => {
         expect(Object.keys(odgovor.body.greske)).toEqual([polje]);
       },
     );
+
+    it('zgrada iz QR koda stiže u link za aktivaciju i ne daje pristup', async () => {
+      const email = novEmail('Jovana');
+      await registruj(email, { zgradaId: 987654 });
+      const link = linkIzMejla(
+        await t.posta.sacekaj(email, 'Aktivacija naloga'),
+      );
+      expect(link.pathname).toBe('/potvrda-emaila');
+      expect(link.searchParams.get('zgrada')).toBe('987654');
+      await javno()
+        .post('/auth/potvrda-emaila')
+        .send({ token: link.searchParams.get('token') })
+        .expect(204);
+      expect(
+        await t.baza.query(
+          'SELECT 1 FROM stanar_stana s JOIN korisnik k ON k.id = s."korisnikId" WHERE k.email = $1',
+          [email],
+        ),
+      ).toEqual([]);
+    });
+
+    it('link za aktivaciju bez zgrade nema parametar zgrade', async () => {
+      const email = novEmail('Jovana');
+      await registruj(email);
+      const link = linkIzMejla(
+        await t.posta.sacekaj(email, 'Aktivacija naloga'),
+      );
+      expect(link.searchParams.has('zgrada')).toBe(false);
+    });
 
     it('registracija ne prima ulogu ni druga nepoznata polja', async () => {
       const email = novEmail('Jovana');

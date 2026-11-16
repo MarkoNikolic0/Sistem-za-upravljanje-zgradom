@@ -8,3 +8,8 @@ export function idIzAdrese(id: string | undefined): number | undefined {
 export function jeIspravanId(id: number): boolean {
   return Number.isInteger(id) && id > 0;
 }
+
+export function ispravanIdIzAdrese(id: string | null | undefined): number | undefined {
+  const broj = idIzAdrese(id ?? undefined);
+  return broj !== undefined && jeIspravanId(broj) ? broj : undefined;
+}

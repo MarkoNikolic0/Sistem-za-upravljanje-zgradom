@@ -128,12 +128,15 @@ export class TokenNalogaService {
     });
   }
 
-  link(svrha: SvrhaTokena, token: string): string {
+  link(svrha: SvrhaTokena, token: string, zgradaId?: number): string {
     const link = new URL(
       PUTANJA[svrha],
       this.config.get<string>('FRONTEND_URL'),
     );
     link.searchParams.set('token', token);
+    if (zgradaId) {
+      link.searchParams.set('zgrada', String(zgradaId));
+    }
     return link.href;
   }
 

@@ -1,10 +1,12 @@
 import { createServer, type Server } from 'node:http';
+import { Zgrada } from '../../src/zgrada/zgrada.entity.js';
 import { pokreniAplikaciju, type TestAplikacija } from '../pomoc/aplikacija.js';
 import {
   dodeliZgradu,
   LOZINKA,
   napraviKorisnika,
   napraviSvet,
+  napraviZgradu,
   napraviZgraduSaLjudima,
 } from '../pomoc/podaci.js';
 import { napraviBazu, PREFIKS_TEST_BAZE } from '../pomoc/test-baza.js';
@@ -108,12 +110,21 @@ async function napraviUpravnikaDveZgrade(aplikacija: TestAplikacija) {
   return { upravnik: prva.upravnik, zgrade: [prva.id, druga.id] };
 }
 
+async function napraviArhiviranuZgradu(aplikacija: TestAplikacija) {
+  const { id } = await napraviZgradu(aplikacija, 'Arhiva');
+  await aplikacija.baza
+    .getRepository(Zgrada)
+    .update(id, { arhivirana: new Date() });
+  return id;
+}
+
 try {
   t = await pokreniAplikaciju({ port: PORT_API });
   const svet = {
     ...(await napraviSvet(t)),
     zaboravni: await napraviKorisnika(t, 'Zaboravni'),
     dveZgrade: await napraviUpravnikaDveZgrade(t),
+    arhiviranaZgrada: await napraviArhiviranuZgradu(t),
   };
   const server = napraviPomoc(t, svet);
   await new Promise<void>((resolve, reject) => {

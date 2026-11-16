@@ -2,7 +2,14 @@
   @if (aktiviran()) {
     <h1 id="ishod" class="naslov-stranice" tabindex="-1">Nalog je aktiviran</h1>
     <p class="mt-6 text-priguseno">Sada možeš da se prijaviš.</p>
-    <a pButton routerLink="/login" size="large" class="mt-8 w-full justify-center">Prijavi se</a>
+    <a
+      pButton
+      routerLink="/login"
+      [queryParams]="povratak"
+      size="large"
+      class="mt-8 w-full justify-center"
+      >Prijavi se</a
+    >
   } @else {
     <h1 class="naslov-stranice">Aktivacija naloga</h1>
 
@@ -17,7 +24,7 @@
       </p>
       <div class="mt-6 flex flex-col items-start gap-3">
         <a routerLink="/ponovna-aktivacija" class="tekst-link">Zatraži nov link</a>
-        <a routerLink="/login" class="tekst-link">Prijavi se</a>
+        <a routerLink="/login" [queryParams]="povratak" class="tekst-link">Prijavi se</a>
       </div>
     } @else {
       <p class="mt-3 text-priguseno">Klikni na dugme da potvrdiš svoju email adresu.</p>

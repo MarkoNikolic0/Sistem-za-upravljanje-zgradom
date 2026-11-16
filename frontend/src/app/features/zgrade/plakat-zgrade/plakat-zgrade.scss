@@ -1,0 +1,141 @@
+:host {
+  display: block;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.izbor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.plakat {
+  container-type: inline-size;
+  width: min(100%, 42rem);
+  aspect-ratio: 210 / 297;
+  margin-top: 2rem;
+  background: white;
+  color: black;
+  text-align: center;
+  border: 1px solid var(--color-ivica);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 8cqi 9cqi;
+}
+
+.vrh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5cqi;
+}
+
+.znak {
+  width: 6cqi;
+}
+
+.naslov-plakata {
+  font-size: 3.4cqi;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.naziv {
+  font-size: 8cqi;
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.adresa {
+  margin-top: 1.5cqi;
+  font-size: 4.2cqi;
+}
+
+.kod svg {
+  display: block;
+  width: 50cqi;
+  margin: 0 auto;
+}
+
+.pozadina-koda {
+  fill: white;
+}
+
+.moduli {
+  fill: black;
+}
+
+.link {
+  margin-top: 1cqi;
+  font-size: 3.4cqi;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.koraci {
+  display: grid;
+  gap: 2cqi;
+  width: fit-content;
+  margin: 0 auto;
+  font-size: 3.8cqi;
+  text-align: left;
+  counter-reset: korak;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 2.5cqi;
+    counter-increment: korak;
+
+    &::before {
+      content: counter(korak);
+      display: grid;
+      flex-shrink: 0;
+      place-items: center;
+      width: 6cqi;
+      height: 6cqi;
+      font-weight: 700;
+      border: 0.4cqi solid black;
+      border-radius: 50%;
+    }
+  }
+}
+
+.podnozje {
+  font-size: 3cqi;
+  color: #444;
+}
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  :host {
+    max-width: none;
+    padding: 0;
+  }
+
+  .alati-plakata {
+    display: none;
+  }
+
+  .plakat {
+    width: 100%;
+    margin: 0;
+    border: 0;
+  }
+}

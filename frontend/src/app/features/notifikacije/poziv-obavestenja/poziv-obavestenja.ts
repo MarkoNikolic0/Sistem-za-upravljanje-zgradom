@@ -1,17 +1,10 @@
-import {
-  afterNextRender,
-  Component,
-  computed,
-  DOCUMENT,
-  inject,
-  Injector,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { fokusNaSadrzaj, fokusPosleCrtanja } from '../../../shared/fokus';
 import { lokalnoSkladiste } from '../../../shared/lokalno-skladiste';
+import { Instalacija } from '../../pwa/instalacija';
 import { PushObavestenja } from '../push-obavestenja';
 
 const KLJUC_ZATVOREN = 'poziv-obavestenja-zatvoren';
@@ -26,9 +19,9 @@ type Ishod = 'ukljuceno' | 'odbijeno';
 })
 export class PozivObavestenja {
   private push = inject(PushObavestenja);
-  private document = inject(DOCUMENT);
-  private injector = inject(Injector);
+  private instalacija = inject(Instalacija);
   private readonly fokusiraj = fokusPosleCrtanja();
+  private readonly naSadrzaj = fokusNaSadrzaj();
   private skladiste = lokalnoSkladiste();
 
   private readonly zatvoren = signal(this.skladiste.procitaj(KLJUC_ZATVOREN) === '1');
@@ -36,11 +29,12 @@ export class PozivObavestenja {
   protected readonly ishod = signal<Ishod | null>(null);
   protected readonly greska = signal<string | null>(null);
 
-  protected readonly stanje = this.push.stanje;
   protected readonly prikazan = computed(
     () =>
       !this.zatvoren() &&
-      (this.stanje() === 'iskljuceno' || this.stanje() === 'potrebna-instalacija'),
+      !this.instalacija.pozivPrikazan() &&
+      !this.push.iskljucio() &&
+      this.push.stanje() === 'iskljuceno',
   );
 
   protected async ukljuci(): Promise<void> {
@@ -67,8 +61,6 @@ export class PozivObavestenja {
     this.skladiste.zapamti(KLJUC_ZATVOREN, '1');
     this.zatvoren.set(true);
     this.ishod.set(null);
-    afterNextRender(() => this.document.getElementById('sadrzaj')?.focus(), {
-      injector: this.injector,
-    });
+    this.naSadrzaj();
   }
 }

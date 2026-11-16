@@ -114,7 +114,11 @@ Uz običan `npm start` aplikacija radi, ali bez service worker-a: nema obavešte
 npx ng serve --configuration production
 ```
 
-Adresa ostaje http://localhost:4200. Obaveštenja se uključuju na stranici **Moj profil**. Pregledač ih dozvoljava samo na `localhost` ili preko HTTPS-a, pa za probu na telefonu treba USB prosleđivanje porta (Chrome, `chrome://inspect`) ili postavljena aplikacija.
+Adresa ostaje http://localhost:4200. Obaveštenja se uključuju na stranici **Moj profil**, a na **Početnoj** se jednom nudi instalacija, pa obaveštenja (oba poziva se mogu zatvoriti i ne vraćaju se). Izbor uključeno ili isključeno pamti se po korisniku na tom uređaju: posle odjave i ponovne prijave obaveštenja se sama vraćaju, a drugi korisnik na istom uređaju ne nasleđuje ništa i sam bira. Pregledač ih dozvoljava samo na `localhost` ili preko HTTPS-a, pa za probu na telefonu treba USB prosleđivanje porta (Chrome, `chrome://inspect`) ili postavljena aplikacija.
+
+## QR kod za stanare
+
+Upravnik (stranica **Zahtevi**) i admin (stranica zgrade) otvaraju plakat za štampu sa QR kodom zgrade. Kod vodi na `/poziv/<id zgrade>`: gost ide na registraciju, a posle aktivacije i prijave na povezivanje sa stanom u toj zgradi; prijavljen korisnik ide pravo na povezivanje. Zgrada ide i u link za aktivaciju iz mejla, pa tok radi i kad se mejl otvori na drugom uređaju. Kod ne daje nikakav pristup: upravnik i dalje odobrava svaki zahtev. Adresa u kodu je adresa sa koje je aplikacija otvorena, pa se na produkciji sama menja.
 
 ## Testovi
 
@@ -133,6 +137,7 @@ E2e testovi sami naprave privremenu bazu čije ime počinje sa `zgrada_e2e_` i o
 | `izolacija.e2e-spec.ts` | korisnik jedne zgrade ne može da vidi ni izmeni podatke druge zgrade, za sve rute |
 | `prava.e2e-spec.ts` | svaka uloga sme samo ono što joj pripada |
 | `auth.e2e-spec.ts` | prijava, tokeni, zaključavanje, lozinka, potvrda emaila |
+| `push.e2e-spec.ts` | pretplata uređaja pripada poslednjem korisniku koji je uključio obaveštenja, odjava briše samo svoju |
 | `kvar`, `glasanje`, `sastanak`, `oglas`, `stanari` | glavni tokovi: statusi kvara, kvorum i većine, iseljenje |
 | `sema.e2e-spec.ts` | oblik baze |
 | `pomoc/` | pomoćni fajlovi: pokretanje aplikacije, test baza, test podaci, spisak ruta, lažni servisi |
@@ -158,6 +163,7 @@ E2e testovi sami pokrenu backend na portu 3100 (nad privremenom bazom `zgrada_e2
 | `lozinka.spec.ts` | zaboravljena lozinka preko linka iz mejla |
 | `obavestenja.spec.ts` | obaveštenje stiže odmah, bez osvežavanja stranice |
 | `pristup.spec.ts` | preusmeravanje gosta i uloga koje nemaju pravo na stranicu |
+| `qr-kod.spec.ts` | QR link: registracija, aktivacija na drugom uređaju, prijava i zahtev za stan u toj zgradi; arhivirana zgrada; plakat na jednoj A4 strani; poziv za instalaciju |
 | `upravnik.spec.ts` | početna upravnika jedne zgrade; upravnik dve zgrade: spisak zgrada, početna izabrane zgrade i izbor zgrade na stranici Stanari |
 
 ## Ako nešto ne radi

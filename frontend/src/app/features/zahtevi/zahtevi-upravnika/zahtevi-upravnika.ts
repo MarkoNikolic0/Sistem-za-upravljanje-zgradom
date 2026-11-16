@@ -1,6 +1,7 @@
 import { afterRenderEffect, Component, ElementRef, inject, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -23,6 +24,7 @@ import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
   imports: [
     DatePipe,
     FormsModule,
+    RouterLink,
     ButtonModule,
     ConfirmDialogModule,
     MessageModule,

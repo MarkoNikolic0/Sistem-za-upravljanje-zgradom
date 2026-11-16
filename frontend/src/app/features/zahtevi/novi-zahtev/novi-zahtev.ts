@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,6 +13,7 @@ import { nazivSprata, SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TagModule } from 'primeng/tag';
 import { porukaServera } from '../../../shared/forme/greske-servera';
+import { ispravanIdIzAdrese } from '../../../shared/ispravan-id';
 
 @Component({
   imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, TagModule, SpratPipe],
@@ -25,6 +26,8 @@ export class NoviZahtev {
   private zgradaService = inject(ZgradaService);
   private fb = inject(FormBuilder);
   private readonly fokusiraj = fokusPosleCrtanja();
+
+  readonly zgrada = input<string>();
 
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
   protected readonly bojeStatusa = BOJE_STATUSA_ZAHTEVA;
@@ -55,6 +58,16 @@ export class NoviZahtev {
       : [],
   );
 
+  private readonly zgradaIzLinka = computed(() => {
+    const zgrada = this.zgrada();
+    if (zgrada === undefined || !this.zgrade.hasValue()) {
+      return undefined;
+    }
+    const id = ispravanIdIzAdrese(zgrada);
+    return this.zgrade.value().find((z) => z.id === id) ?? null;
+  });
+  protected readonly nemaZgradeIzLinka = computed(() => this.zgradaIzLinka() === null);
+
   protected readonly neobradjeni = computed(() =>
     this.zahtevi.hasValue() ? this.zahtevi.value().filter((z) => z.status !== 'prihvacen') : [],
   );
@@ -63,6 +76,13 @@ export class NoviZahtev {
     this.forma.controls.zgradaId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.forma.controls.stanId.reset());
+
+    effect(() => {
+      const zgrada = this.zgradaIzLinka();
+      if (zgrada) {
+        untracked(() => this.forma.controls.zgradaId.setValue(zgrada.id));
+      }
+    });
   }
 
   protected nevazece(polje: 'zgradaId' | 'stanId'): boolean {

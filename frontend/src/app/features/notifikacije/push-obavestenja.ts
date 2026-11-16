@@ -10,7 +10,9 @@ import { NotifikacijaService } from './notifikacija-service';
 export type StanjePusha =
   'nepodrzano' | 'potrebna-instalacija' | 'odbijeno' | 'iskljuceno' | 'ukljuceno';
 
-const KLJUC_VLASNIKA = 'push-korisnik';
+type Izbor = 'ukljuceno' | 'iskljuceno';
+
+const kljucIzbora = (korisnikId: number) => `push-izbor-${korisnikId}`;
 
 const PORUKE_GRESKE = {
   veza: 'Uključivanje nije uspelo. Proveri internet vezu i pokušaj ponovo.',
@@ -37,8 +39,18 @@ export class PushObavestenja {
     this.podrzano ? Notification.permission : 'default',
   );
   private readonly pretplata = toSignal(this.swPush.subscription, { initialValue: null });
+  private readonly promenaIzbora = signal(0);
   private poslednjiPosao: Promise<unknown> = Promise.resolve();
   private uskladjenaSesija: string | null = null;
+
+  private readonly izbor = computed((): Izbor | null => {
+    this.promenaIzbora();
+    const korisnik = this.authStore.korisnik();
+    const izbor = korisnik && this.skladiste.procitaj(kljucIzbora(korisnik.id));
+    return izbor === 'ukljuceno' || izbor === 'iskljuceno' ? izbor : null;
+  });
+
+  readonly iskljucio = computed(() => this.izbor() === 'iskljuceno');
 
   readonly stanje = computed((): StanjePusha => {
     if (!this.podrzano) {
@@ -47,7 +59,9 @@ export class PushObavestenja {
     if (this.dozvola() === 'denied') {
       return 'odbijeno';
     }
-    return this.pretplata() ? 'ukljuceno' : 'iskljuceno';
+    return this.dozvola() === 'granted' && this.pretplata() && this.izbor() === 'ukljuceno'
+      ? 'ukljuceno'
+      : 'iskljuceno';
   });
 
   async ukljuci(): Promise<void> {
@@ -56,7 +70,10 @@ export class PushObavestenja {
     if (dozvola !== 'granted') {
       return;
     }
-    return this.redom(() => this.pretplati());
+    return this.redom(async () => {
+      await this.pretplati();
+      this.zapamtiIzbor('ukljuceno');
+    });
   }
 
   porukaGreske(greska: unknown): string {
@@ -67,7 +84,14 @@ export class PushObavestenja {
   }
 
   iskljuci(): Promise<void> {
-    return this.redom(() => this.ukiniPretplatu());
+    return this.redom(async () => {
+      await this.odvezi();
+      this.zapamtiIzbor('iskljuceno');
+    });
+  }
+
+  odjavi(): Promise<void> {
+    return this.redom(() => this.odvezi().catch(() => undefined));
   }
 
   sinhronizuj(): Promise<void> {
@@ -95,58 +119,46 @@ export class PushObavestenja {
     }
   }
 
-  private async ukiniPretplatu(): Promise<void> {
+  private async odvezi(): Promise<void> {
     if (!this.podrzano) {
       return;
     }
     const pretplata = await firstValueFrom(this.swPush.subscription);
-    if (!pretplata) {
-      return;
+    this.uskladjenaSesija = null;
+    if (pretplata) {
+      await firstValueFrom(this.notifikacijaService.obrisiPretplatu(pretplata.endpoint));
     }
-    await firstValueFrom(this.notifikacijaService.obrisiPretplatu(pretplata.endpoint)).catch(
-      () => undefined,
-    );
-    await this.zaboravi();
   }
 
   private async uskladiSaServerom(): Promise<void> {
-    if (!this.podrzano) {
+    const korisnik = this.authStore.korisnik();
+    if (!this.podrzano || !korisnik || this.izbor() !== 'ukljuceno') {
+      return;
+    }
+    this.dozvola.set(Notification.permission);
+    if (this.dozvola() !== 'granted') {
       return;
     }
     const pretplata = await firstValueFrom(this.swPush.subscription);
     if (!pretplata) {
+      await this.pretplati().catch(() => undefined);
       return;
     }
-    const korisnik = this.authStore.korisnik();
-    if (!korisnik || this.vlasnik() !== korisnik.id) {
-      await this.zaboravi();
-      return;
+    if (korisnik.sid !== this.uskladjenaSesija) {
+      await this.sacuvaj(pretplata).catch(() => undefined);
     }
-    if (korisnik.sid === this.uskladjenaSesija) {
-      return;
-    }
-    await this.sacuvaj(pretplata).catch(() => undefined);
   }
 
   private async sacuvaj(pretplata: PushSubscription): Promise<void> {
-    const korisnik = this.authStore.korisnik();
     await firstValueFrom(this.notifikacijaService.sacuvajPretplatu(pretplata));
+    this.uskladjenaSesija = this.authStore.korisnik()?.sid ?? null;
+  }
+
+  private zapamtiIzbor(izbor: Izbor): void {
+    const korisnik = this.authStore.korisnik();
     if (korisnik) {
-      this.skladiste.zapamti(KLJUC_VLASNIKA, String(korisnik.id));
-    } else {
-      this.skladiste.obrisi(KLJUC_VLASNIKA);
+      this.skladiste.zapamti(kljucIzbora(korisnik.id), izbor);
+      this.promenaIzbora.update((broj) => broj + 1);
     }
-    this.uskladjenaSesija = korisnik?.sid ?? null;
-  }
-
-  private async zaboravi(): Promise<void> {
-    await this.swPush.unsubscribe().catch(() => undefined);
-    this.skladiste.obrisi(KLJUC_VLASNIKA);
-    this.uskladjenaSesija = null;
-  }
-
-  private vlasnik(): number | null {
-    const vrednost = this.skladiste.procitaj(KLJUC_VLASNIKA);
-    return vrednost === null ? null : Number(vrednost);
   }
 }

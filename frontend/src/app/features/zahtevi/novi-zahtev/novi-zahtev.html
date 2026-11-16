@@ -5,6 +5,12 @@
     Izaberi zgradu i stan u kojem živiš. Upravnik zgrade će potvrditi zahtev.
   </p>
 
+  @if (nemaZgradeIzLinka()) {
+    <p-message severity="warn" styleClass="mt-6">
+      Zgrada iz linka nije pronađena. Izaberi zgradu sa spiska.
+    </p-message>
+  }
+
   <div id="poruka-zahteva" tabindex="-1" aria-live="polite" class="mt-6 empty:hidden">
     @if (poslat()) {
       <p-message severity="success">Zahtev je poslat upravniku zgrade.</p-message>

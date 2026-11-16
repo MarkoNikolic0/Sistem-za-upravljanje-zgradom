@@ -3,6 +3,7 @@ import { prijavljenGuard } from './features/auth/pristup/prijavljen-guard';
 import { gostGuard } from './features/auth/pristup/gost-guard';
 import { ulogaGuard } from './features/auth/pristup/uloga-guard';
 import { pocetnaGuard } from './features/auth/pristup/pocetna-guard';
+import { pozivUZgradu } from './features/auth/pristup/poziv-u-zgradu';
 
 export const routes: Routes = [
   {
@@ -44,6 +45,17 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/nova-lozinka/nova-lozinka').then((m) => m.NovaLozinka),
     title: 'Nova lozinka | Upravljanje zgradom',
+  },
+  {
+    path: 'poziv/:zgrada',
+    redirectTo: pozivUZgradu,
+  },
+  {
+    path: 'plakat',
+    canActivate: [prijavljenGuard, ulogaGuard('upravnik', 'admin')],
+    loadComponent: () =>
+      import('./features/zgrade/plakat-zgrade/plakat-zgrade').then((m) => m.PlakatZgrade),
+    title: 'QR kod za stanare | Upravljanje zgradom',
   },
   {
     path: '',

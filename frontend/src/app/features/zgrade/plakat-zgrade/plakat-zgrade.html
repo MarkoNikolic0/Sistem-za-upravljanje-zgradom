@@ -1,0 +1,83 @@
+<div class="alati-plakata">
+  <a [routerLink]="nazad()" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i
+    >{{ admin() && izabrana() ? 'Zgrada' : 'Zahtevi' }}</a
+  >
+  <p class="oznaka mt-6">Zgrada</p>
+  <h1 class="naslov-stranice mt-3">QR kod za stanare</h1>
+  <p class="mt-2 text-priguseno">
+    Odštampaj plakat i okači ga na oglasnu tablu ili ulaz. Kod vodi na registraciju i zahtev za stan
+    u ovoj zgradi, a svaki zahtev i dalje potvrđuje upravnik.
+  </p>
+
+  @if (greska()) {
+    <p-message severity="error" styleClass="mt-6">Zgrade trenutno nije moguće učitati.</p-message>
+  } @else if (!ucitano()) {
+    <div class="ucitavanje mt-6" aria-hidden="true"><p-skeleton height="3rem" /></div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else if (zgrade().length === 0) {
+    <p-message severity="secondary" styleClass="mt-6">Nema aktivnih zgrada.</p-message>
+  } @else {
+    <div class="izbor">
+      @if (zgrade().length > 1) {
+        <div class="flex flex-col gap-1.5 sm:w-72">
+          <span id="plakat-zgrada" class="text-sm font-medium">Zgrada</span>
+          <p-select
+            ariaLabelledBy="plakat-zgrada"
+            [options]="zgrade()"
+            optionLabel="naziv"
+            optionValue="id"
+            [filter]="zgrade().length > 5"
+            filterBy="naziv,adresa"
+            [ngModel]="izabranoId()"
+            (ngModelChange)="izabranoId.set($event)"
+            [fluid]="true"
+          />
+        </div>
+      }
+      <button pButton type="button" (click)="stampaj()">
+        <i class="pi pi-print" aria-hidden="true"></i>
+        Štampaj
+      </button>
+    </div>
+  }
+</div>
+
+@if (izabrana(); as zgrada) {
+  @if (qr(); as kod) {
+    <article class="plakat" aria-label="Plakat za štampu">
+      <div class="list">
+        <div class="vrh">
+          <app-logo class="znak" />
+          <p class="naslov-plakata">Aplikacija naše zgrade</p>
+        </div>
+
+        <div class="zgrada">
+          <h2 class="naziv">{{ zgrada.naziv }}</h2>
+          <p class="adresa">{{ zgrada.adresa }}</p>
+        </div>
+
+        <div class="kod">
+          <svg
+            [attr.viewBox]="'0 0 ' + kod.velicina + ' ' + kod.velicina"
+            shape-rendering="crispEdges"
+            role="img"
+            [attr.aria-label]="'QR kod sa adresom ' + link()?.href"
+          >
+            <rect [attr.width]="kod.velicina" [attr.height]="kod.velicina" class="pozadina-koda" />
+            <path [attr.d]="kod.putanja" class="moduli" />
+          </svg>
+          <p class="link">{{ link()?.host }}{{ link()?.pathname }}</p>
+        </div>
+
+        <ol class="koraci">
+          <li>Skeniraj kod kamerom telefona.</li>
+          <li>Napravi nalog i potvrdi email.</li>
+          <li>Izaberi svoj stan, a upravnik će potvrditi zahtev.</li>
+        </ol>
+
+        <p class="podnozje">Kvarovi, oglasi, sastanci i glasanja na jednom mestu.</p>
+      </div>
+    </article>
+  }
+}

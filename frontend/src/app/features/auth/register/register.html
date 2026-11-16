@@ -196,6 +196,7 @@
     Već imaš nalog?
     <a
       routerLink="/login"
+      [queryParams]="povratak()"
       [state]="stanjeZaLinkove()"
       class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
       >Prijavi se</a

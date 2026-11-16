@@ -8,6 +8,8 @@ import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthService } from '../auth-service';
 import { porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { ispravanIdIzAdrese } from '../../../shared/ispravan-id';
+import { povratakNaPovezivanje } from '../pristup/poziv-u-zgradu';
 
 @Component({
   imports: [ButtonModule, MessageModule, RouterLink, AuthLayout],
@@ -19,7 +21,11 @@ export class PotvrdaEmaila {
   private router = inject(Router);
   private readonly fokusiraj = fokusPosleCrtanja();
 
-  protected readonly token = inject(ActivatedRoute).snapshot.queryParamMap.get('token');
+  private readonly adresa = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected readonly token = this.adresa.get('token');
+  protected readonly povratak = povratakNaPovezivanje(
+    ispravanIdIzAdrese(this.adresa.get('zgrada')),
+  );
 
   protected readonly salje = signal(false);
   protected readonly greska = signal('');

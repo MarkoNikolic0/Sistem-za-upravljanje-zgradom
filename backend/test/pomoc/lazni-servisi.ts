@@ -33,9 +33,16 @@ export class LaznaPosta {
   }
 }
 
-export function tokenIzMejla(mail: Mail): string {
+export function linkIzMejla(mail: Mail): URL {
   const link = /https?:\/\/\S+/.exec(mail.tekst)?.[0];
-  const token = link && new URL(link).searchParams.get('token');
+  if (!link) {
+    throw new Error(`Mejl „${mail.naslov}“ nema link.`);
+  }
+  return new URL(link);
+}
+
+export function tokenIzMejla(mail: Mail): string {
+  const token = linkIzMejla(mail).searchParams.get('token');
   if (!token) {
     throw new Error(`Mejl „${mail.naslov}“ nema link sa tokenom.`);
   }

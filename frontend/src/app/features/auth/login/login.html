@@ -90,6 +90,7 @@
     Nemaš nalog?
     <a
       routerLink="/register"
+      [queryParams]="{ zgrada: zgrada() }"
       class="font-medium text-naslov underline decoration-ivica underline-offset-4 transition-colors hover:decoration-svetlo"
       >Registruj se</a
     >

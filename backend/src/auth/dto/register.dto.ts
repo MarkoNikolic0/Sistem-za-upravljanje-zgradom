@@ -1,7 +1,10 @@
 import {
   IsEmail,
+  IsInt,
   IsNotEmpty,
+  IsOptional,
   IsPhoneNumber,
+  IsPositive,
   IsString,
   MaxLength,
 } from 'class-validator';
@@ -33,4 +36,9 @@ export class RegisterDto {
 
   @PravilaLozinke()
   lozinka: string;
+
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  zgradaId?: number;
 }

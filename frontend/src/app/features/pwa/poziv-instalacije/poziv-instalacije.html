@@ -1,0 +1,29 @@
+@if (instalacija.pozivPrikazan()) {
+  <section class="poziv" aria-labelledby="poziv-instalacije">
+    @if (instalacija.mozeDaSeInstalira()) {
+      <h2 id="poziv-instalacije" class="naslov-odeljka">Instaliraj aplikaciju</h2>
+      <p class="mt-3 text-tekst">
+        Otvaraj je jednim dodirom sa početnog ekrana, u svom prozoru, kao i ostale aplikacije.
+      </p>
+      <div class="dugmad">
+        <button pButton type="button" size="small" (click)="instaliraj()">Instaliraj</button>
+        <button pButton type="button" size="small" text severity="secondary" (click)="zatvori()">
+          Ne sada
+        </button>
+      </div>
+    } @else {
+      <h2 id="poziv-instalacije" class="naslov-odeljka">Dodaj aplikaciju na početni ekran</h2>
+      <p class="mt-3 text-tekst">
+        Dodirni Deli
+        <i class="pi pi-upload text-svetlo" aria-hidden="true"></i>
+        pa Dodaj na početni ekran. Aplikacija se tada otvara kao i ostale, a možeš da uključiš i
+        obaveštenja.
+      </p>
+      <div class="dugmad">
+        <button pButton type="button" size="small" text severity="secondary" (click)="zatvori()">
+          Ne sada
+        </button>
+      </div>
+    }
+  </section>
+}

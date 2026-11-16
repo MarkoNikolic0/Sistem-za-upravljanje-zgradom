@@ -23,6 +23,7 @@ import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notif
 import { cekaGlasFeature } from '../../glasanje/ceka-glas-store/ceka-glas-reducer';
 import { neprocitaniOglasiFeature } from '../../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
 import { brojNaIkonici } from '../../pwa/broj-na-ikonici';
+import { PushObavestenja } from '../../notifikacije/push-obavestenja';
 
 const NAJMANJE_U_TRACI = 3;
 const NAJVISE_U_TRACI = 5;
@@ -46,6 +47,7 @@ const NAJVISE_U_TRACI = 5;
 })
 export class AppLayout {
   private authStore = inject(AuthStore);
+  private push = inject(PushObavestenja);
   private router = inject(Router);
   private store = inject(Store);
   private messageService = inject(MessageService);
@@ -136,6 +138,7 @@ export class AppLayout {
   });
 
   private async odjava() {
+    await this.push.odjavi();
     await this.authStore.logout();
     await this.router.navigate(['/login']);
   }

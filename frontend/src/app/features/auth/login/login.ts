@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, input, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -12,6 +12,7 @@ import { AuthStore } from '../sesija/auth-store';
 import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
 import { StanjePrijave } from '../auth-models';
 import { bezbednaAdresa } from '../pristup/povratak';
+import { zgradaIzPovratka } from '../pristup/poziv-u-zgradu';
 
 @Component({
   imports: [
@@ -37,6 +38,7 @@ export class Login {
   private stanje = this.router.currentNavigation()?.extras.state as StanjePrijave | undefined;
 
   readonly returnUrl = input<string>();
+  protected readonly zgrada = computed(() => zgradaIzPovratka(this.router, this.returnUrl()));
 
   greska = signal('');
   obavestenje = signal(this.stanje?.obavestenje ?? '');

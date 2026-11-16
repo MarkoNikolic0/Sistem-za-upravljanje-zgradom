@@ -25,6 +25,7 @@ export interface Svet {
   bezStana: Akter;
   zaboravni: Akter;
   dveZgrade: { upravnik: Akter; zgrade: number[] };
+  arhiviranaZgrada: number;
 }
 
 let svet: Promise<Svet> | undefined;

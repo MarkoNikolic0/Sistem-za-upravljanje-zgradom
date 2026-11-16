@@ -80,11 +80,15 @@ export class PotvrdaEmailaService {
       });
 
       if (poslati) {
-        const link = this.tokenNaloga.link(poslati.svrha, poslati.token);
-        const mail =
-          poslati.svrha === SvrhaTokena.POTVRDA
-            ? mailPotvrda(dto.email, link)
-            : mailNalogPostoji(dto.email, link);
+        const potvrda = poslati.svrha === SvrhaTokena.POTVRDA;
+        const link = this.tokenNaloga.link(
+          poslati.svrha,
+          poslati.token,
+          potvrda ? dto.zgradaId : undefined,
+        );
+        const mail = potvrda
+          ? mailPotvrda(dto.email, link)
+          : mailNalogPostoji(dto.email, link);
         await this.tokenNaloga.posalji(mail, poslati.token);
       }
     } catch (greska) {

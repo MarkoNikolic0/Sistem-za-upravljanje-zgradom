@@ -24,6 +24,7 @@ import { VazniKontakti } from '../../kontakti/vazni-kontakti/vazni-kontakti';
 import { DokumentiUkratko } from '../../dokumenti/dokumenti-ukratko/dokumenti-ukratko';
 import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
 import { PozivObavestenja } from '../../notifikacije/poziv-obavestenja/poziv-obavestenja';
+import { PozivInstalacije } from '../../pwa/poziv-instalacije/poziv-instalacije';
 
 // Prvi korak za stanara koji jos nema stan
 type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
@@ -41,6 +42,7 @@ type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
     VazniKontakti,
     DokumentiUkratko,
     PozivObavestenja,
+    PozivInstalacije,
   ],
   selector: 'app-home',
   styleUrl: './home.scss',
