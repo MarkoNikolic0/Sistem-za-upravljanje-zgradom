@@ -24,34 +24,54 @@ export class RefreshTokenService {
     private config: ConfigService,
   ) {}
 
-  async kreiraj(
-    korisnik: Korisnik,
-    porodicaId: string = randomUUID(),
-    datumIsteka: Date = this.noviDatumIsteka(),
-  ) {
-    const token = generisiToken();
-
-    const zapis = this.refreshTokenRepository.create({
-      tokenHash: hesirajToken(token),
-      porodicaId,
-      datumIsteka,
+  kreiraj(korisnik: Korisnik) {
+    return this.upisi(
+      this.refreshTokenRepository.manager,
       korisnik,
-    });
-    await this.refreshTokenRepository.save(zapis);
-
-    return { token, datumIsteka, porodicaId };
+      randomUUID(),
+      this.noviDatumIsteka(),
+    );
   }
 
   async rotiraj(token: string) {
     const tokenHash = hesirajToken(token);
-    const sada = new Date();
 
-    const rezultat = await this.refreshTokenRepository.update(
-      { tokenHash, datumOpoziva: IsNull(), datumIsteka: MoreThan(sada) },
-      { datumOpoziva: sada },
+    const rotacija = await this.refreshTokenRepository.manager.transaction(
+      async (manager) => {
+        const sada = new Date();
+        const { affected } = await manager.update(
+          RefreshToken,
+          { tokenHash, datumOpoziva: IsNull(), datumIsteka: MoreThan(sada) },
+          { datumOpoziva: sada },
+        );
+        if (!affected) {
+          return null;
+        }
+
+        const zapis = await manager.findOneOrFail(RefreshToken, {
+          where: { tokenHash },
+          relations: { korisnik: true },
+        });
+        if (zapis.korisnik.deaktiviran) {
+          return null;
+        }
+
+        const { token: noviToken, datumIsteka } = await this.upisi(
+          manager,
+          zapis.korisnik,
+          zapis.porodicaId,
+          zapis.datumIsteka,
+        );
+        return {
+          korisnik: zapis.korisnik,
+          noviToken,
+          datumIsteka,
+          porodicaId: zapis.porodicaId,
+        };
+      },
     );
 
-    if (rezultat.affected === 0) {
+    if (!rotacija) {
       const postojeci = await this.refreshTokenRepository.findOne({
         where: { tokenHash },
       });
@@ -60,28 +80,7 @@ export class RefreshTokenService {
       }
       throw new UnauthorizedException('Nevažeća sesija.');
     }
-
-    const zapis = await this.refreshTokenRepository.findOneOrFail({
-      where: { tokenHash },
-      relations: { korisnik: true },
-    });
-    if (zapis.korisnik.deaktiviran) {
-      await this.opozoviPorodicu(zapis.porodicaId);
-      throw new UnauthorizedException('Nevažeća sesija.');
-    }
-
-    const { token: noviToken, datumIsteka } = await this.kreiraj(
-      zapis.korisnik,
-      zapis.porodicaId,
-      zapis.datumIsteka,
-    );
-
-    return {
-      korisnik: zapis.korisnik,
-      noviToken,
-      datumIsteka,
-      porodicaId: zapis.porodicaId,
-    };
+    return rotacija;
   }
 
   async opozoviPorodicu(porodicaId: string) {
@@ -104,23 +103,14 @@ export class RefreshTokenService {
   async opozoviOstaleSesije(
     manager: EntityManager,
     korisnikId: number,
-    token: string | undefined,
+    trenutnaPorodicaId: string,
   ) {
-    const trenutna = token
-      ? await manager.findOne(RefreshToken, {
-          where: {
-            tokenHash: hesirajToken(token),
-            korisnik: { id: korisnikId },
-          },
-        })
-      : null;
-
     await manager.update(
       RefreshToken,
       {
         korisnik: { id: korisnikId },
         datumOpoziva: IsNull(),
-        ...(trenutna && { porodicaId: Not(trenutna.porodicaId) }),
+        porodicaId: Not(trenutnaPorodicaId),
       },
       { datumOpoziva: new Date() },
     );
@@ -139,6 +129,22 @@ export class RefreshTokenService {
     await this.refreshTokenRepository.delete({
       datumIsteka: LessThan(new Date()),
     });
+  }
+
+  private async upisi(
+    manager: EntityManager,
+    korisnik: Korisnik,
+    porodicaId: string,
+    datumIsteka: Date,
+  ) {
+    const token = generisiToken();
+    await manager.insert(RefreshToken, {
+      tokenHash: hesirajToken(token),
+      porodicaId,
+      datumIsteka,
+      korisnik,
+    });
+    return { token, datumIsteka, porodicaId };
   }
 
   private noviDatumIsteka(): Date {

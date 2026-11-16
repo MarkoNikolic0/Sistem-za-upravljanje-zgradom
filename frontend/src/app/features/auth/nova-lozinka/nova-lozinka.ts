@@ -18,7 +18,11 @@ import { AuthService } from '../auth-service';
 import { AuthStore } from '../sesija/auth-store';
 import { StanjePrijave } from '../auth-models';
 import { MAX_DUZINA_LOZINKE, MIN_DUZINA_LOZINKE, PRAVILA_LOZINKE } from '../pravila-naloga';
-import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
+import {
+  oznaciGreskuPolja,
+  porukaServera,
+  PREVISE_POKUSAJA,
+} from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 
 function isteLozinke(grupa: AbstractControl): ValidationErrors | null {
@@ -113,11 +117,7 @@ export class NovaLozinka {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    const poruka = greskaPolja(err, 'lozinka');
-    if (poruka) {
-      const kontrola = this.forma.controls.lozinka;
-      kontrola.setErrors({ server: poruka });
-      kontrola.markAsTouched();
+    if (oznaciGreskuPolja(err, this.forma.controls, ['lozinka'])) {
       this.fokusiraj('#lozinka');
       return;
     }

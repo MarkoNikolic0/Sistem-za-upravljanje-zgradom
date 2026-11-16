@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { AuthService } from '../auth-service';
 import { AuthStore } from './auth-store';
@@ -15,7 +16,11 @@ export class TokenRefresh {
       map(({ accessToken }) => accessToken),
       tap({
         next: (token) => this.authStore.postaviToken(token),
-        error: () => this.authStore.ocistiSesiju(),
+        error: (greska: unknown) => {
+          if (greska instanceof HttpErrorResponse && greska.status === 401) {
+            this.authStore.ocistiSesiju();
+          }
+        },
       }),
       finalize(() => (this.uToku$ = null)),
       shareReplay(1),

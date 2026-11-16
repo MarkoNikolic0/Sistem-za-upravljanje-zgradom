@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -9,7 +9,12 @@ import { MessageModule } from 'primeng/message';
 import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { AuthStore } from '../sesija/auth-store';
-import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
+import {
+  oznaciGreskuPolja,
+  porukaServera,
+  PREVISE_POKUSAJA,
+} from '../../../shared/forme/greske-servera';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { StanjePrijave } from '../auth-models';
 import { bezbednaAdresa } from '../pristup/povratak';
 import { zgradaIzPovratka } from '../pristup/poziv-u-zgradu';
@@ -33,7 +38,7 @@ export class Login {
   private fb = inject(FormBuilder);
   private authStore = inject(AuthStore);
   private router = inject(Router);
-  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly fokusiraj = fokusPosleCrtanja();
 
   private stanje = this.router.currentNavigation()?.extras.state as StanjePrijave | undefined;
 
@@ -57,7 +62,7 @@ export class Login {
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('input.ng-invalid')?.focus();
+      this.fokusiraj('input.ng-invalid');
       return;
     }
 
@@ -82,12 +87,8 @@ export class Login {
       return;
     }
 
-    const greskaEmaila = greskaPolja(err, 'email');
-    if (greskaEmaila) {
-      const kontrola = this.loginForm.controls.email;
-      kontrola.setErrors({ server: greskaEmaila });
-      kontrola.markAsTouched();
-      this.host.nativeElement.querySelector<HTMLElement>('#email')?.focus();
+    if (oznaciGreskuPolja(err, this.loginForm.controls, ['email'])) {
+      this.fokusiraj('#email');
       return;
     }
 

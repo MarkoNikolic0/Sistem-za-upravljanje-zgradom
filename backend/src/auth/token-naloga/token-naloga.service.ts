@@ -81,7 +81,6 @@ export class TokenNalogaService {
     }
 
     const token = generisiToken();
-    await this.obrisi(manager, korisnikId, svrha);
     await manager.insert(TokenNaloga, {
       tokenHash: hesirajToken(token),
       svrha,
@@ -141,10 +140,20 @@ export class TokenNalogaService {
   }
 
   async posalji(mail: Mail, token: string): Promise<void> {
-    const poslat = await this.mailService.posalji(mail);
-    if (!poslat) {
-      await this.tokenRepository.delete({ tokenHash: hesirajToken(token) });
+    const tokenHash = hesirajToken(token);
+    if (!(await this.mailService.posalji(mail))) {
+      await this.tokenRepository.delete({ tokenHash });
+      return;
     }
+    await this.tokenRepository.query(
+      `DELETE FROM "token_naloga" stari
+       USING "token_naloga" novi
+       WHERE novi."tokenHash" = $1
+         AND stari."korisnikId" = novi."korisnikId"
+         AND stari."svrha" = novi."svrha"
+         AND stari.id <> novi.id`,
+      [tokenHash],
+    );
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)

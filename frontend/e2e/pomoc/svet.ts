@@ -24,6 +24,7 @@ export interface Svet {
   serviser: Akter;
   bezStana: Akter;
   zaboravni: Akter;
+  promenaLozinke: Akter;
   dveZgrade: { upravnik: Akter; zgrade: number[] };
   arhiviranaZgrada: number;
 }

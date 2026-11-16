@@ -3,6 +3,7 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { proveriOkruzenje } from './shared/okruzenje.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ZgradaModule } from './zgrada/zgrada.module.js';
 import { StanModule } from './stan/stan.module.js';
@@ -28,6 +29,7 @@ import { NotifikacijaModule } from './notifikacija/notifikacija.module.js';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: proveriOkruzenje,
     }),
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: minutes(1), limit: 5 }],

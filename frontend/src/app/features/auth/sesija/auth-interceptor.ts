@@ -34,7 +34,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       return tokenRefresh.osvezi().pipe(
         catchError((greskaRefresha: unknown) => {
-          void router.navigateByUrl(naPrijavu(router));
+          if (!authStore.jePrijavljen()) {
+            void router.navigateByUrl(naPrijavu(router));
+          }
           return throwError(() => greskaRefresha);
         }),
         switchMap((noviToken) => next(saTokenom(req, noviToken))),

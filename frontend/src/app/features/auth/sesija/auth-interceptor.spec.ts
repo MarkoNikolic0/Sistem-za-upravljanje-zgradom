@@ -97,6 +97,32 @@ describe('authInterceptor', () => {
     await vi.waitFor(() => expect(router.url).toBe('/login?returnUrl=%2Fkvarovi%2F7'));
   });
 
+  it('kad osvežavanje ne stigne do servera, sesija ostaje i nema preusmeravanja', async () => {
+    await router.navigateByUrl('/kvarovi/7');
+    const odgovor = firstValueFrom(http.get(`${API}/kvarovi/7`));
+    server.expectOne(`${API}/kvarovi/7`).flush(null, NEOVLASCEN);
+    server.expectOne(`${API}/auth/refresh`).error(new ProgressEvent('error'));
+    await expect(odgovor).rejects.toMatchObject({ status: 0 });
+    expect(store.status()).toBe('prijavljen');
+    expect(router.url).toBe('/kvarovi/7');
+
+    const ponovo = firstValueFrom(http.get(`${API}/kvarovi/7`));
+    server.expectOne(`${API}/kvarovi/7`).flush(null, NEOVLASCEN);
+    server.expectOne(`${API}/auth/refresh`).flush({ accessToken: tokenZa('stanar', 2) });
+    server.expectOne(`${API}/kvarovi/7`).flush('ok');
+    expect(await ponovo).toBe('ok');
+  });
+
+  it('greška servera pri osvežavanju ne briše sesiju', async () => {
+    const odgovor = firstValueFrom(http.get(`${API}/a`));
+    server.expectOne(`${API}/a`).flush(null, NEOVLASCEN);
+    server
+      .expectOne(`${API}/auth/refresh`)
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    await expect(odgovor).rejects.toMatchObject({ status: 503 });
+    expect(store.status()).toBe('prijavljen');
+  });
+
   it('posle neuspešnog osvežavanja sledeći 401 pokušava ponovo', async () => {
     const prvi = firstValueFrom(http.get(`${API}/a`));
     server.expectOne(`${API}/a`).flush(null, NEOVLASCEN);

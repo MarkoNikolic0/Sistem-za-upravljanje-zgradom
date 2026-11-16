@@ -16,6 +16,12 @@ import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.serv
 import type { JwtPayload } from './strategies/jwt.strategy.js';
 import { PushService } from '../notifikacija/push/push.service.js';
 
+export interface NovaSesija {
+  accessToken: string;
+  refreshToken: string;
+  datumIsteka: Date;
+}
+
 const LAZNI_HES = bcrypt.hashSync('lozinka-za-isto-vreme-odgovora', 10);
 
 @Injectable()
@@ -29,7 +35,7 @@ export class AuthService {
     private pushService: PushService,
   ) {}
 
-  async login(dto: LoginDto, ip: string) {
+  async login(dto: LoginDto, ip: string): Promise<NovaSesija> {
     const korisnik = await this.korisnikRepository.findOne({
       where: { email: dto.email },
     });
@@ -63,7 +69,7 @@ export class AuthService {
     return { accessToken, refreshToken, datumIsteka };
   }
 
-  async refresh(refreshToken: string) {
+  async refresh(refreshToken: string): Promise<NovaSesija> {
     const { korisnik, noviToken, datumIsteka, porodicaId } =
       await this.refreshTokenService.rotiraj(refreshToken);
     const accessToken = await this.accessToken(korisnik, porodicaId);

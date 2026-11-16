@@ -12,7 +12,11 @@ import { MessageModule } from 'primeng/message';
 import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
 import { AuthLayout } from '../auth-layout/auth-layout';
 import { ProveriMejl } from '../proveri-mejl/proveri-mejl';
-import { greskaPolja, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
+import {
+  oznaciGreskuPolja,
+  porukaServera,
+  PREVISE_POKUSAJA,
+} from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { ispravanIdIzAdrese } from '../../../shared/ispravan-id';
 import { povratakNaPovezivanje } from '../pristup/poziv-u-zgradu';
@@ -25,7 +29,8 @@ import {
   TRAJANJE_POTVRDE_SATI,
 } from '../pravila-naloga';
 
-type Polje = 'ime' | 'prezime' | 'email' | 'telefon' | 'lozinka';
+const POLJA = ['ime', 'prezime', 'email', 'telefon', 'lozinka'] as const;
+type Polje = (typeof POLJA)[number];
 
 @Component({
   imports: [
@@ -96,19 +101,13 @@ export class Register {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    for (const polje of ['ime', 'prezime', 'email', 'telefon', 'lozinka'] as const) {
-      const poruka = greskaPolja(err, polje);
-      if (poruka) {
-        const kontrola = this.registerForm.controls[polje];
-        kontrola.setErrors({ server: poruka });
-        kontrola.markAsTouched();
-        this.fokusiraj('input.ng-invalid');
-        return;
-      }
+    if (oznaciGreskuPolja(err, this.registerForm.controls, POLJA)) {
+      this.fokusiraj('input.ng-invalid');
+      return;
     }
 
     if (err.status === 429) {
-      this.greska.set(PREVISE_POKUSAJA);
+      this.greska.set(porukaServera(err) ?? PREVISE_POKUSAJA);
       return;
     }
 

@@ -1,4 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import {
   PORUKA_LINK,
@@ -26,6 +27,7 @@ import {
 } from './pomoc/podaci.js';
 
 const NOVA_LOZINKA = 'NovaLozinka456!';
+const DRUGA_LOZINKA = 'DrugaLozinka789!';
 
 describe('nalog i prijava', () => {
   let t: TestAplikacija;
@@ -193,7 +195,9 @@ describe('nalog i prijava', () => {
       );
       await zastariTokene(email);
 
-      await registruj(email, { ime: 'Milica', lozinka: NOVA_LOZINKA });
+      await posleSlanja(() =>
+        registruj(email, { ime: 'Milica', lozinka: NOVA_LOZINKA }),
+      );
       const novi = tokenIzMejla(
         await t.posta.sacekaj(email, 'Aktivacija naloga'),
       );
@@ -207,6 +211,26 @@ describe('nalog i prijava', () => {
         .expect(204);
 
       expect(await korisnici().countBy({ email })).toBe(1);
+      expect(await korisnici().findOneBy({ email })).toMatchObject({
+        ime: 'Milica',
+      });
+      await prijava(email).expect(401);
+      await prijava(email, NOVA_LOZINKA).expect(200);
+    });
+
+    it('ponovna registracija u istom minutu menja podatke, a važi link iz prvog mejla', async () => {
+      const email = novEmail('Jovana');
+      await registruj(email);
+      const token = tokenIzMejla(
+        await t.posta.sacekaj(email, 'Aktivacija naloga'),
+      );
+
+      await posleSlanja(() =>
+        registruj(email, { ime: 'Milica', lozinka: NOVA_LOZINKA }),
+      );
+      expect(t.posta.za(email)).toEqual([]);
+      await javno().post('/auth/potvrda-emaila').send({ token }).expect(204);
+
       expect(await korisnici().findOneBy({ email })).toMatchObject({
         ime: 'Milica',
       });
@@ -232,10 +256,12 @@ describe('nalog i prijava', () => {
         await t.posta.sacekaj(neaktiviran, 'Aktivacija naloga'),
       );
       await zastariTokene(neaktiviran);
-      await javno()
-        .post('/auth/ponovo-potvrda')
-        .send({ email: neaktiviran })
-        .expect(202, {});
+      await posleSlanja(() =>
+        javno()
+          .post('/auth/ponovo-potvrda')
+          .send({ email: neaktiviran })
+          .expect(202, {}),
+      );
       const novi = tokenIzMejla(
         await t.posta.sacekaj(neaktiviran, 'Aktivacija naloga'),
       );
@@ -557,6 +583,27 @@ describe('nalog i prijava', () => {
       ]);
     });
 
+    it('kad upis novog kolačića ne uspe, stari kolačić i dalje važi', async () => {
+      const korisnik = await napraviKorisnika(t, 'PadUpisa');
+      const { kolacic } = await prijavi(t, korisnik.email);
+      await t.baza.query(
+        `CREATE FUNCTION pad_upisa_sesije() RETURNS trigger LANGUAGE plpgsql
+         AS $$ BEGIN RAISE EXCEPTION 'pad upisa'; END $$`,
+      );
+      await t.baza.query(
+        `CREATE TRIGGER pad_upisa_sesije BEFORE INSERT ON refresh_token
+         FOR EACH ROW WHEN (NEW."korisnikId" = ${korisnik.id})
+         EXECUTE FUNCTION pad_upisa_sesije()`,
+      );
+      try {
+        await osvezi(kolacic).expect(500);
+      } finally {
+        await t.baza.query('DROP TRIGGER pad_upisa_sesije ON refresh_token');
+        await t.baza.query('DROP FUNCTION pad_upisa_sesije()');
+      }
+      await osvezi(kolacic).expect(200);
+    });
+
     it('odjava gasi sesiju i briše kolačić', async () => {
       const korisnik = await napraviKorisnika(t, 'Odjava');
       const { kolacic } = await prijavi(t, korisnik.email);
@@ -609,6 +656,59 @@ describe('nalog i prijava', () => {
       await prijava(korisnik.email).expect(401);
       await prijava(korisnik.email, NOVA_LOZINKA).expect(200);
       await t.posta.sacekaj(korisnik.email, 'Lozinka je promenjena');
+    });
+
+    it('uređaj na kom je promenjena ostaje prijavljen i kad zahtev ne nosi kolačić', async () => {
+      const korisnik = await napraviKorisnika(t, 'Promena');
+      const ovaj = await prijavi(t, korisnik.email);
+      const drugi = await prijavi(t, korisnik.email);
+
+      await javno()
+        .patch('/auth/lozinka')
+        .set('Authorization', `Bearer ${ovaj.token}`)
+        .send({ trenutnaLozinka: LOZINKA, novaLozinka: NOVA_LOZINKA })
+        .expect(204);
+
+      await osvezi(drugi.kolacic).expect(401);
+      await osvezi(ovaj.kolacic).expect(200);
+    });
+
+    it('čeka istovremenu promenu lozinke i ne gazi je', async () => {
+      const korisnik = await napraviKorisnika(t, 'Promena');
+      const { token, kolacic } = await prijavi(t, korisnik.email);
+      const upit = t.baza.createQueryRunner();
+      await upit.connect();
+      try {
+        await upit.startTransaction();
+        await upit.query('UPDATE korisnik SET lozinka = $1 WHERE id = $2', [
+          await bcrypt.hash(DRUGA_LOZINKA, 10),
+          korisnik.id,
+        ]);
+        const zahtev = promeni(token, kolacic, {
+          trenutnaLozinka: LOZINKA,
+          novaLozinka: NOVA_LOZINKA,
+        }).then((odgovor) => odgovor);
+        await vi.waitFor(
+          async () => {
+            const [{ broj }]: { broj: number }[] = await t.baza.query(
+              `SELECT count(*)::int AS broj FROM pg_stat_activity
+               WHERE datname = current_database()
+                 AND wait_event_type = 'Lock'
+                 AND query LIKE '%"korisnik"%'`,
+            );
+            expect(broj).toBeGreaterThan(0);
+          },
+          { timeout: 5000 },
+        );
+        await upit.commitTransaction();
+        expect((await zahtev).status).toBe(400);
+      } finally {
+        if (upit.isTransactionActive) {
+          await upit.rollbackTransaction();
+        }
+        await upit.release();
+      }
+      await prijava(korisnik.email, DRUGA_LOZINKA).expect(200);
     });
   });
 
@@ -671,6 +771,27 @@ describe('nalog i prijava', () => {
       );
       await nova('JosJednaLozinka789!', drugi).expect(400);
       await prijava(korisnik.email, NOVA_LOZINKA).expect(200);
+    });
+
+    it('kad nov mejl ne ode, link iz prethodnog mejla i dalje važi', async () => {
+      const korisnik = await napraviKorisnika(t, 'Zaboravio');
+      await zatrazi(korisnik.email).expect(202);
+      const token = tokenIzMejla(
+        await t.posta.sacekaj(korisnik.email, 'Promena lozinke'),
+      );
+      await zastariTokene(korisnik.email);
+
+      t.posta.odbija = true;
+      try {
+        await posleSlanja(() => zatrazi(korisnik.email).expect(202));
+      } finally {
+        t.posta.odbija = false;
+      }
+
+      await javno()
+        .post('/auth/nova-lozinka')
+        .send({ token, lozinka: NOVA_LOZINKA })
+        .expect(204);
     });
 
     it('nova lozinka otključava zaključanu prijavu', async () => {

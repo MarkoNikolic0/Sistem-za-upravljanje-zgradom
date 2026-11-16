@@ -10,7 +10,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService } from './auth.service.js';
+import { AuthService, type NovaSesija } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ConfigService } from '@nestjs/config';
@@ -36,12 +36,16 @@ import { NovaLozinkaDto } from './dto/nova-lozinka.dto.js';
 
 @Controller('auth')
 export class AuthController {
+  private readonly jeProdukcija: boolean;
+
   constructor(
     private readonly authService: AuthService,
     private readonly lozinkaService: LozinkaService,
     private readonly potvrdaEmaila: PotvrdaEmailaService,
-    private readonly config: ConfigService,
-  ) {}
+    config: ConfigService,
+  ) {
+    this.jeProdukcija = config.get<string>('NODE_ENV') === 'production';
+  }
 
   @UseGuards(ThrottlerGuard)
   @Post('register')
@@ -72,17 +76,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken, datumIsteka } =
-      await this.authService.login(dto, req.ip ?? '');
-
-    const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
-    res.cookie(
-      REFRESH_COOKIE,
-      refreshToken,
-      refreshCookieOpcije(jeProdukcija, datumIsteka),
-    );
-
-    return { accessToken };
+    return this.sesija(res, await this.authService.login(dto, req.ip ?? ''));
   }
 
   @Post('refresh')
@@ -96,29 +90,14 @@ export class AuthController {
       throw new UnauthorizedException('Nevažeća sesija.');
     }
 
-    const {
-      accessToken,
-      refreshToken: noviToken,
-      datumIsteka,
-    } = await this.authService.refresh(refreshToken);
-
-    const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
-    res.cookie(
-      REFRESH_COOKIE,
-      noviToken,
-      refreshCookieOpcije(jeProdukcija, datumIsteka),
-    );
-
-    return { accessToken };
+    return this.sesija(res, await this.authService.refresh(refreshToken));
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     await this.authService.logout(req.cookies?.[REFRESH_COOKIE]);
-
-    const jeProdukcija = this.config.get<string>('NODE_ENV') === 'production';
-    res.clearCookie(REFRESH_COOKIE, brisanjeCookieOpcije(jeProdukcija));
+    res.clearCookie(REFRESH_COOKIE, brisanjeCookieOpcije(this.jeProdukcija));
   }
 
   @ApiBearerAuth()
@@ -128,13 +107,8 @@ export class AuthController {
   async promeniLozinku(
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: ChangePasswordDto,
-    @Req() req: Request,
   ) {
-    await this.lozinkaService.promeni(
-      korisnik.id,
-      dto,
-      req.cookies?.[REFRESH_COOKIE],
-    );
+    await this.lozinkaService.promeni(korisnik, dto);
   }
 
   @UseGuards(ThrottlerGuard)
@@ -149,5 +123,17 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async novaLozinka(@Body() dto: NovaLozinkaDto) {
     await this.lozinkaService.postaviNovu(dto);
+  }
+
+  private sesija(
+    res: Response,
+    { accessToken, refreshToken, datumIsteka }: NovaSesija,
+  ) {
+    res.cookie(
+      REFRESH_COOKIE,
+      refreshToken,
+      refreshCookieOpcije(this.jeProdukcija, datumIsteka),
+    );
+    return { accessToken };
   }
 }

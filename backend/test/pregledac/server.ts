@@ -1,3 +1,4 @@
+import { IME_BAZE } from './okruzenje.js';
 import { createServer, type Server } from 'node:http';
 import { Zgrada } from '../../src/zgrada/zgrada.entity.js';
 import { pokreniAplikaciju, type TestAplikacija } from '../pomoc/aplikacija.js';
@@ -9,11 +10,10 @@ import {
   napraviZgradu,
   napraviZgraduSaLjudima,
 } from '../pomoc/podaci.js';
-import { napraviBazu, PREFIKS_TEST_BAZE } from '../pomoc/test-baza.js';
+import { napraviBazu } from '../pomoc/test-baza.js';
 
 const PORT_API = 3100;
 const PORT_POMOCI = 3101;
-const FRONTEND = 'http://localhost:4300';
 const PROSLO = {
   sastanak: `UPDATE sastanak SET pocetak = now() - interval '1 hour' WHERE id = $1 RETURNING id`,
   glasanje: `UPDATE glasanje SET rok = now() - interval '1 second' WHERE id = $1 RETURNING id`,
@@ -22,10 +22,7 @@ const RUTA_PROSLO = new RegExp(
   `^/(${Object.keys(PROSLO).join('|')})/(\\d+)/proslo$`,
 );
 
-const imeBaze = `${PREFIKS_TEST_BAZE}${process.pid}`;
-const obrisiBazu = await napraviBazu(imeBaze);
-process.env.DATABASE_NAME = imeBaze;
-process.env.FRONTEND_URL = FRONTEND;
+const obrisiBazu = await napraviBazu(IME_BAZE);
 
 let t: TestAplikacija | undefined;
 let pomoc: Server | undefined;
@@ -123,6 +120,7 @@ try {
   const svet = {
     ...(await napraviSvet(t)),
     zaboravni: await napraviKorisnika(t, 'Zaboravni'),
+    promenaLozinke: await napraviKorisnika(t, 'PromenaLozinke'),
     dveZgrade: await napraviUpravnikaDveZgrade(t),
     arhiviranaZgrada: await napraviArhiviranuZgradu(t),
   };
@@ -136,4 +134,6 @@ try {
   await zavrsi(1);
 }
 
-console.log(`Server za e2e: ${imeBaze}, API ${PORT_API}, pomoć ${PORT_POMOCI}`);
+console.log(
+  `Server za e2e: ${IME_BAZE}, API ${PORT_API}, pomoć ${PORT_POMOCI}`,
+);

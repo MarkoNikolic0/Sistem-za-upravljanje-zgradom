@@ -65,17 +65,15 @@ export class PotvrdaEmailaService {
           return token && { svrha: SvrhaTokena.POTVRDA, token };
         }
 
+        await manager.update(Korisnik, postojeci.id, {
+          ...(await podaci()),
+          kreiranDatum: new Date(),
+        });
         const token = await this.tokenNaloga.napravi(
           manager,
           postojeci.id,
           SvrhaTokena.POTVRDA,
         );
-        if (token) {
-          await manager.update(Korisnik, postojeci.id, {
-            ...(await podaci()),
-            kreiranDatum: new Date(),
-          });
-        }
         return token && { svrha: SvrhaTokena.POTVRDA, token };
       });
 

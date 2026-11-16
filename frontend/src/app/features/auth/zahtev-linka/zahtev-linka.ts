@@ -10,7 +10,11 @@ import { AuthLayout } from '../auth-layout/auth-layout';
 import { ProveriMejl } from '../proveri-mejl/proveri-mejl';
 import { AuthService } from '../auth-service';
 import { StanjePrijave } from '../auth-models';
-import { greskaPolja, porukaServera, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
+import {
+  oznaciGreskuPolja,
+  porukaServera,
+  PREVISE_POKUSAJA,
+} from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TRAJANJE_LINKA_MIN, TRAJANJE_POTVRDE_SATI } from '../pravila-naloga';
 
@@ -82,11 +86,7 @@ export class ZahtevLinka {
   }
 
   private obradiGresku(err: HttpErrorResponse): void {
-    const poruka = greskaPolja(err, 'email');
-    if (poruka) {
-      const kontrola = this.forma.controls.email;
-      kontrola.setErrors({ server: poruka });
-      kontrola.markAsTouched();
+    if (oznaciGreskuPolja(err, this.forma.controls, ['email'])) {
       this.fokusiraj('#email');
       return;
     }

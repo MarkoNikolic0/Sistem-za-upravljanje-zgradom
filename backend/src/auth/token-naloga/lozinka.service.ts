@@ -3,9 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../../korisnik/aktivan-korisnik.js';
 import { MailService } from '../../shared/mail/mail.service.js';
@@ -20,12 +19,11 @@ import { TokenNalogaService } from './token-naloga.service.js';
 import { mailLozinkaPromenjena, mailNovaLozinka } from './mailovi-naloga.js';
 import { NotifikacijaService } from '../../notifikacija/notifikacija.service.js';
 import { PushService } from '../../notifikacija/push/push.service.js';
+import type { TrenutniKorisnikPodaci } from '../decorators/trenutni-korisnik.decorator.js';
 
 @Injectable()
 export class LozinkaService {
   constructor(
-    @InjectRepository(Korisnik)
-    private korisnikRepository: Repository<Korisnik>,
     private dataSource: DataSource,
     private tokenNaloga: TokenNalogaService,
     private refreshTokenService: RefreshTokenService,
@@ -75,49 +73,47 @@ export class LozinkaService {
   }
 
   async promeni(
-    korisnikId: number,
+    { id, sid }: TrenutniKorisnikPodaci,
     dto: ChangePasswordDto,
-    refreshToken: string | undefined,
   ): Promise<void> {
-    const korisnik = await this.korisnikRepository.findOne({
-      where: { id: korisnikId },
-    });
-    if (!korisnik) {
-      throw new NotFoundException('Korisnik ne postoji.');
-    }
+    const email = await this.dataSource.transaction(async (manager) => {
+      const korisnik = await manager.findOne(Korisnik, {
+        where: { id },
+        select: { id: true, email: true, lozinka: true },
+        lock: { mode: 'for_no_key_update' },
+      });
+      if (!korisnik) {
+        throw new NotFoundException('Korisnik ne postoji.');
+      }
 
-    const trenutnaIspravna = await bcrypt.compare(
-      dto.trenutnaLozinka,
-      korisnik.lozinka,
-    );
-    if (!trenutnaIspravna) {
-      throw greskaPolja('trenutnaLozinka', 'Trenutna lozinka nije ispravna.');
-    }
-
-    const istaKaoStara = await bcrypt.compare(
-      dto.novaLozinka,
-      korisnik.lozinka,
-    );
-    if (istaKaoStara) {
-      throw greskaPolja(
-        'novaLozinka',
-        'Nova lozinka mora biti drugačija od trenutne.',
+      const trenutnaIspravna = await bcrypt.compare(
+        dto.trenutnaLozinka,
+        korisnik.lozinka,
       );
-    }
+      if (!trenutnaIspravna) {
+        throw greskaPolja('trenutnaLozinka', 'Trenutna lozinka nije ispravna.');
+      }
 
-    const hes = await bcrypt.hash(dto.novaLozinka, 10);
-    await this.dataSource.transaction(async (manager) => {
-      await manager.update(Korisnik, korisnikId, { lozinka: hes });
-      await this.tokenNaloga.obrisi(manager, korisnikId, SvrhaTokena.LOZINKA);
-      await this.refreshTokenService.opozoviOstaleSesije(
-        manager,
-        korisnikId,
-        refreshToken,
+      const istaKaoStara = await bcrypt.compare(
+        dto.novaLozinka,
+        korisnik.lozinka,
       );
-      await this.pushService.obrisiSve(manager, korisnikId);
-    });
-    this.notifikacije.prekiniVeze(korisnikId);
+      if (istaKaoStara) {
+        throw greskaPolja(
+          'novaLozinka',
+          'Nova lozinka mora biti drugačija od trenutne.',
+        );
+      }
 
-    void this.mailService.posalji(mailLozinkaPromenjena(korisnik.email));
+      const hes = await bcrypt.hash(dto.novaLozinka, 10);
+      await manager.update(Korisnik, id, { lozinka: hes });
+      await this.tokenNaloga.obrisi(manager, id, SvrhaTokena.LOZINKA);
+      await this.refreshTokenService.opozoviOstaleSesije(manager, id, sid);
+      await this.pushService.obrisiSve(manager, id);
+      return korisnik.email;
+    });
+    this.notifikacije.prekiniVeze(id);
+
+    void this.mailService.posalji(mailLozinkaPromenjena(email));
   }
 }
