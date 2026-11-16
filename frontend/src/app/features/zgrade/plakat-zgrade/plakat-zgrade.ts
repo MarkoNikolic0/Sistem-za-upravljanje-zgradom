@@ -58,12 +58,15 @@ export class PlakatZgrade {
     return link && qrKod(link.href);
   });
 
-  protected readonly nemaZgradeIzLinka = computed(
-    () =>
+  protected readonly nemaZgradeIzLinka = computed(() => {
+    const id = this.zgrada();
+    return (
       this.ucitano() &&
-      this.zgrada() !== undefined &&
-      !this.zgrade().some((z) => z.id === this.zgrada()),
-  );
+      id !== undefined &&
+      !Number.isNaN(id) &&
+      !this.zgrade().some((z) => z.id === id)
+    );
+  });
 
   protected readonly nazad = computed(() => {
     const zgrada = this.izabrana();

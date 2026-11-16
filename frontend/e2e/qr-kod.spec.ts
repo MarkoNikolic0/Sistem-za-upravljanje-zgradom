@@ -99,6 +99,7 @@ test('upravnik dve zgrade štampa plakat sa QR kodom za izabranu zgradu', async 
   const kod = plakat.getByRole('img', { name: /QR kod/ });
   await expect(plakat).toContainText('Epsilon');
   await expect(kod).toHaveAccessibleName(new RegExp(`/poziv/${prva}$`));
+  await expect(page.getByText('Zgrada iz linka nije pronađena.')).toHaveCount(0);
 
   await izabranaZgrada(page).click();
   await page.getByRole('option', { name: /Zeta/ }).click();
