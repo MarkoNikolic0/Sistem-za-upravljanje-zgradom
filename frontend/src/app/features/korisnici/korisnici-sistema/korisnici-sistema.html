@@ -92,8 +92,8 @@
               <a [href]="'tel:' + k.telefon">{{ telefon(k.telefon) }}</a>
               <a [href]="'mailto:' + k.email">{{ k.email }}</a>
             </p>
-            @if (k.zgrada) {
-              <p class="opis">Upravlja zgradom {{ k.zgrada.naziv }}</p>
+            @if (k.upravlja.length > 0) {
+              <p class="opis">Upravlja {{ upravljaneZgrade(k) }}</p>
             }
             @if (k.uloga === 'serviser') {
               <p class="opis">{{ opisStruka(k) }}</p>
@@ -151,14 +151,16 @@
   [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
 >
   @if (meniReda.izabran(); as k) {
-    @if (k.zgrada) {
+    @if (k.upravlja.length > 0) {
       <p class="text-sm">
-        {{ ime(k) }} upravlja zgradom „{{ k.zgrada.naziv }}“. Upravnik se menja i razrešava na
-        stranici zgrade.
+        {{ ime(k) }} upravlja {{ upravljaneZgrade(k) }}. Upravnik se menja i razrešava na stranici
+        zgrade.
       </p>
-      <a class="uputstvo-link" [routerLink]="['/zgrade', k.zgrada.id]"
-        >Otvori zgradu {{ k.zgrada.naziv }}</a
-      >
+      <div class="flex flex-col items-start">
+        @for (z of k.upravlja; track z.id) {
+          <a class="uputstvo-link" [routerLink]="['/zgrade', z.id]">Otvori zgradu {{ z.naziv }}</a>
+        }
+      </div>
     } @else {
       <fieldset>
         <legend class="sr-only">Uloga</legend>
@@ -197,7 +199,7 @@
       [outlined]="true"
       (onClick)="dijalogUloge.set(false)"
     />
-    @if (!meniReda.izabran()?.zgrada) {
+    @if (!meniReda.izabran()?.upravlja.length) {
       <p-button label="Sačuvaj" (onClick)="sacuvajUlogu()" />
     }
   </ng-template>

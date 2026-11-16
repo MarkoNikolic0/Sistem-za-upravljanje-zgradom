@@ -58,7 +58,7 @@ export class ArhivaZgradeService {
         { zgrada: { id: zgradaId } },
         'Zgrada je arhivirana.',
       );
-      await this.upravnikService.vratiUStanara(manager, zgradaId);
+      await this.upravnikService.skiniUpravnika(manager, zgradaId);
       await manager.update(Zgrada, zgradaId, { arhivirana: new Date() });
     });
   }

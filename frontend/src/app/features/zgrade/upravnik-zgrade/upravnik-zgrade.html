@@ -49,7 +49,7 @@
             [suggestions]="predlozi()"
             (completeMethod)="pretrazi($event)"
             [optionLabel]="ime"
-            [optionDisabled]="upravljaZgradom"
+            [optionDisabled]="upravljaOvom"
             [minQueryLength]="minPretrage"
             [delay]="300"
             [forceSelection]="true"
@@ -60,8 +60,8 @@
                 <span>{{ ime(k) }}</span>
                 <span class="opis">
                   {{ k.email }}
-                  @if (k.zgrada) {
-                    · upravnik zgrade {{ k.zgrada.naziv }}
+                  @if (k.upravlja.length > 0) {
+                    · upravlja: {{ opisUpravljanja(k) }}
                   }
                 </span>
               </div>
@@ -75,7 +75,7 @@
             @if (greskaPretrage()) {
               Pretraga trenutno ne radi. Pokušaj ponovo.
             } @else {
-              Upiši ime, prezime ili email stanara. Upravnik druge zgrade se prvo razrešava tamo.
+              Upiši ime, prezime ili email stanara ili upravnika.
             }
           </small>
           <div class="mt-2 flex flex-wrap gap-3">

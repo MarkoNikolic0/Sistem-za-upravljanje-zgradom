@@ -23,7 +23,7 @@ type SastanakUkratko = Pick<
 >;
 
 export interface PregledZgrade {
-  zgrada: Pick<Zgrada, 'id' | 'naziv'>;
+  zgrada: Pick<Zgrada, 'id' | 'naziv' | 'adresa'>;
   zahteviNaCekanju: number;
   noviKvarovi: number;
   hitniKvarovi: number;
@@ -126,18 +126,15 @@ export class ZgradaPregledService {
   private async zgradeZaPregled(korisnikId: number, uloga: Uloga) {
     if (uloga === Uloga.ADMIN) {
       return await this.zgradaRepository.find({
-        select: { id: true, naziv: true },
+        select: { id: true, naziv: true, adresa: true },
         where: AKTIVNA_ZGRADA,
         order: { naziv: 'ASC' },
       });
     }
-    const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
-    if (zgradaId === null) {
-      return [];
-    }
     return await this.zgradaRepository.find({
-      select: { id: true, naziv: true },
-      where: { id: zgradaId },
+      select: { id: true, naziv: true, adresa: true },
+      where: { upravnikId: korisnikId, ...AKTIVNA_ZGRADA },
+      order: { naziv: 'ASC' },
     });
   }
 

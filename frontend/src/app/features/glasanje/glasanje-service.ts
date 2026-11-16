@@ -1,8 +1,8 @@
-import { inject, Service, Signal } from '@angular/core';
+import { inject, Service, Signal, signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Stranica } from '../../shared/liste/stranica';
+import { Stranica, uZgradi } from '../../shared/liste/stranica';
 import { Glasanje, NovoGlasanjeRequest, OdlukaZgrade, UpitGlasanja } from './glasanje-models';
 
 @Service()
@@ -29,10 +29,10 @@ export class GlasanjeService {
   }
 
   // Aktivna glasanja, najviše jedna strana (početna)
-  aktivna(broj: number) {
+  aktivna(broj: number, zgradaId: Signal<number | null> = signal(null)) {
     return httpResource<Stranica<Glasanje>>(() => ({
       url: this.apiUrl,
-      params: { stanje: 'aktivna', strana: 1, poStrani: broj },
+      params: { stanje: 'aktivna', strana: 1, poStrani: broj, ...uZgradi(zgradaId()) },
     }));
   }
 

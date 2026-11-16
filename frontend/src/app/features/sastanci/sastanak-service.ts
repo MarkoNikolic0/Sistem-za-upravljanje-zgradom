@@ -1,8 +1,8 @@
-import { inject, Service, Signal } from '@angular/core';
+import { inject, Service, Signal, signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Stranica } from '../../shared/liste/stranica';
+import { Stranica, uZgradi } from '../../shared/liste/stranica';
 import {
   NoviSastanakRequest,
   PregledPrisustva,
@@ -28,10 +28,16 @@ export class SastanakService {
     return this.http.get<Stranica<Sastanak>>(this.apiUrl, { params });
   }
 
-  predstojeci(broj: number) {
+  predstojeci(broj: number, zgradaId: Signal<number | null> = signal(null)) {
     return httpResource<Stranica<Sastanak>>(() => ({
       url: this.apiUrl,
-      params: { stanje: 'predstojeci', otkazani: false, strana: 1, poStrani: broj },
+      params: {
+        stanje: 'predstojeci',
+        otkazani: false,
+        strana: 1,
+        poStrani: broj,
+        ...uZgradi(zgradaId()),
+      },
     }));
   }
 

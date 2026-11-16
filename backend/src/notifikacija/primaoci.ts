@@ -1,17 +1,16 @@
 import type { EntityManager } from 'typeorm';
-import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
-import { uslovUpravnika } from '../zgrada/uslov-upravnika.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 
 export async function upravnikZgrade(
   manager: EntityManager,
   zgradaId: number,
 ): Promise<number[]> {
-  const upravnik = await manager.findOne(Korisnik, {
-    where: uslovUpravnika(zgradaId),
-    select: { id: true },
+  const zgrada = await manager.findOne(Zgrada, {
+    where: { id: zgradaId },
+    select: { id: true, upravnikId: true },
   });
-  return upravnik ? [upravnik.id] : [];
+  return zgrada?.upravnikId ? [zgrada.upravnikId] : [];
 }
 
 export async function stanariZgrade(

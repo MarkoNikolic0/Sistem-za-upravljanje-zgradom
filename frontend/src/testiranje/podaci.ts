@@ -103,7 +103,7 @@ export function sastanak(izmene: Partial<Sastanak> = {}): Sastanak {
 
 export function pregled(izmene: Partial<PregledZgrade> = {}): PregledZgrade {
   return {
-    zgrada: { id: 1, naziv: 'Delta' },
+    zgrada,
     zahteviNaCekanju: 0,
     noviKvarovi: 0,
     hitniKvarovi: 0,

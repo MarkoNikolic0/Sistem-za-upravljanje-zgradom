@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
 import { jeDupliUnos } from '../shared/greske-baze.js';
 import { ZahtevPovezivanje } from './zahtev-povezivanje.entity.js';
 import { Stan } from '../stan/stan.entity.js';
@@ -17,6 +17,7 @@ import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
+import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { ZahtevUpitDto } from './dto/zahtev-upit.dto.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
@@ -93,11 +94,11 @@ export class ZahtevPovezivanjeService {
     if (uloga === Uloga.ADMIN) {
       where.stan = { zgrada: AKTIVNA_ZGRADA };
     } else {
-      const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
-      if (zgradaId === null) {
+      const zgrade = await this.korisnikService.zgradeUpravnika(korisnikId);
+      if (zgrade.length === 0) {
         return { stavke: [], ukupno: 0 };
       }
-      where.stan = { zgrada: { id: zgradaId } };
+      where.stan = { zgrada: { id: In(zgrade) } };
     }
 
     const [stavke, ukupno] = await this.zahtevRepository.findAndCount({
@@ -125,8 +126,8 @@ export class ZahtevPovezivanjeService {
     }
 
     if (uloga !== Uloga.ADMIN) {
-      const zgradaId = await this.korisnikService.zgradaUpravnika(korisnikId);
-      if (zahtev.stan.zgrada.id !== zgradaId) {
+      const zgrade = await this.korisnikService.zgradeUpravnika(korisnikId);
+      if (!sadrzi(zgrade, zahtev.stan.zgrada.id)) {
         throw new ForbiddenException(
           'Možete obrađivati samo zahteve za svoju zgradu!',
         );

@@ -63,7 +63,9 @@ export class ListaSastanaka {
   // Sastanak zakazuje upravnik (zgrada u profilu je samo zgrada kojom upravlja) i admin
   protected readonly zakazuje = computed(() => {
     const profil = this.zgradeKorisnika.profil;
-    return profil.hasValue() && (profil.value().uloga === 'admin' || !!profil.value().zgrada);
+    return (
+      profil.hasValue() && (profil.value().uloga === 'admin' || profil.value().upravlja.length > 0)
+    );
   });
 
   // Najbliži sastanak koji nije otkazan ističe se na vrhu prve strane predstojećih

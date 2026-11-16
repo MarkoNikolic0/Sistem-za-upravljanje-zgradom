@@ -15,7 +15,7 @@ import { RedKontakta } from '../red-kontakta/red-kontakta';
 })
 export class VazniKontakti {
   readonly zgrade = input.required<ZgradaOsnovno[]>();
-  readonly zgradaUpravnika = input<number | null>(null);
+  readonly upravlja = input<number[]>([]);
 
   private readonly zgradeId = computed(() => this.zgrade().map((z) => z.id));
   protected readonly kontakti = inject(KontaktService).kontaktiZgrada(this.zgradeId);

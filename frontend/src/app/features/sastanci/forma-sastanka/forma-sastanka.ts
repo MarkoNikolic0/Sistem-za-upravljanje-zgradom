@@ -100,8 +100,7 @@ export class FormaSastanka {
     if (!profil.hasValue()) {
       return [];
     }
-    const zgrada = profil.value().zgrada;
-    return this.zgradeKorisnika.admin() ? this.zgradeKorisnika.zgrade() : zgrada ? [zgrada] : [];
+    return this.zgradeKorisnika.admin() ? this.zgradeKorisnika.zgrade() : profil.value().upravlja;
   });
 
   protected readonly maksNaslov = MAKS_NASLOV;

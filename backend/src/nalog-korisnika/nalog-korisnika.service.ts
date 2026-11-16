@@ -14,6 +14,7 @@ import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStanaService } from '../stanar-stana/stanar-stana.service.js';
 import { UpravnikZgradeService } from '../zgrada/upravnik-zgrade.service.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { KvarAkcijeService } from '../kvar/kvar-akcije.service.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { RefreshTokenService } from '../auth/refresh-token/refresh-token.service.js';
@@ -46,8 +47,14 @@ export class NalogKorisnikaService {
         return;
       }
       if (korisnik.uloga === Uloga.UPRAVNIK) {
+        const zgrade = await manager.find(Zgrada, {
+          where: { upravnikId: id },
+          select: { id: true, naziv: true },
+          order: { naziv: 'ASC' },
+        });
+        const nazivi = zgrade.map((z) => `„${z.naziv}“`).join(', ');
         throw new ConflictException(
-          `${korisnik.ime} ${korisnik.prezime} upravlja zgradom „${korisnik.zgrada?.naziv}“. Upravnik se razrešava na stranici zgrade.`,
+          `${korisnik.ime} ${korisnik.prezime} upravlja ${zgrade.length === 1 ? 'zgradom' : 'zgradama'} ${nazivi}. Upravnik se razrešava na stranici zgrade.`,
         );
       }
 
@@ -85,9 +92,7 @@ export class NalogKorisnikaService {
         'Nalog autora je deaktiviran.',
       );
       await this.stanariService.odseliIzSvihStanova(manager, id);
-      if (korisnik.zgrada) {
-        await this.upravnikService.vratiUStanara(manager, korisnik.zgrada.id);
-      }
+      await this.upravnikService.razresiSvuda(manager, id);
       await this.kvarAkcijeService.vratiKvaroveServisera(manager, id, adminId);
       await this.refreshTokenService.opozoviSveSesije(manager, id);
       await this.pushService.obrisiSve(manager, id);
@@ -110,7 +115,6 @@ export class NalogKorisnikaService {
     }
     const korisnik = await manager.findOne(Korisnik, {
       where: { id, ...POTVRDJEN_EMAIL },
-      relations: { zgrada: true },
       lock: { mode: 'for_no_key_update', tables: ['korisnik'] },
     });
     if (!korisnik) {

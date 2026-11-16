@@ -4,6 +4,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { StanarStana } from './stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { GlasanjeGlasoviService } from '../glasanje/glasanje-glasovi.service.js';
 import { PratilacKvaraService } from '../pratilac-kvara/pratilac-kvara.service.js';
@@ -119,9 +120,9 @@ export class StanarStanaService {
     );
     if (!ostajeUZgradi) {
       await this.pracenjaService.ukloniPracenja(manager, korisnikId, zgradaId);
-      const upravlja = await manager.existsBy(Korisnik, {
-        id: korisnikId,
-        zgrada: { id: zgradaId },
+      const upravlja = await manager.existsBy(Zgrada, {
+        id: zgradaId,
+        upravnikId: korisnikId,
       });
       if (!upravlja) {
         await this.oglasService.sakrijOglase(

@@ -45,7 +45,11 @@ export class UpravnikZgrade {
 
   protected readonly telefon = formatirajTelefon;
 
-  protected readonly upravljaZgradom = (k: KorisnikPretrage) => k.zgrada !== null;
+  protected readonly upravljaOvom = (k: KorisnikPretrage) =>
+    k.upravlja.some((z) => z.id === this.zgradaId());
+
+  protected readonly opisUpravljanja = (k: KorisnikPretrage) =>
+    k.upravlja.map((z) => z.naziv).join(', ');
 
   protected readonly ime = (k: { ime: string; prezime: string }) => `${k.ime} ${k.prezime}`;
 

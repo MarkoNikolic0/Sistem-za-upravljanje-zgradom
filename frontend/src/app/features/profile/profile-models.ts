@@ -7,7 +7,7 @@ export interface StanKorisnika extends StanOsnovno {
 }
 
 export interface ProfileResponse extends KorisnikResponse {
-  zgrada: ZgradaOsnovno | null;
+  upravlja: ZgradaOsnovno[];
   stanovi: StanKorisnika[];
 }
 

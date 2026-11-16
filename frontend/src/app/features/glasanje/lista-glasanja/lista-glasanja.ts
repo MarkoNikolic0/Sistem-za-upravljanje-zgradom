@@ -61,7 +61,9 @@ export class ListaGlasanja {
   // Glasanje pravi upravnik (zgrada u profilu je samo zgrada kojom upravlja) i admin
   protected readonly praviGlasanja = computed(() => {
     const profil = this.zgradeKorisnika.profil;
-    return profil.hasValue() && (profil.value().uloga === 'admin' || !!profil.value().zgrada);
+    return (
+      profil.hasValue() && (profil.value().uloga === 'admin' || profil.value().upravlja.length > 0)
+    );
   });
 
   constructor() {

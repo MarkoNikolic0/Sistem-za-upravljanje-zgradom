@@ -1,7 +1,7 @@
 <section aria-labelledby="kontakti-naslov" [attr.aria-busy]="kontakti.isLoading()">
   <div class="zaglavlje-odeljka">
     <h2 id="kontakti-naslov" class="naslov-odeljka">Važni kontakti</h2>
-    @if (zgradaUpravnika() !== null) {
+    @if (upravlja().length > 0) {
       <a pButton routerLink="/kontakti" size="small" text>Uredi</a>
     }
   </div>
@@ -46,7 +46,7 @@
             </ul>
           } @else {
             <p class="prazna-zgrada">
-              @if (zgrada.id === zgradaUpravnika()) {
+              @if (upravlja().includes(zgrada.id)) {
                 Još nema kontakata. Dodaj ih da bi ih stanari videli.
               } @else {
                 Upravnik još nije dodao kontakte zgrade.

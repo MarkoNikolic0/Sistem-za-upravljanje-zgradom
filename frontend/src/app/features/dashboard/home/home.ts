@@ -5,6 +5,8 @@ import {
   effect,
   ElementRef,
   inject,
+  input,
+  numberAttribute,
   signal,
   viewChild,
 } from '@angular/core';
@@ -16,6 +18,7 @@ import { ProfileService } from '../../profile/profile-service';
 import { ZahtevService } from '../../zahtevi/zahtev-service';
 import { DatePipe } from '@angular/common';
 import { PregledZgrada } from '../pregled-zgrada/pregled-zgrada';
+import { ZgradeUpravnika } from '../zgrade-upravnika/zgrade-upravnika';
 import { Danas } from '../danas/danas';
 import { VazniKontakti } from '../../kontakti/vazni-kontakti/vazni-kontakti';
 import { DokumentiUkratko } from '../../dokumenti/dokumenti-ukratko/dokumenti-ukratko';
@@ -33,6 +36,7 @@ type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
     MessageModule,
     SkeletonModule,
     PregledZgrada,
+    ZgradeUpravnika,
     Danas,
     VazniKontakti,
     DokumentiUkratko,
@@ -45,6 +49,8 @@ type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
 export class Home {
   private profileService = inject(ProfileService);
   private zahtevService = inject(ZahtevService);
+
+  readonly zgrada = input(undefined, { transform: numberAttribute });
 
   protected readonly profil = this.profileService.osvezenProfil();
   protected readonly zahtevi = this.zahtevService.mojiZahtevi();
@@ -67,9 +73,35 @@ export class Home {
     inject(DestroyRef).onDestroy(() => posmatrac.disconnect());
   }
 
-  protected readonly zgrade = computed(() =>
-    this.profil.hasValue() ? zgradeIzProfila(this.profil.value()) : [],
+  private readonly viseZgrada = computed(
+    () => this.profil.hasValue() && this.profil.value().upravlja.length > 1,
   );
+
+  protected readonly izabrana = computed(() => {
+    if (!this.profil.hasValue()) {
+      return null;
+    }
+    const upravlja = this.profil.value().upravlja;
+    return upravlja.length > 1 ? (upravlja.find((z) => z.id === this.zgrada()) ?? null) : null;
+  });
+
+  protected readonly spisakZgrada = computed(() => this.viseZgrada() && this.izabrana() === null);
+
+  protected readonly zgrade = computed(() => {
+    const izabrana = this.izabrana();
+    if (izabrana) {
+      return [izabrana];
+    }
+    return this.profil.hasValue() ? zgradeIzProfila(this.profil.value()) : [];
+  });
+
+  protected readonly upravlja = computed(() => {
+    const izabrana = this.izabrana();
+    if (izabrana) {
+      return [izabrana.id];
+    }
+    return this.profil.hasValue() ? this.profil.value().upravlja.map((z) => z.id) : [];
+  });
 
   protected readonly zahteviStigli = computed(
     () => this.zahtevi.hasValue() && !this.zahtevi.isLoading(),

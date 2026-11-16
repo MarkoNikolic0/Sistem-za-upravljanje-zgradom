@@ -1,52 +1,53 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
-import { AKTIVNA_ZGRADA, proveriAktivnu } from './aktivna-zgrada.js';
+import { AKTIVNA_ZGRADA } from './aktivna-zgrada.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
-import { uslovUpravnika } from './uslov-upravnika.js';
 
 @Injectable()
 export class UpravnikZgradeService {
   constructor(
-    @InjectRepository(Korisnik)
-    private korisnikRepository: Repository<Korisnik>,
     private dataSource: DataSource,
     private oglasService: OglasService,
   ) {}
 
   async find(zgradaId: number) {
-    await proveriAktivnu(this.dataSource.manager, zgradaId);
-    const korisnik = await this.korisnikRepository.findOne({
-      where: uslovUpravnika(zgradaId),
+    const zgrada = await this.dataSource.manager.findOne(Zgrada, {
+      where: { id: zgradaId, ...AKTIVNA_ZGRADA },
+      relations: { upravnik: true },
       select: {
         id: true,
-        ime: true,
-        prezime: true,
-        email: true,
-        telefon: true,
+        upravnik: {
+          id: true,
+          ime: true,
+          prezime: true,
+          email: true,
+          telefon: true,
+        },
       },
     });
-    return { korisnik };
+    if (!zgrada) {
+      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+    }
+    return { korisnik: zgrada.upravnik };
   }
 
   async postavi(zgradaId: number, korisnikId: number) {
     await this.dataSource.transaction(async (manager) => {
-      await this.zakljucajZgradu(manager, zgradaId);
+      const { upravnikId } = await this.zakljucajZgradu(manager, zgradaId);
+      await this.zakljucajKorisnike(manager, [korisnikId, upravnikId]);
 
       const korisnik = await manager.findOne(Korisnik, {
         where: { id: korisnikId, ...AKTIVAN_KORISNIK },
-        relations: { zgrada: true },
-        lock: { mode: 'pessimistic_write', tables: ['korisnik'] },
+        select: { id: true, uloga: true },
       });
       if (!korisnik) {
         throw new NotFoundException('Korisnik ne postoji.');
@@ -59,49 +60,86 @@ export class UpravnikZgradeService {
           'Za upravnika se može postaviti samo stanar ili upravnik.',
         );
       }
-      if (korisnik.zgrada?.id === zgradaId) {
+      if (upravnikId === korisnikId) {
         return;
       }
-      if (korisnik.zgrada) {
-        throw new ConflictException(
-          `${korisnik.ime} ${korisnik.prezime} već upravlja zgradom „${korisnik.zgrada.naziv}“. Prvo razreši upravnika te zgrade.`,
-        );
-      }
 
-      await this.smeni(manager, zgradaId);
-      await manager.update(Korisnik, korisnikId, {
-        uloga: Uloga.UPRAVNIK,
-        zgrada: { id: zgradaId },
-      });
+      await this.smeni(manager, zgradaId, upravnikId);
+      await manager.update(Zgrada, zgradaId, { upravnikId: korisnikId });
+      await manager.update(Korisnik, korisnikId, { uloga: Uloga.UPRAVNIK });
     });
     return await this.find(zgradaId);
   }
 
   async razresi(zgradaId: number) {
     await this.dataSource.transaction(async (manager) => {
-      await this.zakljucajZgradu(manager, zgradaId);
-      if (!(await this.smeni(manager, zgradaId))) {
+      const { upravnikId } = await this.zakljucajZgradu(manager, zgradaId);
+      if (upravnikId === null) {
         throw new NotFoundException('Zgrada nema upravnika.');
       }
+      await this.zakljucajKorisnike(manager, [upravnikId]);
+      await this.smeni(manager, zgradaId, upravnikId);
     });
+  }
+
+  async skiniUpravnika(manager: EntityManager, zgradaId: number) {
+    const zgrada = await manager.findOneOrFail(Zgrada, {
+      where: { id: zgradaId },
+      select: { id: true, upravnikId: true },
+    });
+    if (zgrada.upravnikId === null) {
+      return;
+    }
+    await this.zakljucajKorisnike(manager, [zgrada.upravnikId]);
+    await this.ukloni(manager, zgradaId, zgrada.upravnikId);
+  }
+
+  async razresiSvuda(manager: EntityManager, korisnikId: number) {
+    await manager.update(
+      Zgrada,
+      { upravnikId: korisnikId },
+      { upravnikId: null },
+    );
+    await manager.update(
+      Korisnik,
+      { id: korisnikId, uloga: Uloga.UPRAVNIK },
+      { uloga: Uloga.STANAR },
+    );
   }
 
   private async zakljucajZgradu(manager: EntityManager, zgradaId: number) {
     const zgrada = await manager.findOne(Zgrada, {
       where: { id: zgradaId, ...AKTIVNA_ZGRADA },
-      select: { id: true },
+      select: { id: true, upravnikId: true },
       lock: { mode: 'pessimistic_write' },
     });
     if (!zgrada) {
       throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
     }
+    return zgrada;
   }
 
-  private async smeni(manager: EntityManager, zgradaId: number) {
-    const bivsi = await this.vratiUStanara(manager, zgradaId);
+  private async zakljucajKorisnike(
+    manager: EntityManager,
+    ids: (number | null)[],
+  ) {
+    await manager.find(Korisnik, {
+      where: { id: In(ids.filter((id) => id !== null)) },
+      select: { id: true },
+      order: { id: 'ASC' },
+      lock: { mode: 'pessimistic_write' },
+    });
+  }
+
+  private async smeni(
+    manager: EntityManager,
+    zgradaId: number,
+    bivsi: number | null,
+  ) {
     if (bivsi === null) {
-      return false;
+      return;
     }
+    await this.ukloni(manager, zgradaId, bivsi);
     const veze = await zakljucajVeze(manager, bivsi, zgradaId);
     if (veze.length === 0) {
       await this.oglasService.sakrijOglase(
@@ -110,21 +148,16 @@ export class UpravnikZgradeService {
         'Autor više ne upravlja zgradom.',
       );
     }
-    return true;
   }
 
-  async vratiUStanara(manager: EntityManager, zgradaId: number) {
-    const upravnik = await manager.findOne(Korisnik, {
-      where: { zgrada: { id: zgradaId } },
-      select: { id: true },
-    });
-    if (!upravnik) {
-      return null;
+  private async ukloni(
+    manager: EntityManager,
+    zgradaId: number,
+    bivsi: number,
+  ) {
+    await manager.update(Zgrada, zgradaId, { upravnikId: null });
+    if (!(await manager.exists(Zgrada, { where: { upravnikId: bivsi } }))) {
+      await manager.update(Korisnik, bivsi, { uloga: Uloga.STANAR });
     }
-    await manager.update(Korisnik, upravnik.id, {
-      uloga: Uloga.STANAR,
-      zgrada: null,
-    });
-    return upravnik.id;
   }
 }

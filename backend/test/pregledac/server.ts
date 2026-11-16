@@ -1,6 +1,12 @@
 import { createServer, type Server } from 'node:http';
 import { pokreniAplikaciju, type TestAplikacija } from '../pomoc/aplikacija.js';
-import { LOZINKA, napraviKorisnika, napraviSvet } from '../pomoc/podaci.js';
+import {
+  dodeliZgradu,
+  LOZINKA,
+  napraviKorisnika,
+  napraviSvet,
+  napraviZgraduSaLjudima,
+} from '../pomoc/podaci.js';
 import { napraviBazu, PREFIKS_TEST_BAZE } from '../pomoc/test-baza.js';
 
 const PORT_API = 3100;
@@ -95,11 +101,19 @@ function napraviPomoc(aplikacija: TestAplikacija, svet: object) {
   });
 }
 
+async function napraviUpravnikaDveZgrade(aplikacija: TestAplikacija) {
+  const prva = await napraviZgraduSaLjudima(aplikacija, 'Epsilon');
+  const druga = await napraviZgraduSaLjudima(aplikacija, 'Zeta');
+  await dodeliZgradu(aplikacija, prva.upravnik, druga.id);
+  return { upravnik: prva.upravnik, zgrade: [prva.id, druga.id] };
+}
+
 try {
   t = await pokreniAplikaciju({ port: PORT_API });
   const svet = {
     ...(await napraviSvet(t)),
     zaboravni: await napraviKorisnika(t, 'Zaboravni'),
+    dveZgrade: await napraviUpravnikaDveZgrade(t),
   };
   const server = napraviPomoc(t, svet);
   await new Promise<void>((resolve, reject) => {

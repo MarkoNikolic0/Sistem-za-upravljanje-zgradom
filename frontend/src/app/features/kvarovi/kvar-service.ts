@@ -1,8 +1,8 @@
-import { inject, Service, Signal } from '@angular/core';
+import { inject, Service, Signal, signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Stranica } from '../../shared/liste/stranica';
+import { Stranica, uZgradi } from '../../shared/liste/stranica';
 import {
   KategorijaKvara,
   Kvar,
@@ -41,10 +41,10 @@ export class KvarService {
   }
 
   // Najnoviji aktivni kvarovi i njihov ukupan broj (početna)
-  najnoviji(broj: number) {
+  najnoviji(broj: number, zgradaId: Signal<number | null> = signal(null)) {
     return httpResource<Stranica<Kvar>>(() => ({
       url: this.apiUrl,
-      params: { stanje: 'aktivni', strana: 1, poStrani: broj },
+      params: { stanje: 'aktivni', strana: 1, poStrani: broj, ...uZgradi(zgradaId()) },
     }));
   }
 

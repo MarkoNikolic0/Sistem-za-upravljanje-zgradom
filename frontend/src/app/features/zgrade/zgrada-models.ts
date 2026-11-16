@@ -25,7 +25,7 @@ export interface UpravnikZgrade {
 type SastanakUkratko = Pick<Sastanak, 'id' | 'naslov' | 'pocetak' | 'vrsta' | 'hitno'>;
 
 export interface PregledZgrade {
-  zgrada: Pick<ZgradaOsnovno, 'id' | 'naziv'>;
+  zgrada: ZgradaOsnovno;
   zahteviNaCekanju: number;
   noviKvarovi: number;
   hitniKvarovi: number;

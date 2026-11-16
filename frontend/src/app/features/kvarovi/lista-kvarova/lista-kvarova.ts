@@ -72,23 +72,30 @@ export class ListaKvarova {
   protected readonly jeHitan = jeHitan;
 
   private readonly uloga = computed(() => this.authStore.korisnik()?.uloga);
-  protected readonly prikaziZgradu = computed(
+  private readonly profil = this.profileService.osvezenProfil();
+  private readonly upravlja = computed(() =>
+    this.profil.hasValue() ? this.profil.value().upravlja : [],
+  );
+  private readonly sveZgrade = computed(
     () => this.uloga() === 'admin' || this.uloga() === 'serviser',
   );
+  protected readonly prikaziZgradu = computed(() => this.sveZgrade() || this.upravlja().length > 1);
   protected readonly serviser = computed(() => this.uloga() === 'serviser');
   protected readonly prikaziPratioce = computed(
     () => this.uloga() === 'upravnik' || this.uloga() === 'admin',
   );
-  private readonly zgrade = this.kvarService.zgradeSaKvarovima(this.prikaziZgradu);
-  protected readonly listaZgrada = computed(() =>
-    this.zgrade.hasValue() ? this.zgrade.value() : [],
-  );
+  private readonly zgrade = this.kvarService.zgradeSaKvarovima(this.sveZgrade);
+  protected readonly listaZgrada = computed(() => {
+    if (!this.sveZgrade()) {
+      return this.upravlja();
+    }
+    return this.zgrade.hasValue() ? this.zgrade.value() : [];
+  });
   protected readonly opcijeZgrada = computed(() => [
     { id: null, naziv: 'Sve zgrade' },
     ...this.listaZgrada(),
   ]);
 
-  private readonly profil = this.profileService.osvezenProfil();
   protected readonly imaStan = computed(
     () => this.profil.hasValue() && this.profil.value().stanovi.length > 0,
   );

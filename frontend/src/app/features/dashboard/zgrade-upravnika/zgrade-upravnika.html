@@ -1,0 +1,61 @@
+<section aria-labelledby="zgrade-naslov" [attr.aria-busy]="pregled.isLoading()">
+  <h2 id="zgrade-naslov" class="naslov-odeljka">Tvoje zgrade</h2>
+
+  @if (pregled.error()) {
+    <p class="mt-3 text-sm text-priguseno">Zgrade trenutno nije moguće učitati.</p>
+    <button pButton type="button" size="small" outlined class="mt-3" (click)="pregled.reload()">
+      Pokušaj ponovo
+    </button>
+  } @else if (!pregled.hasValue()) {
+    <div class="ucitavanje mt-3 flex flex-col gap-3" aria-hidden="true">
+      <p-skeleton height="7.5rem" />
+      <p-skeleton height="7.5rem" />
+    </div>
+    <span class="sr-only">Učitavanje…</span>
+  } @else {
+    <ul class="zgrade ulazak">
+      @for (k of kartice(); track k.zgrada.id) {
+        <li>
+          <a
+            class="kartica"
+            [class.ceka]="k.stavke.length > 0"
+            [class.hitno]="k.hitno"
+            routerLink="/"
+            [queryParams]="{ zgrada: k.zgrada.id }"
+          >
+            <app-fasada class="fasada" [upaljeno]="k.stavke.length" />
+            <span class="glava">
+              <span class="naziv">{{ k.zgrada.naziv }}</span>
+              <span class="adresa">{{ k.zgrada.adresa }}</span>
+            </span>
+            <i class="pi pi-angle-right strelica" aria-hidden="true"></i>
+            <span class="detalji">
+              @if (k.stavke.length === 0) {
+                <span class="mirno">Ništa ne čeka tebe</span>
+              } @else {
+                <span class="stvari">
+                  @for (s of k.stavke; track s.kljuc) {
+                    <span class="stvar" [class.hitna]="s.hitno">
+                      <i [class]="s.ikonica" aria-hidden="true"></i>{{ s.kratko ?? s.naslov }}
+                    </span>
+                  }
+                </span>
+              }
+              @if (k.sastanak; as s) {
+                <span class="sastanak">
+                  <i class="pi pi-calendar" aria-hidden="true"></i>
+                  <span>
+                    <time [attr.datetime]="s.pocetak">{{
+                      s.pocetak | date: "d. MMMM 'u' HH:mm"
+                    }}</time>
+                    · {{ s.naslov }}
+                  </span>
+                </span>
+              }
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</section>

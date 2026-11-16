@@ -18,15 +18,17 @@ import { KorisnikUpitDto } from './dto/korisnik-upit.dto.js';
 import { ServiserSpecijalnost } from '../serviser-specijalnost/serviser-specijalnost.entity.js';
 import { type Stranica, stranicenje } from '../shared/stranicenje.js';
 
-function poKorisniku<T extends { korisnik: { id: number } }, R>(
+function poKorisniku<T, R>(
   redovi: T[],
+  korisnikId: (red: T) => number,
   oblik: (red: T) => R,
 ): Map<number, R[]> {
   const grupe = new Map<number, R[]>();
   for (const red of redovi) {
-    const grupa = grupe.get(red.korisnik.id) ?? [];
+    const id = korisnikId(red);
+    const grupa = grupe.get(id) ?? [];
     grupa.push(oblik(red));
-    grupe.set(red.korisnik.id, grupa);
+    grupe.set(id, grupa);
   }
   return grupe;
 }
@@ -44,13 +46,12 @@ export class KorisnikService {
     private readonly specijalnostRepository: Repository<ServiserSpecijalnost>,
   ) {}
 
-  async zgradaUpravnika(korisnikId: number): Promise<number | null> {
-    const korisnik = await this.korisnikRepository.findOne({
-      where: { id: korisnikId },
-      relations: { zgrada: true },
+  async zgradeUpravnika(korisnikId: number): Promise<number[]> {
+    const zgrade = await this.zgradaRepository.find({
+      where: { upravnikId: korisnikId, ...AKTIVNA_ZGRADA },
+      select: { id: true },
     });
-
-    return korisnik?.zgrada?.id ?? null;
+    return zgrade.map((z) => z.id);
   }
 
   async pristupZgradama(
@@ -85,9 +86,8 @@ export class KorisnikService {
         upravlja: sve,
       };
     }
-    const zgradaUpravnika =
-      uloga === Uloga.UPRAVNIK ? await this.zgradaUpravnika(korisnikId) : null;
-    const upravlja = zgradaUpravnika === null ? [] : [zgradaUpravnika];
+    const upravlja =
+      uloga === Uloga.UPRAVNIK ? await this.zgradeUpravnika(korisnikId) : [];
     const zgrade = [...new Set([...stanuje, ...upravlja])];
     return { stanuje, poseduje, vlasnickiStanovi, zgrade, upravlja };
   }
@@ -108,7 +108,6 @@ export class KorisnikService {
   async findAll({ pretraga, uloga, stanje, ...strana }: KorisnikUpitDto) {
     const upit = this.korisnikRepository
       .createQueryBuilder('korisnik')
-      .leftJoin('korisnik.zgrada', 'zgrada')
       .select([
         'korisnik.id',
         'korisnik.ime',
@@ -117,8 +116,6 @@ export class KorisnikService {
         'korisnik.telefon',
         'korisnik.uloga',
         'korisnik.deaktiviran',
-        'zgrada.id',
-        'zgrada.naziv',
       ])
       .where(
         stanje === StanjeNaloga.AKTIVNI
@@ -151,7 +148,7 @@ export class KorisnikService {
       .getManyAndCount();
 
     const ids = korisnici.map((k) => k.id);
-    const [veze, specijalnosti] = ids.length
+    const [veze, specijalnosti, upravljane] = ids.length
       ? await Promise.all([
           this.stanarStanaRepository.find({
             where: { korisnik: { id: In(ids) } },
@@ -170,16 +167,34 @@ export class KorisnikService {
             select: { id: true, kategorija: true, korisnik: { id: true } },
             order: { kategorija: 'ASC' },
           }),
+          this.zgradaRepository.find({
+            where: { upravnikId: In(ids), ...AKTIVNA_ZGRADA },
+            select: { id: true, naziv: true, upravnikId: true },
+            order: { naziv: 'ASC' },
+          }),
         ])
-      : [[], []];
+      : [[], [], []];
 
-    const stanovi = poKorisniku(veze, (v) => ({
-      id: v.stan.id,
-      broj: v.stan.broj,
-      vlasnik: v.vlasnik,
-      zgrada: v.stan.zgrada,
-    }));
-    const struke = poKorisniku(specijalnosti, (sp) => sp.kategorija);
+    const stanovi = poKorisniku(
+      veze,
+      (v) => v.korisnik.id,
+      (v) => ({
+        id: v.stan.id,
+        broj: v.stan.broj,
+        vlasnik: v.vlasnik,
+        zgrada: v.stan.zgrada,
+      }),
+    );
+    const struke = poKorisniku(
+      specijalnosti,
+      (sp) => sp.korisnik.id,
+      (sp) => sp.kategorija,
+    );
+    const upravlja = poKorisniku(
+      upravljane,
+      (z) => z.upravnikId!,
+      ({ id, naziv }) => ({ id, naziv }),
+    );
     const stavke = korisnici.map((k) => ({
       id: k.id,
       ime: k.ime,
@@ -188,7 +203,7 @@ export class KorisnikService {
       telefon: k.telefon,
       uloga: k.uloga,
       deaktiviran: k.deaktiviran,
-      zgrada: k.zgrada,
+      upravlja: upravlja.get(k.id) ?? [],
       stanovi: stanovi.get(k.id) ?? [],
       specijalnosti: struke.get(k.id) ?? [],
     }));
@@ -198,11 +213,20 @@ export class KorisnikService {
   async mojProfil(korisnikId: number) {
     const korisnik = await this.nadjiKorisnika(korisnikId);
 
-    const veze = await this.stanarStanaRepository.find({
-      where: { korisnik: { id: korisnikId } },
-      relations: { stan: { zgrada: true } },
-      order: { stan: { broj: 'ASC' } },
-    });
+    const [veze, upravlja] = await Promise.all([
+      this.stanarStanaRepository.find({
+        where: { korisnik: { id: korisnikId } },
+        relations: { stan: { zgrada: true } },
+        order: { stan: { broj: 'ASC' } },
+      }),
+      korisnik.uloga === Uloga.UPRAVNIK
+        ? this.zgradaRepository.find({
+            where: { upravnikId: korisnikId, ...AKTIVNA_ZGRADA },
+            select: { id: true, naziv: true, adresa: true },
+            order: { naziv: 'ASC' },
+          })
+        : [],
+    ]);
 
     return {
       id: korisnik.id,
@@ -212,15 +236,7 @@ export class KorisnikService {
       telefon: korisnik.telefon,
       uloga: korisnik.uloga,
       kreiranDatum: korisnik.kreiranDatum,
-      // Samo upravnik ima zgradu kojom upravlja; stanar zgradu dobija preko stana
-      zgrada:
-        korisnik.uloga === Uloga.UPRAVNIK && korisnik.zgrada
-          ? {
-              id: korisnik.zgrada.id,
-              naziv: korisnik.zgrada.naziv,
-              adresa: korisnik.zgrada.adresa,
-            }
-          : null,
+      upravlja,
       stanovi: veze.map((veza) => ({
         id: veza.stan.id,
         broj: veza.stan.broj,
@@ -253,7 +269,6 @@ export class KorisnikService {
   private async nadjiKorisnika(korisnikId: number): Promise<Korisnik> {
     const korisnik = await this.korisnikRepository.findOne({
       where: { id: korisnikId },
-      relations: { zgrada: true },
     });
     if (!korisnik) {
       throw new NotFoundException('Korisnik ne postoji.');

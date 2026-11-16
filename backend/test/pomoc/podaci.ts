@@ -74,6 +74,16 @@ export async function napraviKorisnika(
   return { id: korisnik.id, email: korisnik.email, token };
 }
 
+export async function dodeliZgradu(
+  t: TestAplikacija,
+  upravnik: Akter,
+  zgradaId: number,
+) {
+  await t.baza
+    .getRepository(Zgrada)
+    .update(zgradaId, { upravnikId: upravnik.id });
+}
+
 export async function napraviZgradu(
   t: TestAplikacija,
   naziv: string,
@@ -137,8 +147,8 @@ export async function napraviZgraduSaLjudima(
   const zgrada = await napraviZgradu(t, naziv, brojStanova);
   const upravnik = await napraviKorisnika(t, `Upravnik${naziv}`, {
     uloga: Uloga.UPRAVNIK,
-    zgrada: { id: zgrada.id } as Zgrada,
   });
+  await dodeliZgradu(t, upravnik, zgrada.id);
   const vlasnik = await napraviKorisnika(t, `Vlasnik${naziv}`);
   const ukucanin = await napraviKorisnika(t, `Ukucanin${naziv}`);
   const sused = await napraviKorisnika(t, `Sused${naziv}`);

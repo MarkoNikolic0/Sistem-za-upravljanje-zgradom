@@ -12,6 +12,7 @@ import { AKTIVNA_ZGRADA, proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { CreateStanDto, PodaciStanaDto } from './dto/create-stan.dto.js';
 import { UpdateStanDto } from './dto/update-stan.dto.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
+import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
@@ -179,9 +180,8 @@ export class StanService {
     if (uloga === Uloga.ADMIN) {
       return;
     }
-    const zgradaUpravnika =
-      await this.korisnikService.zgradaUpravnika(korisnikId);
-    if (zgradaUpravnika !== zgradaId) {
+    const zgrade = await this.korisnikService.zgradeUpravnika(korisnikId);
+    if (!sadrzi(zgrade, zgradaId)) {
       throw new ForbiddenException(
         'Možete upravljati samo stanovima svoje zgrade!',
       );

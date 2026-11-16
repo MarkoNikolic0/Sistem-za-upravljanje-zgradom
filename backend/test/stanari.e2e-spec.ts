@@ -5,6 +5,7 @@ import { ServiserSpecijalnost } from '../src/serviser-specijalnost/serviser-spec
 import { LokacijaTip } from '../src/shared/enums/kvar.enums.js';
 import { Uloga } from '../src/shared/enums/uloga.enum.js';
 import { StanarStana } from '../src/stanar-stana/stanar-stana.entity.js';
+import { Zgrada } from '../src/zgrada/zgrada.entity.js';
 import {
   type Akter,
   kao,
@@ -45,11 +46,16 @@ describe('stanari, nalozi i zgrade', () => {
       .getRepository(StanarStana)
       .countBy({ korisnik: { id: korisnik.id } });
 
-  const uBazi = (korisnik: Akter) =>
-    t.baza.getRepository(Korisnik).findOneOrFail({
-      where: { id: korisnik.id },
-      relations: { zgrada: true },
+  const uBazi = async (korisnik: Akter) => {
+    const { uloga } = await t.baza
+      .getRepository(Korisnik)
+      .findOneByOrFail({ id: korisnik.id });
+    const zgrade = await t.baza.getRepository(Zgrada).find({
+      where: { upravnikId: korisnik.id },
+      order: { id: 'ASC' },
     });
+    return { uloga, zgrade: zgrade.map((z) => z.id) };
+  };
 
   const oglas = async (akter: Akter, oglasId: number) =>
     (await kao(t, akter).get(`/oglas/${oglasId}`).expect(200)).body;
@@ -460,7 +466,7 @@ describe('stanari, nalozi i zgrade', () => {
       await deaktiviraj(z.upravnik).expect(204);
       expect(await uBazi(z.upravnik)).toMatchObject({
         uloga: Uloga.STANAR,
-        zgrada: null,
+        zgrade: [],
       });
       const upravnik = await kao(t, admin)
         .get(`/zgrada/${z.id}/upravnik`)
@@ -587,7 +593,13 @@ describe('stanari, nalozi i zgrade', () => {
 
     it('upravnik se ne menja ovde nego razrešenjem na zgradi', async () => {
       const z = await novaZgrada();
-      await promeni(z.upravnik, 'stanar').expect(409);
+      const druga = await novaZgrada();
+      await kao(t, admin)
+        .put(`/zgrada/${druga.id}/upravnik`)
+        .send({ korisnikId: z.upravnik.id })
+        .expect(200);
+      const odgovor = await promeni(z.upravnik, 'stanar').expect(409);
+      expect(odgovor.body.message).toContain('upravlja zgradama');
       await promeni(z.upravnik, 'serviser').expect(409);
       expect((await uBazi(z.upravnik)).uloga).toBe(Uloga.UPRAVNIK);
     });
@@ -615,11 +627,11 @@ describe('stanari, nalozi i zgrade', () => {
       expect(odgovor.body.korisnik).toMatchObject({ id: z.sused.id });
       expect(await uBazi(z.sused)).toMatchObject({
         uloga: Uloga.UPRAVNIK,
-        zgrada: { id: z.id },
+        zgrade: [z.id],
       });
       expect(await uBazi(z.upravnik)).toMatchObject({
         uloga: Uloga.STANAR,
-        zgrada: null,
+        zgrade: [],
       });
       expect((await oglas(z.sused, obavestenje)).datumSakrivanja).toBeNull();
       expect((await oglas(z.sused, prodaja)).razlogSakrivanja).toBe(
@@ -631,21 +643,83 @@ describe('stanari, nalozi i zgrade', () => {
       await postavi(z.id, z.sused).expect(200);
     });
 
-    it('upravnik jedne zgrade, serviser i deaktiviran nalog ne mogu biti postavljeni', async () => {
+    it('serviser, admin i deaktiviran nalog ne mogu biti postavljeni', async () => {
       const z = await novaZgrada();
-      const druga = await novaZgrada();
       const serviser = await napraviServisera(t, 'Serviser');
       const deaktiviran = await napraviKorisnika(t, 'Deaktiviran');
       await kao(t, admin)
         .put(`/korisnik/${deaktiviran.id}/deaktivacija`)
         .expect(204);
 
-      await postavi(z.id, druga.upravnik).expect(409);
       await postavi(z.id, serviser).expect(400);
       await postavi(z.id, admin).expect(400);
       await postavi(z.id, deaktiviran).expect(404);
       await postavi(987654, z.sused).expect(404);
-      expect((await uBazi(z.upravnik)).zgrada?.id).toBe(z.id);
+      expect((await uBazi(z.upravnik)).zgrade).toEqual([z.id]);
+    });
+
+    it('upravnik vodi više zgrada i postaje stanar tek bez ijedne', async () => {
+      const z = await novaZgrada();
+      const druga = await novaZgrada();
+
+      await postavi(z.id, druga.upravnik).expect(200);
+      expect(await uBazi(druga.upravnik)).toEqual({
+        uloga: Uloga.UPRAVNIK,
+        zgrade: [z.id, druga.id],
+      });
+      expect(await uBazi(z.upravnik)).toEqual({
+        uloga: Uloga.STANAR,
+        zgrade: [],
+      });
+      const profil = await kao(t, druga.upravnik)
+        .get('/korisnik/moj-profil')
+        .expect(200);
+      expect(profil.body.upravlja.map((x: { id: number }) => x.id)).toEqual(
+        expect.arrayContaining([z.id, druga.id]),
+      );
+      await kao(t, druga.upravnik).get(`/zgrada/${z.id}/stanar`).expect(200);
+      await kao(t, druga.upravnik)
+        .get(`/zgrada/${druga.id}/stanar`)
+        .expect(200);
+
+      await kao(t, admin).delete(`/zgrada/${druga.id}/upravnik`).expect(204);
+      expect(await uBazi(druga.upravnik)).toEqual({
+        uloga: Uloga.UPRAVNIK,
+        zgrade: [z.id],
+      });
+      await kao(t, druga.upravnik)
+        .get(`/zgrada/${druga.id}/stanar`)
+        .expect(403);
+
+      await kao(t, admin).delete(`/zgrada/${z.id}/upravnik`).expect(204);
+      expect(await uBazi(druga.upravnik)).toEqual({
+        uloga: Uloga.STANAR,
+        zgrade: [],
+      });
+    });
+
+    it('arhiviranje jedne od dve zgrade ne menja ulogu upravnika', async () => {
+      const z = await novaZgrada();
+      const druga = await novaZgrada();
+      await postavi(z.id, druga.upravnik).expect(200);
+      await kao(t, admin).put(`/zgrada/${z.id}/arhiva`).expect(204);
+      expect(await uBazi(druga.upravnik)).toEqual({
+        uloga: Uloga.UPRAVNIK,
+        zgrade: [druga.id],
+      });
+    });
+
+    it('deaktivacija razrešava upravnika svih zgrada', async () => {
+      const z = await novaZgrada();
+      const druga = await novaZgrada();
+      await postavi(z.id, druga.upravnik).expect(200);
+      await kao(t, admin)
+        .put(`/korisnik/${druga.upravnik.id}/deaktivacija`)
+        .expect(204);
+      expect(await uBazi(druga.upravnik)).toEqual({
+        uloga: Uloga.STANAR,
+        zgrade: [],
+      });
     });
 
     it('razrešen upravnik koji stanuje u zgradi ostaje stanar sa svojim oglasima', async () => {
@@ -694,7 +768,7 @@ describe('stanari, nalozi i zgrade', () => {
       }
       expect(await uBazi(z.upravnik)).toMatchObject({
         uloga: Uloga.STANAR,
-        zgrada: null,
+        zgrade: [],
       });
       expect(
         await t.baza

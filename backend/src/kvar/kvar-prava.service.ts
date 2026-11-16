@@ -7,7 +7,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { PORUKA_PRACENJE } from './kvar.constants.js';
-import { uZgradama } from '../korisnik/pristup-zgradama.js';
+import { sadrzi, samoZgrada, uZgradama } from '../korisnik/pristup-zgradama.js';
 
 @Injectable()
 export class KvarPravaService {
@@ -28,12 +28,12 @@ export class KvarPravaService {
         return [uZgradama(zgradaId ? [zgradaId] : null)];
 
       case Uloga.UPRAVNIK: {
-        const zgradaUpravnika =
-          await this.korisnikService.zgradaUpravnika(korisnikId);
-        const uslovi = await this.usloviStanara(korisnikId);
-        return zgradaUpravnika === null
-          ? uslovi
-          : [{ zgrada: { id: zgradaUpravnika } }, ...uslovi];
+        const zgrade = samoZgrada(
+          await this.korisnikService.zgradeUpravnika(korisnikId),
+          zgradaId,
+        );
+        const uslovi = await this.usloviStanara(korisnikId, zgradaId);
+        return zgrade.length === 0 ? uslovi : [uZgradama(zgrade), ...uslovi];
       }
 
       case Uloga.SERVISER:
@@ -45,15 +45,19 @@ export class KvarPravaService {
         ];
 
       default:
-        return await this.usloviStanara(korisnikId);
+        return await this.usloviStanara(korisnikId, zgradaId);
     }
   }
 
   private async usloviStanara(
     korisnikId: number,
+    zgradaId?: number,
   ): Promise<FindOptionsWhere<Kvar>[]> {
     const veze = await this.stanarStanaRepository.find({
-      where: { korisnik: { id: korisnikId } },
+      where: {
+        korisnik: { id: korisnikId },
+        ...(zgradaId !== undefined && { stan: { zgrada: { id: zgradaId } } }),
+      },
       relations: { stan: { zgrada: true } },
     });
     if (veze.length === 0) {
@@ -81,8 +85,10 @@ export class KvarPravaService {
 
       case Uloga.UPRAVNIK:
         return (
-          (await this.korisnikService.zgradaUpravnika(korisnikId)) ===
-            kvar.zgrada.id || (await this.smeKaoStanar(kvar, korisnikId))
+          sadrzi(
+            await this.korisnikService.zgradeUpravnika(korisnikId),
+            kvar.zgrada.id,
+          ) || (await this.smeKaoStanar(kvar, korisnikId))
         );
 
       case Uloga.SERVISER:
@@ -134,9 +140,10 @@ export class KvarPravaService {
     if (uloga !== Uloga.UPRAVNIK) {
       return false;
     }
-    const zgradaUpravnika =
-      await this.korisnikService.zgradaUpravnika(korisnikId);
-    return zgradaUpravnika === kvar.zgrada.id;
+    return sadrzi(
+      await this.korisnikService.zgradeUpravnika(korisnikId),
+      kvar.zgrada.id,
+    );
   }
 
   async smeDaPotvrdi(kvar: Kvar, korisnikId: number): Promise<boolean> {

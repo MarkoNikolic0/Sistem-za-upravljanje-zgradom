@@ -13,28 +13,29 @@ import { OglasService } from '../../oglasi/oglas-service';
 import { uMnozini } from '../../../shared/tekst/mnozina';
 import { predstoji, zaDanas } from './za-danas';
 import { cekaGlas, NAJVISE_AKTIVNIH } from '../../glasanje/pravila-glasanja';
+import { Fasada } from '../fasada/fasada';
 
 const BROJ_SASTANAKA = 3;
 const BROJ_OGLASA = 3;
-const RED_PALJENJA = [4, 9, 1, 7, 11, 2, 6, 10, 0, 5, 8, 3];
 
 @Component({
   selector: 'app-danas',
-  imports: [DatePipe, RouterLink, ButtonModule, SkeletonModule],
+  imports: [DatePipe, RouterLink, ButtonModule, SkeletonModule, Fasada],
   templateUrl: './danas.html',
   styleUrl: './danas.scss',
 })
 export class Danas {
   readonly profil = input.required<ProfileResponse>();
   readonly zgrade = input.required<ZgradaOsnovno[]>();
+  readonly zgrada = input<number | null>(null);
 
   private readonly upravnik = computed(() => this.profil().uloga === 'upravnik');
 
   protected readonly pregled = inject(ZgradaService).pregled(this.upravnik);
-  protected readonly kvarovi = inject(KvarService).najnoviji(1);
-  protected readonly glasanja = inject(GlasanjeService).aktivna(NAJVISE_AKTIVNIH);
-  protected readonly sastanci = inject(SastanakService).predstojeci(BROJ_SASTANAKA);
-  protected readonly oglasi = inject(OglasService).najnoviji(BROJ_OGLASA);
+  protected readonly kvarovi = inject(KvarService).najnoviji(1, this.zgrada);
+  protected readonly glasanja = inject(GlasanjeService).aktivna(NAJVISE_AKTIVNIH, this.zgrada);
+  protected readonly sastanci = inject(SastanakService).predstojeci(BROJ_SASTANAKA, this.zgrada);
+  protected readonly oglasi = inject(OglasService).najnoviji(BROJ_OGLASA, this.zgrada);
 
   private readonly resursi = computed((): WritableResource<unknown>[] => [
     ...(this.upravnik() ? [this.pregled] : []),
@@ -53,12 +54,21 @@ export class Danas {
 
   protected readonly stavke = computed(() =>
     zaDanas({
-      pregled: this.pregled.hasValue() ? (this.pregled.value()[0] ?? null) : null,
+      pregled: this.pregledZgrade(),
       sastanci: this.sastanci.hasValue() ? this.sastanci.value().stavke : [],
       glasanja: this.glasanja.hasValue() ? this.glasanja.value().stavke : [],
       oglasi: this.oglasi.hasValue() ? this.oglasi.value().stavke : [],
     }),
   );
+  private readonly pregledZgrade = computed(() => {
+    if (!this.pregled.hasValue()) {
+      return null;
+    }
+    const pregled = this.pregled.value();
+    const id = this.zgrada();
+    return (id === null ? pregled[0] : pregled.find((p) => p.zgrada.id === id)) ?? null;
+  });
+
   protected readonly glavna = computed(() => this.stavke()[0]);
   protected readonly sporedne = computed(() => this.stavke().slice(1));
 
@@ -74,10 +84,6 @@ export class Danas {
       .map((z) => z.naziv)
       .join(' · '),
   );
-  protected readonly prozori = computed(() => {
-    const upaljeno = this.stavke().length;
-    return RED_PALJENJA.map((_, prozor) => RED_PALJENJA.indexOf(prozor) < upaljeno);
-  });
 
   protected readonly uMnozini = uMnozini;
 

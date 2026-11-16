@@ -1,8 +1,8 @@
-import { inject, Service, Signal } from '@angular/core';
+import { inject, Service, Signal, signal } from '@angular/core';
 import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Stranica } from '../../shared/liste/stranica';
+import { Stranica, uZgradi } from '../../shared/liste/stranica';
 import {
   NeprocitaniOglasi,
   NoviOglasRequest,
@@ -29,10 +29,10 @@ export class OglasService {
   }
 
   // Zakačena obaveštenja pa najnoviji oglasi (početna)
-  najnoviji(broj: number) {
+  najnoviji(broj: number, zgradaId: Signal<number | null> = signal(null)) {
     return httpResource<Stranica<Oglas>>(() => ({
       url: this.apiUrl,
-      params: { strana: 1, poStrani: broj },
+      params: { strana: 1, poStrani: broj, ...uZgradi(zgradaId()) },
     }));
   }
 

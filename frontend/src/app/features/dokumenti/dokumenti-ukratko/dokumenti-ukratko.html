@@ -37,7 +37,7 @@
               </a>
             }
           } @else {
-            @if (zgrada.id === zgradaUpravnika()) {
+            @if (upravlja().includes(zgrada.id)) {
               <a
                 class="dodaj-prvi prvi-dokument"
                 routerLink="/dokumenti"

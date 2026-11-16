@@ -1,5 +1,10 @@
 <div class="pocetna ulazak">
   @if (profil.hasValue() && zahteviStigli()) {
+    @if (izabrana()) {
+      <a routerLink="/" class="nazad mb-6"
+        ><i class="pi pi-arrow-left" aria-hidden="true"></i>Sve zgrade</a
+      >
+    }
     <p class="oznaka">{{ danas | date: 'EEEE, d. MMMM' }}</p>
     <h1 class="naslov-stranice mt-3">Zdravo, {{ profil.value().ime }}</h1>
 
@@ -55,17 +60,17 @@
     @if (prviKorak() === null) {
       @if (profil.value().uloga === 'admin') {
         <app-pregled-zgrada class="panel mt-8" />
+      } @else if (spisakZgrada()) {
+        <app-zgrade-upravnika class="mt-8" />
       } @else {
-        <app-danas [profil]="profil.value()" [zgrade]="zgrade()" />
+        <app-danas
+          [profil]="profil.value()"
+          [zgrade]="zgrade()"
+          [zgrada]="izabrana()?.id ?? null"
+        />
         <aside #kolona class="kolona" [style.--visina-kolone.px]="visinaKolone()">
-          <app-dokumenti-ukratko
-            [zgrade]="zgrade()"
-            [zgradaUpravnika]="profil.value().zgrada?.id ?? null"
-          />
-          <app-vazni-kontakti
-            [zgrade]="zgrade()"
-            [zgradaUpravnika]="profil.value().zgrada?.id ?? null"
-          />
+          <app-dokumenti-ukratko [zgrade]="zgrade()" [upravlja]="upravlja()" />
+          <app-vazni-kontakti [zgrade]="zgrade()" [upravlja]="upravlja()" />
         </aside>
       }
     }

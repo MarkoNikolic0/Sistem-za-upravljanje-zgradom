@@ -16,6 +16,7 @@ export interface StavkaDanas {
   opis: string;
   putanja: (string | number)[];
   hitno: boolean;
+  kratko?: string;
 }
 
 export interface PodaciDanas {
@@ -157,6 +158,7 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
       opis: `Sastanak je održan ${kadaJe(bezZapisnika.pocetak)}, okači zapisnik da ga stanari vide.`,
       putanja: ['/sastanci', bezZapisnika.id],
       hitno: false,
+      kratko: 'Čeka zapisnik',
     });
   }
 

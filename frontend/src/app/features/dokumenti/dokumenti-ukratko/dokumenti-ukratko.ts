@@ -17,7 +17,7 @@ import { RedDokumenta } from '../red-dokumenta/red-dokumenta';
 })
 export class DokumentiUkratko {
   readonly zgrade = input.required<ZgradaOsnovno[]>();
-  readonly zgradaUpravnika = input<number | null>(null);
+  readonly upravlja = input<number[]>([]);
 
   private readonly zgradeId = computed(() => this.zgrade().map((z) => z.id));
   protected readonly dokumenti = inject(DokumentService).najnovijiZgrada(this.zgradeId);

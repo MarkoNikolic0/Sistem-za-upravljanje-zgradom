@@ -7,8 +7,8 @@ import { ZgradaService } from './zgrada-service';
 // Zgrade u kojima korisnik stanuje i zgrada kojom upravlja (admin dobija sve zgrade posebno)
 export function zgradeIzProfila(profil: ProfileResponse): ZgradaOsnovno[] {
   const zgrade = new Map<number, ZgradaOsnovno>();
-  if (profil.zgrada) {
-    zgrade.set(profil.zgrada.id, profil.zgrada);
+  for (const zgrada of profil.upravlja) {
+    zgrade.set(zgrada.id, zgrada);
   }
   for (const stan of profil.stanovi) {
     zgrade.set(stan.zgrada.id, stan.zgrada);
@@ -17,7 +17,7 @@ export function zgradeIzProfila(profil: ProfileResponse): ZgradaOsnovno[] {
 }
 
 export function upravljaZgradom(profil: ProfileResponse, zgradaId: number | null): boolean {
-  return profil.uloga === 'admin' || (zgradaId !== null && profil.zgrada?.id === zgradaId);
+  return profil.uloga === 'admin' || profil.upravlja.some((z) => z.id === zgradaId);
 }
 
 // Zgrade za izbor na stranici: admin dobija sve posebnim zahtevom, ostali iz profila
@@ -49,5 +49,5 @@ export function injectZgradeKorisnika() {
 
 // Zgrade kojima korisnik upravlja (kontakti, stanari)
 export function injectZgradeUpravnika() {
-  return injectZgrade((profil) => (profil.zgrada ? [profil.zgrada] : []));
+  return injectZgrade((profil) => profil.upravlja);
 }

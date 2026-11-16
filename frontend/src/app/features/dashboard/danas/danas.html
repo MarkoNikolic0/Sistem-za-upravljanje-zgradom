@@ -1,12 +1,5 @@
 <header class="zgrada-zaglavlje">
-  <div class="fasada" aria-hidden="true">
-    <span class="krov"></span>
-    <span class="prozori">
-      @for (upaljen of prozori(); track $index) {
-        <span class="prozor" [class.upaljen]="upaljen"></span>
-      }
-    </span>
-  </div>
+  <app-fasada [upaljeno]="stavke().length" />
   @if (zgrade().length > 0) {
     <div class="min-w-0">
       <p class="naziv-zgrade">{{ nazivZgrade() }}</p>

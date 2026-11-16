@@ -1,4 +1,4 @@
--- Test podaci za razvoj i demonstraciju: tri zgrade u Nisu i jedna arhivirana, stanovi, upravnici, serviseri,
+-- Test podaci za razvoj i demonstraciju: cetiri zgrade u Nisu i jedna arhivirana, stanovi, upravnici, serviseri,
 -- stanari, dva deaktivirana naloga, zahtevi za povezivanje, kvarovi u razlicitim statusima, oglasi, ankete i odluke.
 --
 -- Pokretanje (u terminalu iz foldera backend, dok radi Docker kontejner; radi i u PowerShell-u):
@@ -21,7 +21,8 @@ SELECT v.naziv, v.adresa
 FROM (VALUES
   ('Delta Residence', 'Bulevar Nemanjića 45, Niš'),
   ('Stambena zgrada Obrenovićeva', 'Obrenovićeva 30, Niš'),
-  ('Lamela Vizantijski', 'Vizantijski bulevar 12, Niš')
+  ('Lamela Vizantijski', 'Vizantijski bulevar 12, Niš'),
+  ('Zgrada Medijana', 'Bulevar Medijana 21, Niš')
 ) AS v(naziv, adresa)
 WHERE NOT EXISTS (SELECT 1 FROM zgrada z WHERE z.adresa = v.adresa);
 
@@ -103,6 +104,15 @@ FROM (VALUES
   ('Vizantijski bulevar 12, Niš', '30', 8, 85),
   ('Vizantijski bulevar 12, Niš', '31', 8, 59),
   ('Vizantijski bulevar 12, Niš', '32', 8, 47),
+  -- Zgrada Medijana: 4 sprata, po 2 stana (bez stanara, drugu zgradu vodi Nikola)
+  ('Bulevar Medijana 21, Niš', '1', 1, 54),
+  ('Bulevar Medijana 21, Niš', '2', 1, 63),
+  ('Bulevar Medijana 21, Niš', '3', 2, 54),
+  ('Bulevar Medijana 21, Niš', '4', 2, 63),
+  ('Bulevar Medijana 21, Niš', '5', 3, 54),
+  ('Bulevar Medijana 21, Niš', '6', 3, 63),
+  ('Bulevar Medijana 21, Niš', '7', 4, 54),
+  ('Bulevar Medijana 21, Niš', '8', 4, 63),
   ('Sinđelićev trg 8, Niš', '1', 0, 41),
   ('Sinđelićev trg 8, Niš', '2', 0, 53),
   ('Sinđelićev trg 8, Niš', '3', 1, 48),
@@ -114,56 +124,66 @@ JOIN zgrada z ON z.adresa = v.adresa
 WHERE NOT EXISTS (SELECT 1 FROM stan s WHERE s."zgradaId" = z.id AND s.broj = v.broj);
 
 -- KORISNICI (lozinka za sve: Zgrada123!) ----------------------------------------------------
-INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, "zgradaId", "emailPotvrdjen")
+INSERT INTO korisnik (ime, prezime, email, telefon, lozinka, uloga, "emailPotvrdjen")
 SELECT v.ime, v.prezime, v.email, v.telefon,
        '$2b$10$vA3jA/dFn0F49Jati8I25etyp5KMizffmKsZr3odS8BDAhmdnk44i',
        v.uloga::korisnik_uloga_enum,
-       (SELECT id FROM zgrada WHERE adresa = v.zgrada),
        now()
 FROM (VALUES
   -- prvi nalozi napravljeni rucno (zadrzavaju svoju lozinku ako vec postoje)
-  ('Marko', 'Nikolic', 'markonikolic287@gmail.com', '+381600000001', 'admin', NULL),
-  ('Marija', 'Stankovic', 'marija@gmail.com', '+381600000012', 'stanar', NULL),
-  ('Danijel', 'Stojanovic', 'danijel@gmail.com', '+381600000003', 'upravnik', 'Bulevar Nemanjića 45, Niš'),
-  ('Petar', 'Mirkovic', 'petar@gmail.com', '+381600000004', 'serviser', NULL),
+  ('Marko', 'Nikolic', 'markonikolic287@gmail.com', '+381600000001', 'admin'),
+  ('Marija', 'Stankovic', 'marija@gmail.com', '+381600000012', 'stanar'),
+  ('Danijel', 'Stojanovic', 'danijel@gmail.com', '+381600000003', 'upravnik'),
+  ('Petar', 'Mirkovic', 'petar@gmail.com', '+381600000004', 'serviser'),
   -- upravnici
-  ('Jelena', 'Marković', 'jelena.markovic@example.com', '+381631234501', 'upravnik', 'Obrenovićeva 30, Niš'),
-  ('Nikola', 'Ilić', 'nikola.ilic@example.com', '+381641234502', 'upravnik', 'Vizantijski bulevar 12, Niš'),
+  ('Jelena', 'Marković', 'jelena.markovic@example.com', '+381631234501', 'upravnik'),
+  ('Nikola', 'Ilić', 'nikola.ilic@example.com', '+381641234502', 'upravnik'),
   -- serviseri
-  ('Dragan', 'Petrović', 'dragan.petrovic@example.com', '+381651234503', 'serviser', NULL),
-  ('Zoran', 'Đorđević', 'zoran.djordjevic@example.com', '+381661234504', 'serviser', NULL),
+  ('Dragan', 'Petrović', 'dragan.petrovic@example.com', '+381651234503', 'serviser'),
+  ('Zoran', 'Đorđević', 'zoran.djordjevic@example.com', '+381661234504', 'serviser'),
   -- stanari
-  ('Ana', 'Jovanović', 'ana.jovanovic@example.com', '+381601234505', 'stanar', NULL),
-  ('Milan', 'Stojković', 'milan.stojkovic@example.com', '+381611234506', 'stanar', NULL),
-  ('Ivana', 'Nikolić', 'ivana.nikolic@example.com', '+381621234507', 'stanar', NULL),
-  ('Stefan', 'Popović', 'stefan.popovic@example.com', '+381631234508', 'stanar', NULL),
-  ('Milica', 'Đorđević', 'milica.djordjevic@example.com', '+381641234509', 'stanar', NULL),
-  ('Nemanja', 'Kostić', 'nemanja.kostic@example.com', '+381651234510', 'stanar', NULL),
-  ('Tijana', 'Pavlović', 'tijana.pavlovic@example.com', '+381661234511', 'stanar', NULL),
-  ('Aleksandar', 'Ristić', 'aleksandar.ristic@example.com', '+381601234512', 'stanar', NULL),
-  ('Jovana', 'Mitić', 'jovana.mitic@example.com', '+381611234513', 'stanar', NULL),
-  ('Uroš', 'Savić', 'uros.savic@example.com', '+381621234514', 'stanar', NULL),
+  ('Ana', 'Jovanović', 'ana.jovanovic@example.com', '+381601234505', 'stanar'),
+  ('Milan', 'Stojković', 'milan.stojkovic@example.com', '+381611234506', 'stanar'),
+  ('Ivana', 'Nikolić', 'ivana.nikolic@example.com', '+381621234507', 'stanar'),
+  ('Stefan', 'Popović', 'stefan.popovic@example.com', '+381631234508', 'stanar'),
+  ('Milica', 'Đorđević', 'milica.djordjevic@example.com', '+381641234509', 'stanar'),
+  ('Nemanja', 'Kostić', 'nemanja.kostic@example.com', '+381651234510', 'stanar'),
+  ('Tijana', 'Pavlović', 'tijana.pavlovic@example.com', '+381661234511', 'stanar'),
+  ('Aleksandar', 'Ristić', 'aleksandar.ristic@example.com', '+381601234512', 'stanar'),
+  ('Jovana', 'Mitić', 'jovana.mitic@example.com', '+381611234513', 'stanar'),
+  ('Uroš', 'Savić', 'uros.savic@example.com', '+381621234514', 'stanar'),
   -- stanari Delta Residence
-  ('Natalija', 'Stojadinović', 'natalija.stojadinovic@example.com', '+381631234525', 'stanar', NULL),
-  ('Vesna', 'Đokić', 'vesna.djokic@example.com', '+381601234517', 'stanar', NULL),
-  ('Dejan', 'Milosavljević', 'dejan.milosavljevic@example.com', '+381611234518', 'stanar', NULL),
-  ('Sanja', 'Milosavljević', 'sanja.milosavljevic@example.com', '+381621234519', 'stanar', NULL),
-  ('Bojan', 'Tasić', 'bojan.tasic@example.com', '+381631234520', 'stanar', NULL),
-  ('Marina', 'Cvetković', 'marina.cvetkovic@example.com', '+381641234521', 'stanar', NULL),
-  ('Goran', 'Stamenković', 'goran.stamenkovic@example.com', '+381651234522', 'stanar', NULL),
+  ('Natalija', 'Stojadinović', 'natalija.stojadinovic@example.com', '+381631234525', 'stanar'),
+  ('Vesna', 'Đokić', 'vesna.djokic@example.com', '+381601234517', 'stanar'),
+  ('Dejan', 'Milosavljević', 'dejan.milosavljevic@example.com', '+381611234518', 'stanar'),
+  ('Sanja', 'Milosavljević', 'sanja.milosavljevic@example.com', '+381621234519', 'stanar'),
+  ('Bojan', 'Tasić', 'bojan.tasic@example.com', '+381631234520', 'stanar'),
+  ('Marina', 'Cvetković', 'marina.cvetkovic@example.com', '+381641234521', 'stanar'),
+  ('Goran', 'Stamenković', 'goran.stamenkovic@example.com', '+381651234522', 'stanar'),
   -- vlasnici Delta Residence bez drugih podataka (da odluka moze da ima kvorum)
-  ('Nenad', 'Vasić', 'nenad.vasic@example.com', '+381661234526', 'stanar', NULL),
-  ('Dušica', 'Mladenović', 'dusica.mladenovic@example.com', '+381601234527', 'stanar', NULL),
-  ('Igor', 'Stevanović', 'igor.stevanovic@example.com', '+381611234528', 'stanar', NULL),
-  ('Jasmina', 'Krstić', 'jasmina.krstic@example.com', '+381621234529', 'stanar', NULL),
-  ('Vladimir', 'Antić', 'vladimir.antic@example.com', '+381631234530', 'stanar', NULL),
+  ('Nenad', 'Vasić', 'nenad.vasic@example.com', '+381661234526', 'stanar'),
+  ('Dušica', 'Mladenović', 'dusica.mladenovic@example.com', '+381601234527', 'stanar'),
+  ('Igor', 'Stevanović', 'igor.stevanovic@example.com', '+381611234528', 'stanar'),
+  ('Jasmina', 'Krstić', 'jasmina.krstic@example.com', '+381621234529', 'stanar'),
+  ('Vladimir', 'Antić', 'vladimir.antic@example.com', '+381631234530', 'stanar'),
   -- stanari bez stana (za testiranje povezivanja)
-  ('Katarina', 'Lazić', 'katarina.lazic@example.com', '+381631234515', 'stanar', NULL),
-  ('Luka', 'Živković', 'luka.zivkovic@example.com', '+381641234516', 'stanar', NULL),
-  ('Milena', 'Jovanović', 'milena.jovanovic@example.com', '+381661234523', 'stanar', NULL),
-  ('Đorđe', 'Ranđelović', 'djordje.randjelovic@example.com', '+381601234524', 'stanar', NULL)
-) AS v(ime, prezime, email, telefon, uloga, zgrada)
+  ('Katarina', 'Lazić', 'katarina.lazic@example.com', '+381631234515', 'stanar'),
+  ('Luka', 'Živković', 'luka.zivkovic@example.com', '+381641234516', 'stanar'),
+  ('Milena', 'Jovanović', 'milena.jovanovic@example.com', '+381661234523', 'stanar'),
+  ('Đorđe', 'Ranđelović', 'djordje.randjelovic@example.com', '+381601234524', 'stanar')
+) AS v(ime, prezime, email, telefon, uloga)
 ON CONFLICT (email) DO NOTHING;
+
+-- UPRAVNICI ZGRADA (Nikola vodi dve zgrade; rucno postavljen upravnik se ne menja) ----------
+UPDATE zgrada z SET "upravnikId" = k.id
+FROM (VALUES
+  ('Bulevar Nemanjića 45, Niš', 'danijel@gmail.com'),
+  ('Obrenovićeva 30, Niš', 'jelena.markovic@example.com'),
+  ('Vizantijski bulevar 12, Niš', 'nikola.ilic@example.com'),
+  ('Bulevar Medijana 21, Niš', 'nikola.ilic@example.com')
+) AS v(adresa, email)
+JOIN korisnik k ON k.email = v.email AND k.uloga = 'upravnik'
+WHERE z.adresa = v.adresa AND z."upravnikId" IS NULL;
 
 -- DEAKTIVIRANI NALOZI (filter Deaktivirani na stranici Korisnici; ne mogu da se prijave) ----
 -- Datum deaktivacije se upisuje samo kad skripta pravi nalog, pa rucna aktivacija ostaje
@@ -558,7 +578,7 @@ SELECT t.korak::promena_statusa_kvara_status_enum, kv.id,
          WHEN t.korak IN ('prijavljen', 'zatvoren', 'povucen') THEN kv."korisnikId"
          WHEN t.korak IN ('u_toku', 'resen') THEN kv."serviserId"
          ELSE COALESCE(
-           (SELECT u.id FROM korisnik u WHERE u."zgradaId" = kv."zgradaId" AND u.uloga = 'upravnik' LIMIT 1),
+           (SELECT z."upravnikId" FROM zgrada z WHERE z.id = kv."zgradaId"),
            kv."korisnikId")
        END,
        kv."datumPrijave" + CASE t.korak

@@ -132,6 +132,11 @@ export class KorisniciSistema {
     return `${k.ime} ${k.prezime}`;
   }
 
+  protected upravljaneZgrade(k: KorisnikSistema): string {
+    const nazivi = k.upravlja.map((z) => `„${z.naziv}“`).join(', ');
+    return `${k.upravlja.length === 1 ? 'zgradom' : 'zgradama'} ${nazivi}`;
+  }
+
   protected opisStanova(k: KorisnikSistema): string {
     return k.stanovi
       .map((s) => `${s.zgrada.naziv}, stan ${s.broj}${s.vlasnik ? ' (vlasnik)' : ''}`)
@@ -211,7 +216,7 @@ export class KorisniciSistema {
             'Odseliće se iz svih stanova, a glasovi u glasanjima koja traju i praćenja kvarova se brišu.',
           ]
         : []),
-      ...(k.zgrada ? [`Prestaje da upravlja zgradom „${k.zgrada.naziv}“.`] : []),
+      ...(k.upravlja.length > 0 ? [`Prestaje da upravlja ${this.upravljaneZgrade(k)}.`] : []),
       ...(k.uloga === 'serviser' ? ['Kvarovi na kojima radi vraćaju se upravniku.'] : []),
       'Oglasi ovog naloga se sakrivaju, a obaveštenja ostaju.',
     ];

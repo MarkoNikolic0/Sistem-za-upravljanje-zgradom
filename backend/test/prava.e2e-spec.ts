@@ -1,7 +1,6 @@
 import { LokacijaTip } from '../src/shared/enums/kvar.enums.js';
 import { VrstaSastanka } from '../src/shared/enums/sastanak.enums.js';
 import { Uloga } from '../src/shared/enums/uloga.enum.js';
-import type { Zgrada } from '../src/zgrada/zgrada.entity.js';
 import {
   type Akter,
   kao,
@@ -9,6 +8,7 @@ import {
   type TestAplikacija,
 } from './pomoc/aplikacija.js';
 import {
+  dodeliZgradu,
   napraviKorisnika,
   napraviSadrzaj,
   napraviServisera,
@@ -462,8 +462,8 @@ describe('prava pristupa', () => {
       njegova = await napraviZgradu(t, 'Delta');
       upravnik = await napraviKorisnika(t, 'UpravnikDelta', {
         uloga: UPRAVNIK,
-        zgrada: { id: njegova.id } as Zgrada,
       });
+      await dodeliZgradu(t, upravnik, njegova.id);
       await useli(t, upravnik, svet.a.stanovi[1], false);
       const odgovor = await kao(t, svet.a.sused)
         .post('/kvar')
@@ -502,6 +502,55 @@ describe('prava pristupa', () => {
         .post(`/zgrada/${njegova.id}/kontakt`)
         .send(noviKontakt())
         .expect(201);
+    });
+  });
+
+  describe('upravnik dve zgrade', () => {
+    let upravnik: Akter;
+    let zgrade: { id: number; stanovi: number[] }[];
+
+    beforeAll(async () => {
+      zgrade = [
+        await napraviZgradu(t, 'Epsilon'),
+        await napraviZgradu(t, 'Zeta'),
+      ];
+      upravnik = await napraviKorisnika(t, 'UpravnikDveZgrade', {
+        uloga: UPRAVNIK,
+      });
+      for (const zgrada of zgrade) {
+        await dodeliZgradu(t, upravnik, zgrada.id);
+      }
+    });
+
+    it('upravlja obema zgradama', async () => {
+      for (const zgrada of zgrade) {
+        await kao(t, upravnik).get(`/zgrada/${zgrada.id}/stanar`).expect(200);
+        await kao(t, upravnik)
+          .post('/glasanje')
+          .send(novaAnketa(zgrada.id))
+          .expect(201);
+        await kao(t, upravnik)
+          .post('/sastanak')
+          .send(noviSastanak(zgrada.id, VrstaSastanka.ZBOR))
+          .expect(201);
+        await kao(t, upravnik)
+          .post(`/zgrada/${zgrada.id}/kontakt`)
+          .send(noviKontakt())
+          .expect(201);
+      }
+    });
+
+    it('treću zgradu ne vidi i njome ne upravlja', async () => {
+      await kao(t, upravnik).get(`/zgrada/${svet.a.id}/stanar`).expect(403);
+      await kao(t, upravnik)
+        .post('/glasanje')
+        .send(novaAnketa(svet.a.id))
+        .expect(403);
+      await kao(t, upravnik).get(`/kvar/${sadrzaj.kvarZajednicki}`).expect(403);
+      await kao(t, upravnik)
+        .patch(`/kvar/${sadrzaj.kvarZajednicki}/prihvati`)
+        .expect(403);
+      await kao(t, upravnik).get(`/glasanje/${sadrzaj.anketa}`).expect(403);
     });
   });
 

@@ -5,7 +5,7 @@ import type { UpitStrane } from '../../shared/liste/stranica';
 
 export interface KorisnikPretrage extends KorisnikOsnovno {
   email: string;
-  zgrada: Pick<ZgradaOsnovno, 'id' | 'naziv'> | null;
+  upravlja: Pick<ZgradaOsnovno, 'id' | 'naziv'>[];
 }
 
 export interface StanKorisnika {

@@ -24,6 +24,7 @@ export interface Svet {
   serviser: Akter;
   bezStana: Akter;
   zaboravni: Akter;
+  dveZgrade: { upravnik: Akter; zgrade: number[] };
 }
 
 let svet: Promise<Svet> | undefined;

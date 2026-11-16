@@ -9,6 +9,7 @@ import {
   type TestAplikacija,
 } from './pomoc/aplikacija.js';
 import {
+  dodeliZgradu,
   napraviSadrzaj,
   napraviSvet,
   napraviZgraduSaLjudima,
@@ -405,7 +406,8 @@ describe('izolacija podataka po zgradi', () => {
   let t: TestAplikacija;
   let svet: Svet;
   let gama: ZgradaSveta;
-  let sadrzaj: { a: Sadrzaj; b: Sadrzaj; gama: Sadrzaj };
+  let delta: ZgradaSveta;
+  let sadrzaj: { a: Sadrzaj; b: Sadrzaj; gama: Sadrzaj; delta: Sadrzaj };
   let fajlovi: { slika: Buffer; pdf: Buffer };
 
   const posalji = (akter: Akter, ruta: string, proba: Proba, m: Meta) => {
@@ -427,10 +429,16 @@ describe('izolacija podataka po zgradi', () => {
     t = await pokreniAplikaciju();
     svet = await napraviSvet(t);
     gama = await napraviZgraduSaLjudima(t, 'Gama');
+    delta = {
+      ...(await napraviZgraduSaLjudima(t, 'Delta')),
+      upravnik: svet.a.upravnik,
+    };
+    await dodeliZgradu(t, svet.a.upravnik, delta.id);
     sadrzaj = {
       a: await napraviSadrzaj(t, svet, svet.a),
       b: await napraviSadrzaj(t, svet, svet.b),
       gama: await napraviSadrzaj(t, svet, gama),
+      delta: await napraviSadrzaj(t, svet, delta),
     };
     await kao(t, svet.admin).put(`/zgrada/${gama.id}/arhiva`).expect(204);
     fajlovi = { slika: await slika(), pdf: pdf() };
@@ -521,22 +529,68 @@ describe('izolacija podataka po zgradi', () => {
     },
   );
 
-  it('upravnik u spisku zahteva i pregledu vidi samo svoju zgradu', async () => {
+  it('upravnik u spisku zahteva i pregledu vidi samo svoje zgrade', async () => {
     const zahtevi = await kao(t, svet.a.upravnik)
       .get('/zahtev-povezivanje')
       .expect(200);
     expect(zahtevi.body.stavke.map((z: { id: number }) => z.id)).toEqual([
+      sadrzaj.delta.zahtev,
       sadrzaj.a.zahtev,
     ]);
 
     const pregled = await kao(t, svet.a.upravnik)
       .get('/zgrada/pregled')
       .expect(200);
-    expect(pregled.body).toHaveLength(1);
-    expect(pregled.body[0]).toMatchObject({
-      zgrada: { id: svet.a.id },
-      zahteviNaCekanju: 1,
-      noviKvarovi: 2,
+    expect(pregled.body).toHaveLength(2);
+    for (const [i, zgrada] of [svet.a, delta].entries()) {
+      expect(pregled.body[i]).toMatchObject({
+        zgrada: { id: zgrada.id },
+        zahteviNaCekanju: 1,
+        noviKvarovi: 2,
+      });
+    }
+  });
+
+  describe('upravnik zgrada Alfa i Delta', () => {
+    it.each(Object.entries(LISTE))(
+      '%s vraća sadržaj obe zgrade, a filter samo izabrane',
+      async (ruta, lista) => {
+        const putanja = ruta.split(' ')[1];
+        const ids = async (upit: string) => {
+          const odgovor = await kao(t, svet.a.upravnik)
+            .get(`${putanja}${upit}`)
+            .expect(200);
+          return (odgovor.body.stavke as { id: number }[]).map((s) => s.id);
+        };
+
+        expect(await ids('')).toEqual(
+          expect.arrayContaining([
+            ...lista.tudje(sadrzaj.a),
+            ...lista.tudje(sadrzaj.delta),
+          ]),
+        );
+        const samoDelta = await ids(`?zgradaId=${delta.id}`);
+        expect(samoDelta).toEqual(
+          expect.arrayContaining(lista.tudje(sadrzaj.delta)),
+        );
+        const alfa = lista.tudje(sadrzaj.a);
+        expect(samoDelta.filter((id) => alfa.includes(id))).toEqual([]);
+      },
+    );
+
+    it('obema zgradama upravlja', async () => {
+      for (const [zgrada, s] of [
+        [svet.a, sadrzaj.a],
+        [delta, sadrzaj.delta],
+      ] as const) {
+        await kao(t, svet.a.upravnik)
+          .get(`/zgrada/${zgrada.id}/stanar`)
+          .expect(200);
+        const kvar = await kao(t, svet.a.upravnik)
+          .get(`/kvar/${s.kvarStan}`)
+          .expect(200);
+        expect(kvar.body.smeDaUpravlja).toBe(true);
+      }
     });
   });
 

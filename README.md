@@ -100,6 +100,7 @@ Lozinka za sve: **`Zgrada123!`**
 | --- | --- |
 | Admin | `markonikolic287@gmail.com` |
 | Upravnik | `danijel@gmail.com` |
+| Upravnik dve zgrade | `nikola.ilic@example.com` |
 | Serviser | `petar@gmail.com` |
 | Stanar | `marija@gmail.com` |
 
@@ -157,6 +158,7 @@ E2e testovi sami pokrenu backend na portu 3100 (nad privremenom bazom `zgrada_e2
 | `lozinka.spec.ts` | zaboravljena lozinka preko linka iz mejla |
 | `obavestenja.spec.ts` | obaveštenje stiže odmah, bez osvežavanja stranice |
 | `pristup.spec.ts` | preusmeravanje gosta i uloga koje nemaju pravo na stranicu |
+| `upravnik.spec.ts` | početna upravnika jedne zgrade; upravnik dve zgrade: spisak zgrada, početna izabrane zgrade i izbor zgrade na stranici Stanari |
 
 ## Ako nešto ne radi
 
@@ -165,6 +167,7 @@ E2e testovi sami pokrenu backend na portu 3100 (nad privremenom bazom `zgrada_e2
 - **Slike se ne otpremaju** — nije urađen korak 3.
 - **Seed javlja da tabela ne postoji** — backend nije pokrenut bar jednom; pokreni ga pa ponovi korak 5.
 - **Posle preuzimanja nove verzije niko ne može da se prijavi ili backend ne startuje** — baza je napravljena pre potvrde emaila. Iz foldera `backend` pokreni `docker cp seed/nadogradnja-potvrda-emaila.sql zgrada_container:/tmp/nadogradnja.sql` i `docker exec zgrada_container sh -c 'psql -q -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/nadogradnja.sql'`, pa ponovo pokreni backend.
+- **Posle preuzimanja nove verzije upravnici više nemaju zgradu** — baza je napravljena dok je upravnik mogao da vodi samo jednu zgradu. Pre pokretanja nove verzije backend-a, iz foldera `backend` pokreni `docker cp seed/nadogradnja-upravnik-vise-zgrada.sql zgrada_container:/tmp/nadogradnja.sql` i `docker exec zgrada_container sh -c 'psql -q -U $POSTGRES_USER -d $POSTGRES_DB -f /tmp/nadogradnja.sql'`. Ako je nova verzija već bila pokrenuta, upravnici se vraćaju ponovnim pokretanjem seed-a (korak 5) ili na stranici zgrade.
 - **Git Bash umesto PowerShell-a** — ispred `docker exec ... /garage` komandi dodaj `MSYS_NO_PATHCONV=1`.
 - **Brisanje svih podataka i početak iz nule** — `docker compose down -v`, pa ponovo od koraka 2.
 

@@ -1,0 +1,43 @@
+:host {
+  --sirina-fasade: 4.5rem;
+
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  width: var(--sirina-fasade);
+  overflow: hidden;
+  border: 1px solid var(--color-ivica);
+  border-radius: 2px;
+  background: var(--color-fasada);
+}
+
+.krov {
+  height: calc(var(--sirina-fasade) / 9);
+  background: var(--color-fasada-krov);
+}
+
+.prozori {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: calc(var(--sirina-fasade) / 12);
+  padding: calc(var(--sirina-fasade) / 9);
+}
+
+.prozor {
+  aspect-ratio: 6 / 7;
+  background: var(--color-prozor);
+  transition:
+    background-color var(--trajanje-sporo),
+    box-shadow var(--trajanje-sporo);
+
+  @for $i from 2 through 9 {
+    &:nth-child(#{$i}) {
+      transition-delay: calc(#{$i - 1} * 2 * var(--razmak-ulaska));
+    }
+  }
+
+  &.upaljen {
+    background: var(--color-svetlo);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--color-svetlo) 50%, transparent);
+  }
+}
