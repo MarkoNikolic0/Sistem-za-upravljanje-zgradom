@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import request from 'supertest';
 import { PushPretplata } from '../src/notifikacija/push/push-pretplata.entity.js';
 import {
   type Akter,
@@ -6,7 +7,7 @@ import {
   pokreniAplikaciju,
   type TestAplikacija,
 } from './pomoc/aplikacija.js';
-import { napraviKorisnika } from './pomoc/podaci.js';
+import { napraviKorisnika, prijavi } from './pomoc/podaci.js';
 
 describe('push pretplata uređaja', () => {
   let t: TestAplikacija;
@@ -57,14 +58,29 @@ describe('push pretplata uređaja', () => {
     expect(await vlasnik(endpoint)).toBe(prvi.id);
   });
 
-  it('korisnik pri odjavi briše samo svoju pretplatu, ne i tuđu na istom uređaju', async () => {
+  it('uređaj briše svoju pretplatu po adresi, ko god da ju je sačuvao', async () => {
     const endpoint = uredjaj();
-    await sacuvaj(drugi, endpoint);
-
-    await obrisi(prvi, endpoint);
-    expect(await vlasnik(endpoint)).toBe(drugi.id);
+    const drugaPretplata = uredjaj();
+    await sacuvaj(prvi, endpoint);
+    await sacuvaj(prvi, drugaPretplata);
 
     await obrisi(drugi, endpoint);
     expect(await vlasnik(endpoint)).toBeNull();
+    expect(await vlasnik(drugaPretplata)).toBe(prvi.id);
+  });
+
+  it('odjava briše pretplatu te sesije, a ostale sesije ostaju', async () => {
+    const telefon = uredjaj();
+    const racunar = uredjaj();
+    const sesija = await prijavi(t, prvi.email);
+    await sacuvaj({ ...prvi, token: sesija.token }, telefon);
+    await sacuvaj(prvi, racunar);
+
+    await request(t.server)
+      .post('/auth/logout')
+      .set('Cookie', sesija.kolacic)
+      .expect(204);
+    expect(await vlasnik(telefon)).toBeNull();
+    expect(await vlasnik(racunar)).toBe(prvi.id);
   });
 });

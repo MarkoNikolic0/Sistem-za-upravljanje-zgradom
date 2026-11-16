@@ -78,6 +78,10 @@ test('arhivirana ili nepostojeća zgrada u linku ne otkriva ništa', async ({ pa
     await expect(izabranaZgrada(page)).toContainText('Izaberi zgradu');
     await expect(page.getByText('Arhiva')).toHaveCount(0);
   }
+  await izabranaZgrada(page).click();
+  await page.getByRole('option', { name: /Beta/ }).click();
+  await expect(page.getByText('Zgrada iz linka nije pronađena.')).toHaveCount(0);
+
   await page.goto('/poziv/abc');
   await expect(page).toHaveURL('/povezivanje');
   await expect(page.getByText('Zgrada iz linka nije pronađena.')).toHaveCount(0);
@@ -109,11 +113,14 @@ test('upravnik dve zgrade štampa plakat sa QR kodom za izabranu zgradu', async 
 });
 
 test('admin otvara plakat sa stranice zgrade, a stanar ne može na plakat', async ({ page }) => {
-  const { a, admin } = await ucitajSvet();
+  const { a, admin, arhiviranaZgrada } = await ucitajSvet();
   await prijavi(page, admin.email);
   await page.goto(`/zgrade/${a.id}`);
   await page.getByRole('link', { name: 'QR kod za stanare' }).click();
   await expect(page.getByRole('article', { name: 'Plakat za štampu' })).toContainText('Alfa');
+  await page.goto(`/plakat?zgrada=${arhiviranaZgrada}`);
+  await expect(page.getByText('Zgrada iz linka nije pronađena.')).toBeVisible();
+  await expect(page.getByRole('article', { name: 'Plakat za štampu' })).not.toContainText('Arhiva');
 
   await page.context().clearCookies();
   await prijavi(page, a.vlasnik.email);

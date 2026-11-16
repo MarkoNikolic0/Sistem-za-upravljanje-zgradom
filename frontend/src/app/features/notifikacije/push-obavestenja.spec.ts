@@ -68,22 +68,20 @@ describe('push obaveštenja na uređaju', () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
+  let sesija = 0;
   const prijavi = async (id: number) => {
-    store.postaviToken(tokenZa('stanar', id));
+    sesija += 1;
+    store.postaviToken(tokenZa('stanar', id, undefined, `sesija-${sesija}`));
     await push.sinhronizuj();
   };
-  const odjavi = async () => {
-    await push.odjavi();
-    store.ocistiSesiju();
-  };
+  const odjavi = () => store.ocistiSesiju();
 
   it('isti korisnik posle odjave i prijave dobija obaveštenja bez klika', async () => {
     await prijavi(1);
     await push.ukljuci();
     expect(push.stanje()).toBe('ukljuceno');
 
-    await odjavi();
-    expect(server.obrisiPretplatu).toHaveBeenCalledWith(PRETPLATA.endpoint);
+    odjavi();
     expect(swPush.unsubscribe).not.toHaveBeenCalled();
 
     await prijavi(1);
@@ -95,10 +93,11 @@ describe('push obaveštenja na uređaju', () => {
   it('drugi korisnik na istom uređaju ne nasleđuje obaveštenja i sam bira', async () => {
     await prijavi(1);
     await push.ukljuci();
-    await odjavi();
+    odjavi();
 
     await prijavi(2);
     expect(server.sacuvajPretplatu).toHaveBeenCalledTimes(1);
+    expect(server.obrisiPretplatu).toHaveBeenCalledWith(PRETPLATA.endpoint);
     expect(push.stanje()).toBe('iskljuceno');
     expect(push.iskljucio()).toBe(false);
 
@@ -106,7 +105,7 @@ describe('push obaveštenja na uređaju', () => {
     expect(server.sacuvajPretplatu).toHaveBeenCalledTimes(2);
     expect(push.stanje()).toBe('ukljuceno');
 
-    await odjavi();
+    odjavi();
     await prijavi(1);
     expect(server.sacuvajPretplatu).toHaveBeenCalledTimes(3);
     expect(push.stanje()).toBe('ukljuceno');
@@ -119,7 +118,7 @@ describe('push obaveštenja na uređaju', () => {
     expect(server.obrisiPretplatu).toHaveBeenCalledWith(PRETPLATA.endpoint);
     expect(push.stanje()).toBe('iskljuceno');
 
-    await odjavi();
+    odjavi();
     await prijavi(1);
     expect(server.sacuvajPretplatu).toHaveBeenCalledTimes(1);
     expect(push.stanje()).toBe('iskljuceno');
@@ -129,7 +128,7 @@ describe('push obaveštenja na uređaju', () => {
   it('povučena dozvola u pregledaču ne pretplaćuje bez pitanja', async () => {
     await prijavi(1);
     await push.ukljuci();
-    await odjavi();
+    odjavi();
     dozvola = 'default';
     pretplata.next(null);
 
@@ -146,7 +145,7 @@ describe('push obaveštenja na uređaju', () => {
   it('obrisana pretplata u pregledaču se obnavlja sama dok je dozvola data', async () => {
     await prijavi(1);
     await push.ukljuci();
-    await odjavi();
+    odjavi();
     pretplata.next(null);
 
     await prijavi(1);

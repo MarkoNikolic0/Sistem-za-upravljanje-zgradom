@@ -90,10 +90,6 @@ export class PushObavestenja {
     });
   }
 
-  odjavi(): Promise<void> {
-    return this.redom(() => this.odvezi().catch(() => undefined));
-  }
-
   sinhronizuj(): Promise<void> {
     return this.redom(() => this.uskladiSaServerom());
   }
@@ -132,21 +128,28 @@ export class PushObavestenja {
 
   private async uskladiSaServerom(): Promise<void> {
     const korisnik = this.authStore.korisnik();
-    if (!this.podrzano || !korisnik || this.izbor() !== 'ukljuceno') {
+    if (!this.podrzano || !korisnik) {
       return;
     }
     this.dozvola.set(Notification.permission);
-    if (this.dozvola() !== 'granted') {
+    if (korisnik.sid === this.uskladjenaSesija) {
       return;
     }
     const pretplata = await firstValueFrom(this.swPush.subscription);
+    if (this.izbor() !== 'ukljuceno' || this.dozvola() !== 'granted') {
+      if (pretplata) {
+        await firstValueFrom(this.notifikacijaService.obrisiPretplatu(pretplata.endpoint)).catch(
+          () => undefined,
+        );
+      }
+      this.uskladjenaSesija = korisnik.sid;
+      return;
+    }
     if (!pretplata) {
       await this.pretplati().catch(() => undefined);
       return;
     }
-    if (korisnik.sid !== this.uskladjenaSesija) {
-      await this.sacuvaj(pretplata).catch(() => undefined);
-    }
+    await this.sacuvaj(pretplata).catch(() => undefined);
   }
 
   private async sacuvaj(pretplata: PushSubscription): Promise<void> {

@@ -137,7 +137,7 @@ E2e testovi sami naprave privremenu bazu čije ime počinje sa `zgrada_e2e_` i o
 | `izolacija.e2e-spec.ts` | korisnik jedne zgrade ne može da vidi ni izmeni podatke druge zgrade, za sve rute |
 | `prava.e2e-spec.ts` | svaka uloga sme samo ono što joj pripada |
 | `auth.e2e-spec.ts` | prijava, tokeni, zaključavanje, lozinka, potvrda emaila |
-| `push.e2e-spec.ts` | pretplata uređaja pripada poslednjem korisniku koji je uključio obaveštenja, odjava briše samo svoju |
+| `push.e2e-spec.ts` | pretplata uređaja pripada poslednjem korisniku koji je uključio obaveštenja, odjava briše pretplatu te sesije |
 | `kvar`, `glasanje`, `sastanak`, `oglas`, `stanari` | glavni tokovi: statusi kvara, kvorum i većine, iseljenje |
 | `sema.e2e-spec.ts` | oblik baze |
 | `pomoc/` | pomoćni fajlovi: pokretanje aplikacije, test baza, test podaci, spisak ruta, lažni servisi |

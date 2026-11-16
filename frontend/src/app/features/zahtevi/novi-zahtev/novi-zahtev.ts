@@ -66,7 +66,9 @@ export class NoviZahtev {
     const id = ispravanIdIzAdrese(zgrada);
     return this.zgrade.value().find((z) => z.id === id) ?? null;
   });
-  protected readonly nemaZgradeIzLinka = computed(() => this.zgradaIzLinka() === null);
+  protected readonly nemaZgradeIzLinka = computed(
+    () => this.zgradaIzLinka() === null && this.zgradaId() === null && !this.poslat(),
+  );
 
   protected readonly neobradjeni = computed(() =>
     this.zahtevi.hasValue() ? this.zahtevi.value().filter((z) => z.status !== 'prihvacen') : [],

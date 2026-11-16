@@ -14,6 +14,7 @@ import { RefreshTokenService } from './refresh-token/refresh-token.service.js';
 import { PORUKA_PRIJAVA, PORUKA_ZAKLJUCAN } from './auth.constants.js';
 import { NeuspelePrijaveService } from './neuspele-prijave/neuspele-prijave.service.js';
 import type { JwtPayload } from './strategies/jwt.strategy.js';
+import { PushService } from '../notifikacija/push/push.service.js';
 
 const LAZNI_HES = bcrypt.hashSync('lozinka-za-isto-vreme-odgovora', 10);
 
@@ -25,6 +26,7 @@ export class AuthService {
     private jwtService: JwtService,
     private refreshTokenService: RefreshTokenService,
     private neuspelePrijaveService: NeuspelePrijaveService,
+    private pushService: PushService,
   ) {}
 
   async login(dto: LoginDto, ip: string) {
@@ -73,7 +75,11 @@ export class AuthService {
     if (!refreshToken) {
       return;
     }
-    await this.refreshTokenService.opozoviPoTokenu(refreshToken);
+    const porodicaId =
+      await this.refreshTokenService.opozoviPoTokenu(refreshToken);
+    if (porodicaId) {
+      await this.pushService.obrisiSesiju(porodicaId);
+    }
   }
 
   private accessToken(korisnik: Korisnik, porodicaId: string) {

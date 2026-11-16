@@ -58,9 +58,18 @@ export class PlakatZgrade {
     return link && qrKod(link.href);
   });
 
+  protected readonly nemaZgradeIzLinka = computed(
+    () =>
+      this.ucitano() &&
+      this.zgrada() !== undefined &&
+      !this.zgrade().some((z) => z.id === this.zgrada()),
+  );
+
   protected readonly nazad = computed(() => {
     const zgrada = this.izabrana();
-    return this.admin() && zgrada ? ['/zgrade', zgrada.id] : ['/zahtevi'];
+    return this.admin() && zgrada
+      ? { putanja: ['/zgrade', zgrada.id], tekst: 'Zgrada' }
+      : { putanja: ['/zahtevi'], tekst: 'Zahtevi' };
   });
 
   protected stampaj(): void {

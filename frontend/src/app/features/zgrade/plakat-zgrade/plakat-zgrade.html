@@ -1,7 +1,6 @@
 <div class="alati-plakata">
-  <a [routerLink]="nazad()" class="nazad"
-    ><i class="pi pi-arrow-left" aria-hidden="true"></i
-    >{{ admin() && izabrana() ? 'Zgrada' : 'Zahtevi' }}</a
+  <a [routerLink]="nazad().putanja" class="nazad"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i>{{ nazad().tekst }}</a
   >
   <p class="oznaka mt-6">Zgrada</p>
   <h1 class="naslov-stranice mt-3">QR kod za stanare</h1>
@@ -18,6 +17,11 @@
   } @else if (zgrade().length === 0) {
     <p-message severity="secondary" styleClass="mt-6">Nema aktivnih zgrada.</p-message>
   } @else {
+    @if (nemaZgradeIzLinka()) {
+      <p-message severity="warn" styleClass="mt-6">
+        Zgrada iz linka nije pronađena. Izaberi zgradu sa spiska.
+      </p-message>
+    }
     <div class="izbor">
       @if (zgrade().length > 1) {
         <div class="flex flex-col gap-1.5 sm:w-72">

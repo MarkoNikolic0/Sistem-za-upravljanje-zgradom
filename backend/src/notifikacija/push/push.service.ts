@@ -62,11 +62,12 @@ export class PushService {
     );
   }
 
-  async obrisi(korisnikId: number, endpoint: string): Promise<void> {
-    await this.pretplataRepository.delete({
-      endpoint,
-      korisnik: { id: korisnikId },
-    });
+  async obrisi(endpoint: string): Promise<void> {
+    await this.pretplataRepository.delete({ endpoint });
+  }
+
+  async obrisiSesiju(porodicaId: string): Promise<void> {
+    await this.pretplataRepository.delete({ porodicaId });
   }
 
   async obrisiSve(manager: EntityManager, korisnikId: number): Promise<void> {

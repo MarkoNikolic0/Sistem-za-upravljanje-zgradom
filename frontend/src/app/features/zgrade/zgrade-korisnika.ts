@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { ispravanIdIzAdrese } from '../../shared/ispravan-id';
 import { ProfileResponse } from '../profile/profile-models';
 import { ProfileService } from '../profile/profile-service';
 import { ZgradaOsnovno } from './zgrada-models';
@@ -56,6 +57,5 @@ export function injectZgradeUpravnika() {
 export function zgradaIzAdrese(): number | null {
   const router = inject(Router);
   const adresa = router.currentNavigation()?.finalUrl ?? router.parseUrl(router.url);
-  const zgrada = Number(adresa.queryParamMap.get('zgrada'));
-  return Number.isInteger(zgrada) && zgrada > 0 ? zgrada : null;
+  return ispravanIdIzAdrese(adresa.queryParamMap.get('zgrada')) ?? null;
 }

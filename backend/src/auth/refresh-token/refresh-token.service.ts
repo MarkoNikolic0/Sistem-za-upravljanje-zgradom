@@ -91,13 +91,14 @@ export class RefreshTokenService {
     );
   }
 
-  async opozoviPoTokenu(token: string) {
+  async opozoviPoTokenu(token: string): Promise<string | undefined> {
     const zapis = await this.refreshTokenRepository.findOne({
       where: { tokenHash: hesirajToken(token) },
     });
     if (zapis) {
       await this.opozoviPorodicu(zapis.porodicaId);
     }
+    return zapis?.porodicaId;
   }
 
   async opozoviOstaleSesije(

@@ -68,11 +68,8 @@ export class NotifikacijaController {
 
   @Delete('push-pretplata')
   @HttpCode(HttpStatus.NO_CONTENT)
-  obrisiPretplatu(
-    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
-    @Body() dto: OdjavaPushDto,
-  ) {
-    return this.pushService.obrisi(korisnik.id, dto.endpoint);
+  obrisiPretplatu(@Body() dto: OdjavaPushDto) {
+    return this.pushService.obrisi(dto.endpoint);
   }
 
   @Put(':id/procitano')

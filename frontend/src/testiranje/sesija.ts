@@ -8,7 +8,12 @@ function base64url(tekst: string): string {
     .replace(/=+$/, '');
 }
 
-export function tokenZa(uloga: Uloga, id = 1, email = 'đorđe.šćekić@example.com'): string {
-  const payload = { sub: id, email, uloga, sid: `sesija-${id}`, iat: 0, exp: 0 };
+export function tokenZa(
+  uloga: Uloga,
+  id = 1,
+  email = 'đorđe.šćekić@example.com',
+  sid = `sesija-${id}`,
+): string {
+  const payload = { sub: id, email, uloga, sid, iat: 0, exp: 0 };
   return `zaglavlje.${base64url(JSON.stringify(payload))}.potpis`;
 }
