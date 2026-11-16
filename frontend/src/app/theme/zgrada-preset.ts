@@ -39,6 +39,7 @@ export const ZgradaPreset = definePreset(Aura, {
     button: {
       root: {
         fontSize: '0.8125rem',
+        transitionDuration: 'var(--trajanje-brzo)',
         lg: {
           fontSize: '0.875rem',
           paddingY: '0.75rem',

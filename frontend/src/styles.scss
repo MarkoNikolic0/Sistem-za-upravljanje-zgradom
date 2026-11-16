@@ -113,7 +113,7 @@
   }
 }
 
-.ulazak > * {
+.ulazak > :not(.ucitavanje) {
   animation: ulazak var(--trajanje) var(--kriva-ulaska) backwards;
 
   @for $i from 2 through 9 {
@@ -159,7 +159,8 @@
   animation: preostalo linear forwards;
 }
 
-.p-toast-message[data-expanded] .preostalo {
+.p-toast:active .preostalo,
+.p-toast-message:is([data-expanded], [data-swiping]) .preostalo {
   animation-play-state: paused;
 }
 
@@ -167,6 +168,10 @@
   to {
     scale: 0 1;
   }
+}
+
+.p-toast .plocica-ikonice {
+  animation: pali-se var(--trajanje-sporo) var(--kriva-ulaska) var(--trajanje-brzo) backwards;
 }
 
 .toast-verzije .p-toast-message {
