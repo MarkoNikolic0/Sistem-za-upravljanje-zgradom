@@ -83,7 +83,13 @@ export class KomentarKvarService {
       order: { id: 'DESC' },
       take: Math.min(upit.poStrani, MAKS_PO_STRANI),
     });
-    if (await this.kvarPravaService.skrivaKontakte(kvar, korisnikId, uloga)) {
+    if (
+      await this.kvarPravaService.skrivaKontakte(
+        kvar.zgrada.id,
+        korisnikId,
+        uloga,
+      )
+    ) {
       sakrijKontakt(stavke.map((komentar) => komentar.korisnik));
     }
 

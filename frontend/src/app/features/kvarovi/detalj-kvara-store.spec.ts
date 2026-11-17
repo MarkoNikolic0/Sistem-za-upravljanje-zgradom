@@ -13,6 +13,7 @@ describe('DetaljKvaraStore', () => {
   let nadjiKvar: Mock<() => Observable<KvarDetalj>>;
   let prihvati: Mock<() => Observable<KvarDetalj>>;
   let prati: Mock<() => Observable<StanjePracenja>>;
+  let postaviPrioritet: Mock<() => Observable<KvarDetalj>>;
   const azurirani: { kvar: KvarDetalj; prethodni: KvarDetalj | null }[] = [];
 
   beforeEach(() => {
@@ -20,10 +21,11 @@ describe('DetaljKvaraStore', () => {
     nadjiKvar = vi.fn(() => of(kvar({ id: 7, status: 'prijavljen', smeDaPrati: true })));
     prihvati = vi.fn();
     prati = vi.fn(() => of({ pratim: true, brojPratilaca: 2 }));
+    postaviPrioritet = vi.fn(() => of(kvar({ id: 7, status: 'prihvacen', prioritet: 'hitno' })));
     TestBed.configureTestingModule({
       providers: [
         DetaljKvaraStore,
-        { provide: KvarService, useValue: { nadjiKvar, prihvati, prati } },
+        { provide: KvarService, useValue: { nadjiKvar, prihvati, prati, postaviPrioritet } },
       ],
     });
     store = TestBed.inject(DetaljKvaraStore);
@@ -47,6 +49,35 @@ describe('DetaljKvaraStore', () => {
       kvar: { status: 'prihvacen' },
       prethodni: { status: 'prijavljen' },
     });
+  });
+
+  it('druga akcija dok prva traje čeka red i izvrši se posle nje', () => {
+    const odgovor = new Subject<KvarDetalj>();
+    prihvati.mockReturnValue(odgovor);
+    store.prihvati();
+    store.postaviPrioritet('hitno');
+    expect(store.kvar()?.prioritet).toBe('srednje');
+
+    odgovor.next(kvar({ id: 7, status: 'prihvacen' }));
+    odgovor.complete();
+    expect(store.kvar()).toMatchObject({ status: 'prihvacen', prioritet: 'hitno' });
+    expect(store.akcijaUToku()).toBe(false);
+
+    prihvati.mockReturnValue(of(kvar({ id: 7, status: 'prihvacen' })));
+    store.prihvati();
+    expect(prihvati).toHaveBeenCalledTimes(2);
+  });
+
+  it('odgovor praćenja ne vraća stariji prikaz kad se kvar u međuvremenu osveži', () => {
+    const odgovor = new Subject<StanjePracenja>();
+    prati.mockReturnValue(odgovor);
+    store.prati();
+    nadjiKvar.mockReturnValue(of(kvar({ id: 7, status: 'resen' })));
+    store.osvezi(7);
+
+    odgovor.next({ pratim: true, brojPratilaca: 2 });
+    odgovor.complete();
+    expect(store.kvar()).toMatchObject({ status: 'resen', pratim: true, brojPratilaca: 2 });
   });
 
   it('praćenje koristi odgovor servera bez novog učitavanja kvara', () => {

@@ -83,9 +83,18 @@
     <p-skeleton height="4rem" styleClass="ucitavanje" aria-hidden="true" />
     <span class="sr-only">Učitavanje komentara…</span>
   }
-  @if (zavrsen()) {
-    <p class="mt-6 text-sm text-priguseno">Kvar je završen, pa više ne može da se komentariše.</p>
-  } @else {
+  <div aria-live="polite">
+    @if (zavrsen()) {
+      <p class="mt-6 text-sm text-priguseno">
+        @if (zavrsenPriSlanju()) {
+          Kvar je u međuvremenu završen, pa komentar nije poslat.
+        } @else {
+          Kvar je završen, pa više ne može da se komentariše.
+        }
+      </p>
+    }
+  </div>
+  @if (!zavrsen()) {
     <form [formGroup]="forma" (ngSubmit)="posaljiKomentar()" class="mt-6 flex flex-col gap-1.5">
       <label for="komentar" class="text-sm font-medium">Novi komentar</label>
       <textarea

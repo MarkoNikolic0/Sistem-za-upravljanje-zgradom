@@ -74,6 +74,7 @@ export class KomentariKvara {
     tekst: ['', { validators: PRAVILA_KOMENTARA_KVARA, updateOn: 'submit' }],
   });
   protected readonly greskaKomentara = signal('');
+  protected readonly zavrsenPriSlanju = signal(false);
 
   protected ucitajPonovo(): void {
     this.store.ucitaj(this.kvar().id);
@@ -118,6 +119,7 @@ export class KomentariKvara {
       this.fokusiraj('#komentar');
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 409) {
+        this.zavrsenPriSlanju.set(true);
         this.detaljStore.osvezi(this.kvar().id);
         this.fokusiraj('#komentari-naslov');
         return;

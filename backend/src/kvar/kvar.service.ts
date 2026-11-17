@@ -20,7 +20,7 @@ import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
-import { KvarPravaService } from './kvar-prava.service.js';
+import { KvarPravaService, vidiKontakte } from './kvar-prava.service.js';
 import {
   DANA_ZA_POTVRDU,
   MAKS_SLICNIH,
@@ -99,11 +99,8 @@ export class KvarService {
     uloga: Uloga,
     upit: KvarUpitDto,
   ): Promise<Stranica<Kvar>> {
-    const vidljivi = await this.prava.usloviVidljivosti(
-      korisnikId,
-      uloga,
-      upit.zgradaId,
-    );
+    const { uslovi: vidljivi, zgradeSaKontaktima } =
+      await this.prava.usloviVidljivosti(korisnikId, uloga, upit.zgradaId);
     if (vidljivi.length === 0) {
       return { stavke: [], ukupno: 0 };
     }
@@ -120,13 +117,10 @@ export class KvarService {
       order: { datumPrijave: 'DESC', id: 'DESC' },
       ...stranicenje(upit),
     });
-    const bezKontakta = await this.prava.vanUpravljanja(
-      stavke,
-      korisnikId,
-      uloga,
-    );
     sakrijKontakt(
-      bezKontakta.flatMap((kvar) => [kvar.korisnik, kvar.serviser]),
+      stavke
+        .filter((kvar) => !vidiKontakte(zgradeSaKontaktima, kvar.zgrada.id))
+        .flatMap((kvar) => [kvar.korisnik, kvar.serviser]),
     );
 
     return { stavke, ukupno };
@@ -145,7 +139,7 @@ export class KvarService {
         kategorija: upit.kategorija,
         status: In(OTVORENI_STATUSI),
       },
-      relations: { zgrada: true, korisnik: true },
+      relations: { korisnik: true },
       order: { datumPrijave: 'DESC', id: 'DESC' },
       take: MAKS_SLICNIH,
     });
@@ -162,12 +156,11 @@ export class KvarService {
       select: { id: true, kvar: { id: true } },
     });
     const praceniIds = new Set(praceni.map((p) => p.kvar.id));
-    const bezKontakta = await this.prava.vanUpravljanja(
-      slicni,
-      korisnikId,
-      uloga,
-    );
-    sakrijKontakt(bezKontakta.map((kvar) => kvar.korisnik));
+    if (
+      await this.prava.skrivaKontakte(veza.stan.zgrada.id, korisnikId, uloga)
+    ) {
+      sakrijKontakt(slicni.map((kvar) => kvar.korisnik));
+    }
     return slicni.map((kvar) =>
       Object.assign(kvar, { pratim: praceniIds.has(kvar.id) }),
     );

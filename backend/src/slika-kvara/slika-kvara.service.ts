@@ -39,7 +39,13 @@ export class SlikaKvaraService {
       relations: { korisnik: true },
       order: { datumOtpremanja: 'ASC', id: 'ASC' },
     });
-    if (await this.kvarPravaService.skrivaKontakte(kvar, korisnikId, uloga)) {
+    if (
+      await this.kvarPravaService.skrivaKontakte(
+        kvar.zgrada.id,
+        korisnikId,
+        uloga,
+      )
+    ) {
       sakrijKontakt(slike.map((slika) => slika.korisnik));
     }
     return await Promise.all(slike.map((slika) => this.saLinkovima(slika)));

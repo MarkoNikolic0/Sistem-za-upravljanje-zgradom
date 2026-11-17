@@ -23,16 +23,18 @@ describe('KomentariKvaraStore', () => {
   let store: InstanceType<typeof KomentariKvaraStore>;
   let komentari: Mock<() => Observable<Stranica<KomentarKvara>>>;
   let dodaj: Mock<() => Observable<KomentarKvara>>;
+  let obrisi: Mock<() => Observable<void>>;
 
   const ids = () => store.komentari().map((k) => k.id);
 
   beforeEach(() => {
     komentari = vi.fn(() => strana(5, 3));
     dodaj = vi.fn();
+    obrisi = vi.fn(() => of(undefined));
     TestBed.configureTestingModule({
       providers: [
         KomentariKvaraStore,
-        { provide: KomentariKvaraService, useValue: { komentari, dodaj } },
+        { provide: KomentariKvaraService, useValue: { komentari, dodaj, obrisi } },
       ],
     });
     store = TestBed.inject(KomentariKvaraStore);
@@ -51,6 +53,14 @@ describe('KomentariKvaraStore', () => {
     dodaj.mockReturnValue(of(komentar(10)));
     await store.dodaj('Komentar 10');
     expect(ids()).toEqual([3, 5, 6, 8, 9, 10]);
+  });
+
+  it('obrisan komentar se ne vraća iz osvežavanja koje ga još sadrži', async () => {
+    await store.obrisi(5);
+    expect(ids()).toEqual([3]);
+    komentari.mockReturnValue(strana(6, 5, 3));
+    store.osveziNove();
+    expect(ids()).toEqual([3, 6]);
   });
 
   it('osvežavanje ne dodaje komentare starije od učitanih', () => {

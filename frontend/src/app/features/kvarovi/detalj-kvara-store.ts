@@ -26,6 +26,7 @@ import { porukaServera, prvaGreskaPolja } from '../../shared/forme/greske-server
 import { jeIspravanId } from '../../shared/ispravan-id';
 
 interface Akcija {
+  kljuc: string;
   zahtev: Observable<KvarDetalj>;
   uspeh: (kvar: KvarDetalj) => string;
   fokus: boolean;
@@ -156,9 +157,11 @@ export const DetaljKvaraStore = signalStore(
         ),
       );
 
+      const uRedu = new Set<string>();
+
       const izvrsi = rxMethod<Akcija>(
         pipe(
-          concatMap(({ zahtev, uspeh, fokus }) => {
+          concatMap(({ kljuc, zahtev, uspeh, fokus }) => {
             patchState(store, { akcijaUToku: true, porukaAkcije: null });
             return zahtev.pipe(
               tapResponse({
@@ -175,7 +178,10 @@ export const DetaljKvaraStore = signalStore(
                     osvezi(kvar.id);
                   }
                 },
-                finalize: () => patchState(store, { akcijaUToku: false }),
+                finalize: () => {
+                  uRedu.delete(kljuc);
+                  patchState(store, { akcijaUToku: false });
+                },
               }),
             );
           }),
@@ -184,17 +190,21 @@ export const DetaljKvaraStore = signalStore(
 
       function pracenje(zahtev: Observable<StanjePracenja>): Observable<KvarDetalj> {
         const kvar = store.kvar();
-        return kvar ? zahtev.pipe(map((stanje) => ({ ...kvar, ...stanje }))) : EMPTY;
+        return kvar
+          ? zahtev.pipe(map((stanje) => ({ ...(store.kvar() ?? kvar), ...stanje })))
+          : EMPTY;
       }
 
       function akcija(
+        kljuc: string,
         zahtev: (id: number) => Observable<KvarDetalj>,
         uspeh: (kvar: KvarDetalj) => string,
         fokus = true,
       ): void {
         const kvar = store.kvar();
-        if (kvar && !store.akcijaUToku()) {
-          izvrsi({ zahtev: zahtev(kvar.id), uspeh, fokus });
+        if (kvar && !uRedu.has(kljuc)) {
+          uRedu.add(kljuc);
+          izvrsi({ kljuc, zahtev: zahtev(kvar.id), uspeh, fokus });
         }
       }
 
@@ -206,30 +216,35 @@ export const DetaljKvaraStore = signalStore(
         },
         prihvati(): void {
           akcija(
+            'prihvati',
             (id) => kvarService.prihvati(id),
             () => 'Kvar je prihvaćen.',
           );
         },
         odbij(tekst: string): void {
           akcija(
+            'odbij',
             (id) => kvarService.odbij(id, tekst),
             () => 'Prijava je odbijena. Razlog je upisan u komentare.',
           );
         },
         povuci(tekst: string): void {
           akcija(
+            'povuci',
             (id) => kvarService.povuci(id, tekst),
             () => 'Prijava je povučena. Kvar je prešao u završene.',
           );
         },
         dodeliServisera(serviserId: number): void {
           akcija(
+            `dodeli:${serviserId}`,
             (id) => kvarService.dodeliServisera(id, serviserId),
             ({ serviser }) => `Kvar je dodeljen serviseru: ${serviser?.ime} ${serviser?.prezime}.`,
           );
         },
         postaviPrioritet(prioritet: PrioritetKvara): void {
           akcija(
+            `prioritet:${prioritet}`,
             (id) => kvarService.postaviPrioritet(id, prioritet),
             (kvar) =>
               `Prioritet je promenjen: ${NAZIVI_PRIORITETA_KVARA[kvar.prioritet]}. Novi rok: ${formatDate(kvar.rokResavanja, 'd. MMM y. HH:mm', locale)}.`,
@@ -238,6 +253,7 @@ export const DetaljKvaraStore = signalStore(
         },
         postaviDolazak(dolazak: Date | null): void {
           akcija(
+            'dolazak',
             (id) => kvarService.postaviDolazak(id, dolazak),
             () =>
               dolazak ? 'Dolazak je upisan. Stanar ga vidi na vrhu kvara.' : 'Dolazak je uklonjen.',
@@ -245,36 +261,42 @@ export const DetaljKvaraStore = signalStore(
         },
         promeniStatus(status: StatusRadaServisera): void {
           akcija(
+            `status:${status}`,
             (id) => kvarService.promeniStatus(id, status),
             () => (status === 'u_toku' ? 'Rad na kvaru je započet.' : 'Kvar je označen kao rešen.'),
           );
         },
         potvrdi(ocena: number | null): void {
           akcija(
+            'potvrdi',
             (id) => kvarService.potvrdi(id, ocena),
             () => 'Hvala na potvrdi. Kvar je zatvoren.',
           );
         },
         vrati(tekst: string): void {
           akcija(
+            'vrati',
             (id) => kvarService.vrati(id, tekst),
             () => 'Kvar je vraćen serviseru. Tvoj komentar je dodat.',
           );
         },
         prati(): void {
           akcija(
+            'prati',
             (id) => pracenje(kvarService.prati(id)),
             () => 'Pratiš ovaj kvar. Upravnik vidi da je i kod tebe isti problem.',
           );
         },
         prestaniPracenje(): void {
           akcija(
+            'prestaniPracenje',
             (id) => pracenje(kvarService.prestaniPracenje(id)),
             () => 'Više ne pratiš ovaj kvar.',
           );
         },
         zatvori(): void {
           akcija(
+            'zatvori',
             (id) => kvarService.zatvori(id),
             () => 'Kvar je zatvoren.',
           );

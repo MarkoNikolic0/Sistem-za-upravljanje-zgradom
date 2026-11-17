@@ -9,6 +9,13 @@ import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { PORUKA_PRACENJE } from './kvar.constants.js';
 import { sadrzi, samoZgrada, uZgradama } from '../korisnik/pristup-zgradama.js';
 
+export function vidiKontakte(
+  zgradeSaKontaktima: number[] | null,
+  zgradaId: number,
+): boolean {
+  return zgradeSaKontaktima === null || sadrzi(zgradeSaKontaktima, zgradaId);
+}
+
 @Injectable()
 export class KvarPravaService {
   constructor(
@@ -22,30 +29,43 @@ export class KvarPravaService {
     korisnikId: number,
     uloga: Uloga,
     zgradaId?: number,
-  ): Promise<FindOptionsWhere<Kvar>[]> {
+  ): Promise<{
+    uslovi: FindOptionsWhere<Kvar>[];
+    zgradeSaKontaktima: number[] | null;
+  }> {
     switch (uloga) {
       case Uloga.ADMIN:
-        return [uZgradama(zgradaId ? [zgradaId] : null)];
+        return {
+          uslovi: [uZgradama(zgradaId ? [zgradaId] : null)],
+          zgradeSaKontaktima: null,
+        };
 
       case Uloga.UPRAVNIK: {
-        const zgrade = samoZgrada(
-          await this.korisnikService.zgradeUpravnika(korisnikId),
-          zgradaId,
-        );
+        const upravlja = await this.korisnikService.zgradeUpravnika(korisnikId);
+        const zgrade = samoZgrada(upravlja, zgradaId);
         const uslovi = await this.usloviStanara(korisnikId, zgradaId);
-        return zgrade.length === 0 ? uslovi : [uZgradama(zgrade), ...uslovi];
+        return {
+          uslovi: zgrade.length === 0 ? uslovi : [uZgradama(zgrade), ...uslovi],
+          zgradeSaKontaktima: upravlja,
+        };
       }
 
       case Uloga.SERVISER:
-        return [
-          {
-            serviser: { id: korisnikId },
-            ...uZgradama(zgradaId ? [zgradaId] : null),
-          },
-        ];
+        return {
+          uslovi: [
+            {
+              serviser: { id: korisnikId },
+              ...uZgradama(zgradaId ? [zgradaId] : null),
+            },
+          ],
+          zgradeSaKontaktima: null,
+        };
 
       default:
-        return await this.usloviStanara(korisnikId, zgradaId);
+        return {
+          uslovi: await this.usloviStanara(korisnikId, zgradaId),
+          zgradeSaKontaktima: null,
+        };
     }
   }
 
@@ -146,24 +166,24 @@ export class KvarPravaService {
     );
   }
 
-  async vanUpravljanja(
-    kvarovi: Kvar[],
+  async zgradeSaKontaktima(
     korisnikId: number,
     uloga: Uloga,
-  ): Promise<Kvar[]> {
-    if (uloga !== Uloga.UPRAVNIK || kvarovi.length === 0) {
-      return [];
-    }
-    const zgrade = await this.korisnikService.zgradeUpravnika(korisnikId);
-    return kvarovi.filter((kvar) => !sadrzi(zgrade, kvar.zgrada.id));
+  ): Promise<number[] | null> {
+    return uloga === Uloga.UPRAVNIK
+      ? await this.korisnikService.zgradeUpravnika(korisnikId)
+      : null;
   }
 
   async skrivaKontakte(
-    kvar: Kvar,
+    zgradaId: number,
     korisnikId: number,
     uloga: Uloga,
   ): Promise<boolean> {
-    return (await this.vanUpravljanja([kvar], korisnikId, uloga)).length > 0;
+    return !vidiKontakte(
+      await this.zgradeSaKontaktima(korisnikId, uloga),
+      zgradaId,
+    );
   }
 
   async smeDaPotvrdi(kvar: Kvar, korisnikId: number): Promise<boolean> {

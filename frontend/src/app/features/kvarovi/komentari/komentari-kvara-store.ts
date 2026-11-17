@@ -16,16 +16,23 @@ import { KOMENTARA_PO_STRANI } from '../pravila-kvara';
 import { KomentariKvaraService } from './komentari-kvara-service';
 import { jeIspravanId } from '../../../shared/ispravan-id';
 
-function spoji(komentari: KomentarKvara[], novi: KomentarKvara[]): KomentarKvara[] {
+function spoji(
+  komentari: KomentarKvara[],
+  novi: KomentarKvara[],
+  obrisani: number[] = [],
+): KomentarKvara[] {
   const postojeci = new Set(komentari.map((k) => k.id));
   const najstariji = komentari.at(0)?.id ?? 0;
-  const dodati = novi.filter((k) => !postojeci.has(k.id) && k.id > najstariji);
+  const dodati = novi.filter(
+    (k) => !postojeci.has(k.id) && !obrisani.includes(k.id) && k.id > najstariji,
+  );
   return dodati.length === 0 ? komentari : [...komentari, ...dodati].sort((a, b) => a.id - b.id);
 }
 
 interface KomentariKvaraState {
   kvarId: number | null;
   komentari: KomentarKvara[];
+  obrisani: number[];
   preostaloStarijih: number;
   ucitavaStarije: boolean;
   slanje: boolean;
@@ -35,6 +42,7 @@ export const KomentariKvaraStore = signalStore(
   withState<KomentariKvaraState>({
     kvarId: null,
     komentari: [],
+    obrisani: [],
     preostaloStarijih: 0,
     ucitavaStarije: false,
     slanje: false,
@@ -44,7 +52,7 @@ export const KomentariKvaraStore = signalStore(
     ucitaj: rxMethod<number>(
       pipe(
         filter(jeIspravanId),
-        tap((kvarId) => patchState(store, { kvarId, komentari: [] }, setPending())),
+        tap((kvarId) => patchState(store, { kvarId, komentari: [], obrisani: [] }, setPending())),
         switchMap((kvarId) =>
           komentariKvaraService.komentari(kvarId, KOMENTARA_PO_STRANI).pipe(
             tapResponse({
@@ -94,7 +102,9 @@ export const KomentariKvaraStore = signalStore(
             return EMPTY;
           }
           return komentariKvaraService.komentari(kvarId, KOMENTARA_PO_STRANI).pipe(
-            tap(({ stavke }) => patchState(store, { komentari: spoji(store.komentari(), stavke) })),
+            tap(({ stavke }) =>
+              patchState(store, { komentari: spoji(store.komentari(), stavke, store.obrisani()) }),
+            ),
             catchError(() => EMPTY),
           );
         }),
@@ -108,7 +118,7 @@ export const KomentariKvaraStore = signalStore(
       patchState(store, { slanje: true });
       try {
         const komentar = await firstValueFrom(komentariKvaraService.dodaj(kvarId, tekst));
-        patchState(store, { komentari: spoji(store.komentari(), [komentar]) });
+        patchState(store, { komentari: spoji(store.komentari(), [komentar], store.obrisani()) });
       } finally {
         patchState(store, { slanje: false });
       }
@@ -119,7 +129,10 @@ export const KomentariKvaraStore = signalStore(
         return;
       }
       await firstValueFrom(komentariKvaraService.obrisi(kvarId, id));
-      patchState(store, { komentari: store.komentari().filter((k) => k.id !== id) });
+      patchState(store, {
+        komentari: store.komentari().filter((k) => k.id !== id),
+        obrisani: [...store.obrisani(), id],
+      });
     },
   })),
   withReducer(
