@@ -224,13 +224,13 @@ describe('stanari, nalozi i zgrade', () => {
       for (const putanja of [
         `/kvar/${mojKvar}`,
         `/kvar/${tudjKvar}`,
-        `/glasanje/${anketa.id}`,
         `/zgrada/${z.id}/dokument`,
         `/zgrada/${z.id}/kontakt`,
       ]) {
         await kao(t, stanar).get(putanja).expect(403);
       }
       await kao(t, stanar).get(`/oglas/${mojOglas}`).expect(404);
+      await kao(t, stanar).get(`/glasanje/${anketa.id}`).expect(404);
       for (const putanja of ['/kvar', '/oglas', '/glasanje', '/sastanak']) {
         const odgovor = await kao(t, stanar).get(putanja).expect(200);
         expect(odgovor.body.ukupno).toBe(0);
@@ -370,7 +370,7 @@ describe('stanari, nalozi i zgrade', () => {
         relations: { glasanje: true },
       });
       expect(glasovi.map((g) => g.glasanje.id)).toEqual([anketa.id]);
-      await kao(t, z.vlasnik).get(`/glasanje/${odluka.id}`).expect(403);
+      await kao(t, z.vlasnik).get(`/glasanje/${odluka.id}`).expect(404);
       await kao(t, z.vlasnik).get(`/glasanje/${anketa.id}`).expect(200);
 
       await kao(t, z.upravnik)

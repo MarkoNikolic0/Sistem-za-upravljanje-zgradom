@@ -139,7 +139,7 @@ export class SastanakService {
     await this.proveriTacke(dto.vrsta, dto.tacke, dto.zgradaId);
 
     const { id } = await this.dataSource.transaction(async (manager) => {
-      await proveriAktivnu(manager, dto.zgradaId, true);
+      await proveriAktivnu(manager, dto.zgradaId, 'pessimistic_read');
       const sacuvan = await manager.save(
         this.sastanakRepository.create({
           vrsta: dto.vrsta,

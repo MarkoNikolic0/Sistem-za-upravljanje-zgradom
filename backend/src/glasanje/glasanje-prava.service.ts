@@ -50,14 +50,11 @@ export class GlasanjePravaService {
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
     });
-    if (!glasanje) {
-      throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
-    }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     const zgrade =
-      glasanje.vrsta === VrstaGlasanja.ODLUKA ? zgradeVlasnika(p) : p.zgrade;
-    if (!sadrzi(zgrade, glasanje.zgrada.id)) {
-      throw new ForbiddenException('Nemate pristup ovom glasanju!');
+      glasanje?.vrsta === VrstaGlasanja.ODLUKA ? zgradeVlasnika(p) : p.zgrade;
+    if (!glasanje || !sadrzi(zgrade, glasanje.zgrada.id)) {
+      throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
     }
     return { glasanje, p };
   }

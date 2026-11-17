@@ -174,6 +174,9 @@ export class NovoGlasanje {
   }
 
   protected async posalji(): Promise<void> {
+    if (this.slanje()) {
+      return;
+    }
     const { zgradaId, vrsta, pitanje, opis, opcije, vecina, rok } = this.forma.getRawValue();
     const odluka = vrsta === 'odluka';
     if (this.forma.invalid || zgradaId === null || rok === null || (odluka && vecina === null)) {

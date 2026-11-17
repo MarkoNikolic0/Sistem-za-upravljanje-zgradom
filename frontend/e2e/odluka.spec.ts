@@ -52,6 +52,7 @@ test.describe.serial('odluka', () => {
     await page.goto('/glasanje');
     await page.getByText('Završene', { exact: true }).click();
     await expect(odluka(page)).toContainText('Usvojena');
+    await expect(odluka(page).getByRole('button', { name: 'Obriši' })).toHaveCount(0);
     await odluka(page).getByRole('link', { name: 'Objavi na tabli' }).click();
     await expect(page).toHaveURL(/\/oglasi\/novi\?odluka=\d+/);
     await expect(page.getByRole('heading', { name: 'Objava odluke' })).toBeVisible();

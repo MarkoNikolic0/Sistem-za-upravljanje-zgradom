@@ -21,6 +21,10 @@ export class GlasanjeService {
     return this.http.get<Stranica<Glasanje>>(this.apiUrl, { params });
   }
 
+  procitaj(id: number): Observable<Glasanje> {
+    return this.http.get<Glasanje>(`${this.apiUrl}/${id}`);
+  }
+
   glasanje(id: Signal<number | undefined>) {
     return httpResource<Glasanje>(() => {
       const glasanjeId = id();

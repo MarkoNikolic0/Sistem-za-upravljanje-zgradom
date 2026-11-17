@@ -114,7 +114,7 @@ export class OglasService {
 
     try {
       const sacuvan = await this.dataSource.transaction(async (manager) => {
-        await proveriAktivnu(manager, dto.zgradaId, true);
+        await proveriAktivnu(manager, dto.zgradaId, 'pessimistic_read');
         const sacuvan = await manager.save(
           this.oglasRepository.create({
             naslov: dto.naslov,

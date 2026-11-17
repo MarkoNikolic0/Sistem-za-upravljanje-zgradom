@@ -1,2 +1,4 @@
 <span class="popunjeno" [style.--udeo]="udeo()"></span>
-<span class="prag" [style.--polozaj]="prag()"></span>
+@if (prag() !== null) {
+  <span class="prag" [style.--polozaj]="prag()"></span>
+}

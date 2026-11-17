@@ -8,5 +8,5 @@ import { Component, input } from '@angular/core';
 })
 export class TrakaKvoruma {
   readonly udeo = input.required<number>();
-  readonly prag = input.required<number>();
+  readonly prag = input<number | null>(null);
 }

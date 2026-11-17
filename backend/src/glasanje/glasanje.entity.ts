@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,6 +13,7 @@ import { VecinaOdluke, VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import type { OpcijaGlasanja } from './opcija-glasanja.entity.js';
 
 @Entity()
+@Index(['zgrada', 'rok'])
 export class Glasanje {
   @PrimaryGeneratedColumn()
   id: number;

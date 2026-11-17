@@ -7,12 +7,12 @@ export const AKTIVNA_ZGRADA = { arhivirana: IsNull() };
 export async function proveriAktivnu(
   manager: EntityManager,
   zgradaId: number,
-  zakljucaj = false,
+  zakljucaj?: 'pessimistic_read' | 'pessimistic_write',
 ) {
   const zgrada = await manager.findOne(Zgrada, {
     where: { id: zgradaId, ...AKTIVNA_ZGRADA },
     select: { id: true },
-    ...(zakljucaj && { lock: { mode: 'pessimistic_read' } }),
+    ...(zakljucaj && { lock: { mode: zakljucaj } }),
   });
   if (!zgrada) {
     throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);

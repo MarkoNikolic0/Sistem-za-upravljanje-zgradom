@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import type { Glasanje } from './glasanje.entity.js';
 
 @Entity()
@@ -9,6 +15,7 @@ export class OpcijaGlasanja {
   @Column()
   tekst: string;
 
+  @Index()
   @ManyToOne('Glasanje', 'opcije', { nullable: false, onDelete: 'CASCADE' })
   glasanje: Glasanje;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
@@ -29,10 +29,13 @@ export class GlasanjeRezultatiService {
 
   // Glasanje posle izmene, sa rezultatima za korisnika
   async jedno(id: number, korisnikId: number, p: PristupZgradama) {
-    const glasanje = await this.glasanjeRepository.findOneOrFail({
+    const glasanje = await this.glasanjeRepository.findOne({
       where: { id },
       relations: { zgrada: true, kreirao: true, opcije: true },
     });
+    if (!glasanje) {
+      throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
+    }
     return this.jednoSaRezultatima(glasanje, korisnikId, p);
   }
 

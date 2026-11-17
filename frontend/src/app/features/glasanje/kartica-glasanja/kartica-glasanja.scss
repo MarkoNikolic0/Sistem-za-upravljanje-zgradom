@@ -233,23 +233,6 @@ button.opcija {
   padding-top: 1.25rem;
 }
 
-.traka-ucesca {
-  height: 3px;
-  margin-top: 0.5rem;
-  overflow: hidden;
-  border-radius: 9999px;
-  background: rgb(255 255 255 / 0.06);
-
-  span {
-    display: block;
-    height: 100%;
-    background: var(--color-svetlo);
-    transform: scaleX(var(--udeo));
-    transform-origin: left;
-    transition: transform var(--trajanje-trake) var(--kriva-ulaska);
-  }
-}
-
 .podnozje {
   display: flex;
   flex-wrap: wrap;
@@ -263,8 +246,7 @@ button.opcija {
 
 // Trake rastu od nule i kad su rezultati vidljivi već pri učitavanju
 @starting-style {
-  .rezultati .traka,
-  .traka-ucesca span {
+  .rezultati .traka {
     transform: scaleX(0);
   }
 }

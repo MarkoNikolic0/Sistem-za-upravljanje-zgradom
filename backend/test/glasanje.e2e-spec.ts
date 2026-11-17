@@ -1,4 +1,6 @@
+import { NotFoundException } from '@nestjs/common';
 import { Glas } from '../src/glasanje/glas.entity.js';
+import { GlasanjeRezultatiService } from '../src/glasanje/glasanje-rezultati.service.js';
 import {
   type Akter,
   kao,
@@ -197,6 +199,19 @@ describe('glasanje', () => {
       expect(await ids('aktivna')).not.toContain(anketa.id);
     });
 
+    it('glas i zatvaranje u istom trenutku: glas se broji samo ako je stigao pre zatvaranja', async () => {
+      const anketa = await napravi(novaAnketa(z.id));
+      const [glas, zatvaranje] = await Promise.all([
+        glasaj(z.vlasnik, anketa, 'Siva'),
+        kao(t, z.upravnik).patch(`/glasanje/${anketa.id}/zatvori`),
+      ]);
+      expect(zatvaranje.status).toBe(200);
+      expect([200, 409]).toContain(glas.status);
+      const posle = await prikaz(z.upravnik, anketa);
+      expect(posle.zavrseno).toBe(true);
+      expect(posle.brojGlasaca).toBe(glas.status === 200 ? 1 : 0);
+    });
+
     it('posle roka se ne glasa', async () => {
       const anketa = await napravi(novaAnketa(z.id));
       await istekni(anketa);
@@ -219,6 +234,28 @@ describe('glasanje', () => {
           .getRepository(Glas)
           .countBy({ glasanje: { id: anketa.id } }),
       ).toBe(0);
+    });
+
+    it('ko ne vidi glasanje dobija 404, kao da ne postoji', async () => {
+      const odluka = await napravi(novaOdluka(z.id));
+      await kao(t, z.ukucanin).get(`/glasanje/${odluka.id}`).expect(404);
+      await kao(t, z.ukucanin)
+        .put(`/glasanje/${odluka.id}/glas`)
+        .send({ opcijaId: odluka.opcije[0].id })
+        .expect(404);
+      await kao(t, z.vlasnik).get('/glasanje?zgradaId=0').expect(400);
+    });
+
+    it('glasanje obrisano dok se računa odgovor daje 404', async () => {
+      await expect(
+        t.app.get(GlasanjeRezultatiService).jedno(2_000_000_000, z.vlasnik.id, {
+          stanuje: [],
+          poseduje: [],
+          vlasnickiStanovi: [],
+          zgrade: [],
+          upravlja: [],
+        }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('o anketi se obaveštavaju svi stanari, o odluci samo vlasnici', async () => {
@@ -394,20 +431,54 @@ describe('glasanje', () => {
       await glasaj(z.vlasnik, odluka, 'Protiv').expect(409);
     });
 
-    it('broj stanova se pamti kad je odluka napravljena', async () => {
+    it('broj stanova prati stanove dodate i obrisane dok odluka traje, a posle roka se ne menja', async () => {
       const zgrada = await napraviZgradu(t, 'Rastuca', 2);
       const admin = await napraviKorisnika(t, 'Admin', {
         uloga: 'admin' as never,
       });
+      const zavrsena = await napravi(novaOdluka(zgrada.id), admin);
+      await istekni(zavrsena);
       const odluka = await napravi(novaOdluka(zgrada.id), admin);
       expect(odluka.ukupnoGlasaca).toBe(2);
+
       await kao(t, admin)
-        .post('/stan')
-        .send({ broj: '3', sprat: 1, kvadratura: 60, zgradaId: zgrada.id })
+        .post('/stan/grupno')
+        .send({
+          zgradaId: zgrada.id,
+          stanovi: [
+            { broj: '3', sprat: 1, kvadratura: 60 },
+            { broj: '4', sprat: 1, kvadratura: 60 },
+          ],
+        })
         .expect(201);
-      expect((await prikaz(admin, odluka)).ukupnoGlasaca).toBe(2);
-      const nova = await napravi(novaOdluka(zgrada.id), admin);
-      expect(nova.ukupnoGlasaca).toBe(3);
+      expect((await prikaz(admin, odluka)).ukupnoGlasaca).toBe(4);
+
+      const stanovi = await kao(t, admin)
+        .get(`/stan/zgrada/${zgrada.id}`)
+        .expect(200);
+      const cetvrti = (stanovi.body as { id: number; broj: string }[]).find(
+        (s) => s.broj === '4',
+      );
+      await kao(t, admin).delete(`/stan/${cetvrti?.id}`).expect(200);
+      expect((await prikaz(admin, odluka)).ukupnoGlasaca).toBe(3);
+      expect((await prikaz(admin, zavrsena)).ukupnoGlasaca).toBe(2);
+    });
+
+    it('briše se samo dok traje i niko nije glasao', async () => {
+      const prazna = await napravi(novaOdluka(z.id));
+      expect(prazna.smeDaObrise).toBe(true);
+      await kao(t, z.upravnik).delete(`/glasanje/${prazna.id}`).expect(204);
+
+      const saGlasom = await napravi(novaOdluka(z.id));
+      await glasaj(z.vlasnik, saGlasom, 'Za').expect(200);
+      expect((await prikaz(z.upravnik, saGlasom)).smeDaObrise).toBe(false);
+      await kao(t, z.upravnik).delete(`/glasanje/${saGlasom.id}`).expect(409);
+
+      const zavrsena = await napravi(novaOdluka(z.id));
+      await istekni(zavrsena);
+      expect((await prikaz(z.upravnik, zavrsena)).smeDaObrise).toBe(false);
+      await kao(t, z.upravnik).delete(`/glasanje/${zavrsena.id}`).expect(409);
+      await prikaz(z.upravnik, zavrsena);
     });
 
     it('objavljuje se kao obaveštenje, jednom i tek posle roka', async () => {

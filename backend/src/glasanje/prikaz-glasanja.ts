@@ -91,7 +91,7 @@ export function prikazGlasanja(
     sastanak: podaci.sastanakPoOdluci.get(glasanje.id) ?? null,
     smeDaGlasa: !zavrseno && imaPravoGlasa,
     smeDaZatvori: !zavrseno && !odluka && upravlja,
-    smeDaObrise: upravlja,
+    smeDaObrise: upravlja && (!odluka || (!zavrseno && brojGlasaca === 0)),
     smeDaObjavi: zavrseno && odluka && upravlja && oglasId === null,
   });
 }

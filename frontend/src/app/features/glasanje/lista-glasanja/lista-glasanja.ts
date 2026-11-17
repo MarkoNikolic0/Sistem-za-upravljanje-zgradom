@@ -86,17 +86,18 @@ export class ListaGlasanja {
   }
 
   protected async glasaj(glasanje: Glasanje, opcijaId: number): Promise<void> {
-    if (!(await this.store.glasaj(glasanje, opcijaId))) {
+    if ((await this.store.glasaj(glasanje, opcijaId)) === 'odbijen') {
       this.fokusiraj('#poruka-glasanja');
     }
   }
 
   protected async povuci(glasanje: Glasanje): Promise<void> {
-    // Dugme Povuci glas nestaje, pa fokus ide na prvu opciju
-    const fokus = (await this.store.povuciGlas(glasanje))
-      ? `#anketa-${glasanje.id} .opcija`
-      : '#poruka-glasanja';
-    this.fokusiraj(fokus);
+    const ishod = await this.store.povuciGlas(glasanje);
+    if (ishod === 'zabelezen') {
+      this.fokusiraj(`#anketa-${glasanje.id} .opcija`);
+    } else if (ishod === 'odbijen') {
+      this.fokusiraj('#poruka-glasanja');
+    }
   }
 
   protected zatvori(event: Event, glasanje: Glasanje): void {
@@ -112,7 +113,9 @@ export class ListaGlasanja {
     const odluka = glasanje.vrsta === 'odluka';
     this.potvrdi(event, {
       header: odluka ? 'Brisanje odluke' : 'Brisanje ankete',
-      message: `Obrisati ${odluka ? 'odluku' : 'anketu'} „${glasanje.pitanje}“ i sve glasove? Ovo ne može da se poništi.`,
+      message: odluka
+        ? `Obrisati odluku „${glasanje.pitanje}“? Ovo ne može da se poništi.`
+        : `Obrisati anketu „${glasanje.pitanje}“ i sve glasove? Ovo ne može da se poništi.`,
       natpis: 'Obriši',
       akcija: () => this.store.obrisi(glasanje),
     });

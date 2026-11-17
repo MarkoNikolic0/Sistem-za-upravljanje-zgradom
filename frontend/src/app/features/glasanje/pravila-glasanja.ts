@@ -36,7 +36,19 @@ export function stanova(broj: number): string {
 }
 
 export function udeo(broj: number, ukupno: number): number {
-  return ukupno === 0 ? 0 : broj / ukupno;
+  return ukupno === 0 ? 0 : Math.min(broj / ukupno, 1);
+}
+
+const NAJDUZE_CEKANJE_MS = 2_147_483_647;
+const POSLE_ROKA_MS = 1_000;
+
+export function sledeciRok(glasanja: Glasanje[], sada = Date.now()): number | null {
+  const rokovi = glasanja.map((g) => new Date(g.rok).getTime()).filter((rok) => rok > sada);
+  return rokovi.length > 0 ? Math.min(...rokovi) : null;
+}
+
+export function cekanjeDoRoka(rok: number, sada = Date.now()): number {
+  return Math.min(rok - sada + POSLE_ROKA_MS, NAJDUZE_CEKANJE_MS);
 }
 
 export function uProcentima(deo: number): string {

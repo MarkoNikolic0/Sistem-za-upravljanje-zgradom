@@ -29,6 +29,7 @@ export class Glas {
   @ManyToOne(() => Korisnik, { nullable: false, onDelete: 'CASCADE' })
   korisnik: Korisnik;
 
+  @Index()
   @ManyToOne(() => Stan, { nullable: true })
   stan: Stan | null;
 

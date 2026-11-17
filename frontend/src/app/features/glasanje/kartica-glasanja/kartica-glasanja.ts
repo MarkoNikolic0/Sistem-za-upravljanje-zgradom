@@ -16,10 +16,19 @@ import {
   vodece,
 } from '../pravila-glasanja';
 import { StanjeOdluke } from '../stanje-odluke/stanje-odluke';
+import { TrakaKvoruma } from '../traka-kvoruma/traka-kvoruma';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  imports: [DatePipe, NgTemplateOutlet, RouterLink, ButtonModule, MessageModule, StanjeOdluke],
+  imports: [
+    DatePipe,
+    NgTemplateOutlet,
+    RouterLink,
+    ButtonModule,
+    MessageModule,
+    StanjeOdluke,
+    TrakaKvoruma,
+  ],
   selector: 'app-kartica-glasanja',
   styleUrl: './kartica-glasanja.scss',
   templateUrl: './kartica-glasanja.html',

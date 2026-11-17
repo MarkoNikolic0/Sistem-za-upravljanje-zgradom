@@ -13,18 +13,9 @@ import {
 } from 'rxjs';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { VezaActions } from '../../notifikacije/notifikacija-store/notifikacije-actions';
-import { Glasanje } from '../glasanje-models';
 import { GlasanjeService } from '../glasanje-service';
-import { cekaGlas, NAJVISE_AKTIVNIH } from '../pravila-glasanja';
+import { cekaGlas, cekanjeDoRoka, NAJVISE_AKTIVNIH, sledeciRok } from '../pravila-glasanja';
 import { CekaGlasActions, CekaGlasApiActions } from './ceka-glas-actions';
-
-const NAJDUZE_CEKANJE_MS = 2_147_483_647;
-const POSLE_ROKA_MS = 1_000;
-
-function sledeciRok(cekaju: Glasanje[], sada = Date.now()): number | null {
-  const rokovi = cekaju.map((g) => new Date(g.rok).getTime()).filter((rok) => rok > sada);
-  return rokovi.length > 0 ? Math.min(...rokovi) : null;
-}
 
 export const cekaGlasUcitaj = createEffect(
   (
@@ -75,7 +66,7 @@ export const cekaGlasRok = createEffect(
       switchMap(({ sledeciRok }) =>
         sledeciRok === null
           ? EMPTY
-          : timer(Math.min(sledeciRok - Date.now() + POSLE_ROKA_MS, NAJDUZE_CEKANJE_MS)).pipe(
+          : timer(cekanjeDoRoka(sledeciRok)).pipe(
               map(() => CekaGlasActions.rokIstekao()),
               takeUntil(actions$.pipe(ofType(VezaActions.zaustavi))),
             ),

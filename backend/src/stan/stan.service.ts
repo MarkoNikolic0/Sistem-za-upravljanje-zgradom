@@ -18,6 +18,7 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
+import { promeniBrojStanovaOdluka } from '../glasanje/stanovi-odluka.js';
 import { PrisutanStan } from '../sastanak/prisutan-stan.entity.js';
 import { poRedosleduStanova } from './redosled-stanova.js';
 import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
@@ -118,7 +119,12 @@ export class StanService {
       );
     }
 
-    return await this.stanRepository.remove(stan);
+    return await this.stanRepository.manager.transaction(async (manager) => {
+      await proveriAktivnu(manager, stan.zgrada.id, 'pessimistic_write');
+      const obrisan = await manager.remove(stan);
+      await promeniBrojStanovaOdluka(manager, stan.zgrada.id, -1);
+      return obrisan;
+    });
   }
 
   private async sacuvajNove(
@@ -159,8 +165,10 @@ export class StanService {
     );
     try {
       return await this.stanRepository.manager.transaction(async (manager) => {
-        await proveriAktivnu(manager, zgradaId, true);
-        return await manager.save(stanovi);
+        await proveriAktivnu(manager, zgradaId, 'pessimistic_write');
+        const sacuvani = await manager.save(stanovi);
+        await promeniBrojStanovaOdluka(manager, zgradaId, sacuvani.length);
+        return sacuvani;
       });
     } catch (greska) {
       if (jeDupliUnos(greska)) {

@@ -324,7 +324,7 @@ describe('prava pristupa', () => {
         .expect(200);
       await kao(t, svet.a.ukucanin)
         .get(`/glasanje/${sadrzaj.odluka}`)
-        .expect(403);
+        .expect(404);
       expect(await ids(svet.a.vlasnik, '/glasanje')).toContain(sadrzaj.odluka);
       expect(await ids(svet.a.ukucanin, '/glasanje')).toEqual([sadrzaj.anketa]);
     });
@@ -376,7 +376,7 @@ describe('prava pristupa', () => {
         200,
       );
       await glas(svet.a.ukucanin, sadrzaj.odluka, sadrzaj.opcijaOdluke).expect(
-        403,
+        404,
       );
       await glas(svet.a.vlasnik, sadrzaj.odluka, sadrzaj.opcijaOdluke).expect(
         200,
@@ -488,7 +488,7 @@ describe('prava pristupa', () => {
         .send(novaAnketa(svet.a.id))
         .expect(403);
       await kao(t, upravnik).get(`/glasanje/${sadrzaj.anketa}`).expect(200);
-      await kao(t, upravnik).get(`/glasanje/${sadrzaj.odluka}`).expect(403);
+      await kao(t, upravnik).get(`/glasanje/${sadrzaj.odluka}`).expect(404);
       await kao(t, upravnik).get(`/sastanak/${sadrzaj.skupstina}`).expect(403);
     });
 
@@ -550,7 +550,7 @@ describe('prava pristupa', () => {
       await kao(t, upravnik)
         .patch(`/kvar/${sadrzaj.kvarZajednicki}/prihvati`)
         .expect(403);
-      await kao(t, upravnik).get(`/glasanje/${sadrzaj.anketa}`).expect(403);
+      await kao(t, upravnik).get(`/glasanje/${sadrzaj.anketa}`).expect(404);
     });
   });
 

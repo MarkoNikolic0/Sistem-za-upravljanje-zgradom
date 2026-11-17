@@ -3,12 +3,14 @@ import { glasanje, SADA, zaDanaU } from '../../../testiranje/podaci';
 import { OpcijaGlasanja } from './glasanje-models';
 import {
   cekaGlas,
+  cekanjeDoRoka,
   detaljIshoda,
   glasaliSuvlasnici,
   istice,
   isticeUskoro,
   objavaOdluke,
   razliciteOpcije,
+  sledeciRok,
   udeo,
   uProcentima,
   vodece,
@@ -48,8 +50,18 @@ describe('pravila glasanja', () => {
     expect(cekaGlas(glasanje({ smeDaGlasa: false }))).toBe(false);
   });
 
+  it('sledeći rok je najbliži budući, a čekanje traje do sekund posle njega', () => {
+    const sada = SADA.getTime();
+    const rokovi = [zaDanaU(-1), zaDanaU(3), zaDanaU(1)].map((rok) => glasanje({ rok }));
+    expect(sledeciRok(rokovi, sada)).toBe(new Date(zaDanaU(1)).getTime());
+    expect(sledeciRok([glasanje({ rok: zaDanaU(-1) })], sada)).toBeNull();
+    expect(cekanjeDoRoka(sada + 5_000, sada)).toBe(6_000);
+    expect(cekanjeDoRoka(sada + 60 * 86_400_000, sada)).toBe(2_147_483_647);
+  });
+
   it('udeo i procenat ne dele nulom', () => {
     expect(udeo(0, 0)).toBe(0);
+    expect(udeo(25, 20)).toBe(1);
     expect(uProcentima(udeo(1, 3))).toBe('33%');
   });
 

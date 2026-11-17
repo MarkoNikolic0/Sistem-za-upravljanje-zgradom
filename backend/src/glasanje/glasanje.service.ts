@@ -24,7 +24,12 @@ import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
 import { ODGOVORI_ODLUKE } from './ishod-odluke.js';
 import { GlasanjePravaService } from './glasanje-prava.service.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
-import { PORUKA_ZAVRSENA } from './glasanje.constants.js';
+import {
+  MAKS_ODLUKA_ZA_IZBOR,
+  PORUKA_ODLUKA_OSTAJE,
+  PORUKA_ZAVRSENA,
+} from './glasanje.constants.js';
+import { Glas } from './glas.entity.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { stanariZgrade } from '../notifikacija/primaoci.js';
@@ -83,6 +88,7 @@ export class GlasanjeService {
       select: { id: true, pitanje: true, rok: true },
       where: { vrsta: VrstaGlasanja.ODLUKA, zgrada: { id: zgradaId } },
       order: { rok: 'DESC', id: 'DESC' },
+      take: MAKS_ODLUKA_ZA_IZBOR,
     });
     return odluke.map(({ id, pitanje, rok }) => ({
       id,
@@ -117,7 +123,7 @@ export class GlasanjeService {
 
     const { id } = await this.glasanjeRepository.manager.transaction(
       async (manager) => {
-        await proveriAktivnu(manager, dto.zgradaId, true);
+        await proveriAktivnu(manager, dto.zgradaId, 'pessimistic_read');
         const sacuvano = await manager.save(
           this.glasanjeRepository.create({
             vrsta: dto.vrsta,
@@ -171,8 +177,32 @@ export class GlasanjeService {
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
-    await this.prava.findZaUpravljanje(id, korisnikId, uloga);
-    await this.glasanjeRepository.delete(id);
+    const { glasanje } = await this.prava.findZaUpravljanje(
+      id,
+      korisnikId,
+      uloga,
+    );
+    if (glasanje.vrsta === VrstaGlasanja.ANKETA) {
+      await this.glasanjeRepository.delete(id);
+      return;
+    }
+    await this.glasanjeRepository.manager.transaction(async (manager) => {
+      const odluka = await manager.findOne(Glasanje, {
+        where: { id },
+        select: { id: true, rok: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!odluka) {
+        return;
+      }
+      if (
+        odluka.rok <= new Date() ||
+        (await manager.existsBy(Glas, { glasanje: { id } }))
+      ) {
+        throw new ConflictException(PORUKA_ODLUKA_OSTAJE);
+      }
+      await manager.delete(Glasanje, id);
+    });
   }
 
   async proveriObjavu(glasanjeId: number, zgradaId: number) {

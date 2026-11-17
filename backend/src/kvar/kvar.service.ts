@@ -70,7 +70,7 @@ export class KvarService {
     });
 
     return await this.dataSource.transaction(async (manager) => {
-      await proveriAktivnu(manager, kvar.zgrada.id, true);
+      await proveriAktivnu(manager, kvar.zgrada.id, 'pessimistic_read');
       const sacuvan = await manager.save(kvar);
       await manager.insert(PromenaStatusaKvara, {
         kvar: { id: sacuvan.id },

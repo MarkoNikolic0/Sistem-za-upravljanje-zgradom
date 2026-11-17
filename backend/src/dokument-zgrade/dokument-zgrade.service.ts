@@ -115,7 +115,7 @@ export class DokumentZgradeService {
 
     try {
       return await this.dataSource.transaction(async (manager) => {
-        await proveriAktivnu(manager, zgradaId, true);
+        await proveriAktivnu(manager, zgradaId, 'pessimistic_read');
         return await upisi(manager, {
           kljuc,
           tip,

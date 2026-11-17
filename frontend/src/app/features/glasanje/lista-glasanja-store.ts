@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { firstValueFrom, Observable, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, firstValueFrom, forkJoin, Observable, pipe, switchMap, tap, timer } from 'rxjs';
 import {
   setError,
   setFulfilled,
@@ -18,14 +18,17 @@ import { Glasanje, StanjeGlasanja } from './glasanje-models';
 import { CekaGlasActions } from './ceka-glas-store/ceka-glas-actions';
 import { GlasanjeService } from './glasanje-service';
 import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
+import { cekanjeDoRoka, sledeciRok } from './pravila-glasanja';
 
 const GLASANJA_PO_STRANI = 10;
+
+export type IshodGlasa = 'zabelezen' | 'odbijen' | 'bez-veze';
 
 interface ListaGlasanjaState {
   glasanja: Glasanje[];
   stanje: StanjeGlasanja;
   zgradaId: number | null;
-  glasUToku: boolean;
+  glasoviUToku: number[];
   greskaGlasa: { id: number; tekst: string } | null;
   najava: string;
 }
@@ -35,7 +38,7 @@ export const ListaGlasanjaStore = signalStore(
     glasanja: [],
     stanje: 'aktivna',
     zgradaId: zgradaIzAdrese(),
-    glasUToku: false,
+    glasoviUToku: [],
     greskaGlasa: null,
     najava: '',
   })),
@@ -72,12 +75,43 @@ export const ListaGlasanjaStore = signalStore(
       ),
     );
 
+    const osveziIstekla = rxMethod<Glasanje[]>(
+      pipe(
+        switchMap((glasanja) => {
+          const rok = sledeciRok(glasanja.filter((g) => !g.zavrseno));
+          return rok === null ? EMPTY : timer(cekanjeDoRoka(rok));
+        }),
+        switchMap(() => {
+          const sada = Date.now();
+          const istekla = store
+            .glasanja()
+            .filter((g) => !g.zavrseno && new Date(g.rok).getTime() <= sada);
+          return forkJoin(istekla.map((g) => glasanjeService.procitaj(g.id))).pipe(
+            tapResponse({
+              next: (nova) => {
+                const poId = new Map(nova.map((g) => [g.id, g]));
+                patchState(store, {
+                  glasanja: store.glasanja().map((g) => poId.get(g.id) ?? g),
+                });
+              },
+              error: () => ucitaj(),
+            }),
+          );
+        }),
+      ),
+    );
+
     async function promeniGlas(
       id: number,
       poziv: () => Observable<Glasanje>,
       najava: string,
-    ): Promise<boolean> {
-      patchState(store, { glasUToku: true, greskaGlasa: null, najava: '', poruka: null });
+    ): Promise<IshodGlasa> {
+      patchState(store, {
+        glasoviUToku: [...store.glasoviUToku(), id],
+        greskaGlasa: null,
+        najava: '',
+        poruka: null,
+      });
       try {
         const glasanje = await firstValueFrom(poziv());
         patchState(store, {
@@ -85,7 +119,7 @@ export const ListaGlasanjaStore = signalStore(
           najava,
         });
         globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
-        return true;
+        return 'zabelezen';
       } catch (err) {
         const greska = err instanceof HttpErrorResponse ? err : null;
         if (greska && [403, 404, 409].includes(greska.status)) {
@@ -93,19 +127,20 @@ export const ListaGlasanjaStore = signalStore(
             poruka: { tip: 'greska', tekst: porukaServera(greska) ?? 'Glas nije zabeležen.' },
           });
           ucitaj();
-          return false;
+          return 'odbijen';
         }
         patchState(store, {
           greskaGlasa: { id, tekst: 'Glas nije zabeležen. Proveri vezu i pokušaj ponovo.' },
         });
-        return true;
+        return 'bez-veze';
       } finally {
-        patchState(store, { glasUToku: false });
+        patchState(store, { glasoviUToku: store.glasoviUToku().filter((g) => g !== id) });
       }
     }
 
     return {
       ucitaj,
+      osveziIstekla,
       promeniStanje(stanje: StanjeGlasanja): void {
         patchState(store, { stanje, strana: 1, poruka: null });
         ucitaj();
@@ -118,7 +153,7 @@ export const ListaGlasanjaStore = signalStore(
         patchState(store, { strana });
         ucitaj();
       },
-      glasaj(glasanje: Glasanje, opcijaId: number): Promise<boolean> {
+      glasaj(glasanje: Glasanje, opcijaId: number): Promise<IshodGlasa> {
         const opcija = glasanje.opcije.find((o) => o.id === opcijaId);
         return promeniGlas(
           glasanje.id,
@@ -126,7 +161,7 @@ export const ListaGlasanjaStore = signalStore(
           `Glas za „${opcija?.tekst}“ je zabeležen.`,
         );
       },
-      povuciGlas(glasanje: Glasanje): Promise<boolean> {
+      povuciGlas(glasanje: Glasanje): Promise<IshodGlasa> {
         return promeniGlas(
           glasanje.id,
           () => glasanjeService.povuciGlas(glasanje.id),
@@ -134,33 +169,40 @@ export const ListaGlasanjaStore = signalStore(
         );
       },
       zatvori(id: number): Promise<boolean> {
-        return store.izvrsi(
-          async () => {
-            await firstValueFrom(glasanjeService.zatvori(id));
-            globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
-            ucitaj();
-          },
-          'Anketa je zatvorena. Rezultati su u Završenim.',
-          'Anketa nije zatvorena. Pokušaj ponovo.',
-          ucitaj,
+        return store.jednom(`zatvori-${id}`, () =>
+          store.izvrsi(
+            async () => {
+              await firstValueFrom(glasanjeService.zatvori(id));
+              globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
+              ucitaj();
+            },
+            'Anketa je zatvorena. Rezultati su u Završenim.',
+            'Anketa nije zatvorena. Pokušaj ponovo.',
+            ucitaj,
+          ),
         );
       },
       obrisi(glasanje: Glasanje): Promise<boolean> {
         const naziv = glasanje.vrsta === 'odluka' ? 'Odluka' : 'Anketa';
-        return store.izvrsi(
-          async () => {
-            await firstValueFrom(glasanjeService.obrisi(glasanje.id));
-            globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
-            ucitaj();
-          },
-          `${naziv} je obrisana.`,
-          `${naziv} nije obrisana. Pokušaj ponovo.`,
-          ucitaj,
+        return store.jednom(`obrisi-${glasanje.id}`, () =>
+          store.izvrsi(
+            async () => {
+              await firstValueFrom(glasanjeService.obrisi(glasanje.id));
+              globalniStore.dispatch(CekaGlasActions.glasanjaPromenjena());
+              ucitaj();
+            },
+            `${naziv} je obrisana.`,
+            `${naziv} nije obrisana. Pokušaj ponovo.`,
+            ucitaj,
+          ),
         );
       },
     };
   }),
   withHooks({
-    onInit: (store) => store.ucitaj(),
+    onInit: (store) => {
+      store.ucitaj();
+      store.osveziIstekla(store.glasanja);
+    },
   }),
 );
