@@ -105,6 +105,29 @@ describe('ListaGlasanjaStore', () => {
     expect(lista).toHaveBeenCalledTimes(2);
   });
 
+  it('bez veze posle roka lista ostaje, a kad server još ne zatvori glasanje, pokušava ponovo', () => {
+    const rok = new Date(SADA.getTime() + SAT_MS).toISOString();
+    pokreni([glasanje({ id: 1, rok })]);
+    procitaj
+      .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })))
+      .mockReturnValueOnce(of(glasanje({ id: 1, rok })))
+      .mockReturnValueOnce(of(glasanje({ id: 1, rok, zavrseno: true })));
+
+    vi.advanceTimersByTime(SAT_MS + 1_000);
+    expect(lista).toHaveBeenCalledOnce();
+    expect(store.glasanja()).toHaveLength(1);
+    expect(store.error()).toBeNull();
+
+    store.osveziIstekla([...store.glasanja()]);
+    TestBed.tick();
+    vi.advanceTimersByTime(30_000);
+    TestBed.tick();
+    vi.advanceTimersByTime(30_000);
+    TestBed.tick();
+    expect(procitaj).toHaveBeenCalledTimes(3);
+    expect(store.glasanja()[0].zavrseno).toBe(true);
+  });
+
   it('ponovljen klik na Zatvori šalje jedan zahtev', async () => {
     pokreni([glasanje({ id: 1, smeDaZatvori: true })]);
     const odgovor = new Subject<Glasanje>();

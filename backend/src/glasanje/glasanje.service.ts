@@ -24,11 +24,7 @@ import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
 import { ODGOVORI_ODLUKE } from './ishod-odluke.js';
 import { GlasanjePravaService } from './glasanje-prava.service.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
-import {
-  MAKS_ODLUKA_ZA_IZBOR,
-  PORUKA_ODLUKA_OSTAJE,
-  PORUKA_ZAVRSENA,
-} from './glasanje.constants.js';
+import { PORUKA_ODLUKA_OSTAJE, PORUKA_ZAVRSENA } from './glasanje.constants.js';
 import { Glas } from './glas.entity.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
@@ -88,7 +84,6 @@ export class GlasanjeService {
       select: { id: true, pitanje: true, rok: true },
       where: { vrsta: VrstaGlasanja.ODLUKA, zgrada: { id: zgradaId } },
       order: { rok: 'DESC', id: 'DESC' },
-      take: MAKS_ODLUKA_ZA_IZBOR,
     });
     return odluke.map(({ id, pitanje, rok }) => ({
       id,

@@ -18,7 +18,7 @@ import { Glasanje, StanjeGlasanja } from './glasanje-models';
 import { CekaGlasActions } from './ceka-glas-store/ceka-glas-actions';
 import { GlasanjeService } from './glasanje-service';
 import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
-import { cekanjeDoRoka, sledeciRok } from './pravila-glasanja';
+import { cekanjeDoOsvezavanja, rokProsao } from './pravila-glasanja';
 
 const GLASANJA_PO_STRANI = 10;
 
@@ -78,14 +78,12 @@ export const ListaGlasanjaStore = signalStore(
     const osveziIstekla = rxMethod<Glasanje[]>(
       pipe(
         switchMap((glasanja) => {
-          const rok = sledeciRok(glasanja.filter((g) => !g.zavrseno));
-          return rok === null ? EMPTY : timer(cekanjeDoRoka(rok));
+          const cekanje = cekanjeDoOsvezavanja(glasanja);
+          return cekanje === null ? EMPTY : timer(cekanje);
         }),
         switchMap(() => {
           const sada = Date.now();
-          const istekla = store
-            .glasanja()
-            .filter((g) => !g.zavrseno && new Date(g.rok).getTime() <= sada);
+          const istekla = store.glasanja().filter((g) => rokProsao(g, sada));
           return forkJoin(istekla.map((g) => glasanjeService.procitaj(g.id))).pipe(
             tapResponse({
               next: (nova) => {
@@ -94,7 +92,11 @@ export const ListaGlasanjaStore = signalStore(
                   glasanja: store.glasanja().map((g) => poId.get(g.id) ?? g),
                 });
               },
-              error: () => ucitaj(),
+              error: (err: unknown) => {
+                if (err instanceof HttpErrorResponse && err.status === 404) {
+                  ucitaj();
+                }
+              },
             }),
           );
         }),

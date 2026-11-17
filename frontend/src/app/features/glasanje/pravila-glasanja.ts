@@ -41,6 +41,7 @@ export function udeo(broj: number, ukupno: number): number {
 
 const NAJDUZE_CEKANJE_MS = 2_147_483_647;
 const POSLE_ROKA_MS = 1_000;
+const PONOVO_POSLE_ROKA_MS = 30_000;
 
 export function sledeciRok(glasanja: Glasanje[], sada = Date.now()): number | null {
   const rokovi = glasanja.map((g) => new Date(g.rok).getTime()).filter((rok) => rok > sada);
@@ -49,6 +50,21 @@ export function sledeciRok(glasanja: Glasanje[], sada = Date.now()): number | nu
 
 export function cekanjeDoRoka(rok: number, sada = Date.now()): number {
   return Math.min(rok - sada + POSLE_ROKA_MS, NAJDUZE_CEKANJE_MS);
+}
+
+export function rokProsao(glasanje: Glasanje, sada = Date.now()): boolean {
+  return !glasanje.zavrseno && new Date(glasanje.rok).getTime() <= sada;
+}
+
+export function cekanjeDoOsvezavanja(glasanja: Glasanje[], sada = Date.now()): number | null {
+  if (glasanja.some((g) => rokProsao(g, sada))) {
+    return PONOVO_POSLE_ROKA_MS;
+  }
+  const rok = sledeciRok(
+    glasanja.filter((g) => !g.zavrseno),
+    sada,
+  );
+  return rok === null ? null : cekanjeDoRoka(rok, sada);
 }
 
 export function uProcentima(deo: number): string {
