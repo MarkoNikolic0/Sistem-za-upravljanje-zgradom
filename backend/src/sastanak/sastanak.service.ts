@@ -309,7 +309,7 @@ export class SastanakService {
   ) {
     await this.notifikacije.obavesti(
       manager,
-      await this.pozvani(manager, sastanak.zgrada.id, sastanak.vrsta),
+      [...(await this.pozvani(manager, sastanak.zgrada.id, sastanak.vrsta))],
       { tip, tekst, link: `/sastanci/${sastanak.id}` },
       akterId,
     );
@@ -340,18 +340,18 @@ export class SastanakService {
       );
 
     await posalji(
-      novi.filter((k) => stari.includes(k)),
+      [...novi].filter((k) => stari.has(k)),
       TipNotifikacije.SASTANAK_IZMENJEN,
       `Sastanak „${naslov}“ je izmenjen. Termin: ${danISat(pocetak)}.` +
         (izmena.ponisteneNajave ? ' Potvrdi ponovo da li dolaziš.' : ''),
     );
     await posalji(
-      novi.filter((k) => !stari.includes(k)),
+      [...novi].filter((k) => !stari.has(k)),
       TipNotifikacije.SASTANAK_NOVI,
       `Zakazan je sastanak „${naslov}“ za ${danISat(pocetak)}.`,
     );
     await posalji(
-      stari.filter((k) => !novi.includes(k)),
+      [...stari].filter((k) => !novi.has(k)),
       TipNotifikacije.SASTANAK_IZMENJEN,
       `Sastanak „${naslov}“ je promenjen u skupštinu, na koju dolaze samo vlasnici stanova.`,
       null,
@@ -367,7 +367,7 @@ export class SastanakService {
       stanariZgrade(manager, zgradaId, vrsta === VrstaSastanka.SKUPSTINA),
       upravnikZgrade(manager, zgradaId),
     ]);
-    return [...new Set([...stanari, ...upravnik])];
+    return new Set([...stanari, ...upravnik]);
   }
 
   private proveriTermin(vrsta: VrstaSastanka, pocetak: Date, hitno: boolean) {

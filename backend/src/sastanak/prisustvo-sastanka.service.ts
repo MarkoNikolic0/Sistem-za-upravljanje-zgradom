@@ -136,7 +136,8 @@ export class PrisustvoSastankaService {
               id: In(stanovi),
               zgrada: { id: zgradaId },
             }),
-        manager.countBy(Stan, { zgrada: { id: zgradaId } }),
+        sastanak.ukupnoStanova ??
+          manager.countBy(Stan, { zgrada: { id: zgradaId } }),
       ]);
       if (uZgradi !== stanovi.length) {
         throw greskaPolja('stanovi', 'Izabran stan nije u ovoj zgradi.');

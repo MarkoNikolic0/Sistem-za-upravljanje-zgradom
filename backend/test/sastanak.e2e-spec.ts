@@ -514,6 +514,11 @@ describe('sastanci', () => {
           prag: 3,
           prisutno: 3,
         });
+        const ispravka = await evidentiraj(
+          skupstina,
+          z.stanovi.slice(0, 2),
+        ).expect(200);
+        expect(ispravka.body.kvorum).toMatchObject({ ukupno: 4, prisutno: 2 });
       } finally {
         await t.baza.getRepository(Stan).delete(novi.id);
       }
