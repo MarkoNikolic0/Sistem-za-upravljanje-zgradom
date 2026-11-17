@@ -424,6 +424,20 @@ describe('stanari, nalozi i zgrade', () => {
           .send({ opcijaId: glasanje.opcije[0].id })
           .expect(200);
       }
+      const sastanci: number[] = [];
+      for (const vrsta of [VrstaSastanka.SKUPSTINA, VrstaSastanka.ZBOR]) {
+        const sastanak = await id(
+          kao(t, z.upravnik)
+            .post('/sastanak')
+            .send(noviSastanak(z.id, vrsta))
+            .expect(201),
+        );
+        await kao(t, z.vlasnik)
+          .put(`/sastanak/${sastanak}/najava`)
+          .send({ dolazi: true })
+          .expect(200);
+        sastanci.push(sastanak);
+      }
 
       const izmena = await kao(t, z.upravnik)
         .patch(`/zgrada/${z.id}/stanar/${z.vezaVlasnika}`)
@@ -441,6 +455,11 @@ describe('stanari, nalozi i zgrade', () => {
       expect(glasovi.map((g) => g.glasanje.id)).toEqual([anketa.id]);
       await kao(t, z.vlasnik).get(`/glasanje/${odluka.id}`).expect(404);
       await kao(t, z.vlasnik).get(`/glasanje/${anketa.id}`).expect(200);
+      const najave = await t.baza.getRepository(PotvrdaPrisustva).find({
+        where: { korisnik: { id: z.vlasnik.id } },
+        relations: { sastanak: true },
+      });
+      expect(najave.map((n) => n.sastanak.id)).toEqual([sastanci[1]]);
 
       await kao(t, z.upravnik)
         .patch(`/zgrada/${z.id}/stanar/${z.vezaVlasnika}`)

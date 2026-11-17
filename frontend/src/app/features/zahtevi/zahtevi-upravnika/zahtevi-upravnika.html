@@ -76,7 +76,6 @@
               pomoc="Stanar će videti razlog i moći će da pošalje novi zahtev."
               [obavezan]="false"
               [opasno]="true"
-              [slanje]="store.zahtevUObradiId() === zahtev.id"
               (posalji)="odbij(zahtev, $event)"
               (odustani)="odustaniOdOdbijanja(zahtev)"
             />

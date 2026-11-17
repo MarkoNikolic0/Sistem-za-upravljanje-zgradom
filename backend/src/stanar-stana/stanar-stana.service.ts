@@ -14,6 +14,7 @@ import { OglasService } from '../oglas/oglas.service.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { obrisiBuduceNajave } from '../sastanak/najave-prisustva.js';
+import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
 
 @Injectable()
 export class StanarStanaService {
@@ -47,7 +48,7 @@ export class StanarStanaService {
     await this.proveriUpravnika(zgradaId, korisnikId, uloga);
 
     return await this.dataSource.transaction(async (manager) => {
-      const { veza, stanarId } = await this.zakljucajVezu(
+      const { veza, veze, stanarId } = await this.zakljucajVezu(
         manager,
         zgradaId,
         id,
@@ -60,6 +61,14 @@ export class StanarStanaService {
           veza.stan.id,
           false,
         );
+        if (!veze.some((v) => v.id !== id && v.vlasnik)) {
+          await obrisiBuduceNajave(
+            manager,
+            zgradaId,
+            stanarId,
+            VrstaSastanka.SKUPSTINA,
+          );
+        }
       }
       await manager.update(StanarStana, id, { vlasnik: dto.vlasnik });
       if (veza.vlasnik !== dto.vlasnik) {
@@ -229,6 +238,7 @@ export class StanarStanaService {
     }
     return {
       veza,
+      veze,
       stanarId: nadjena.korisnik.id,
       ostajeUZgradi: veze.length > 1,
     };
