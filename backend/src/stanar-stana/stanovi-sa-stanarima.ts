@@ -6,6 +6,7 @@ import { poRedosleduStanova } from '../stan/redosled-stanova.js';
 export async function stanoviSaStanarima(
   manager: EntityManager,
   zgradaId: number,
+  saKontaktima = true,
 ) {
   const [stanovi, veze] = await Promise.all([
     manager.find(Stan, {
@@ -23,8 +24,8 @@ export async function stanoviSaStanarima(
           id: true,
           ime: true,
           prezime: true,
-          email: true,
-          telefon: true,
+          email: saKontaktima,
+          telefon: saKontaktima,
         },
       },
       order: {

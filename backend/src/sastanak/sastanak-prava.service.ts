@@ -51,12 +51,12 @@ export class SastanakPravaService {
       where: { id },
       relations,
     });
-    if (!sastanak) {
-      throw new NotFoundException(`Sastanak sa id-jem ${id} ne postoji!`);
-    }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
-    if (!sadrzi(zgradeVrste(sastanak.vrsta, p), sastanak.zgrada.id)) {
-      throw new ForbiddenException('Nemate pristup ovom sastanku!');
+    if (
+      !sastanak ||
+      !sadrzi(zgradeVrste(sastanak.vrsta, p), sastanak.zgrada.id)
+    ) {
+      throw new NotFoundException(`Sastanak sa id-jem ${id} ne postoji!`);
     }
     return { sastanak, p };
   }

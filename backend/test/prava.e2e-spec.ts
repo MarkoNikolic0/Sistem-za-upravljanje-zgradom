@@ -335,7 +335,7 @@ describe('prava pristupa', () => {
         .expect(200);
       await kao(t, svet.a.ukucanin)
         .get(`/sastanak/${sadrzaj.skupstina}`)
-        .expect(403);
+        .expect(404);
       await kao(t, svet.a.ukucanin)
         .get(`/sastanak/${sadrzaj.zbor}`)
         .expect(200);
@@ -360,7 +360,7 @@ describe('prava pristupa', () => {
         kao(t, akter)
           .put(`/sastanak/${sastanak}/najava`)
           .send({ dolazi: true });
-      await najava(svet.a.ukucanin, sadrzaj.skupstina).expect(403);
+      await najava(svet.a.ukucanin, sadrzaj.skupstina).expect(404);
       await najava(svet.a.vlasnik, sadrzaj.skupstina).expect(200);
       await najava(svet.a.ukucanin, sadrzaj.zbor).expect(200);
       await najava(svet.a.vlasnik, sadrzaj.zbor).expect(200);
@@ -489,7 +489,7 @@ describe('prava pristupa', () => {
         .expect(403);
       await kao(t, upravnik).get(`/glasanje/${sadrzaj.anketa}`).expect(200);
       await kao(t, upravnik).get(`/glasanje/${sadrzaj.odluka}`).expect(404);
-      await kao(t, upravnik).get(`/sastanak/${sadrzaj.skupstina}`).expect(403);
+      await kao(t, upravnik).get(`/sastanak/${sadrzaj.skupstina}`).expect(404);
     });
 
     it('svojom zgradom upravlja', async () => {

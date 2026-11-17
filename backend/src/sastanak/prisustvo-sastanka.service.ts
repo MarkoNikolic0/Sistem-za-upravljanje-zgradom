@@ -31,6 +31,7 @@ import {
 } from './prisustvo-sastanka.js';
 import { stanoviSaStanarima } from '../stanar-stana/stanovi-sa-stanarima.js';
 import { type PristupZgradama, sadrzi } from '../korisnik/pristup-zgradama.js';
+import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
@@ -124,17 +125,22 @@ export class PrisustvoSastankaService {
     if (sastanak.pocetak > new Date()) {
       throw new ConflictException(PORUKA_NIJE_POCEO);
     }
-    if (stanovi.length > 0) {
-      const uZgradi = await this.stanRepository.countBy({
-        id: In(stanovi),
-        zgrada: { id: sastanak.zgrada.id },
-      });
+
+    await this.dataSource.transaction(async (manager) => {
+      const zgradaId = sastanak.zgrada.id;
+      await proveriAktivnu(manager, zgradaId, 'pessimistic_read');
+      const [uZgradi, ukupnoStanova] = await Promise.all([
+        stanovi.length === 0
+          ? 0
+          : manager.countBy(Stan, {
+              id: In(stanovi),
+              zgrada: { id: zgradaId },
+            }),
+        manager.countBy(Stan, { zgrada: { id: zgradaId } }),
+      ]);
       if (uZgradi !== stanovi.length) {
         throw greskaPolja('stanovi', 'Izabran stan nije u ovoj zgradi.');
       }
-    }
-
-    await this.dataSource.transaction(async (manager) => {
       const zakljucan = await manager.findOne(Sastanak, {
         where: { id, pocetak: LessThanOrEqual(new Date()) },
         select: { id: true },
@@ -153,9 +159,10 @@ export class PrisustvoSastankaService {
           stanovi.map((stanId) => ({ sastanak: { id }, stan: { id: stanId } })),
         );
       }
-      sastanak.datumEvidencije = new Date();
+      Object.assign(sastanak, { datumEvidencije: new Date(), ukupnoStanova });
       await manager.update(Sastanak, id, {
         datumEvidencije: sastanak.datumEvidencije,
+        ukupnoStanova,
       });
     });
     return this.saSpiskom(sastanak, korisnikId, p);
@@ -242,7 +249,8 @@ export class PrisustvoSastankaService {
       !otkazan &&
       poceo;
     const [ukupnoStanova, odgovori, prisutno, zakljucana] = await Promise.all([
-      this.stanRepository.countBy({ zgrada: { id: sastanak.zgrada.id } }),
+      sastanak.ukupnoStanova ??
+        this.stanRepository.countBy({ zgrada: { id: sastanak.zgrada.id } }),
       this.odgovori(sastanak.zgrada.id, potvrde),
       sastanak.datumEvidencije === null
         ? null
@@ -273,7 +281,7 @@ export class PrisustvoSastankaService {
     const potvrde = await this.potvrde(sastanak.id);
     const [pregled, stanovi, prisutni] = await Promise.all([
       this.saPotvrdama(sastanak, korisnikId, p, potvrde),
-      stanoviSaStanarima(this.dataSource.manager, sastanak.zgrada.id),
+      stanoviSaStanarima(this.dataSource.manager, sastanak.zgrada.id, false),
       sastanak.datumEvidencije === null
         ? []
         : this.prisutanStanRepository.find({

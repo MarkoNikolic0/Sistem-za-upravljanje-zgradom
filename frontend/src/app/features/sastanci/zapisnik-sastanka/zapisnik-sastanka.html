@@ -49,6 +49,10 @@
       </p>
     }
   </div>
+} @else if (s.smeDaOkaciZapisnik && s.vrsta === 'skupstina' && !s.prisustvo?.datumEvidencije) {
+  <p class="text-sm text-priguseno">
+    Zapisnik skupštine se kači posle evidencije prisustva, da bi u njemu bio utvrđen kvorum.
+  </p>
 } @else if (s.smeDaOkaciZapisnik) {
   <button id="okaci-zapisnik" type="button" class="prazno dodaj-prvi" (click)="otvori()">
     <span class="prazno-ikonica" aria-hidden="true"><i class="pi pi-file-edit"></i></span>

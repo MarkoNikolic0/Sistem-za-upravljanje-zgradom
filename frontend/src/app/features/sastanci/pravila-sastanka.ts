@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { danaDo, zaDana } from '../../shared/tekst/datum';
+import { danaDo, danaDoUSrbiji, zaDana } from '../../shared/tekst/datum';
 import { uMnozini } from '../../shared/tekst/mnozina';
 import { imaPonavljanja } from '../../shared/forme/ponavljanje';
 import { KvorumSastanka, Sastanak, VrstaSastanka } from './sastanak-models';
@@ -62,7 +62,7 @@ export function rokPoziva(pocetni: () => Termin | null): ValidatorFn {
     if (pocetak.getTime() <= Date.now()) {
       return { proslost: true };
     }
-    return jeSkupstinaSaRokom(vrsta, hitno) && danaDo(pocetak) < DANA_ZA_POZIV
+    return jeSkupstinaSaRokom(vrsta, hitno) && danaDoUSrbiji(pocetak) < DANA_ZA_POZIV
       ? { rokPoziva: true }
       : null;
   };

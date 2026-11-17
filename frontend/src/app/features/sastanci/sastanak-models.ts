@@ -98,7 +98,7 @@ export interface SastanakRequest {
   pocetak: Date;
   lokacija: string;
   hitno: boolean;
-  tacke: { naslov: string; odlukaId?: number }[];
+  tacke: { naslov: string; opis?: string; odlukaId?: number }[];
 }
 
 export interface NoviSastanakRequest extends SastanakRequest {

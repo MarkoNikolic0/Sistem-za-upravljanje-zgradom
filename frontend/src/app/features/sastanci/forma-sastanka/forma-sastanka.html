@@ -255,6 +255,17 @@
                     {{ tacka.controls.naslov.errors?.['server'] ?? 'Popuni tačku ili je ukloni.' }}
                   </small>
                 }
+                <textarea
+                  pTextarea
+                  formControlName="opis"
+                  rows="1"
+                  [autoResize]="true"
+                  placeholder="Pojašnjenje (nije obavezno)"
+                  [attr.aria-label]="'Pojašnjenje tačke ' + (i + 1)"
+                  [attr.maxlength]="maksOpis"
+                  [fluid]="true"
+                  pSize="small"
+                ></textarea>
                 @if (skupstina()) {
                   <p-select
                     formControlName="odlukaId"

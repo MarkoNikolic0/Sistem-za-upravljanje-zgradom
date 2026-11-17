@@ -1,6 +1,6 @@
 import { FormControl } from '@angular/forms';
 import { SADA } from '../../../testiranje/podaci';
-import { danaDo, formatRoka, krajDana, rokNijeProsao, zaDana } from './datum';
+import { danaDo, danaDoUSrbiji, formatRoka, krajDana, rokNijeProsao, zaDana } from './datum';
 
 describe('datum', () => {
   beforeEach(() => vi.setSystemTime(SADA));
@@ -22,6 +22,13 @@ describe('datum', () => {
   it('danaDo ne greši pri prelasku na letnje računanje vremena', () => {
     expect(danaDo(new Date(2026, 2, 30), new Date(2026, 2, 28, 12))).toBe(2);
     expect(danaDo(new Date(2026, 9, 26), new Date(2026, 9, 24, 12))).toBe(2);
+  });
+
+  it('danaDoUSrbiji broji dane po vremenu u Srbiji, kao server', () => {
+    const sada = new Date('2026-06-10T21:30:00Z');
+    expect(danaDoUSrbiji('2026-06-10T22:30:00Z', sada)).toBe(1);
+    expect(danaDoUSrbiji('2026-06-10T21:45:00Z', sada)).toBe(0);
+    expect(danaDoUSrbiji('2026-06-13T10:00:00Z', sada)).toBe(3);
   });
 
   it('krajDana je poslednja milisekunda istog dana', () => {

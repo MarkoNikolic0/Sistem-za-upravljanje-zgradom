@@ -14,6 +14,13 @@ export function danaDo(datum: Date | string, sada = new Date()): number {
   return Math.round((dan.getTime() - danas.getTime()) / MS_PO_DANU);
 }
 
+const DAN_U_SRBIJI = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Belgrade' });
+
+export function danaDoUSrbiji(datum: Date | string, sada = new Date()): number {
+  const dan = (d: Date) => Date.parse(DAN_U_SRBIJI.format(d));
+  return Math.round((dan(new Date(datum)) - dan(sada)) / MS_PO_DANU);
+}
+
 export function krajDana(datum: Date): Date {
   return new Date(datum.getFullYear(), datum.getMonth(), datum.getDate(), 23, 59, 59, 999);
 }

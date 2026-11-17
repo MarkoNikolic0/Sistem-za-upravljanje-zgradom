@@ -1,4 +1,6 @@
 import { VrstaSastanka } from '../src/shared/enums/sastanak.enums.js';
+import { Uloga } from '../src/shared/enums/uloga.enum.js';
+import { Stan } from '../src/stan/stan.entity.js';
 import {
   type Akter,
   kao,
@@ -212,7 +214,7 @@ describe('sastanci', () => {
         .patch(`/sastanak/${zbor}`)
         .send({ vrsta: SKUPSTINA, hitno: true })
         .expect(200);
-      await kao(t, z.ukucanin).get(`/sastanak/${zbor}`).expect(403);
+      await kao(t, z.ukucanin).get(`/sastanak/${zbor}`).expect(404);
     });
 
     it('otkazivanje traži razlog, a otkazan sastanak se više ne menja', async () => {
@@ -444,6 +446,7 @@ describe('sastanci', () => {
       const zbor = await odrzan(ZBOR);
       const idZapisnika = async (sastanak: number) =>
         (await okaciZapisnik(sastanak).expect(200)).body.zapisnik.id as number;
+      await evidentiraj(skupstina, [z.stanovi[0]]).expect(200);
       const saSkupstine = await idZapisnika(skupstina);
       const saZbora = await idZapisnika(zbor);
 
@@ -471,6 +474,7 @@ describe('sastanci', () => {
 
     it('zapisnik mora biti PDF ili slika i ne kači se na otkazan sastanak', async () => {
       const skupstina = await odrzan();
+      await evidentiraj(skupstina, [z.stanovi[0]]).expect(200);
       await okaciZapisnik(
         skupstina,
         Buffer.from('obican tekst'),
@@ -489,6 +493,186 @@ describe('sastanci', () => {
       await pocni(otkazan);
       await okaciZapisnik(otkazan).expect(409);
       await evidentiraj(otkazan, [z.stanovi[0]]).expect(409);
+    });
+
+    it('zapisnik skupštine čeka evidenciju prisustva, zapisnik zbora ne', async () => {
+      const skupstina = await odrzan();
+      const odgovor = await okaciZapisnik(skupstina).expect(409);
+      expect(odgovor.body.message).toContain('evidentiraj prisustvo');
+      await okaciZapisnik(await odrzan(ZBOR)).expect(200);
+    });
+
+    it('kvorum održane skupštine ostaje po broju stanova iz evidencije', async () => {
+      const skupstina = await odrzan();
+      await evidentiraj(skupstina, z.stanovi.slice(0, 3)).expect(200);
+      const novi = await t.baza
+        .getRepository(Stan)
+        .save({ broj: '99', sprat: 9, kvadratura: 40, zgrada: { id: z.id } });
+      try {
+        expect((await detalj(skupstina)).prisustvo.kvorum).toMatchObject({
+          ukupno: 4,
+          prag: 3,
+          prisutno: 3,
+        });
+      } finally {
+        await t.baza.getRepository(Stan).delete(novi.id);
+      }
+    });
+  });
+
+  describe('poziv po Zakonu o stanovanju', () => {
+    const odluka = async () =>
+      (
+        await kao(t, z.upravnik)
+          .post('/glasanje')
+          .send(novaOdluka(z.id))
+          .expect(201)
+      ).body.id as number;
+
+    it('dnevni red nehitne skupštine se ne menja kasnije od 3 dana pre sednice', async () => {
+      const skupstina = await zakazi(SKUPSTINA);
+      await t.baza.query(
+        `UPDATE sastanak SET pocetak = now() + interval '1 day' WHERE id = $1`,
+        [skupstina],
+      );
+      const kasno = await kao(t, z.upravnik)
+        .patch(`/sastanak/${skupstina}`)
+        .send({ tacke: [{ naslov: 'Tekuća pitanja' }, { naslov: 'Kredit' }] })
+        .expect(400);
+      expect(Object.keys(kasno.body.greske)).toEqual(['tacke']);
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${skupstina}`)
+        .send({ naslov: 'Skupština, ispravljen naslov' })
+        .expect(200);
+
+      const hitna = await zakazi(SKUPSTINA, {
+        pocetak: zaDana(1),
+        hitno: true,
+      });
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${hitna}`)
+        .send({ tacke: [{ naslov: 'Hitna popravka krova' }] })
+        .expect(200);
+    });
+
+    it('izmena bez dnevnog reda čuva tačke i njihov opis', async () => {
+      const skupstina = await zakazi(SKUPSTINA, {
+        tacke: [{ naslov: 'Fasada', opis: 'Ponude u prilogu.' }],
+      });
+      const pre = await detalj(skupstina);
+      const posle = (
+        await kao(t, z.upravnik)
+          .patch(`/sastanak/${skupstina}`)
+          .send({
+            lokacija: 'Sala u prizemlju',
+            tacke: [{ naslov: 'Fasada', opis: 'Ponude u prilogu.' }],
+          })
+          .expect(200)
+      ).body;
+      expect(posle.tacke).toEqual([
+        expect.objectContaining({
+          id: pre.tacke[0].id,
+          opis: 'Ponude u prilogu.',
+        }),
+      ]);
+    });
+
+    it('odluka je na dnevnom redu samo jednog sastanka koji nije otkazan', async () => {
+      const id = await odluka();
+      const tacke = [{ naslov: 'Lift', odlukaId: id }];
+      const prvi = await zakazi(SKUPSTINA, { tacke });
+      const drugi = await kao(t, z.upravnik)
+        .post('/sastanak')
+        .send({ ...noviSastanak(z.id, SKUPSTINA), tacke })
+        .expect(400);
+      expect(drugi.body.greske.tacke).toContain('drugog sastanka');
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${prvi}`)
+        .send({ tacke, lokacija: 'Druga sala' })
+        .expect(200);
+
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${prvi}/otkazi`)
+        .send({ razlog: 'Pomereno.' })
+        .expect(200);
+      await zakazi(SKUPSTINA, { tacke });
+    });
+
+    it('izmena samo naslova ili napomene ne šalje obaveštenje', async () => {
+      const zbor = await zakazi(ZBOR);
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${zbor}`)
+        .send({ naslov: 'Zbor, novi naslov', opis: 'Ponesite olovku.' })
+        .expect(200);
+      expect(await obavestenja(z.ukucanin, zbor)).toEqual(['sastanak_novi']);
+    });
+
+    it('skupština pretvorena u zbor poziva i ukućane', async () => {
+      const skupstina = await zakazi(SKUPSTINA);
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${skupstina}`)
+        .send({ vrsta: ZBOR })
+        .expect(200);
+      expect(await obavestenja(z.ukucanin, skupstina)).toEqual([
+        'sastanak_novi',
+      ]);
+      expect(await obavestenja(z.vlasnik, skupstina)).toEqual([
+        'sastanak_novi',
+        'sastanak_izmenjen',
+      ]);
+    });
+
+    it('drugi dan sednice poništava najave, drugi sat ih čuva', async () => {
+      const termin = (sat: number, dana = 10) => {
+        const d = new Date(Date.now() + dana * 24 * 60 * 60 * 1000);
+        d.setUTCHours(sat, 0, 0, 0);
+        return d.toISOString();
+      };
+      const zbor = await zakazi(ZBOR, { pocetak: termin(9) });
+      await najavi(z.vlasnik, zbor, true).expect(200);
+
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${zbor}`)
+        .send({ pocetak: termin(11) })
+        .expect(200);
+      expect((await detalj(zbor, z.vlasnik)).prisustvo.mojOdgovor).toBe(true);
+
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${zbor}`)
+        .send({ pocetak: termin(11, 12) })
+        .expect(200);
+      expect((await detalj(zbor, z.vlasnik)).prisustvo.mojOdgovor).toBeNull();
+      const poruke = (
+        await kao(t, z.vlasnik).get('/notifikacija?poStrani=50').expect(200)
+      ).body.stavke as { link: string; tekst: string }[];
+      expect(
+        poruke.find((n) => n.link === `/sastanci/${zbor}`)?.tekst,
+      ).toContain('Potvrdi ponovo');
+    });
+
+    it('kad admin izmeni ili otkaže sastanak, upravnik dobija obaveštenje', async () => {
+      const admin = await napraviKorisnika(t, 'AdminSastanci', {
+        uloga: Uloga.ADMIN,
+      });
+      const zbor = await zakazi(ZBOR);
+      await kao(t, admin)
+        .patch(`/sastanak/${zbor}`)
+        .send({ lokacija: 'Dvorište' })
+        .expect(200);
+      await kao(t, admin)
+        .patch(`/sastanak/${zbor}/otkazi`)
+        .send({ razlog: 'Kiša.' })
+        .expect(200);
+      expect(await obavestenja(z.upravnik, zbor)).toEqual([
+        'sastanak_izmenjen',
+        'sastanak_otkazan',
+      ]);
+    });
+
+    it('sastanak druge zgrade daje 404, a neispravna zgrada u upitu 400', async () => {
+      const skupstina = await zakazi(SKUPSTINA);
+      await kao(t, z.ukucanin).get(`/sastanak/${skupstina}`).expect(404);
+      await kao(t, z.vlasnik).get('/sastanak?zgradaId=-1').expect(400);
     });
   });
 });

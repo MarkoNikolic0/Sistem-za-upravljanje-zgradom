@@ -208,7 +208,7 @@ export class FormaSastanka {
     const tacke = this.forma.controls.tacke;
     tacke.clear();
     for (const t of s.tacke) {
-      tacke.push(this.novaTacka(t.naslov, t.odluka?.id ?? null));
+      tacke.push(this.novaTacka(t.naslov, t.odluka?.id ?? null, t.opis ?? ''));
     }
     this.forma.controls.zgradaId.disable();
     this.forma.setValue({
@@ -223,13 +223,14 @@ export class FormaSastanka {
     });
   }
 
-  private novaTacka(naslov = '', odlukaId: number | null = null) {
+  private novaTacka(naslov = '', odlukaId: number | null = null, opis = '') {
     return this.fb.group({
       naslov: this.fb.nonNullable.control(naslov, [
         Validators.required,
         Validators.pattern(NIJE_PRAZNO),
         Validators.maxLength(MAKS_TACKA),
       ]),
+      opis: this.fb.nonNullable.control(opis, Validators.maxLength(MAKS_OPIS)),
       odlukaId: this.fb.control<number | null>(odlukaId),
     });
   }
@@ -323,6 +324,7 @@ export class FormaSastanka {
       hitno: skupstina && hitno,
       tacke: tacke.map((t) => ({
         naslov: t.naslov.trim(),
+        ...(t.opis.trim() !== '' && { opis: t.opis.trim() }),
         ...(skupstina && t.odlukaId !== null && { odlukaId: t.odlukaId }),
       })),
     };

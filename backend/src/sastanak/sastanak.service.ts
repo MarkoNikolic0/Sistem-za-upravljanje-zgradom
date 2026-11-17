@@ -10,12 +10,14 @@ import {
   In,
   IsNull,
   MoreThan,
+  Not,
   Raw,
   Repository,
   type FindOptionsWhere,
 } from 'typeorm';
 import { Sastanak } from './sastanak.entity.js';
 import { TackaDnevnogReda } from './tacka-dnevnog-reda.entity.js';
+import { PotvrdaPrisustva } from './potvrda-prisustva.entity.js';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
 import { GlasanjeRezultatiService } from '../glasanje/glasanje-rezultati.service.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
@@ -51,15 +53,29 @@ import {
 import { DANA_ZA_POZIV, PORUKA_PROSAO } from './sastanak.constants.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
-import { stanariZgrade } from '../notifikacija/primaoci.js';
+import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
+
+interface IzmenaPoziva {
+  id: number;
+  naslov: string;
+  pocetak: Date;
+  zgradaId: number;
+  staraVrsta: VrstaSastanka;
+  vrsta: VrstaSastanka;
+  ponisteneNajave: boolean;
+}
+
+function kljucTacaka(tacke: TackaDto[]) {
+  return JSON.stringify(
+    tacke.map((t) => [t.naslov, t.opis || null, t.odlukaId ?? null]),
+  );
+}
 
 @Injectable()
 export class SastanakService {
   constructor(
     @InjectRepository(Sastanak)
     private sastanakRepository: Repository<Sastanak>,
-    @InjectRepository(Glasanje)
-    private glasanjeRepository: Repository<Glasanje>,
     private glasanjeRezultati: GlasanjeRezultatiService,
     private korisnikService: KorisnikService,
     private prava: SastanakPravaService,
@@ -136,10 +152,10 @@ export class SastanakService {
     }
     const hitno = dto.hitno ?? false;
     this.proveriTermin(dto.vrsta, dto.pocetak, hitno);
-    await this.proveriTacke(dto.vrsta, dto.tacke, dto.zgradaId);
 
     const { id } = await this.dataSource.transaction(async (manager) => {
       await proveriAktivnu(manager, dto.zgradaId, 'pessimistic_read');
+      await this.proveriTacke(manager, dto.vrsta, dto.tacke, dto.zgradaId);
       const sacuvan = await manager.save(
         this.sastanakRepository.create({
           vrsta: dto.vrsta,
@@ -176,30 +192,47 @@ export class SastanakService {
       korisnikId,
       uloga,
     );
+    const zgradaId = sastanak.zgrada.id;
     const vrsta = dto.vrsta ?? sastanak.vrsta;
     const pocetak = dto.pocetak ?? sastanak.pocetak;
-    const hitno = dto.hitno ?? sastanak.hitno;
-    if (
+    const hitno = this.hitno(vrsta, dto.hitno ?? sastanak.hitno);
+    const stareTacke = sastanak.tacke
+      .toSorted((a, b) => a.redniBroj - b.redniBroj)
+      .map((t) => ({
+        naslov: t.naslov,
+        opis: t.opis ?? undefined,
+        odlukaId: t.odluka?.id,
+      }));
+    const tacke = dto.tacke ?? stareTacke;
+    const menjaTacke = kljucTacaka(tacke) !== kljucTacaka(stareTacke);
+    const menjaTermin =
       pocetak.getTime() !== sastanak.pocetak.getTime() ||
       vrsta !== sastanak.vrsta ||
-      hitno !== sastanak.hitno
-    ) {
+      hitno !== sastanak.hitno;
+    if (menjaTermin) {
       this.proveriTermin(vrsta, pocetak, hitno);
+    } else if (menjaTacke && this.kasniPoziv(vrsta, pocetak, hitno)) {
+      throw greskaPolja(
+        'tacke',
+        `Dnevni red skupštine se menja najkasnije ${DANA_ZA_POZIV} dana pre sednice, osim hitne.`,
+      );
     }
-    await this.proveriTacke(
-      vrsta,
-      dto.tacke ?? sastanak.tacke.map((t) => ({ odlukaId: t.odluka?.id })),
-      sastanak.zgrada.id,
-    );
+    const menjaPoziv =
+      menjaTermin ||
+      menjaTacke ||
+      (dto.lokacija !== undefined && dto.lokacija !== sastanak.lokacija);
 
     await this.dataSource.transaction(async (manager) => {
+      if (menjaTacke || vrsta !== sastanak.vrsta) {
+        await this.proveriTacke(manager, vrsta, tacke, zgradaId, id);
+      }
       const rezultat = await manager.update(
         Sastanak,
         { id, pocetak: MoreThan(new Date()), datumOtkazivanja: IsNull() },
         {
           vrsta,
           pocetak,
-          hitno: this.hitno(vrsta, hitno),
+          hitno,
           ...(dto.naslov !== undefined && { naslov: dto.naslov }),
           ...(dto.opis !== undefined && { opis: dto.opis || null }),
           ...(dto.lokacija !== undefined && { lokacija: dto.lokacija }),
@@ -208,35 +241,30 @@ export class SastanakService {
       if (rezultat.affected === 0) {
         throw new ConflictException(PORUKA_PROSAO);
       }
-      if (dto.tacke !== undefined) {
+      if (menjaTacke) {
         await manager.delete(TackaDnevnogReda, { sastanak: { id } });
         await manager.insert(
           TackaDnevnogReda,
-          this.noveTacke(dto.tacke).map((t) => ({ ...t, sastanak: { id } })),
+          this.noveTacke(tacke).map((t) => ({ ...t, sastanak: { id } })),
         );
       }
-      await this.obavestiPozvane(
-        manager,
-        { id, vrsta, zgrada: sastanak.zgrada },
-        TipNotifikacije.SASTANAK_IZMENJEN,
-        `Sastanak „${dto.naslov ?? sastanak.naslov}“ je izmenjen. Termin: ${danISat(pocetak)}.`,
-        korisnikId,
-      );
-      if (
-        vrsta === VrstaSastanka.SKUPSTINA &&
-        sastanak.vrsta !== VrstaSastanka.SKUPSTINA
-      ) {
-        const zgradaId = sastanak.zgrada.id;
-        const vlasnici = await stanariZgrade(manager, zgradaId, true);
-        await this.notifikacije.obavesti(
+      const ponisteneNajave =
+        danaDo(pocetak, sastanak.pocetak) !== 0 &&
+        Boolean(
+          (await manager.delete(PotvrdaPrisustva, { sastanak: { id } }))
+            .affected,
+        );
+      if (menjaPoziv) {
+        await this.obavestiOIzmeni(
           manager,
-          (await stanariZgrade(manager, zgradaId)).filter(
-            (stanarId) => !vlasnici.includes(stanarId),
-          ),
           {
-            tip: TipNotifikacije.SASTANAK_IZMENJEN,
-            tekst: `Sastanak „${dto.naslov ?? sastanak.naslov}“ je promenjen u skupštinu, na koju dolaze samo vlasnici stanova.`,
-            link: null,
+            id,
+            naslov: dto.naslov ?? sastanak.naslov,
+            pocetak,
+            zgradaId,
+            staraVrsta: sastanak.vrsta,
+            vrsta,
+            ponisteneNajave,
           },
           korisnikId,
         );
@@ -279,24 +307,74 @@ export class SastanakService {
     tekst: string,
     akterId: number,
   ) {
-    const samoVlasnici = sastanak.vrsta === VrstaSastanka.SKUPSTINA;
     await this.notifikacije.obavesti(
       manager,
-      await stanariZgrade(manager, sastanak.zgrada.id, samoVlasnici),
+      await this.pozvani(manager, sastanak.zgrada.id, sastanak.vrsta),
       { tip, tekst, link: `/sastanci/${sastanak.id}` },
       akterId,
     );
+  }
+
+  private async obavestiOIzmeni(
+    manager: EntityManager,
+    izmena: IzmenaPoziva,
+    akterId: number,
+  ) {
+    const { id, naslov, pocetak, zgradaId, staraVrsta, vrsta } = izmena;
+    const stari = await this.pozvani(manager, zgradaId, staraVrsta);
+    const novi =
+      vrsta === staraVrsta
+        ? stari
+        : await this.pozvani(manager, zgradaId, vrsta);
+    const posalji = (
+      primaoci: number[],
+      tip: TipNotifikacije,
+      tekst: string,
+      link: string | null = `/sastanci/${id}`,
+    ) =>
+      this.notifikacije.obavesti(
+        manager,
+        primaoci,
+        { tip, tekst, link },
+        akterId,
+      );
+
+    await posalji(
+      novi.filter((k) => stari.includes(k)),
+      TipNotifikacije.SASTANAK_IZMENJEN,
+      `Sastanak „${naslov}“ je izmenjen. Termin: ${danISat(pocetak)}.` +
+        (izmena.ponisteneNajave ? ' Potvrdi ponovo da li dolaziš.' : ''),
+    );
+    await posalji(
+      novi.filter((k) => !stari.includes(k)),
+      TipNotifikacije.SASTANAK_NOVI,
+      `Zakazan je sastanak „${naslov}“ za ${danISat(pocetak)}.`,
+    );
+    await posalji(
+      stari.filter((k) => !novi.includes(k)),
+      TipNotifikacije.SASTANAK_IZMENJEN,
+      `Sastanak „${naslov}“ je promenjen u skupštinu, na koju dolaze samo vlasnici stanova.`,
+      null,
+    );
+  }
+
+  private async pozvani(
+    manager: EntityManager,
+    zgradaId: number,
+    vrsta: VrstaSastanka,
+  ) {
+    const [stanari, upravnik] = await Promise.all([
+      stanariZgrade(manager, zgradaId, vrsta === VrstaSastanka.SKUPSTINA),
+      upravnikZgrade(manager, zgradaId),
+    ]);
+    return [...new Set([...stanari, ...upravnik])];
   }
 
   private proveriTermin(vrsta: VrstaSastanka, pocetak: Date, hitno: boolean) {
     if (pocetak <= new Date()) {
       throw greskaPolja('pocetak', 'Termin mora biti u budućnosti.');
     }
-    if (
-      vrsta === VrstaSastanka.SKUPSTINA &&
-      !hitno &&
-      danaDo(pocetak) < DANA_ZA_POZIV
-    ) {
+    if (this.kasniPoziv(vrsta, pocetak, hitno)) {
       throw greskaPolja(
         'pocetak',
         `Skupština se zakazuje bar ${DANA_ZA_POZIV} dana unapred, osim hitne sednice.`,
@@ -304,10 +382,20 @@ export class SastanakService {
     }
   }
 
+  private kasniPoziv(vrsta: VrstaSastanka, pocetak: Date, hitno: boolean) {
+    return (
+      vrsta === VrstaSastanka.SKUPSTINA &&
+      !hitno &&
+      danaDo(pocetak) < DANA_ZA_POZIV
+    );
+  }
+
   private async proveriTacke(
+    manager: EntityManager,
     vrsta: VrstaSastanka,
     tacke: Pick<TackaDto, 'odlukaId'>[],
     zgradaId: number,
+    sastanakId?: number,
   ) {
     const odluke = tacke
       .map((t) => t.odlukaId)
@@ -321,13 +409,32 @@ export class SastanakService {
     if (new Set(odluke).size !== odluke.length) {
       throw greskaPolja('tacke', 'Ista odluka je uz više tačaka.');
     }
-    const postoje = await this.glasanjeRepository.countBy({
-      id: In(odluke),
-      vrsta: VrstaGlasanja.ODLUKA,
-      zgrada: { id: zgradaId },
+    const postoje = await manager.find(Glasanje, {
+      where: {
+        id: In(odluke),
+        vrsta: VrstaGlasanja.ODLUKA,
+        zgrada: { id: zgradaId },
+      },
+      select: { id: true },
+      lock: { mode: 'for_no_key_update' },
     });
-    if (postoje !== odluke.length) {
+    if (postoje.length !== odluke.length) {
       throw greskaPolja('tacke', 'Izabrana odluka ne postoji u ovoj zgradi.');
+    }
+    const naDrugomSastanku = await manager.exists(TackaDnevnogReda, {
+      where: {
+        odluka: { id: In(odluke) },
+        sastanak: {
+          datumOtkazivanja: IsNull(),
+          ...(sastanakId !== undefined && { id: Not(sastanakId) }),
+        },
+      },
+    });
+    if (naDrugomSastanku) {
+      throw greskaPolja(
+        'tacke',
+        'Izabrana odluka je već na dnevnom redu drugog sastanka.',
+      );
     }
   }
 

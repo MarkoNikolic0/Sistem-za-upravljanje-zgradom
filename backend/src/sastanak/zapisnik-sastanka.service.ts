@@ -16,6 +16,15 @@ import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
 import { SAMO_ZGRADA, SastanakPravaService } from './sastanak-prava.service.js';
 
 const PORUKA_NIJE_ODRZAN = 'Zapisnik se kači kad sednica počne.';
+const PORUKA_BEZ_EVIDENCIJE =
+  'Prvo evidentiraj prisustvo, pa okači zapisnik skupštine.';
+
+function bezEvidencije(sastanak: Pick<Sastanak, 'vrsta' | 'datumEvidencije'>) {
+  return (
+    sastanak.vrsta === VrstaSastanka.SKUPSTINA &&
+    sastanak.datumEvidencije === null
+  );
+}
 
 export function smeDaOkaciZapisnik(sastanak: Sastanak, p: PristupZgradama) {
   return (
@@ -58,6 +67,9 @@ export class ZapisnikSastankaService {
     }
     if (sastanak.pocetak > new Date()) {
       throw new ConflictException(PORUKA_NIJE_ODRZAN);
+    }
+    if (bezEvidencije(sastanak)) {
+      throw new ConflictException(PORUKA_BEZ_EVIDENCIJE);
     }
 
     const stariKljuc = await this.dokumenti.sacuvajSaFajlom(
@@ -105,11 +117,14 @@ export class ZapisnikSastankaService {
             datumOtkazivanja: IsNull(),
           }
         : { id },
-      select: { id: true },
+      select: { id: true, vrsta: true, datumEvidencije: true },
       lock: { mode: 'pessimistic_write' },
     });
     if (samoOdrzan && !sastanak) {
       throw new ConflictException(PORUKA_NIJE_ODRZAN);
+    }
+    if (samoOdrzan && sastanak && bezEvidencije(sastanak)) {
+      throw new ConflictException(PORUKA_BEZ_EVIDENCIJE);
     }
     const zapisnik = await manager.findOne(DokumentZgrade, {
       where: { sastanakId: id },

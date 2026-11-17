@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsOptional } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsPositive,
+} from 'class-validator';
 import { StanjeSastanka } from '../../shared/enums/sastanak.enums.js';
 import { StranicenjeDto } from '../../shared/stranicenje.js';
 import { KaoBoolean } from '../../shared/kao-boolean.js';
@@ -11,6 +17,7 @@ export class SastanakUpitDto extends StranicenjeDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @IsPositive()
   zgradaId?: number;
 
   @IsOptional()

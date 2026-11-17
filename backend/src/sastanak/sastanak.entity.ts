@@ -44,6 +44,9 @@ export class Sastanak {
   @Column({ type: 'timestamptz', nullable: true })
   datumEvidencije: Date | null;
 
+  @Column({ type: 'int', nullable: true })
+  ukupnoStanova: number | null;
+
   @ManyToOne(() => Zgrada, { nullable: false, onDelete: 'CASCADE' })
   zgrada: Zgrada;
 
