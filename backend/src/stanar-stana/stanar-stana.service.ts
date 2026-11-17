@@ -182,6 +182,7 @@ export class StanarStanaService {
           { autor: { id: korisnikId }, zgrada: { id: zgradaId } },
           'Autor se odselio iz zgrade.',
         );
+        await this.notifikacije.obrisiZaZgradu(manager, [korisnikId], zgradaId);
       }
     }
   }

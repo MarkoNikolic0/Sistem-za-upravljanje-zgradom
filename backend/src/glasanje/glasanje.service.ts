@@ -28,7 +28,7 @@ import { PORUKA_ODLUKA_OSTAJE, PORUKA_ZAVRSENA } from './glasanje.constants.js';
 import { Glas } from './glas.entity.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
-import { stanariZgrade } from '../notifikacija/primaoci.js';
+import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
 
 @Injectable()
 export class GlasanjeService {
@@ -136,7 +136,10 @@ export class GlasanjeService {
         );
         await this.notifikacije.obavesti(
           manager,
-          await stanariZgrade(manager, dto.zgradaId, odluka),
+          [
+            ...(await stanariZgrade(manager, dto.zgradaId, odluka)),
+            ...(await upravnikZgrade(manager, dto.zgradaId)),
+          ],
           {
             tip: TipNotifikacije.GLASANJE_NOVO,
             tekst: `${odluka ? 'Nova odluka' : 'Nova anketa'} za glasanje: „${dto.pitanje}“.`,

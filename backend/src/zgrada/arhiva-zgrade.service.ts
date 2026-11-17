@@ -8,7 +8,7 @@ import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
-import { stanariZgrade } from '../notifikacija/primaoci.js';
+import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
 import { odbijZahteve } from '../zahtev-povezivanje/odbij-zahteve.js';
 import { obrisiBuduceNajave } from '../sastanak/najave-prisustva.js';
 
@@ -45,15 +45,17 @@ export class ArhivaZgradeService {
         { stan: { zgrada: { id: zgradaId } } },
         'Zgrada je arhivirana.',
       );
-      await this.notifikacije.obavesti(
+      const stanari = await stanariZgrade(manager, zgradaId);
+      await this.notifikacije.obrisiZaZgradu(
         manager,
-        await stanariZgrade(manager, zgradaId),
-        {
-          tip: TipNotifikacije.STANOVANJE,
-          tekst: `Zgrada „${zgrada.naziv}“ je arhivirana, pa više nisi njen stanar.`,
-          link: '/profil',
-        },
+        [...stanari, ...(await upravnikZgrade(manager, zgradaId))],
+        zgradaId,
       );
+      await this.notifikacije.obavesti(manager, stanari, {
+        tip: TipNotifikacije.STANOVANJE,
+        tekst: `Zgrada „${zgrada.naziv}“ je arhivirana, pa više nisi njen stanar.`,
+        link: '/profil',
+      });
       await obrisiBuduceNajave(manager, zgradaId);
       await manager.delete(StanarStana, {
         stan: { id: uZgradi('stan', zgradaId) },

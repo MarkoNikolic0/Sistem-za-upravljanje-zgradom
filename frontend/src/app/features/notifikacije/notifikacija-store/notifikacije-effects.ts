@@ -18,7 +18,13 @@ import {
   tap,
 } from 'rxjs';
 import { ProfileService } from '../../profile/profile-service';
-import { KLJUC_TOASTA, putanjaAdrese, TIPOVI_ZA_PROFIL } from '../notifikacija-models';
+import { TokenRefresh } from '../../auth/sesija/token-refresh';
+import {
+  KLJUC_TOASTA,
+  putanjaAdrese,
+  TIPOVI_ZA_PROFIL,
+  TIPOVI_ZA_ULOGU,
+} from '../notifikacija-models';
 import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import { notifikacijeFeature } from './notifikacije-reducer';
@@ -69,8 +75,7 @@ export const veza = createEffect(
 export const neprocitane = createEffect(
   (actions$ = inject(Actions), service = inject(NotifikacijaService)) =>
     actions$.pipe(
-      ofType(VezaActions.povezan, VezaActions.stigla),
-      filter((akcija) => !('naStranici' in akcija && akcija.naStranici)),
+      ofType(VezaActions.povezan),
       switchMap(() =>
         service.neprocitane().pipe(
           map((neprocitane) => NotifikacijeApiActions.neprocitaneUcitane(neprocitane)),
@@ -228,6 +233,16 @@ export const osveziProfil = createEffect(
       ofType(VezaActions.stigla),
       filter(({ notifikacija }) => TIPOVI_ZA_PROFIL.includes(notifikacija.tip)),
       tap(() => profileService.profil.reload()),
+    ),
+  { functional: true, dispatch: false },
+);
+
+export const osveziUlogu = createEffect(
+  (actions$ = inject(Actions), tokenRefresh = inject(TokenRefresh)) =>
+    actions$.pipe(
+      ofType(VezaActions.stigla),
+      filter(({ notifikacija }) => TIPOVI_ZA_ULOGU.includes(notifikacija.tip)),
+      exhaustMap(() => tokenRefresh.osvezi().pipe(catchError(() => EMPTY))),
     ),
   { functional: true, dispatch: false },
 );

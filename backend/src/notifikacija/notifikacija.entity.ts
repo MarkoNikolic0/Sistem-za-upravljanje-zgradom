@@ -18,6 +18,7 @@ export enum TipNotifikacije {
   ZAHTEV_NOVI = 'zahtev_novi',
   ZAHTEV_OBRADJEN = 'zahtev_obradjen',
   STANOVANJE = 'stanovanje',
+  UPRAVLJANJE = 'upravljanje',
   SASTANAK_NOVI = 'sastanak_novi',
   SASTANAK_IZMENJEN = 'sastanak_izmenjen',
   SASTANAK_OTKAZAN = 'sastanak_otkazan',
@@ -47,6 +48,7 @@ export class Notifikacija {
   @ManyToOne(() => Korisnik, { nullable: false, onDelete: 'CASCADE' })
   korisnik: Korisnik;
 
+  @Index()
   @CreateDateColumn({ type: 'timestamptz' })
   datumKreiranja: Date;
 }

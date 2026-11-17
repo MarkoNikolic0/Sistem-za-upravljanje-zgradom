@@ -18,7 +18,9 @@ import {
   DOGADJAJ_NOTIFIKACIJA,
   DOGADJAJ_NOV_OGLAS,
   DOGADJAJ_VIDLJIVOST,
+  NAJVISE_VEZA_PO_KORISNIKU,
   SOBA_KORISNIKA,
+  SOBA_SESIJE,
 } from './notifikacija.constants.js';
 
 @WebSocketGateway({ namespace: 'notifikacije' })
@@ -40,7 +42,15 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   async handleConnection(socket: Socket) {
-    await socket.join(SOBA_KORISNIKA(socket.data.korisnikId as number));
+    const istek = setTimeout(
+      () => socket.disconnect(true),
+      (socket.data.istice as number) - Date.now(),
+    );
+    socket.once('disconnect', () => clearTimeout(istek));
+    await socket.join([
+      SOBA_KORISNIKA(socket.data.korisnikId as number),
+      SOBA_SESIJE(socket.data.sid as string),
+    ]);
   }
 
   posalji(notifikacije: Notifikacija[]) {
@@ -85,6 +95,10 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
     this.server.in(SOBA_KORISNIKA(korisnikId)).disconnectSockets(true);
   }
 
+  prekiniSesiju(sid: string) {
+    this.server.in(SOBA_SESIJE(sid)).disconnectSockets(true);
+  }
+
   private async prijavi(socket: Socket) {
     const { token, vidljiv } = socket.handshake.auth as {
       token?: unknown;
@@ -93,10 +107,19 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
     if (typeof token !== 'string') {
       throw new Error('Nema tokena.');
     }
-    const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+    const payload = await this.jwtService.verifyAsync<
+      JwtPayload & { exp: number }
+    >(token);
     const korisnik = await this.jwtStrategy.validate(payload);
+    const veze = await this.server
+      .in(SOBA_KORISNIKA(korisnik.id))
+      .fetchSockets();
+    if (veze.length >= NAJVISE_VEZA_PO_KORISNIKU) {
+      throw new Error('Previše otvorenih veza.');
+    }
     socket.data.korisnikId = korisnik.id;
     socket.data.sid = korisnik.sid;
+    socket.data.istice = payload.exp * 1000;
     socket.data.vidljiv = vidljiv === true;
   }
 }

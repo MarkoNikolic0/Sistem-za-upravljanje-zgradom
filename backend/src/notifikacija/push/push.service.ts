@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -13,10 +14,30 @@ import { PushPretplata } from './push-pretplata.entity.js';
 import {
   ISTEKLA_PRETPLATA,
   ISTOVREMENO_PUSH,
+  NAJDUZA_TEMA_PUSH,
   NAJDUZI_TEKST_PUSH,
   NASLOVI_PUSH,
+  ROK_ODGOVORA_PUSH_MS,
   TRAJANJE_PUSH_S,
 } from './push.constants.js';
+
+const grafemi = new Intl.Segmenter('sr-Latn', { granularity: 'grapheme' });
+
+export function skrati(tekst: string, najvise: number): string {
+  const delovi = Array.from(grafemi.segment(tekst), ({ segment }) => segment);
+  return delovi.length > najvise
+    ? `${delovi.slice(0, najvise - 1).join('')}…`
+    : tekst;
+}
+
+export function temaPusha(link: string | null): string | undefined {
+  return link === null
+    ? undefined
+    : createHash('sha256')
+        .update(link)
+        .digest('base64url')
+        .slice(0, NAJDUZA_TEMA_PUSH);
+}
 
 @Injectable()
 export class PushService {
@@ -32,6 +53,8 @@ export class PushService {
     private pretplataRepository: Repository<PushPretplata>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(Notifikacija)
+    private notifikacijaRepository: Repository<Notifikacija>,
     private gateway: NotifikacijaGateway,
     config: ConfigService,
   ) {
@@ -129,9 +152,15 @@ export class PushService {
         lista.push(pretplata);
         poKorisniku.set(pretplata.korisnik.id, lista);
       }
+      const neprocitane = await this.neprocitane([...poKorisniku.keys()]);
       const slanja = notifikacije.flatMap((notifikacija) =>
         (poKorisniku.get(notifikacija.korisnik.id) ?? []).map(
-          (pretplata) => () => this.posaljiNaUredjaj(pretplata, notifikacija),
+          (pretplata) => () =>
+            this.posaljiNaUredjaj(
+              pretplata,
+              notifikacija,
+              neprocitane.get(notifikacija.korisnik.id) ?? 0,
+            ),
         ),
       );
       for (let i = 0; i < slanja.length; i += ISTOVREMENO_PUSH) {
@@ -146,9 +175,25 @@ export class PushService {
     }
   }
 
+  private async neprocitane(korisnici: number[]): Promise<Map<number, number>> {
+    if (korisnici.length === 0) {
+      return new Map();
+    }
+    const redovi = await this.notifikacijaRepository
+      .createQueryBuilder('notifikacija')
+      .select('notifikacija."korisnikId"', 'korisnik')
+      .addSelect('COUNT(*)::int', 'broj')
+      .where('notifikacija.korisnik IN (:...korisnici)', { korisnici })
+      .andWhere('notifikacija.procitano = false')
+      .groupBy('notifikacija."korisnikId"')
+      .getRawMany<{ korisnik: number; broj: number }>();
+    return new Map(redovi.map(({ korisnik, broj }) => [korisnik, broj]));
+  }
+
   private async posaljiNaUredjaj(
     pretplata: PushPretplata,
     notifikacija: Notifikacija,
+    neprocitano: number,
   ): Promise<void> {
     try {
       await webpush.sendNotification(
@@ -156,8 +201,13 @@ export class PushService {
           endpoint: pretplata.endpoint,
           keys: { p256dh: pretplata.p256dh, auth: pretplata.auth },
         },
-        JSON.stringify(this.sadrzaj(notifikacija)),
-        { vapidDetails: this.vapid, TTL: TRAJANJE_PUSH_S },
+        JSON.stringify(this.sadrzaj(notifikacija, neprocitano)),
+        {
+          vapidDetails: this.vapid,
+          TTL: TRAJANJE_PUSH_S,
+          timeout: ROK_ODGOVORA_PUSH_MS,
+          topic: temaPusha(notifikacija.link),
+        },
       );
     } catch (greska) {
       const status =
@@ -172,20 +222,17 @@ export class PushService {
     }
   }
 
-  private sadrzaj(notifikacija: Notifikacija) {
-    const tekst =
-      notifikacija.tekst.length > NAJDUZI_TEKST_PUSH
-        ? `${notifikacija.tekst.slice(0, NAJDUZI_TEKST_PUSH - 1)}…`
-        : notifikacija.tekst;
+  private sadrzaj(notifikacija: Notifikacija, neprocitano: number) {
     return {
       notification: {
         title: NASLOVI_PUSH[notifikacija.tip],
-        body: tekst,
+        body: skrati(notifikacija.tekst, NAJDUZI_TEKST_PUSH),
         icon: '/icons/icon-192x192.png',
         badge: '/icons/badge-96x96.png',
         lang: 'sr-Latn',
         timestamp: new Date(notifikacija.datumKreiranja).getTime(),
         data: {
+          neprocitano,
           onActionClick: {
             default: {
               operation: 'navigateLastFocusedOrOpen',

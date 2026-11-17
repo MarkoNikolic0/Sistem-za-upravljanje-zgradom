@@ -4,6 +4,8 @@ export const TRAJANJE_PUSH_S = 24 * 60 * 60;
 export const NAJDUZI_TEKST_PUSH = 300;
 export const ISTEKLA_PRETPLATA = [404, 410];
 export const ISTOVREMENO_PUSH = 20;
+export const ROK_ODGOVORA_PUSH_MS = 10_000;
+export const NAJDUZA_TEMA_PUSH = 32;
 
 export const SERVISI_ZA_PUSH = [
   /^fcm\.googleapis\.com$/,
@@ -21,6 +23,7 @@ export const NASLOVI_PUSH: Record<TipNotifikacije, string> = {
   [TipNotifikacije.ZAHTEV_NOVI]: 'Nov zahtev',
   [TipNotifikacije.ZAHTEV_OBRADJEN]: 'Zahtev je obrađen',
   [TipNotifikacije.STANOVANJE]: 'Promena stanovanja',
+  [TipNotifikacije.UPRAVLJANJE]: 'Promena upravljanja',
   [TipNotifikacije.SASTANAK_NOVI]: 'Zakazan sastanak',
   [TipNotifikacije.SASTANAK_IZMENJEN]: 'Sastanak je izmenjen',
   [TipNotifikacije.SASTANAK_OTKAZAN]: 'Sastanak je otkazan',

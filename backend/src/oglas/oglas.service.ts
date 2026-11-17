@@ -156,7 +156,10 @@ export class OglasService {
   ) {
     await this.notifikacije.obavesti(
       manager,
-      await stanariZgrade(manager, zgradaId),
+      [
+        ...(await stanariZgrade(manager, zgradaId)),
+        ...(await upravnikZgrade(manager, zgradaId)),
+      ],
       {
         tip: TipNotifikacije.VAZNO_OBAVESTENJE,
         tekst: `Važno obaveštenje: „${naslov}“.`,

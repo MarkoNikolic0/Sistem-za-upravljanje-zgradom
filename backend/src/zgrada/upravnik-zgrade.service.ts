@@ -11,12 +11,15 @@ import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { OglasService } from '../oglas/oglas.service.js';
 import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 
 @Injectable()
 export class UpravnikZgradeService {
   constructor(
     private dataSource: DataSource,
     private oglasService: OglasService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async find(zgradaId: number) {
@@ -42,7 +45,8 @@ export class UpravnikZgradeService {
 
   async postavi(zgradaId: number, korisnikId: number) {
     await this.dataSource.transaction(async (manager) => {
-      const { upravnikId } = await this.zakljucajZgradu(manager, zgradaId);
+      const zgrada = await this.zakljucajZgradu(manager, zgradaId);
+      const { upravnikId } = zgrada;
       await this.zakljucajKorisnike(manager, [korisnikId, upravnikId]);
 
       const korisnik = await manager.findOne(Korisnik, {
@@ -64,34 +68,45 @@ export class UpravnikZgradeService {
         return;
       }
 
-      await this.smeni(manager, zgradaId, upravnikId);
+      await this.smeni(manager, zgrada, upravnikId);
       await manager.update(Zgrada, zgradaId, { upravnikId: korisnikId });
       await manager.update(Korisnik, korisnikId, { uloga: Uloga.UPRAVNIK });
+      await this.obavesti(
+        manager,
+        korisnikId,
+        `Postavljen si za upravnika zgrade „${zgrada.naziv}“.`,
+      );
     });
     return await this.find(zgradaId);
   }
 
   async razresi(zgradaId: number) {
     await this.dataSource.transaction(async (manager) => {
-      const { upravnikId } = await this.zakljucajZgradu(manager, zgradaId);
+      const zgrada = await this.zakljucajZgradu(manager, zgradaId);
+      const { upravnikId } = zgrada;
       if (upravnikId === null) {
         throw new NotFoundException('Zgrada nema upravnika.');
       }
       await this.zakljucajKorisnike(manager, [upravnikId]);
-      await this.smeni(manager, zgradaId, upravnikId);
+      await this.smeni(manager, zgrada, upravnikId);
     });
   }
 
   async skiniUpravnika(manager: EntityManager, zgradaId: number) {
     const zgrada = await manager.findOneOrFail(Zgrada, {
       where: { id: zgradaId },
-      select: { id: true, upravnikId: true },
+      select: { id: true, naziv: true, upravnikId: true },
     });
     if (zgrada.upravnikId === null) {
       return;
     }
     await this.zakljucajKorisnike(manager, [zgrada.upravnikId]);
     await this.ukloni(manager, zgradaId, zgrada.upravnikId);
+    await this.obavesti(
+      manager,
+      zgrada.upravnikId,
+      `Zgrada „${zgrada.naziv}“ je arhivirana, pa njom više ne upravljaš.`,
+    );
   }
 
   async zakljucajZgradeUpravnika(manager: EntityManager, korisnikId: number) {
@@ -119,7 +134,7 @@ export class UpravnikZgradeService {
   private async zakljucajZgradu(manager: EntityManager, zgradaId: number) {
     const zgrada = await manager.findOne(Zgrada, {
       where: { id: zgradaId, ...AKTIVNA_ZGRADA },
-      select: { id: true, upravnikId: true },
+      select: { id: true, naziv: true, upravnikId: true },
       lock: { mode: 'pessimistic_write' },
     });
     if (!zgrada) {
@@ -142,21 +157,39 @@ export class UpravnikZgradeService {
 
   private async smeni(
     manager: EntityManager,
-    zgradaId: number,
+    zgrada: Pick<Zgrada, 'id' | 'naziv'>,
     bivsi: number | null,
   ) {
     if (bivsi === null) {
       return;
     }
-    await this.ukloni(manager, zgradaId, bivsi);
-    const veze = await zakljucajVeze(manager, bivsi, zgradaId);
+    await this.ukloni(manager, zgrada.id, bivsi);
+    const veze = await zakljucajVeze(manager, bivsi, zgrada.id);
     if (veze.length === 0) {
       await this.oglasService.sakrijOglase(
         manager,
-        { autor: { id: bivsi }, zgrada: { id: zgradaId } },
+        { autor: { id: bivsi }, zgrada: { id: zgrada.id } },
         'Autor više ne upravlja zgradom.',
       );
+      await this.notifikacije.obrisiZaZgradu(manager, [bivsi], zgrada.id);
     }
+    await this.obavesti(
+      manager,
+      bivsi,
+      `Više ne upravljaš zgradom „${zgrada.naziv}“.`,
+    );
+  }
+
+  private async obavesti(
+    manager: EntityManager,
+    korisnikId: number,
+    tekst: string,
+  ) {
+    await this.notifikacije.obavesti(manager, [korisnikId], {
+      tip: TipNotifikacije.UPRAVLJANJE,
+      tekst,
+      link: '/profil',
+    });
   }
 
   private async ukloni(

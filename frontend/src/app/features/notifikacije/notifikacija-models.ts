@@ -7,6 +7,7 @@ export type TipNotifikacije =
   | 'zahtev_novi'
   | 'zahtev_obradjen'
   | 'stanovanje'
+  | 'upravljanje'
   | 'sastanak_novi'
   | 'sastanak_izmenjen'
   | 'sastanak_otkazan'
@@ -41,6 +42,7 @@ export const DOGADJAJI_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   zahtev_novi: 'Nov zahtev',
   zahtev_obradjen: 'Zahtev je obrađen',
   stanovanje: 'Promena stanovanja',
+  upravljanje: 'Promena upravljanja',
   sastanak_novi: 'Zakazan sastanak',
   sastanak_izmenjen: 'Sastanak je izmenjen',
   sastanak_otkazan: 'Sastanak je otkazan',
@@ -65,6 +67,7 @@ export const IKONICE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   zahtev_novi: 'pi pi-link',
   zahtev_obradjen: 'pi pi-link',
   stanovanje: 'pi pi-home',
+  upravljanje: 'pi pi-briefcase',
   sastanak_novi: 'pi pi-calendar',
   sastanak_izmenjen: 'pi pi-calendar',
   sastanak_otkazan: 'pi pi-calendar-times',
@@ -85,6 +88,7 @@ export const BOJE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   zahtev_novi: ZAHTEV,
   zahtev_obradjen: ZAHTEV,
   stanovanje: ZAHTEV,
+  upravljanje: ZAHTEV,
   sastanak_novi: SASTANAK,
   sastanak_izmenjen: SASTANAK,
   sastanak_otkazan: SASTANAK,
@@ -100,7 +104,9 @@ export function doPonoci(sada = new Date()): number {
 
 export const KLJUC_TOASTA = 'notifikacija';
 
-export const TIPOVI_ZA_PROFIL: TipNotifikacije[] = ['zahtev_obradjen', 'stanovanje'];
+export const TIPOVI_ZA_PROFIL: TipNotifikacije[] = ['zahtev_obradjen', 'stanovanje', 'upravljanje'];
+
+export const TIPOVI_ZA_ULOGU: TipNotifikacije[] = ['upravljanje'];
 
 export interface GrupaNotifikacija {
   naziv: string;

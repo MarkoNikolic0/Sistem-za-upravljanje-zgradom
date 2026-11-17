@@ -15,6 +15,7 @@ import { RefreshToken } from './refresh-token.entity.js';
 import { generisiToken, hesirajToken } from '../token.util.js';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MS_PO_DANU } from '../../shared/vreme.js';
+import { NotifikacijaService } from '../../notifikacija/notifikacija.service.js';
 
 @Injectable()
 export class RefreshTokenService {
@@ -22,6 +23,7 @@ export class RefreshTokenService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
     private config: ConfigService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   kreiraj(korisnik: Korisnik) {
@@ -88,6 +90,7 @@ export class RefreshTokenService {
       { porodicaId, datumOpoziva: IsNull() },
       { datumOpoziva: new Date() },
     );
+    this.notifikacije.prekiniSesiju(porodicaId);
   }
 
   async opozoviPoTokenu(token: string): Promise<string | undefined> {

@@ -74,7 +74,7 @@ export const appConfig: ApplicationConfig = {
         },
       },
     }),
-    provideServiceWorker('ngsw-worker.js', {
+    provideServiceWorker('sw-zgrada.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),

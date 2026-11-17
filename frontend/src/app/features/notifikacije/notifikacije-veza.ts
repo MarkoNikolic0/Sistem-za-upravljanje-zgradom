@@ -1,6 +1,7 @@
 import { DOCUMENT, inject, Service } from '@angular/core';
 import { Router } from '@angular/router';
-import { finalize, Observable, Subscription, switchMap, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, Subscription, switchMap, timer } from 'rxjs';
 import { io } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from '../auth/sesija/auth-store';
@@ -51,13 +52,20 @@ export class NotifikacijeVeza {
         pokusaj++;
         osvezavanje.add(
           timer(pauza)
-            .pipe(
-              switchMap(() => this.tokenRefresh.osvezi()),
-              finalize(() => (ceka = false)),
-            )
+            .pipe(switchMap(() => this.tokenRefresh.osvezi()))
             .subscribe({
-              next: () => socket.connect(),
-              error: () => void this.router.navigateByUrl(naPrijavu(this.router)),
+              next: () => {
+                ceka = false;
+                socket.connect();
+              },
+              error: (greska: unknown) => {
+                ceka = false;
+                if (greska instanceof HttpErrorResponse && greska.status === 401) {
+                  void this.router.navigateByUrl(naPrijavu(this.router));
+                } else {
+                  poveziSaNovimTokenom();
+                }
+              },
             }),
         );
       };

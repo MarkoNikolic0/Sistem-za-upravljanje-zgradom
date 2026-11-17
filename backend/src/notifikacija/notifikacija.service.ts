@@ -8,7 +8,7 @@ import { Korisnik } from '../korisnik/korisnik.entity.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { Stranica, velicinaStrane } from '../shared/stranicenje.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
-import { DANA_CUVANJA } from './notifikacija.constants.js';
+import { BRISANJE_PO, DANA_CUVANJA } from './notifikacija.constants.js';
 import { NotifikacijaGateway } from './notifikacija.gateway.js';
 
 export interface NovaNotifikacija {
@@ -114,14 +114,53 @@ export class NotifikacijaService {
     this.gateway.prekiniVeze(korisnikId);
   }
 
+  prekiniSesiju(sid: string) {
+    this.gateway.prekiniSesiju(sid);
+  }
+
+  async obrisiZaZgradu(
+    manager: EntityManager,
+    korisnici: number[],
+    zgradaId: number,
+  ): Promise<void> {
+    if (korisnici.length === 0) {
+      return;
+    }
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from(Notifikacija)
+      .where('"korisnikId" IN (:...korisnici)', { korisnici })
+      .andWhere(
+        `("link" IN (SELECT '/kvarovi/' || "id" FROM "kvar" WHERE "zgradaId" = :zgradaId)
+          OR "link" IN (SELECT '/sastanci/' || "id" FROM "sastanak" WHERE "zgradaId" = :zgradaId))`,
+        { zgradaId },
+      )
+      .execute();
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async obrisiStare() {
     const granica = new Date(Date.now() - DANA_CUVANJA * MS_PO_DANU);
-    const { affected } = await this.notifikacijaRepository.delete({
-      datumKreiranja: LessThan(granica),
-    });
-    if (affected) {
-      this.logger.log(`Obrisano starih notifikacija: ${affected}`);
+    let ukupno = 0;
+    let obrisano: number;
+    do {
+      const stare = this.notifikacijaRepository
+        .createQueryBuilder('stara')
+        .select('stara.id')
+        .where('stara.datumKreiranja < :granica')
+        .orderBy('stara.id')
+        .limit(BRISANJE_PO);
+      const rezultat = await this.notifikacijaRepository
+        .createQueryBuilder()
+        .delete()
+        .where(`"id" IN (${stare.getQuery()})`, { granica })
+        .execute();
+      obrisano = rezultat.affected ?? 0;
+      ukupno += obrisano;
+    } while (obrisano === BRISANJE_PO);
+    if (ukupno > 0) {
+      this.logger.log(`Obrisano starih notifikacija: ${ukupno}`);
     }
   }
 }

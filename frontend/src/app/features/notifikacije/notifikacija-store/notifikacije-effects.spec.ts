@@ -5,11 +5,13 @@ import { of, Subject, throwError } from 'rxjs';
 import { pokreniEfekat } from '../../../../testiranje/efekti';
 import { Notifikacija, TipNotifikacije } from '../notifikacija-models';
 import { ProfileService } from '../../profile/profile-service';
+import { TokenRefresh } from '../../auth/sesija/token-refresh';
 import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import {
   neprocitane,
   osveziProfil,
+  osveziUlogu,
   prikaziToast,
   procitaj,
   procitajSve,
@@ -26,20 +28,38 @@ const notifikacija = (id: number, procitano = false): Notifikacija => ({
 });
 
 describe('notifikacije efekti', () => {
-  it('profil se osvežava kad stigne obrada zahteva ili promena stanovanja', () => {
+  const stiglaTipa = (tip: TipNotifikacije) =>
+    VezaActions.stigla({ notifikacija: { ...notifikacija(1), tip }, naStranici: false });
+
+  it('profil se osvežava kad stigne obrada zahteva, promena stanovanja ili upravljanja', () => {
     const profileService = { profil: { reload: vi.fn() } };
     const { posalji } = pokreniEfekat((a) =>
       osveziProfil(a, profileService as unknown as ProfileService),
     );
-    const stigla = (tip: TipNotifikacije) =>
-      posalji(VezaActions.stigla({ notifikacija: { ...notifikacija(1), tip }, naStranici: false }));
-    stigla('kvar_status');
-    stigla('zahtev_obradjen');
-    stigla('stanovanje');
-    expect(profileService.profil.reload).toHaveBeenCalledTimes(2);
+    posalji(stiglaTipa('kvar_status'));
+    posalji(stiglaTipa('zahtev_obradjen'));
+    posalji(stiglaTipa('stanovanje'));
+    posalji(stiglaTipa('upravljanje'));
+    expect(profileService.profil.reload).toHaveBeenCalledTimes(3);
   });
 
-  it('broj neprocitanih se učitava po povezivanju i novoj notifikaciji, ali ne kad je na stranici', () => {
+  it('promena upravljanja osvežava token da bi meni pratio novu ulogu, i greška ne prekida efekat', () => {
+    const tokenRefresh = {
+      osvezi: vi
+        .fn()
+        .mockReturnValueOnce(throwError(() => new Error('mreža')))
+        .mockReturnValueOnce(of('novi-token')),
+    };
+    const { posalji } = pokreniEfekat((a) =>
+      osveziUlogu(a, tokenRefresh as unknown as TokenRefresh),
+    );
+    posalji(stiglaTipa('stanovanje'));
+    posalji(stiglaTipa('upravljanje'));
+    posalji(stiglaTipa('upravljanje'));
+    expect(tokenRefresh.osvezi).toHaveBeenCalledTimes(2);
+  });
+
+  it('broj nepročitanih se učitava samo po povezivanju, nova notifikacija ga ne traži ponovo', () => {
     const service = { neprocitane: vi.fn(() => of({ broj: 2, linkovi: {} })) };
     const { posalji, izlaz } = pokreniEfekat((a) =>
       neprocitane(a, service as unknown as NotifikacijaService),
@@ -47,11 +67,8 @@ describe('notifikacije efekti', () => {
     posalji(VezaActions.povezan());
     posalji(VezaActions.stigla({ notifikacija: notifikacija(1), naStranici: true }));
     posalji(VezaActions.stigla({ notifikacija: notifikacija(2), naStranici: false }));
-    expect(service.neprocitane).toHaveBeenCalledTimes(2);
-    expect(izlaz).toEqual([
-      NotifikacijeApiActions.neprocitaneUcitane({ broj: 2, linkovi: {} }),
-      NotifikacijeApiActions.neprocitaneUcitane({ broj: 2, linkovi: {} }),
-    ]);
+    expect(service.neprocitane).toHaveBeenCalledTimes(1);
+    expect(izlaz).toEqual([NotifikacijeApiActions.neprocitaneUcitane({ broj: 2, linkovi: {} })]);
   });
 
   it('greška pri učitavanju broja ne prekida efekat', () => {

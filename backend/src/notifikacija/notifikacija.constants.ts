@@ -1,5 +1,8 @@
 export const SOBA_KORISNIKA = (korisnikId: number) => `korisnik:${korisnikId}`;
+export const SOBA_SESIJE = (sid: string) => `sesija:${sid}`;
 export const DOGADJAJ_NOTIFIKACIJA = 'notifikacija';
 export const DOGADJAJ_NOV_OGLAS = 'nov-oglas';
 export const DOGADJAJ_VIDLJIVOST = 'vidljivost';
 export const DANA_CUVANJA = 90;
+export const BRISANJE_PO = 5000;
+export const NAJVISE_VEZA_PO_KORISNIKU = 20;
