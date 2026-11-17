@@ -250,20 +250,20 @@ describe('prava pristupa', () => {
         .expect(200);
       await kao(t, svet.serviser)
         .get(`/kvar/${sadrzaj.kvarZajednicki}`)
-        .expect(403);
+        .expect(404);
       await kao(t, drugiServiser)
         .get(`/kvar/${sadrzaj.kvarServisera}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('ne čita i ne piše komentare i slike na kvaru koji mu nije dodeljen', async () => {
       const kvar = `/kvar/${sadrzaj.kvarServisera}`;
-      await kao(t, drugiServiser).get(`${kvar}/komentar`).expect(403);
+      await kao(t, drugiServiser).get(`${kvar}/komentar`).expect(404);
       await kao(t, drugiServiser)
         .post(`${kvar}/komentar`)
         .send({ tekst: 'Nije moj kvar.' })
-        .expect(403);
-      await kao(t, drugiServiser).get(`${kvar}/slika`).expect(403);
+        .expect(404);
+      await kao(t, drugiServiser).get(`${kvar}/slika`).expect(404);
       await kao(t, svet.serviser).get(`${kvar}/komentar`).expect(200);
     });
 
@@ -384,7 +384,7 @@ describe('prava pristupa', () => {
     });
 
     it('kvar iz tuđeg stana ne vidi ni komšija iz iste zgrade', async () => {
-      await kao(t, svet.a.sused).get(`/kvar/${sadrzaj.kvarStan}`).expect(403);
+      await kao(t, svet.a.sused).get(`/kvar/${sadrzaj.kvarStan}`).expect(404);
       await kao(t, svet.a.ukucanin)
         .get(`/kvar/${sadrzaj.kvarStan}`)
         .expect(200);
@@ -448,7 +448,7 @@ describe('prava pristupa', () => {
       expect(moji.body).toHaveLength(1);
       await kao(t, svet.bezStana)
         .get(`/kvar/${sadrzaj.kvarZajednicki}`)
-        .expect(403);
+        .expect(404);
       await kao(t, svet.bezStana).get(`/oglas/${sadrzaj.oglas}`).expect(404);
     });
   });
@@ -478,7 +478,7 @@ describe('prava pristupa', () => {
         .expect(200);
       expect(detalj.body.smeDaUpravlja).toBe(false);
       await kao(t, upravnik).get(`/kvar/${tudjKvar}`).expect(200);
-      await kao(t, upravnik).get(`/kvar/${sadrzaj.kvarStan}`).expect(403);
+      await kao(t, upravnik).get(`/kvar/${sadrzaj.kvarStan}`).expect(404);
       await kao(t, upravnik)
         .patch(`/kvar/${sadrzaj.kvarZajednicki}/prihvati`)
         .expect(403);
@@ -546,7 +546,7 @@ describe('prava pristupa', () => {
         .post('/glasanje')
         .send(novaAnketa(svet.a.id))
         .expect(403);
-      await kao(t, upravnik).get(`/kvar/${sadrzaj.kvarZajednicki}`).expect(403);
+      await kao(t, upravnik).get(`/kvar/${sadrzaj.kvarZajednicki}`).expect(404);
       await kao(t, upravnik)
         .patch(`/kvar/${sadrzaj.kvarZajednicki}/prihvati`)
         .expect(403);

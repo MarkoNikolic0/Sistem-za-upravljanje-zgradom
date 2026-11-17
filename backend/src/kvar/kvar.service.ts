@@ -171,7 +171,7 @@ export class KvarService {
   async findDostupan(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     if (!(await this.prava.smeDaVidi(kvar, korisnikId, uloga))) {
-      throw new ForbiddenException('Nemate pristup ovom kvaru!');
+      throw new NotFoundException(`Kvar sa id-jem ${id} ne postoji!`);
     }
     return kvar;
   }

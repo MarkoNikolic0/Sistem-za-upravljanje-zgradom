@@ -352,7 +352,7 @@ describe('kvarovi', () => {
       await kao(t, z.upravnik).put(`/kvar/${zajednicki}/pracenje`).expect(403);
       const privatni = await prijavi(PRIVATNI_STAN);
       await kao(t, z.ukucanin).put(`/kvar/${privatni}/pracenje`).expect(403);
-      await kao(t, z.sused).put(`/kvar/${privatni}/pracenje`).expect(403);
+      await kao(t, z.sused).put(`/kvar/${privatni}/pracenje`).expect(404);
     });
 
     it('slični kvarovi su otvoreni kvarovi iste vrste u zajedničkom prostoru zgrade', async () => {
@@ -472,7 +472,7 @@ describe('kvarovi', () => {
         serviser: { id: drugiServiser.id },
         dolazakServisera: null,
       });
-      await kao(t, serviser).get(`/kvar/${kvar}`).expect(403);
+      await kao(t, serviser).get(`/kvar/${kvar}`).expect(404);
       await status(kvar, 'u_toku').expect(403);
       await status(kvar, 'u_toku', drugiServiser).expect(200);
       expect(await obavestenja(serviser, kvar)).toContain(

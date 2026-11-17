@@ -100,7 +100,7 @@ describe('stanari, nalozi i zgrade', () => {
           .send(noviKvar(z.stanovi[0], ZAJEDNICKI_PROSTOR))
           .expect(201),
       );
-      await kao(t, novajlija).get(`/kvar/${kvar}`).expect(403);
+      await kao(t, novajlija).get(`/kvar/${kvar}`).expect(404);
 
       await obradi(zahtev, { status: 'na_cekanju' }).expect(400);
       await obradi(zahtev, { status: 'prihvacen', vlasnik: true }).expect(200);
@@ -221,9 +221,10 @@ describe('stanari, nalozi i zgrade', () => {
       });
       await kao(t, z.vlasnik).get(`/oglas/${mojOglas}`).expect(404);
 
+      for (const putanja of [`/kvar/${mojKvar}`, `/kvar/${tudjKvar}`]) {
+        await kao(t, stanar).get(putanja).expect(404);
+      }
       for (const putanja of [
-        `/kvar/${mojKvar}`,
-        `/kvar/${tudjKvar}`,
         `/zgrada/${z.id}/dokument`,
         `/zgrada/${z.id}/kontakt`,
       ]) {
@@ -240,7 +241,7 @@ describe('stanari, nalozi i zgrade', () => {
       await kao(t, stanar)
         .patch(`/kvar/${mojKvar}/povuci`)
         .send({})
-        .expect(403);
+        .expect(404);
     });
 
     it('iseljen stanar više ne dobija obaveštenja o kvaru koji je prijavio', async () => {
@@ -584,7 +585,7 @@ describe('stanari, nalozi i zgrade', () => {
       ).toBe(0);
       const posle = await kao(t, z.upravnik).get(`/kvar/${kvar}`).expect(200);
       expect(posle.body).toMatchObject({ status: 'prihvacen', serviser: null });
-      await kao(t, serviser).get(`/kvar/${kvar}`).expect(403);
+      await kao(t, serviser).get(`/kvar/${kvar}`).expect(404);
       await kao(t, admin)
         .put(`/korisnik/${serviser.id}/specijalnosti`)
         .send({ kategorije: ['vodovod'] })

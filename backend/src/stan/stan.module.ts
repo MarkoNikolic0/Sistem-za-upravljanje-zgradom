@@ -6,23 +6,10 @@ import { Stan } from './stan.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { KorisnikModule } from '../korisnik/korisnik.module.js';
-import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
-import { Kvar } from '../kvar/kvar.entity.js';
-import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
-import { Glas } from '../glasanje/glas.entity.js';
-import { PrisutanStan } from '../sastanak/prisutan-stan.entity.js';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Stan,
-      Zgrada,
-      StanarStana,
-      Kvar,
-      ZahtevPovezivanje,
-      Glas,
-      PrisutanStan,
-    ]),
+    TypeOrmModule.forFeature([Stan, Zgrada]),
     AuthModule,
     KorisnikModule,
   ],

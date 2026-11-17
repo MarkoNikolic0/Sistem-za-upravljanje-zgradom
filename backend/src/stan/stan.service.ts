@@ -28,14 +28,6 @@ import { jeDupliUnos } from '../shared/greske-baze.js';
 export class StanService {
   constructor(
     @InjectRepository(Stan) private stanRepository: Repository<Stan>,
-    @InjectRepository(StanarStana)
-    private stanarStanaRepository: Repository<StanarStana>,
-    @InjectRepository(Kvar) private kvarRepository: Repository<Kvar>,
-    @InjectRepository(ZahtevPovezivanje)
-    private zahtevRepository: Repository<ZahtevPovezivanje>,
-    @InjectRepository(Glas) private glasRepository: Repository<Glas>,
-    @InjectRepository(PrisutanStan)
-    private prisutanStanRepository: Repository<PrisutanStan>,
     private korisnikService: KorisnikService,
   ) {}
 
@@ -106,21 +98,31 @@ export class StanService {
     const stan = await this.findOne(id);
     await this.proveriZgradu(korisnikId, uloga, stan.zgrada.id);
 
-    const [stanari, kvarovi, zahtevi, glasovi, prisustva] = await Promise.all([
-      this.stanarStanaRepository.count({ where: { stan: { id } } }),
-      this.kvarRepository.count({ where: { stan: { id } } }),
-      this.zahtevRepository.count({ where: { stan: { id } } }),
-      this.glasRepository.count({ where: { stan: { id } } }),
-      this.prisutanStanRepository.count({ where: { stan: { id } } }),
-    ]);
-    if (stanari + kvarovi + zahtevi + glasovi + prisustva > 0) {
-      throw new ConflictException(
-        `Stan se ne može obrisati jer ima: stanara ${stanari}, kvarova ${kvarovi}, zahteva za povezivanje ${zahtevi}, glasova u odlukama ${glasovi}, prisustva na skupštinama ${prisustva}.`,
-      );
-    }
-
     return await this.stanRepository.manager.transaction(async (manager) => {
       await proveriAktivnu(manager, stan.zgrada.id, 'pessimistic_write');
+      const zakljucan = await manager.findOne(Stan, {
+        where: { id },
+        select: { id: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!zakljucan) {
+        throw new NotFoundException(`Stan sa id-jem ${id} ne postoji!`);
+      }
+      const uStanu = { where: { stan: { id } } };
+      const [stanari, kvarovi, zahtevi, glasovi, prisustva] = await Promise.all(
+        [
+          manager.count(StanarStana, uStanu),
+          manager.count(Kvar, uStanu),
+          manager.count(ZahtevPovezivanje, uStanu),
+          manager.count(Glas, uStanu),
+          manager.count(PrisutanStan, uStanu),
+        ],
+      );
+      if (stanari + kvarovi + zahtevi + glasovi + prisustva > 0) {
+        throw new ConflictException(
+          `Stan se ne može obrisati jer ima: stanara ${stanari}, kvarova ${kvarovi}, zahteva za povezivanje ${zahtevi}, glasova u odlukama ${glasovi}, prisustva na skupštinama ${prisustva}.`,
+        );
+      }
       const obrisan = await manager.remove(stan);
       await promeniBrojStanovaOdluka(manager, stan.zgrada.id, -1);
       return obrisan;
