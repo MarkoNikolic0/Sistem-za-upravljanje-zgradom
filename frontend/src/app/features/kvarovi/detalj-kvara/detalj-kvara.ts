@@ -17,6 +17,7 @@ import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import {
+  MAKS_OCENA_KVARA,
   NAZIVI_KATEGORIJA_KVARA,
   NAZIVI_STATUSA_KVARA,
   StanjeNavigacijeKvara,
@@ -76,6 +77,7 @@ export class DetaljKvara {
   protected readonly boje = BOJE_STATUSA;
   protected readonly oznakeRoka = OZNAKE_ROKA;
   protected readonly jeHitan = jeHitan;
+  protected readonly maksOcena = MAKS_OCENA_KVARA;
 
   protected readonly rok = computed(() => {
     const kvar = this.store.kvar();

@@ -98,11 +98,32 @@ describe('ListaKvarovaStore', () => {
   it('izmena kvara na strani menja red bez učitavanja, a izlazak iz filtera učitava', () => {
     store.prikaziListu();
     lista.mockClear();
-    dispatcher.dispatch(kvarEvents.azuriran(kvar({ id: 2, status: 'u_toku' })));
+    const prijavljen = kvar({ id: 2 });
+    const uToku = kvar({ id: 2, status: 'u_toku' });
+    dispatcher.dispatch(kvarEvents.azuriran({ kvar: uToku, prethodni: prijavljen }));
     expect(store.kvarovi()[1].status).toBe('u_toku');
     expect(lista).not.toHaveBeenCalled();
 
-    dispatcher.dispatch(kvarEvents.azuriran(kvar({ id: 2, status: 'zatvoren' })));
+    const zatvoren = kvar({ id: 2, status: 'zatvoren' });
+    dispatcher.dispatch(kvarEvents.azuriran({ kvar: zatvoren, prethodni: uToku }));
+    expect(lista).toHaveBeenCalledOnce();
+  });
+
+  it('izmena kvara van strane učitava samo kad kvar ulazi u filter ili izlazi iz njega', () => {
+    store.prikaziListu();
+    lista.mockClear();
+    const prijavljen = kvar({ id: 30 });
+    const uToku = kvar({ id: 30, status: 'u_toku' });
+    dispatcher.dispatch(kvarEvents.azuriran({ kvar: uToku, prethodni: prijavljen }));
+    expect(lista).not.toHaveBeenCalled();
+
+    dispatcher.dispatch(kvarEvents.azuriran({ kvar: uToku, prethodni: null }));
+    expect(lista).toHaveBeenCalledOnce();
+
+    store.promeniStanje('zavrseni');
+    lista.mockClear();
+    const zatvoren = kvar({ id: 30, status: 'zatvoren' });
+    dispatcher.dispatch(kvarEvents.azuriran({ kvar: zatvoren, prethodni: uToku }));
     expect(lista).toHaveBeenCalledOnce();
   });
 });

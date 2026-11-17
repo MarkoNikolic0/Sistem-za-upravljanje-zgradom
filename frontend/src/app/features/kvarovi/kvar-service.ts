@@ -118,8 +118,8 @@ export class KvarService {
     return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/status`, { status });
   }
 
-  potvrdi(id: number): Observable<KvarDetalj> {
-    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/potvrdi`, null);
+  potvrdi(id: number, ocena: number | null): Observable<KvarDetalj> {
+    return this.http.patch<KvarDetalj>(`${this.apiUrl}/${id}/potvrdi`, ocena ? { ocena } : {});
   }
 
   zatvori(id: number): Observable<KvarDetalj> {

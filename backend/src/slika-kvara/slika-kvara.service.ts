@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { SlikaKvara } from './slika-kvara.entity.js';
 import { KvarService } from '../kvar/kvar.service.js';
@@ -18,6 +18,7 @@ import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
 import { obradiSliku } from '../shared/skladiste/obrada-slike.js';
 import { MAKS_SLIKA_PO_KVARU } from './slika-kvara.constants.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
+import { sakrijKontakt } from '../korisnik/kontakt-serializer.interceptor.js';
 
 @Injectable()
 export class SlikaKvaraService {
@@ -31,13 +32,16 @@ export class SlikaKvaraService {
   ) {}
 
   async findZaKvar(kvarId: number, korisnikId: number, uloga: Uloga) {
-    await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
+    const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
     const slike = await this.slikaRepository.find({
       where: { kvar: { id: kvarId } },
       relations: { korisnik: true },
       order: { datumOtpremanja: 'ASC', id: 'ASC' },
     });
+    if (await this.kvarPravaService.skrivaKontakte(kvar, korisnikId, uloga)) {
+      sakrijKontakt(slike.map((slika) => slika.korisnik));
+    }
     return await Promise.all(slike.map((slika) => this.saLinkovima(slika)));
   }
 
@@ -52,6 +56,7 @@ export class SlikaKvaraService {
     }
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
     this.proveriDaNijeZavrsen(kvar.status);
+    await this.proveriBroj(this.slikaRepository.manager, kvar.id);
 
     const [velika, slicica] = await obradiSliku(fajl.buffer, 'slika');
     const osnova = `kvarovi/${kvar.id}/${randomUUID()}`;
@@ -71,15 +76,7 @@ export class SlikaKvaraService {
           lock: { mode: 'pessimistic_write' },
         });
         this.proveriDaNijeZavrsen(zakljucan.status);
-        const broj = await manager.count(SlikaKvara, {
-          where: { kvar: { id: kvar.id } },
-        });
-        if (broj >= MAKS_SLIKA_PO_KVARU) {
-          throw greskaPolja(
-            'slika',
-            `Kvar može imati najviše ${MAKS_SLIKA_PO_KVARU} slika.`,
-          );
-        }
+        await this.proveriBroj(manager, kvar.id);
         const { identifiers } = await manager.insert(SlikaKvara, {
           kljuc,
           kljucSlicice,
@@ -98,6 +95,18 @@ export class SlikaKvaraService {
       relations: { korisnik: true },
     });
     return await this.saLinkovima(slika);
+  }
+
+  private async proveriBroj(manager: EntityManager, kvarId: number) {
+    const broj = await manager.count(SlikaKvara, {
+      where: { kvar: { id: kvarId } },
+    });
+    if (broj >= MAKS_SLIKA_PO_KVARU) {
+      throw greskaPolja(
+        'slika',
+        `Kvar može imati najviše ${MAKS_SLIKA_PO_KVARU} slika.`,
+      );
+    }
   }
 
   private proveriDaNijeZavrsen(status: StatusKvara) {

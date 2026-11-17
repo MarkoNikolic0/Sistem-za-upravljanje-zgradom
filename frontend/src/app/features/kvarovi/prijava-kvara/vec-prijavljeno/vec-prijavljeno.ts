@@ -40,6 +40,9 @@ export class VecPrijavljeno {
   protected readonly greska = linkedSignal({ source: this.upit, computation: () => '' });
 
   protected async prati(kvarId: number): Promise<void> {
+    if (this.pracenjeUToku()) {
+      return;
+    }
     this.greska.set('');
     this.pracenjeUToku.set(true);
     try {

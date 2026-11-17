@@ -8,13 +8,17 @@
       Ako ne odgovoriš do {{ rok | date: 'd. MMM y.' }}, kvar će se sam zatvoriti.
     </p>
   }
+  <fieldset class="mt-4">
+    <legend class="text-sm font-medium">Oceni popravku (nije obavezno)</legend>
+    <p-rating class="mt-2" [(ngModel)]="ocena" [stars]="maksOcena" />
+  </fieldset>
   <div class="mt-4 flex flex-wrap gap-2">
     <button
       pButton
       type="button"
       size="small"
       [disabled]="store.akcijaUToku()"
-      (click)="store.potvrdi()"
+      (click)="store.potvrdi(ocena())"
     >
       Potvrdi da je rešeno
     </button>

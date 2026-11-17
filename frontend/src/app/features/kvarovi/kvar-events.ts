@@ -6,6 +6,6 @@ export const kvarEvents = eventGroup({
   source: 'Kvarovi',
   events: {
     prijavljen: type<Kvar>(),
-    azuriran: type<KvarDetalj>(),
+    azuriran: type<{ kvar: KvarDetalj; prethodni: KvarDetalj | null }>(),
   },
 });

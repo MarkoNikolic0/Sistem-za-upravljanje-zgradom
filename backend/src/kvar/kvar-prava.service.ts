@@ -146,6 +146,26 @@ export class KvarPravaService {
     );
   }
 
+  async vanUpravljanja(
+    kvarovi: Kvar[],
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<Kvar[]> {
+    if (uloga !== Uloga.UPRAVNIK || kvarovi.length === 0) {
+      return [];
+    }
+    const zgrade = await this.korisnikService.zgradeUpravnika(korisnikId);
+    return kvarovi.filter((kvar) => !sadrzi(zgrade, kvar.zgrada.id));
+  }
+
+  async skrivaKontakte(
+    kvar: Kvar,
+    korisnikId: number,
+    uloga: Uloga,
+  ): Promise<boolean> {
+    return (await this.vanUpravljanja([kvar], korisnikId, uloga)).length > 0;
+  }
+
   async smeDaPotvrdi(kvar: Kvar, korisnikId: number): Promise<boolean> {
     if (kvar.stan) {
       return await this.stanarStanaRepository.exists({

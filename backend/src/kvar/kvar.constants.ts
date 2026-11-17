@@ -32,6 +32,8 @@ export const PORUKA_PRACENJE =
 
 export const DANA_ZA_POTVRDU = 7;
 
+export const MAKS_OCENA = 5;
+
 export const DANA_ZA_RESAVANJE: Record<Prioritet, number> = {
   [Prioritet.HITNO]: 2,
   [Prioritet.SREDNJE]: 7,

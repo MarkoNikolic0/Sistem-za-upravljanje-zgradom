@@ -13,6 +13,7 @@ import { NAZIVI_ULOGA } from '../../../auth/auth-models';
 import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KomentarKvara, KvarDetalj, MAKS_KOMENTAR_KVARA, StatusKvara } from '../../kvar-models';
 import { KomentariKvaraStore } from '../komentari-kvara-store';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { jeZavrsen, PRAVILA_KOMENTARA_KVARA } from '../../pravila-kvara';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -47,6 +48,7 @@ const OZNAKE_RAZLOGA: Partial<Record<StatusKvara, OznakaRazloga>> = {
 })
 export class KomentariKvara {
   protected readonly store = inject(KomentariKvaraStore);
+  private detaljStore = inject(DetaljKvaraStore);
   private authStore = inject(AuthStore);
   private confirmationService = inject(ConfirmationService);
   private fb = inject(FormBuilder);
@@ -101,6 +103,9 @@ export class KomentariKvara {
 
   protected async posaljiKomentar(): Promise<void> {
     const tekst = this.forma.controls.tekst;
+    if (this.store.slanje()) {
+      return;
+    }
     if (tekst.invalid) {
       tekst.markAsTouched();
       this.fokusiraj('#komentar');
@@ -112,6 +117,11 @@ export class KomentariKvara {
       this.forma.reset();
       this.fokusiraj('#komentar');
     } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 409) {
+        this.detaljStore.osvezi(this.kvar().id);
+        this.fokusiraj('#komentari-naslov');
+        return;
+      }
       const poruka = err instanceof HttpErrorResponse ? greskaPolja(err, 'tekst') : undefined;
       this.greskaKomentara.set(poruka ?? 'Komentar nije poslat. Pokušaj ponovo.');
       this.fokusiraj('#komentar');

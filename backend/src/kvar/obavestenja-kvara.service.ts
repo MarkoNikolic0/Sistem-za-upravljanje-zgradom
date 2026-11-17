@@ -8,12 +8,13 @@ import { danISat } from '../shared/vreme.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { upravnikZgrade } from '../notifikacija/primaoci.js';
+import { DANA_ZA_POTVRDU } from './kvar.constants.js';
 
 interface PromenaStatusa {
   kvar: Kvar;
   izStatusa: StatusKvara[];
   status: StatusKvara;
-  akterId: number;
+  akterId?: number;
   noviServiserId?: number;
 }
 
@@ -84,7 +85,9 @@ export class ObavestenjaKvaraService {
       case StatusKvara.ZATVOREN:
         return posalji(
           [...(await stanari()), ...(await upravnik()), ...serviser],
-          `Kvar ${naslov} je zatvoren.`,
+          p.akterId === undefined
+            ? `Kvar ${naslov} je zatvoren jer rešenje nije potvrđeno za ${DANA_ZA_POTVRDU} dana.`
+            : `Kvar ${naslov} je zatvoren.`,
         );
     }
   }
@@ -139,7 +142,7 @@ export class ObavestenjaKvaraService {
     return [...stanari, ...pratioci].map((veza) => veza.korisnik.id);
   }
 
-  private posiljalac(manager: EntityManager, kvar: Kvar, akterId: number) {
+  private posiljalac(manager: EntityManager, kvar: Kvar, akterId?: number) {
     return (
       primaoci: number[],
       tekst: string,

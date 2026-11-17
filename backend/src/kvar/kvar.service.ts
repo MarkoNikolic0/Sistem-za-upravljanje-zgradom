@@ -34,6 +34,7 @@ import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
+import { sakrijKontakt } from '../korisnik/kontakt-serializer.interceptor.js';
 
 @Injectable()
 export class KvarService {
@@ -119,11 +120,23 @@ export class KvarService {
       order: { datumPrijave: 'DESC', id: 'DESC' },
       ...stranicenje(upit),
     });
+    const bezKontakta = await this.prava.vanUpravljanja(
+      stavke,
+      korisnikId,
+      uloga,
+    );
+    sakrijKontakt(
+      bezKontakta.flatMap((kvar) => [kvar.korisnik, kvar.serviser]),
+    );
 
     return { stavke, ukupno };
   }
 
-  async findSlicne(korisnikId: number, upit: SlicniKvaroviUpitDto) {
+  async findSlicne(
+    korisnikId: number,
+    uloga: Uloga,
+    upit: SlicniKvaroviUpitDto,
+  ) {
     const veza = await this.vezaSaStanom(korisnikId, upit.stanId);
     const slicni = await this.kvarRepository.find({
       where: {
@@ -132,7 +145,7 @@ export class KvarService {
         kategorija: upit.kategorija,
         status: In(OTVORENI_STATUSI),
       },
-      relations: { korisnik: true },
+      relations: { zgrada: true, korisnik: true },
       order: { datumPrijave: 'DESC', id: 'DESC' },
       take: MAKS_SLICNIH,
     });
@@ -149,6 +162,12 @@ export class KvarService {
       select: { id: true, kvar: { id: true } },
     });
     const praceniIds = new Set(praceni.map((p) => p.kvar.id));
+    const bezKontakta = await this.prava.vanUpravljanja(
+      slicni,
+      korisnikId,
+      uloga,
+    );
+    sakrijKontakt(bezKontakta.map((kvar) => kvar.korisnik));
     return slicni.map((kvar) =>
       Object.assign(kvar, { pratim: praceniIds.has(kvar.id) }),
     );
@@ -190,6 +209,13 @@ export class KvarService {
           order: { datum: 'ASC', id: 'ASC' },
         }),
       ]);
+    if (uloga === Uloga.UPRAVNIK && !smeDaUpravlja) {
+      sakrijKontakt([
+        kvar.korisnik,
+        kvar.serviser,
+        ...istorija.map((promena) => promena.korisnik),
+      ]);
+    }
     return Object.assign(kvar, {
       smeDaUpravlja,
       smeDaPotvrdi,

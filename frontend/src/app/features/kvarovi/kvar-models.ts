@@ -63,12 +63,15 @@ export interface Kvar {
   datumResenja: string | null;
   rokResavanja: string;
   dolazakServisera: string | null;
+  ocena: number | null;
   brojPratilaca: number;
   zgrada: ZgradaOsnovno;
   stan: StanOsnovno | null;
   korisnik: KorisnikOsnovno & Partial<Kontakt>;
   serviser: (KorisnikOsnovno & Partial<Kontakt>) | null;
 }
+
+export const MAKS_OCENA_KVARA = 5;
 
 export interface PromenaStatusaKvara {
   id: number;

@@ -81,6 +81,12 @@
             </dd>
           </div>
         }
+        @if (kvar.ocena; as ocena) {
+          <div>
+            <dt><i class="pi pi-star" aria-hidden="true"></i>Ocena</dt>
+            <dd>{{ ocena }} od {{ maksOcena }}</dd>
+          </div>
+        }
         <div>
           <dt><i class="pi pi-user" aria-hidden="true"></i>Serviser</dt>
           <dd>

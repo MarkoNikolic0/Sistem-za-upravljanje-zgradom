@@ -15,6 +15,7 @@ import {
   noviKvar,
   pdf,
   slika,
+  useli,
   zaDana,
   type ZgradaSveta,
 } from './pomoc/podaci.js';
@@ -171,6 +172,12 @@ describe('kvarovi', () => {
         status: 'zatvoren',
         korisnik: null,
       });
+      const poruka =
+        'Kvar „Curi cev“ je zatvoren jer rešenje nije potvrđeno za 7 dana.';
+      expect((await obavestenja(z.vlasnik, stari)).at(-1)).toBe(poruka);
+      expect((await obavestenja(z.upravnik, stari)).at(-1)).toBe(poruka);
+      expect((await obavestenja(serviser, stari)).at(-1)).toBe(poruka);
+      expect(await obavestenja(z.vlasnik, skori)).not.toContain(poruka);
     });
   });
 
@@ -390,6 +397,21 @@ describe('kvarovi', () => {
       await akcija(z.vlasnik, kvar, 'potvrdi').expect(200);
     });
 
+    it('potvrda čuva ocenu od 1 do 5, a može i bez nje', async () => {
+      const kvar = await doStatusa('resen');
+      for (const ocena of [0, 6, 2.5, 'pet']) {
+        await akcija(z.vlasnik, kvar, 'potvrdi', { ocena }).expect(400);
+      }
+      const zatvoren = await akcija(z.vlasnik, kvar, 'potvrdi', {
+        ocena: 4,
+      }).expect(200);
+      expect(zatvoren.body).toMatchObject({ status: 'zatvoren', ocena: 4 });
+
+      const bezOcene = await doStatusa('resen');
+      await akcija(z.vlasnik, bezOcene, 'potvrdi').expect(200);
+      expect((await detalj(bezOcene)).ocena).toBeNull();
+    });
+
     it('vraćanje na popravku traži razlog i obaveštava servisera i upravnika', async () => {
       const kvar = await doStatusa('resen');
       await akcija(z.vlasnik, kvar, 'vrati', {}).expect(400);
@@ -567,6 +589,65 @@ describe('kvarovi', () => {
         ids(prva.body).filter((id) => ids(druga.body).includes(id)),
       ).toEqual([]);
       await kao(t, z.upravnik).get('/kvar?strana=0').expect(400);
+    });
+  });
+
+  describe('kontakti', () => {
+    it('upravnik vidi email i telefon samo u zgradama kojima upravlja', async () => {
+      const druga = await napraviZgraduSaLjudima(t, 'Kontakti');
+      await useli(t, z.upravnik, druga.stanovi[2], false);
+      const kvar = (
+        await kao(t, druga.vlasnik)
+          .post('/kvar')
+          .send(noviKvar(druga.stanovi[0], ZAJEDNICKI_PROSTOR))
+          .expect(201)
+      ).body.id as number;
+      await kao(t, druga.vlasnik)
+        .post(`/kvar/${kvar}/komentar`)
+        .send({ tekst: 'Komentar.' })
+        .expect(201);
+      await kao(t, druga.vlasnik)
+        .post(`/kvar/${kvar}/slika`)
+        .attach('slika', await slika(), 'cev.png')
+        .expect(201);
+
+      const korisnici = async (akter: Akter) => {
+        const [kvarDetalj, spisak, komentari, slike] = await Promise.all(
+          [
+            `/kvar/${kvar}`,
+            `/kvar?zgradaId=${druga.id}`,
+            `/kvar/${kvar}/komentar`,
+            `/kvar/${kvar}/slika`,
+          ].map(
+            async (adresa) =>
+              (await kao(t, akter).get(adresa).expect(200)).body,
+          ),
+        );
+        return [
+          kvarDetalj.korisnik,
+          ...kvarDetalj.istorija.map((p: { korisnik: object }) => p.korisnik),
+          spisak.stavke[0].korisnik,
+          komentari.stavke[0].korisnik,
+          slike[0].korisnik,
+        ];
+      };
+
+      const slicni = await kao(t, z.upravnik)
+        .get(`/kvar/slicni?stanId=${druga.stanovi[2]}&kategorija=vodovod`)
+        .expect(200);
+      for (const korisnik of [
+        ...(await korisnici(z.upravnik)),
+        slicni.body[0].korisnik,
+      ]) {
+        expect(korisnik).not.toHaveProperty('telefon');
+        expect(korisnik).not.toHaveProperty('email');
+      }
+      for (const korisnik of await korisnici(druga.upravnik)) {
+        expect(korisnik).toHaveProperty('telefon');
+        expect(korisnik).toHaveProperty('email');
+      }
+      const svoj = await detalj(await prijavi());
+      expect(svoj.korisnik).toHaveProperty('telefon');
     });
   });
 

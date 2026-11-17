@@ -28,6 +28,7 @@ import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
+import { PotvrdaDto } from './dto/potvrda.dto.js';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -63,7 +64,7 @@ export class KvarController {
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Query() upit: SlicniKvaroviUpitDto,
   ) {
-    return this.kvarService.findSlicne(korisnik.id, upit);
+    return this.kvarService.findSlicne(korisnik.id, korisnik.uloga, upit);
   }
 
   @UseGuards(RolesGuard)
@@ -189,8 +190,9 @@ export class KvarController {
   potvrdi(
     @Param('id', ParseIntPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+    @Body() dto: PotvrdaDto,
   ) {
-    return this.kvarAkcijeService.potvrdi(id, korisnik.id, korisnik.uloga);
+    return this.kvarAkcijeService.potvrdi(id, korisnik.id, korisnik.uloga, dto);
   }
 
   @Patch(':id/vrati')

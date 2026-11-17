@@ -39,6 +39,7 @@ import { MS_PO_DANU } from '../shared/vreme.js';
 import { PostaviDolazakDto } from './dto/postavi-dolazak.dto.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { OpcioniRazlogDto, RazlogDto } from './dto/razlog.dto.js';
+import { PotvrdaDto } from './dto/potvrda.dto.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
@@ -110,11 +111,6 @@ export class KvarAkcijeService {
       {
         komentar: dto.tekst,
         provera: async (manager) => {
-          await manager.findOne(Kvar, {
-            where: { id },
-            select: { id: true },
-            lock: { mode: 'pessimistic_write' },
-          });
           if (
             await manager.exists(PratilacKvara, { where: { kvar: { id } } })
           ) {
@@ -240,7 +236,7 @@ export class KvarAkcijeService {
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
 
-  async potvrdi(id: number, korisnikId: number, uloga: Uloga) {
+  async potvrdi(id: number, korisnikId: number, uloga: Uloga, dto: PotvrdaDto) {
     const kvar = await this.kvarService.findOne(id);
     await this.prava.proveriPotvrdu(kvar, korisnikId);
     await this.prelaz(
@@ -248,6 +244,7 @@ export class KvarAkcijeService {
       [StatusKvara.RESEN],
       StatusKvara.ZATVOREN,
       korisnikId,
+      { izmene: { ocena: dto.ocena ?? null } },
     );
     return await this.kvarService.findDetalj(id, korisnikId, uloga);
   }
@@ -300,6 +297,22 @@ export class KvarAkcijeService {
             status: StatusKvara.ZATVOREN,
           })),
         );
+        const kvarovi = await manager.find(Kvar, {
+          where: { id: In(redovi.map(({ id }) => id)) },
+          relations: {
+            zgrada: true,
+            stan: true,
+            korisnik: true,
+            serviser: true,
+          },
+        });
+        for (const kvar of kvarovi) {
+          await this.obavestenja.promenaStatusa(manager, {
+            kvar,
+            izStatusa: [StatusKvara.RESEN],
+            status: StatusKvara.ZATVOREN,
+          });
+        }
       }
       return redovi.length;
     });

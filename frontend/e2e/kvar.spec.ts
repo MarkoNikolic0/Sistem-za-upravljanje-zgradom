@@ -60,8 +60,10 @@ test.describe.serial('kvar od prijave do zatvaranja', () => {
     const { a } = await ucitajSvet();
     await prijavi(page, a.vlasnik.email);
     await page.goto(adresaKvara);
+    await page.getByRole('radio', { name: 'Ocena 4' }).press('Space');
     await page.getByRole('button', { name: 'Potvrdi da je rešeno' }).click();
     await expect(page.getByText('Zatvoren').first()).toBeVisible();
+    await expect(page.getByText('4 od 5')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Potvrdi da je rešeno' })).toHaveCount(0);
   });
 });

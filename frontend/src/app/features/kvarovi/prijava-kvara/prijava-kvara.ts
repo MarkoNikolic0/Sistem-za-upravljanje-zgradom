@@ -142,6 +142,9 @@ export class PrijavaKvara {
   }
 
   protected async posalji(): Promise<void> {
+    if (this.slanje()) {
+      return;
+    }
     const { stanId, lokacijaTip, kategorija, naslov, opis, hitno } = this.forma.getRawValue();
     if (this.forma.invalid || stanId === null || kategorija === null) {
       this.forma.markAllAsTouched();

@@ -127,6 +127,7 @@ export function kvar(izmene: Partial<KvarDetalj> = {}): KvarDetalj {
     datumResenja: null,
     rokResavanja: zaDanaU(6),
     dolazakServisera: null,
+    ocena: null,
     brojPratilaca: 0,
     zgrada,
     stan: null,

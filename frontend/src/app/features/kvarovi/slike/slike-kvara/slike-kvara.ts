@@ -7,10 +7,11 @@ import { ImageModule } from 'primeng/image';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
-import { greskaPolja } from '../../../../shared/forme/greske-servera';
+import { greskaPolja, porukaServera } from '../../../../shared/forme/greske-servera';
 import { AuthStore } from '../../../auth/sesija/auth-store';
 import { KvarDetalj, SlikaKvara } from '../../kvar-models';
 import { SlikeKvaraStore } from '../slike-kvara-store';
+import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { jeZavrsen, PRAVILA_SLIKA_KVARA } from '../../pravila-kvara';
 import { IzborFajlova } from '../../../../shared/fajlovi/izbor-fajlova/izbor-fajlova';
 
@@ -35,6 +36,7 @@ interface Poruka {
 })
 export class SlikeKvara {
   protected readonly store = inject(SlikeKvaraStore);
+  private detaljStore = inject(DetaljKvaraStore);
   private authStore = inject(AuthStore);
   private confirmationService = inject(ConfirmationService);
   private readonly fokusiraj = fokusPosleCrtanja();
@@ -73,6 +75,7 @@ export class SlikeKvara {
     const kvarId = this.kvar().id;
     const nisuDodate: string[] = [];
     let razlog = '';
+    let zavrsenUMedjuvremenu = false;
     this.poruka.set(null);
     this.otpremanje.set(true);
     for (const fajl of fajlovi) {
@@ -81,9 +84,13 @@ export class SlikeKvara {
       } catch (err) {
         nisuDodate.push(`„${fajl.name}“`);
         razlog ||= this.razlog(err);
+        zavrsenUMedjuvremenu ||= err instanceof HttpErrorResponse && err.status === 409;
       }
     }
     this.otpremanje.set(false);
+    if (zavrsenUMedjuvremenu) {
+      this.detaljStore.osvezi(kvarId);
+    }
 
     if (nisuDodate.length > 0) {
       this.poruka.set({ tip: 'greska', tekst: `Nije dodato: ${nisuDodate.join(', ')}. ${razlog}` });
@@ -122,6 +129,9 @@ export class SlikeKvara {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 413) {
         return `Slika mora biti manja od ${PRAVILA_SLIKA_KVARA.maksMb} MB.`;
+      }
+      if (err.status === 409) {
+        return porukaServera(err) ?? 'Kvar je završen.';
       }
       const poruka = greskaPolja(err, 'slika');
       if (poruka) {

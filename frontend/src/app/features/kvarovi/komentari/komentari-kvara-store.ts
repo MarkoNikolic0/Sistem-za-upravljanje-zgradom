@@ -16,6 +16,13 @@ import { KOMENTARA_PO_STRANI } from '../pravila-kvara';
 import { KomentariKvaraService } from './komentari-kvara-service';
 import { jeIspravanId } from '../../../shared/ispravan-id';
 
+function spoji(komentari: KomentarKvara[], novi: KomentarKvara[]): KomentarKvara[] {
+  const postojeci = new Set(komentari.map((k) => k.id));
+  const najstariji = komentari.at(0)?.id ?? 0;
+  const dodati = novi.filter((k) => !postojeci.has(k.id) && k.id > najstariji);
+  return dodati.length === 0 ? komentari : [...komentari, ...dodati].sort((a, b) => a.id - b.id);
+}
+
 interface KomentariKvaraState {
   kvarId: number | null;
   komentari: KomentarKvara[];
@@ -87,13 +94,7 @@ export const KomentariKvaraStore = signalStore(
             return EMPTY;
           }
           return komentariKvaraService.komentari(kvarId, KOMENTARA_PO_STRANI).pipe(
-            tap(({ stavke }) => {
-              const poslednjiId = store.komentari().at(-1)?.id ?? 0;
-              const novi = stavke.filter((k) => k.id > poslednjiId).reverse();
-              if (novi.length > 0) {
-                patchState(store, { komentari: [...store.komentari(), ...novi] });
-              }
-            }),
+            tap(({ stavke }) => patchState(store, { komentari: spoji(store.komentari(), stavke) })),
             catchError(() => EMPTY),
           );
         }),
@@ -107,7 +108,7 @@ export const KomentariKvaraStore = signalStore(
       patchState(store, { slanje: true });
       try {
         const komentar = await firstValueFrom(komentariKvaraService.dodaj(kvarId, tekst));
-        patchState(store, { komentari: [...store.komentari(), komentar] });
+        patchState(store, { komentari: spoji(store.komentari(), [komentar]) });
       } finally {
         patchState(store, { slanje: false });
       }
@@ -122,17 +123,16 @@ export const KomentariKvaraStore = signalStore(
     },
   })),
   withReducer(
-    on(kvarEvents.azuriran, ({ payload: kvar }, { kvarId, komentari, requestStatus }) => {
+    on(kvarEvents.azuriran, ({ payload: { kvar } }, { kvarId, komentari, requestStatus }) => {
       if (kvar.id !== kvarId || requestStatus !== 'fulfilled') {
         return {};
       }
-      const poslednjiId = komentari.at(-1)?.id ?? 0;
       const novi = kvar.istorija.flatMap((p) =>
-        p.komentar && p.korisnik && p.komentar.id > poslednjiId
+        p.komentar && p.korisnik
           ? [{ ...p.komentar, datumKreiranja: p.datum, korisnik: p.korisnik }]
           : [],
       );
-      return novi.length > 0 ? { komentari: [...komentari, ...novi] } : {};
+      return { komentari: spoji(komentari, novi) };
     }),
   ),
 );

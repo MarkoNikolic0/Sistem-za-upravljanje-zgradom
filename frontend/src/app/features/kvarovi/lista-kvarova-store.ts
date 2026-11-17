@@ -107,7 +107,7 @@ export const ListaKvarovaStore = signalStore(
       prioritet: null,
       strana: 1,
     })),
-    on(kvarEvents.azuriran, ({ payload: kvar }, { kvarovi }) => ({
+    on(kvarEvents.azuriran, ({ payload: { kvar } }, { kvarovi }) => ({
       kvarovi: kvarovi.map((k) => (k.id === kvar.id ? kvar : k)),
     })),
   ),
@@ -117,13 +117,18 @@ export const ListaKvarovaStore = signalStore(
       tap(() => store.ucitaj()),
     ),
     posleIzmeneKvara$: events.on(kvarEvents.azuriran).pipe(
-      filter(({ payload: kvar }) => {
-        const naStrani = store.kvarovi().some((k) => k.id === kvar.id);
-        const uFilteru =
-          jeZavrsen(kvar.status) === (store.stanje() === 'zavrseni') &&
-          (store.kategorija() ?? kvar.kategorija) === kvar.kategorija &&
-          (store.prioritet() ?? kvar.prioritet) === kvar.prioritet;
-        return store.requestStatus() !== 'idle' && !(naStrani && uFilteru);
+      filter(({ payload: { kvar, prethodni } }) => {
+        if (store.requestStatus() === 'idle') {
+          return false;
+        }
+        const uFilteru = (k: Kvar) =>
+          jeZavrsen(k.status) === (store.stanje() === 'zavrseni') &&
+          (store.kategorija() ?? k.kategorija) === k.kategorija &&
+          (store.prioritet() ?? k.prioritet) === k.prioritet;
+        if (prethodni) {
+          return uFilteru(prethodni) !== uFilteru(kvar);
+        }
+        return !(store.kvarovi().some((k) => k.id === kvar.id) && uFilteru(kvar));
       }),
       tap(() => store.ucitaj()),
     ),

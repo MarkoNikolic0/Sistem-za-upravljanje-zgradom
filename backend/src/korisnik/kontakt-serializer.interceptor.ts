@@ -4,12 +4,21 @@ import {
   ExecutionContext,
 } from '@nestjs/common';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import type { Korisnik } from './korisnik.entity.js';
 
 const ULOGE_SA_KONTAKTOM: Uloga[] = [
   Uloga.UPRAVNIK,
   Uloga.SERVISER,
   Uloga.ADMIN,
 ];
+
+export function sakrijKontakt(korisnici: (Korisnik | null | undefined)[]) {
+  for (const korisnik of korisnici) {
+    if (korisnik) {
+      Object.assign(korisnik, { email: undefined, telefon: undefined });
+    }
+  }
+}
 
 export class KontaktSerializerInterceptor extends ClassSerializerInterceptor {
   protected getContextOptions(

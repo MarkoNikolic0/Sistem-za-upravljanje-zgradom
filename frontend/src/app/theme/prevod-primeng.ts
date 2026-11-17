@@ -54,6 +54,8 @@ export const PREVOD_PRIMENG: Translation = {
   selectionMessage: 'Izabrano: {0}',
   emptySelectionMessage: 'Ništa nije izabrano',
   aria: {
+    star: 'Ocena 1',
+    stars: 'Ocena {star}',
     listLabel: 'Lista opcija',
     pageLabel: 'Strana {page}',
     firstPageLabel: 'Prva strana',

@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { concatMap, EMPTY, Observable, pipe, switchMap, tap } from 'rxjs';
+import { concatMap, EMPTY, map, Observable, pipe, switchMap, tap } from 'rxjs';
 import {
   setError,
   setFulfilled,
@@ -18,6 +18,7 @@ import {
   NAZIVI_PRIORITETA_KVARA,
   PorukaAkcije,
   PrioritetKvara,
+  StanjePracenja,
   StatusRadaServisera,
 } from './kvar-models';
 import { KvarService } from './kvar-service';
@@ -98,8 +99,9 @@ export const DetaljKvaraStore = signalStore(
       locale = inject(LOCALE_ID),
     ) => {
       function prikazi(kvar: KvarDetalj): void {
+        const prethodni = store.kvar();
         patchState(store, { kvar });
-        dispatcher.dispatch(kvarEvents.azuriran(kvar));
+        dispatcher.dispatch(kvarEvents.azuriran({ kvar, prethodni }));
       }
 
       const ucitaj = rxMethod<number>(
@@ -180,13 +182,18 @@ export const DetaljKvaraStore = signalStore(
         ),
       );
 
+      function pracenje(zahtev: Observable<StanjePracenja>): Observable<KvarDetalj> {
+        const kvar = store.kvar();
+        return kvar ? zahtev.pipe(map((stanje) => ({ ...kvar, ...stanje }))) : EMPTY;
+      }
+
       function akcija(
         zahtev: (id: number) => Observable<KvarDetalj>,
         uspeh: (kvar: KvarDetalj) => string,
         fokus = true,
       ): void {
         const kvar = store.kvar();
-        if (kvar) {
+        if (kvar && !store.akcijaUToku()) {
           izvrsi({ zahtev: zahtev(kvar.id), uspeh, fokus });
         }
       }
@@ -242,9 +249,9 @@ export const DetaljKvaraStore = signalStore(
             () => (status === 'u_toku' ? 'Rad na kvaru je započet.' : 'Kvar je označen kao rešen.'),
           );
         },
-        potvrdi(): void {
+        potvrdi(ocena: number | null): void {
           akcija(
-            (id) => kvarService.potvrdi(id),
+            (id) => kvarService.potvrdi(id, ocena),
             () => 'Hvala na potvrdi. Kvar je zatvoren.',
           );
         },
@@ -256,14 +263,13 @@ export const DetaljKvaraStore = signalStore(
         },
         prati(): void {
           akcija(
-            (id) => kvarService.prati(id).pipe(switchMap(() => kvarService.nadjiKvar(id))),
+            (id) => pracenje(kvarService.prati(id)),
             () => 'Pratiš ovaj kvar. Upravnik vidi da je i kod tebe isti problem.',
           );
         },
         prestaniPracenje(): void {
           akcija(
-            (id) =>
-              kvarService.prestaniPracenje(id).pipe(switchMap(() => kvarService.nadjiKvar(id))),
+            (id) => pracenje(kvarService.prestaniPracenje(id)),
             () => 'Više ne pratiš ovaj kvar.',
           );
         },

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   VirtualColumn,
@@ -17,6 +18,7 @@ import {
 } from '../shared/enums/kvar.enums.js';
 
 @Entity()
+@Index(['zgrada', 'status', 'datumPrijave'])
 export class Kvar {
   @PrimaryGeneratedColumn()
   id: number;
@@ -56,12 +58,14 @@ export class Kvar {
   @ManyToOne(() => Zgrada, { nullable: false })
   zgrada: Zgrada;
 
+  @Index()
   @ManyToOne(() => Stan, { nullable: true })
   stan: Stan;
 
   @ManyToOne(() => Korisnik, { nullable: false })
   korisnik: Korisnik;
 
+  @Index()
   @ManyToOne(() => Korisnik, { nullable: true })
   serviser: Korisnik | null;
 
@@ -76,6 +80,9 @@ export class Kvar {
 
   @Column({ type: 'timestamptz', nullable: true })
   dolazakServisera: Date | null;
+
+  @Column({ type: 'smallint', nullable: true })
+  ocena: number | null;
 
   @VirtualColumn({
     type: 'int',

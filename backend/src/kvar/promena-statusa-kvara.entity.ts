@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -15,6 +16,7 @@ export class PromenaStatusaKvara {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @ManyToOne(() => Kvar, { nullable: false, onDelete: 'CASCADE' })
   kvar: Kvar;
 

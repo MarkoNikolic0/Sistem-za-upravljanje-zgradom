@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -16,6 +17,7 @@ export class KomentarKvar {
   @Column({ type: 'text' })
   tekst: string;
 
+  @Index()
   @ManyToOne(() => Kvar, { nullable: false, onDelete: 'CASCADE' })
   kvar: Kvar;
 
