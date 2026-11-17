@@ -86,12 +86,6 @@
   background: color-mix(in srgb, var(--color-svetlo) 14%, transparent);
 }
 
-.osobe {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
 .osoba {
   display: flex;
   align-items: flex-start;
@@ -101,17 +95,6 @@
 .inicijali {
   width: 2.25rem;
   height: 2.25rem;
-
-  &.serviser {
-    color: var(--color-info);
-    background: color-mix(in srgb, var(--color-info) 14%, transparent);
-  }
-
-  &.prazan {
-    color: var(--color-utisano);
-    background: transparent;
-    border: 1px dashed var(--color-ivica);
-  }
 }
 
 .kontakt {
@@ -191,8 +174,8 @@
 }
 
 .cinjenice {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1px;
   margin-top: 1.75rem;
   overflow: hidden;
@@ -200,23 +183,10 @@
   background: var(--color-linija);
   box-shadow: inset 0 0 0 1px var(--color-linija);
 
-  @container (width >= 40rem) {
-    grid-template-columns: none;
-    grid-auto-columns: minmax(0, 1fr);
-    grid-auto-flow: column;
-  }
-
   > div {
+    flex: 1 1 8.5rem;
     padding: 0.875rem 1rem;
     background: color-mix(in srgb, var(--color-povrsina) 92%, black);
-
-    &:last-child:nth-child(odd) {
-      grid-column: span 2;
-
-      @container (width >= 40rem) {
-        grid-column: auto;
-      }
-    }
   }
 
   dt {
@@ -236,6 +206,11 @@
     font-size: 0.9375rem;
     color: var(--color-naslov);
     overflow-wrap: anywhere;
+  }
+
+  .kontakt {
+    display: flex;
+    width: fit-content;
   }
 
   .zvezdice {

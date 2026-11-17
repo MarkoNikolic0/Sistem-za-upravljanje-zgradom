@@ -97,6 +97,21 @@
             </dd>
           </div>
         }
+        <div>
+          <dt><i class="pi pi-user" aria-hidden="true"></i>Serviser</dt>
+          <dd>
+            @if (kvar.serviser; as serviser) {
+              {{ serviser.ime }} {{ serviser.prezime }}
+              @if (serviser.telefon; as telefon) {
+                <a class="kontakt" [href]="'tel:' + telefon"
+                  ><i class="pi pi-phone" aria-hidden="true"></i>{{ formatirajTelefon(telefon) }}</a
+                >
+              }
+            } @else {
+              <span class="text-priguseno">Nije dodeljen</span>
+            }
+          </dd>
+        </div>
       </dl>
 
       @if (kvar.dolazakServisera; as dolazak) {
@@ -155,7 +170,7 @@
           </div>
           <app-tok-kvara [status]="kvar.status" [istorija]="kvar.istorija" />
         </section>
-        <div class="panel osobe">
+        <div class="panel">
           <div class="osoba">
             <span class="inicijali" aria-hidden="true"
               >{{ kvar.korisnik.ime[0] }}{{ kvar.korisnik.prezime[0] }}</span
@@ -169,29 +184,6 @@
                 >
               }
             </div>
-          </div>
-          <div class="osoba">
-            @if (kvar.serviser; as serviser) {
-              <span class="inicijali serviser" aria-hidden="true"
-                >{{ serviser.ime[0] }}{{ serviser.prezime[0] }}</span
-              >
-              <div class="min-w-0">
-                <p class="text-xs text-utisano">Serviser</p>
-                <p class="text-naslov">{{ serviser.ime }} {{ serviser.prezime }}</p>
-                @if (serviser.telefon; as telefon) {
-                  <a class="kontakt" [href]="'tel:' + telefon"
-                    ><i class="pi pi-phone" aria-hidden="true"></i
-                    >{{ formatirajTelefon(telefon) }}</a
-                  >
-                }
-              </div>
-            } @else {
-              <span class="inicijali prazan" aria-hidden="true"><i class="pi pi-user"></i></span>
-              <div>
-                <p class="text-xs text-utisano">Serviser</p>
-                <p class="text-priguseno">Još nije dodeljen</p>
-              </div>
-            }
           </div>
         </div>
       </aside>

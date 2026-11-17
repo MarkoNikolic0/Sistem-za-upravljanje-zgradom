@@ -83,7 +83,7 @@ export interface OcenaServisera {
 export function ocenaServisera(
   serviser: Pick<ServiserZaDodelu, 'prosekOcena' | 'brojOcena'>,
 ): OcenaServisera | null {
-  if (serviser.prosekOcena === null || serviser.brojOcena === 0) {
+  if (serviser.prosekOcena === null) {
     return null;
   }
   const prosek = PROSEK_OCENA.format(serviser.prosekOcena);

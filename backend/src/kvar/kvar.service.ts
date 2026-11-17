@@ -32,6 +32,7 @@ import { MS_PO_DANU } from '../shared/vreme.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
 import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
+import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
 
 export interface ServiserSaOcenom {
@@ -249,10 +250,10 @@ export class KvarService {
       .addSelect('korisnik.prezime', 'prezime')
       .addSelect('ROUND(AVG(kvar.ocena), 1)::float', 'prosekOcena')
       .addSelect('COUNT(kvar.id)::int', 'brojOcena')
-      .where('specijalnost.kategorija = :kategorija', { kategorija })
-      .andWhere('korisnik.uloga = :uloga', { uloga: Uloga.SERVISER })
-      .andWhere('korisnik.deaktiviran IS NULL')
-      .andWhere('korisnik.emailPotvrdjen IS NOT NULL')
+      .where({
+        kategorija,
+        korisnik: { uloga: Uloga.SERVISER, ...AKTIVAN_KORISNIK },
+      })
       .groupBy('korisnik.id')
       .orderBy('korisnik.prezime', 'ASC')
       .addOrderBy('korisnik.ime', 'ASC')

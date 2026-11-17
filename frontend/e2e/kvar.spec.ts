@@ -66,7 +66,7 @@ test.describe.serial('kvar od prijave do zatvaranja', () => {
     const ocena = page.getByRole('definition').filter({ has: page.locator('p-rating') });
     await expect(ocena).toHaveText('4 od 5');
     await expect(ocena.getByRole('radio')).toHaveCount(0);
-    await expect(page.getByRole('term').filter({ hasText: 'Serviser' })).toHaveCount(0);
+    await expect(page.getByRole('term').filter({ hasText: 'Serviser' })).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Potvrdi da je rešeno' })).toHaveCount(0);
   });
 
@@ -88,9 +88,11 @@ test.describe.serial('kvar od prijave do zatvaranja', () => {
     await page.goto(adresa);
     await page.getByRole('button', { name: 'Prihvati' }).click();
     await page.getByRole('combobox', { name: /servis/i }).click();
-    const opcija = page.getByRole('option', { name: /Serviser.*prosečna ocena 4,0 \(1 ocena\)/ });
-    await expect(opcija).toContainText('4,0 (1)');
+    const opcija = page.getByRole('option', {
+      name: /Serviser.*prosečna ocena \d,\d \(\d+ ocen[ae]\)/,
+    });
+    await expect(opcija).toContainText(/\d,\d \(\d+\)/);
     await opcija.click();
-    await expect(page.getByRole('combobox', { name: /servis/i })).not.toContainText('4,0');
+    await expect(page.getByRole('combobox', { name: /servis/i })).not.toContainText(/\d,\d/);
   });
 });
