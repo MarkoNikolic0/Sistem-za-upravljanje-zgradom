@@ -456,6 +456,54 @@ describe('kvarovi', () => {
       expect(ids).not.toContain(deaktiviran.id);
     });
 
+    it('uz servisere stiže prosek i broj ocena zatvorenih kvarova iz svih zgrada', async () => {
+      const ocenjeni = await napraviServisera(t, 'Ocenjeni');
+      const neocenjeni = await napraviServisera(t, 'Neocenjeni');
+      const druga = await napraviZgraduSaLjudima(t, 'DrugaOcene');
+      const doResenja = async (zgrada: ZgradaSveta, kome: Akter) => {
+        const kvar = (
+          await kao(t, zgrada.vlasnik)
+            .post('/kvar')
+            .send(noviKvar(zgrada.stanovi[0], PRIVATNI_STAN))
+            .expect(201)
+        ).body.id as number;
+        await akcija(zgrada.upravnik, kvar, 'prihvati').expect(200);
+        await akcija(zgrada.upravnik, kvar, 'dodeli', {
+          serviserId: kome.id,
+        }).expect(200);
+        await status(kvar, 'u_toku', kome).expect(200);
+        await status(kvar, 'resen', kome).expect(200);
+        return kvar;
+      };
+      const zatvori = async (zgrada: ZgradaSveta, ocena?: number) =>
+        akcija(zgrada.vlasnik, await doResenja(zgrada, ocenjeni), 'potvrdi', {
+          ocena,
+        }).expect(200);
+
+      await zatvori(z, 5);
+      await zatvori(z, 4);
+      await zatvori(druga, 4);
+      await zatvori(z);
+      const nezatvoren = await doResenja(z, ocenjeni);
+      await t.baza.query('UPDATE kvar SET ocena = 1 WHERE id = $1', [
+        nezatvoren,
+      ]);
+
+      const dostupni = await kao(t, z.upravnik)
+        .get('/kvar/serviseri/vodovod')
+        .expect(200);
+      const po = (s: Akter) =>
+        (dostupni.body as { id: number }[]).find((d) => d.id === s.id);
+      expect(po(ocenjeni)).toEqual({
+        id: ocenjeni.id,
+        ime: 'Ocenjeni',
+        prezime: expect.any(String),
+        prosekOcena: 4.3,
+        brojOcena: 3,
+      });
+      expect(po(neocenjeni)).toMatchObject({ prosekOcena: null, brojOcena: 0 });
+    });
+
     it('preraspodela oduzima pristup prvom serviseru i briše zakazan dolazak', async () => {
       const kvar = await doStatusa('dodeljen');
       await akcija(serviser, kvar, 'dolazak', { dolazak: zaDana(1) }).expect(

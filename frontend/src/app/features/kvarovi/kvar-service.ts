@@ -14,9 +14,9 @@ import {
   SlicanKvar,
   StanjePracenja,
   UpitSlicnih,
+  ServiserZaDodelu,
 } from './kvar-models';
 import { ZgradaOsnovno } from '../zgrade/zgrada-models';
-import { KorisnikOsnovno } from '../auth/auth-models';
 
 @Service()
 export class KvarService {
@@ -55,7 +55,7 @@ export class KvarService {
   }
 
   serviseri(kategorija: Signal<KategorijaKvara | undefined>) {
-    return httpResource<KorisnikOsnovno[]>(
+    return httpResource<ServiserZaDodelu[]>(
       () => {
         const k = kategorija();
         return k ? `${this.apiUrl}/serviseri/${k}` : undefined;

@@ -84,19 +84,19 @@
         @if (kvar.ocena; as ocena) {
           <div>
             <dt><i class="pi pi-star" aria-hidden="true"></i>Ocena</dt>
-            <dd>{{ ocena }} od {{ maksOcena }}</dd>
+            <dd>
+              <p-rating
+                class="zvezdice"
+                inert
+                aria-hidden="true"
+                [ngModel]="ocena"
+                [stars]="maksOcena"
+                [readonly]="true"
+              />
+              <span class="sr-only">{{ ocena }} od {{ maksOcena }}</span>
+            </dd>
           </div>
         }
-        <div>
-          <dt><i class="pi pi-user" aria-hidden="true"></i>Serviser</dt>
-          <dd>
-            @if (kvar.serviser; as serviser) {
-              {{ serviser.ime }} {{ serviser.prezime }}
-            } @else {
-              <span class="text-priguseno">Nije dodeljen</span>
-            }
-          </dd>
-        </div>
       </dl>
 
       @if (kvar.dolazakServisera; as dolazak) {

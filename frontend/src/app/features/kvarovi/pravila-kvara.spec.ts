@@ -6,6 +6,7 @@ import {
   jeHitan,
   jeZavrsen,
   najkasnijiDolazak,
+  ocenaServisera,
   pratiRok,
   stanjeRoka,
 } from './pravila-kvara';
@@ -62,5 +63,24 @@ describe('pravila kvara', () => {
     expect(dolazakUBuducnosti(polje)).toBeNull();
     polje.setValue(new Date(2026, 5, 10, 12, 0));
     expect(dolazakUBuducnosti(polje)).toEqual({ proslost: true });
+  });
+});
+
+describe('ocenaServisera', () => {
+  it('prikazuje prosek sa decimalnim zarezom i broj ocena', () => {
+    expect(ocenaServisera({ prosekOcena: 4.6, brojOcena: 12 })).toEqual({
+      prikaz: '4,6 (12)',
+      opis: 'prosečna ocena 4,6 (12 ocena)',
+    });
+    expect(ocenaServisera({ prosekOcena: 5, brojOcena: 1 })?.opis).toBe(
+      'prosečna ocena 5,0 (1 ocena)',
+    );
+    expect(ocenaServisera({ prosekOcena: 3.5, brojOcena: 3 })?.opis).toBe(
+      'prosečna ocena 3,5 (3 ocene)',
+    );
+  });
+
+  it('bez ocena ne vraća ništa', () => {
+    expect(ocenaServisera({ prosekOcena: null, brojOcena: 0 })).toBeNull();
   });
 });

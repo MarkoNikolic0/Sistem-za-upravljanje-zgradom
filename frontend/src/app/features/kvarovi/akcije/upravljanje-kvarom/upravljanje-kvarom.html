@@ -37,14 +37,28 @@
       <p-select
         ariaLabelledBy="serviser-oznaka"
         [options]="opcijeServisera()"
-        optionLabel="naziv"
+        optionLabel="oznaka"
         optionValue="id"
         placeholder="Izaberi servisera"
         emptyMessage="Nema servisera za ovu vrstu kvara."
         [loading]="serviseri.isLoading()"
         [(ngModel)]="izabraniServiser"
         [fluid]="true"
-      />
+      >
+        <ng-template #selectedItem let-opcija>{{ opcija.naziv }}</ng-template>
+        <ng-template #item let-opcija>
+          <span class="serviser">
+            <span class="min-w-0 truncate">{{ opcija.naziv }}</span>
+            @if (opcija.ocena) {
+              <span class="ocena"
+                ><i class="pi pi-star-fill" aria-hidden="true"></i>{{ opcija.ocena }}</span
+              >
+            } @else {
+              <span class="ocena">bez ocena</span>
+            }
+          </span>
+        </ng-template>
+      </p-select>
       @if (serviseri.error()) {
         <small class="text-sm text-greska">Serviseri trenutno ne mogu da se učitaju.</small>
       }

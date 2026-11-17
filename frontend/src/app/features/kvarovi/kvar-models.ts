@@ -73,6 +73,11 @@ export interface Kvar {
 
 export const MAKS_OCENA_KVARA = 5;
 
+export interface ServiserZaDodelu extends Pick<KorisnikOsnovno, 'id' | 'ime' | 'prezime'> {
+  prosekOcena: number | null;
+  brojOcena: number;
+}
+
 export interface PromenaStatusaKvara {
   id: number;
   status: StatusKvara;

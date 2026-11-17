@@ -19,6 +19,7 @@ import {
 
 @Entity()
 @Index(['zgrada', 'status', 'datumPrijave'])
+@Index(['serviser', 'status'])
 export class Kvar {
   @PrimaryGeneratedColumn()
   id: number;

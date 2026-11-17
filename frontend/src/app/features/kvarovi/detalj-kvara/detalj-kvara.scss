@@ -201,12 +201,22 @@
   box-shadow: inset 0 0 0 1px var(--color-linija);
 
   @container (width >= 40rem) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
   }
 
   > div {
     padding: 0.875rem 1rem;
     background: color-mix(in srgb, var(--color-povrsina) 92%, black);
+
+    &:last-child:nth-child(odd) {
+      grid-column: span 2;
+
+      @container (width >= 40rem) {
+        grid-column: auto;
+      }
+    }
   }
 
   dt {
@@ -226,6 +236,11 @@
     font-size: 0.9375rem;
     color: var(--color-naslov);
     overflow-wrap: anywhere;
+  }
+
+  .zvezdice {
+    --p-rating-icon-size: 0.9375rem;
+    --p-rating-gap: 0.1875rem;
   }
 }
 

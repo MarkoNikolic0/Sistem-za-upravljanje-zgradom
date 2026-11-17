@@ -16,6 +16,7 @@ import { KvarService } from '../../kvar-service';
 import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { RazlogPromene } from '../../status/razlog-promene/razlog-promene';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
+import { ocenaServisera } from '../../pravila-kvara';
 import { FormaRazloga } from '../../../../shared/forme/forma-razloga/forma-razloga';
 
 @Component({
@@ -62,7 +63,16 @@ export class UpravljanjeKvarom {
   });
   protected readonly serviseri = this.kvarService.serviseri(this.kategorijaZaDodelu);
   protected readonly opcijeServisera = computed(() =>
-    this.serviseri.value().map((s) => ({ id: s.id, naziv: `${s.ime} ${s.prezime}` })),
+    this.serviseri.value().map((s) => {
+      const naziv = `${s.ime} ${s.prezime}`;
+      const ocena = ocenaServisera(s);
+      return {
+        id: s.id,
+        naziv,
+        ocena: ocena?.prikaz ?? null,
+        oznaka: `${naziv}, ${ocena?.opis ?? 'bez ocena'}`,
+      };
+    }),
   );
   protected readonly izabraniServiser = linkedSignal(() => this.kvar().serviser?.id ?? null);
   // Dok zahtev traje ostaje izabrano, a posle važi prioritet kvara (i kad zahtev ne uspe)

@@ -9,9 +9,11 @@ import {
   viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { RatingModule } from 'primeng/rating';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { formatirajTelefon } from '../../../shared/tekst/telefon';
@@ -41,9 +43,11 @@ import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju'
 @Component({
   imports: [
     DatePipe,
+    FormsModule,
     RouterLink,
     ButtonModule,
     MessageModule,
+    RatingModule,
     SkeletonModule,
     SpratPipe,
     KomentariKvara,

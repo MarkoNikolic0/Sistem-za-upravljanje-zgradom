@@ -389,7 +389,8 @@ const NISU_PODACI_ZGRADE: Record<string, string> = {
   'GET /stan/zgrada/:zgradaId': 'spisak stanova za izbor pri povezivanju',
   'POST /zahtev-povezivanje': 'zahtev se šalje za bilo koju zgradu',
   'GET /zahtev-povezivanje/moji-zahtevi': 'sopstveni zahtevi',
-  'GET /kvar/serviseri/:kategorija': 'serviseri nisu vezani za zgradu',
+  'GET /kvar/serviseri/:kategorija':
+    'serviseri nisu vezani za zgradu, prosek ocena je zbirni podatak',
 };
 
 const SOPSTVENO_OBAVESTENJE = 'PUT /notifikacija/:id/procitano';

@@ -1,7 +1,14 @@
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 import { NIJE_PRAZNO } from '../../shared/forme/nije-prazno';
-import { DANA_ZA_RESAVANJE, Kvar, MAKS_KOMENTAR_KVARA, StatusKvara } from './kvar-models';
+import {
+  DANA_ZA_RESAVANJE,
+  Kvar,
+  MAKS_KOMENTAR_KVARA,
+  ServiserZaDodelu,
+  StatusKvara,
+} from './kvar-models';
 import { PravilaFajlova } from '../../shared/fajlovi/fajlovi';
+import { uMnozini } from '../../shared/tekst/mnozina';
 
 export const KVAROVA_PO_STRANI = 10;
 export const KOMENTARA_PO_STRANI = 20;
@@ -62,3 +69,26 @@ export const PRAVILA_SLIKA_KVARA: PravilaFajlova = {
   vlasnik: 'Kvar',
   mnozina: 'slika',
 };
+
+const PROSEK_OCENA = new Intl.NumberFormat('sr-Latn', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+export interface OcenaServisera {
+  prikaz: string;
+  opis: string;
+}
+
+export function ocenaServisera(
+  serviser: Pick<ServiserZaDodelu, 'prosekOcena' | 'brojOcena'>,
+): OcenaServisera | null {
+  if (serviser.prosekOcena === null || serviser.brojOcena === 0) {
+    return null;
+  }
+  const prosek = PROSEK_OCENA.format(serviser.prosekOcena);
+  return {
+    prikaz: `${prosek} (${serviser.brojOcena})`,
+    opis: `prosečna ocena ${prosek} (${uMnozini(serviser.brojOcena, 'ocena', 'ocene', 'ocena')})`,
+  };
+}
