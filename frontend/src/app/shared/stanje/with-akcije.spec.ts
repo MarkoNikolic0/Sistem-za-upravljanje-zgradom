@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import type { Mock } from 'vitest';
 import { AkcijeStore } from './with-akcije';
 
@@ -93,5 +93,18 @@ describe('withAkcije', () => {
     expect(store.poruka()).toBeNull();
     await rezultat;
     expect(store.poruka()?.tekst).toBe('Nova');
+  });
+
+  it('jednom: ponovljena akcija sa istim ključem se odbacuje dok prva traje', async () => {
+    const odgovor = new Subject<boolean>();
+    const akcija = vi.fn(() => firstValueFrom(odgovor));
+    const prva = store.jednom('obnovi-1', akcija);
+    expect(await store.jednom('obnovi-1', akcija)).toBe(false);
+    const druga = store.jednom('obnovi-2', () => Promise.resolve(true));
+    expect(await druga).toBe(true);
+    odgovor.next(true);
+    expect(await prva).toBe(true);
+    expect(akcija).toHaveBeenCalledOnce();
+    expect(await store.jednom('obnovi-1', () => Promise.resolve(true))).toBe(true);
   });
 });

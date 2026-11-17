@@ -79,30 +79,36 @@ export const ListaOglasaStore = signalStore(
         ucitaj();
       },
       obrisi(id: number): Promise<boolean> {
-        return store.izvrsi(
-          async () => {
-            await firstValueFrom(oglasService.obrisi(id));
-            ucitaj();
-          },
-          'Oglas je obrisan.',
-          'Oglas nije obrisan. Pokušaj ponovo.',
-          ucitaj,
+        return store.jednom(`obrisi-${id}`, () =>
+          store.izvrsi(
+            async () => {
+              await firstValueFrom(oglasService.obrisi(id));
+              ucitaj();
+            },
+            'Oglas je obrisan.',
+            'Oglas nije obrisan. Pokušaj ponovo.',
+            ucitaj,
+          ),
         );
       },
       sakrij(id: number, razlog: string): Promise<boolean> {
-        return store.izvrsi(
-          async () => zameni(await firstValueFrom(oglasService.sakrij(id, razlog))),
-          'Oglas je sakriven. Autor vidi razlog, a ostali stanari ga više ne vide.',
-          'Oglas nije sakriven. Pokušaj ponovo.',
-          ucitaj,
+        return store.jednom(`sakrij-${id}`, () =>
+          store.izvrsi(
+            async () => zameni(await firstValueFrom(oglasService.sakrij(id, razlog))),
+            'Oglas je sakriven. Autor vidi razlog, a ostali stanari ga više ne vide.',
+            'Oglas nije sakriven. Pokušaj ponovo.',
+            ucitaj,
+          ),
         );
       },
       obnovi(id: number): Promise<boolean> {
-        return store.izvrsi(
-          async () => zameni(await firstValueFrom(oglasService.obnovi(id))),
-          'Oglas je obnovljen i ponovo ga vide svi stanari.',
-          'Oglas nije obnovljen. Pokušaj ponovo.',
-          ucitaj,
+        return store.jednom(`obnovi-${id}`, () =>
+          store.izvrsi(
+            async () => zameni(await firstValueFrom(oglasService.obnovi(id))),
+            'Oglas je obnovljen i ponovo ga vide svi stanari.',
+            'Oglas nije obnovljen. Pokušaj ponovo.',
+            ucitaj,
+          ),
         );
       },
     };

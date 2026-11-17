@@ -41,9 +41,15 @@ export class OglasProcitanoService {
     return { broj, procitanoDo };
   }
 
-  async procitajSve(korisnikId: number): Promise<void> {
-    await this.korisnikRepository.update(korisnikId, {
-      oglasiProcitaniDo: () => 'now()',
-    });
+  async procitajSve(korisnikId: number) {
+    const [redovi]: [{ procitanoDo: Date }[], number] =
+      await this.korisnikRepository.query(
+        `UPDATE korisnik k SET "oglasiProcitaniDo" = now()
+         FROM korisnik staro
+         WHERE k.id = $1 AND staro.id = k.id
+         RETURNING staro."oglasiProcitaniDo" AS "procitanoDo"`,
+        [korisnikId],
+      );
+    return { procitanoDo: redovi[0].procitanoDo };
   }
 }

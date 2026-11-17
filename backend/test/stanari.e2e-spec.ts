@@ -219,24 +219,24 @@ describe('stanari, nalozi i zgrade', () => {
       expect(await oglas(z.upravnik, mojOglas)).toMatchObject({
         razlogSakrivanja: 'Autor se odselio iz zgrade.',
       });
-      await kao(t, z.vlasnik).get(`/oglas/${mojOglas}`).expect(403);
+      await kao(t, z.vlasnik).get(`/oglas/${mojOglas}`).expect(404);
 
       for (const putanja of [
         `/kvar/${mojKvar}`,
         `/kvar/${tudjKvar}`,
-        `/oglas/${mojOglas}`,
         `/glasanje/${anketa.id}`,
         `/zgrada/${z.id}/dokument`,
         `/zgrada/${z.id}/kontakt`,
       ]) {
         await kao(t, stanar).get(putanja).expect(403);
       }
+      await kao(t, stanar).get(`/oglas/${mojOglas}`).expect(404);
       for (const putanja of ['/kvar', '/oglas', '/glasanje', '/sastanak']) {
         const odgovor = await kao(t, stanar).get(putanja).expect(200);
         expect(odgovor.body.ukupno).toBe(0);
       }
-      await kao(t, stanar).patch(`/oglas/${mojOglas}/obnovi`).expect(403);
-      await kao(t, stanar).delete(`/oglas/${mojOglas}`).expect(403);
+      await kao(t, stanar).patch(`/oglas/${mojOglas}/obnovi`).expect(404);
+      await kao(t, stanar).delete(`/oglas/${mojOglas}`).expect(404);
       await kao(t, stanar)
         .patch(`/kvar/${mojKvar}/povuci`)
         .send({})
@@ -821,7 +821,7 @@ describe('stanari, nalozi i zgrade', () => {
       expect(await oglas(admin, mojOglas)).toMatchObject({
         razlogSakrivanja: 'Zgrada je arhivirana.',
       });
-      await kao(t, z.vlasnik).get(`/oglas/${mojOglas}`).expect(403);
+      await kao(t, z.vlasnik).get(`/oglas/${mojOglas}`).expect(404);
     });
 
     it('briše se samo prazna zgrada', async () => {

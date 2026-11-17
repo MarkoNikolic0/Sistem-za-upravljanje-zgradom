@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { prijavi } from './pomoc/prijava';
-import { ucitajSvet } from './pomoc/svet';
+import { pomeriUProslost, ucitajSvet } from './pomoc/svet';
 
 test.describe.serial('oglas', () => {
   let naslov = '';
@@ -29,6 +29,25 @@ test.describe.serial('oglas', () => {
     const oglas = page.getByRole('article').filter({ hasText: naslov });
     await expect(oglas).toBeVisible();
     await expect(oglas.getByRole('button', { name: /Izmeni|Obriši/ })).toHaveCount(0);
+  });
+
+  test('autor menja istekao oglas bez novog roka', async ({ page }) => {
+    const { a } = await ucitajSvet();
+    await prijavi(page, a.vlasnik.email);
+    await page.goto('/oglasi');
+    const oglas = page.getByRole('article').filter({ hasText: naslov });
+    const izmena = await oglas.getByRole('link', { name: 'Izmeni' }).getAttribute('href');
+    await pomeriUProslost('oglas', Number(/\/oglasi\/(\d+)\/izmena/.exec(izmena ?? '')?.[1]));
+
+    await page.reload();
+    await expect(oglas.getByText('Istekao', { exact: true })).toBeVisible();
+    await oglas.getByRole('link', { name: 'Izmeni' }).click();
+    await expect(page.getByLabel('Tekst')).toHaveValue(/Malo korišćen/);
+    await page.getByLabel('Tekst').fill('Malo korišćen, sa kacigom.');
+    await page.getByRole('button', { name: 'Sačuvaj izmene' }).click();
+    await expect(page.getByText('Oglas je izmenjen.')).toBeVisible();
+    await expect(oglas.getByText('Malo korišćen, sa kacigom.')).toBeVisible();
+    await expect(oglas.getByText('Istekao', { exact: true })).toBeVisible();
   });
 
   test('stanar druge zgrade ne vidi oglas', async ({ page }) => {

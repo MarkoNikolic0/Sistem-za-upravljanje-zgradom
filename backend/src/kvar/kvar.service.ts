@@ -20,7 +20,7 @@ import { KvarUpitDto } from './dto/kvar-upit.dto.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { PromenaStatusaKvara } from './promena-statusa-kvara.entity.js';
-import { KvarPravaService, vidiKontakte } from './kvar-prava.service.js';
+import { KvarPravaService } from './kvar-prava.service.js';
 import {
   DANA_ZA_POTVRDU,
   MAKS_SLICNIH,
@@ -34,7 +34,6 @@ import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
-import { sakrijKontakt } from '../korisnik/kontakt-serializer.interceptor.js';
 
 @Injectable()
 export class KvarService {
@@ -99,8 +98,11 @@ export class KvarService {
     uloga: Uloga,
     upit: KvarUpitDto,
   ): Promise<Stranica<Kvar>> {
-    const { uslovi: vidljivi, zgradeSaKontaktima } =
-      await this.prava.usloviVidljivosti(korisnikId, uloga, upit.zgradaId);
+    const vidljivi = await this.prava.usloviVidljivosti(
+      korisnikId,
+      uloga,
+      upit.zgradaId,
+    );
     if (vidljivi.length === 0) {
       return { stavke: [], ukupno: 0 };
     }
@@ -117,12 +119,6 @@ export class KvarService {
       order: { datumPrijave: 'DESC', id: 'DESC' },
       ...stranicenje(upit),
     });
-    sakrijKontakt(
-      stavke
-        .filter((kvar) => !vidiKontakte(zgradeSaKontaktima, kvar.zgrada.id))
-        .flatMap((kvar) => [kvar.korisnik, kvar.serviser]),
-    );
-
     return { stavke, ukupno };
   }
 
@@ -156,11 +152,6 @@ export class KvarService {
       select: { id: true, kvar: { id: true } },
     });
     const praceniIds = new Set(praceni.map((p) => p.kvar.id));
-    if (
-      await this.prava.skrivaKontakte(veza.stan.zgrada.id, korisnikId, uloga)
-    ) {
-      sakrijKontakt(slicni.map((kvar) => kvar.korisnik));
-    }
     return slicni.map((kvar) =>
       Object.assign(kvar, { pratim: praceniIds.has(kvar.id) }),
     );
@@ -202,13 +193,6 @@ export class KvarService {
           order: { datum: 'ASC', id: 'ASC' },
         }),
       ]);
-    if (uloga === Uloga.UPRAVNIK && !smeDaUpravlja) {
-      sakrijKontakt([
-        kvar.korisnik,
-        kvar.serviser,
-        ...istorija.map((promena) => promena.korisnik),
-      ]);
-    }
     return Object.assign(kvar, {
       smeDaUpravlja,
       smeDaPotvrdi,

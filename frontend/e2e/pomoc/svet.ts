@@ -46,7 +46,7 @@ export function ucitajSvet(): Promise<Svet> {
   return svet;
 }
 
-export async function pomeriUProslost(vrsta: 'sastanak' | 'glasanje', id: number) {
+export async function pomeriUProslost(vrsta: 'sastanak' | 'glasanje' | 'oglas', id: number) {
   const odgovor = await fetch(`${ADRESA_POMOCI}/${vrsta}/${id}/proslo`, { method: 'POST' });
   if (!odgovor.ok) {
     throw new Error(`Pomeranje ${vrsta} ${id} u prošlost nije uspelo (${odgovor.status}).`);

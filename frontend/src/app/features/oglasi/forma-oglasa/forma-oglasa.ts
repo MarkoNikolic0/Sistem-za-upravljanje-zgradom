@@ -137,7 +137,9 @@ export class FormaOglasa {
       Validators.pattern(NIJE_PRAZNO),
       Validators.maxLength(MAKS_TEKST_OGLASA),
     ]),
-    vaziDo: this.fb.control<Date | null>(null, rokNijeProsao),
+    vaziDo: this.fb.control<Date | null>(null, (polje) =>
+      polje.dirty ? rokNijeProsao(polje) : null,
+    ),
     vazno: this.fb.nonNullable.control(false),
   });
 
@@ -151,7 +153,8 @@ export class FormaOglasa {
   // Obaveštenje nudimo samo upravniku izabrane zgrade i adminu
   protected readonly vrste = computed(() => {
     const smeObavestenje =
-      this.profil.hasValue() && upravljaZgradom(this.profil.value(), this.zgradaId());
+      (this.profil.hasValue() && upravljaZgradom(this.profil.value(), this.zgradaId())) ||
+      (this.oglas.hasValue() && this.oglas.value().vrsta === 'obavestenje');
     return Object.entries(VRSTE_OGLASA)
       .filter(([vrsta]) => vrsta !== 'obavestenje' || smeObavestenje)
       .map(([value, opis]) => ({ value: value as VrstaOglasa, label: opis.naziv }));
@@ -234,6 +237,9 @@ export class FormaOglasa {
   }
 
   protected async posalji(): Promise<void> {
+    if (this.slanje()) {
+      return;
+    }
     const { zgradaId, vrsta, naslov, tekst, vaziDo, vazno } = this.forma.getRawValue();
     if (this.forma.invalid || zgradaId === null || vrsta === null) {
       this.forma.markAllAsTouched();
@@ -246,7 +252,9 @@ export class FormaOglasa {
       naslov: naslov.trim(),
       tekst: tekst.trim(),
       vazno,
-      vaziDo: vaziDo && krajDana(vaziDo),
+      ...(this.izmena() && this.forma.controls.vaziDo.pristine
+        ? {}
+        : { vaziDo: vaziDo && krajDana(vaziDo) }),
     };
     const id = this.id();
     this.greska.set('');

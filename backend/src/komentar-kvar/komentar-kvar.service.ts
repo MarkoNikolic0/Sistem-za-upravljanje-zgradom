@@ -17,7 +17,6 @@ import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ObavestenjaKvaraService } from '../kvar/obavestenja-kvara.service.js';
-import { sakrijKontakt } from '../korisnik/kontakt-serializer.interceptor.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -72,7 +71,7 @@ export class KomentarKvarService {
     uloga: Uloga,
     upit: KomentarUpitDto,
   ): Promise<Stranica<KomentarKvar>> {
-    const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
+    await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
     const [stavke, ukupno] = await this.komentarKvarRepository.findAndCount({
       where: {
@@ -83,15 +82,6 @@ export class KomentarKvarService {
       order: { id: 'DESC' },
       take: Math.min(upit.poStrani, MAKS_PO_STRANI),
     });
-    if (
-      await this.kvarPravaService.skrivaKontakte(
-        kvar.zgrada.id,
-        korisnikId,
-        uloga,
-      )
-    ) {
-      sakrijKontakt(stavke.map((komentar) => komentar.korisnik));
-    }
 
     return { stavke, ukupno };
   }

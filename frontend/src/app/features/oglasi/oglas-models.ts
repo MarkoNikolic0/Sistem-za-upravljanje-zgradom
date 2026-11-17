@@ -83,9 +83,12 @@ export interface Oglas {
   smeDaSakrije: boolean;
 }
 
-export interface NeprocitaniOglasi {
-  broj: number;
+export interface ProcitaniOglasi {
   procitanoDo: string;
+}
+
+export interface NeprocitaniOglasi extends ProcitaniOglasi {
+  broj: number;
 }
 
 export interface OglasRequest {
@@ -93,7 +96,7 @@ export interface OglasRequest {
   tekst: string;
   vrsta: VrstaOglasa;
   vazno: boolean;
-  vaziDo: Date | null;
+  vaziDo?: Date | null;
 }
 
 export interface NoviOglasRequest extends OglasRequest {

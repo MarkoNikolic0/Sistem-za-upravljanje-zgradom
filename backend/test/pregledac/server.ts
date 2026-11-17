@@ -17,6 +17,7 @@ const PORT_POMOCI = 3101;
 const PROSLO = {
   sastanak: `UPDATE sastanak SET pocetak = now() - interval '1 hour' WHERE id = $1 RETURNING id`,
   glasanje: `UPDATE glasanje SET rok = now() - interval '1 second' WHERE id = $1 RETURNING id`,
+  oglas: `UPDATE oglas SET "vaziDo" = now() - interval '1 second' WHERE id = $1 RETURNING id`,
 };
 const RUTA_PROSLO = new RegExp(
   `^/(${Object.keys(PROSLO).join('|')})/(\\d+)/proslo$`,

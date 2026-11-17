@@ -9,6 +9,7 @@ import {
   Oglas,
   OglasRequest,
   PrilogOglasa,
+  ProcitaniOglasi,
   UpitOglasa,
 } from './oglas-models';
 
@@ -47,8 +48,8 @@ export class OglasService {
     return this.http.get<NeprocitaniOglasi>(`${this.apiUrl}/broj-neprocitanih`);
   }
 
-  procitajSve(): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/procitano`, null);
+  procitajSve(): Observable<ProcitaniOglasi> {
+    return this.http.put<ProcitaniOglasi>(`${this.apiUrl}/procitano`, null);
   }
 
   objavi(podaci: NoviOglasRequest): Observable<Oglas> {

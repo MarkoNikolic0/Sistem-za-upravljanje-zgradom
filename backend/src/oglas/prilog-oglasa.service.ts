@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,8 +30,19 @@ function nazivZaPrikaz(originalno: string) {
     .join('');
 }
 
+function proveriBroj(broj: number) {
+  if (broj >= MAKS_PRILOGA_PO_OGLASU) {
+    throw greskaPolja(
+      'prilog',
+      `Oglas može imati najviše ${MAKS_PRILOGA_PO_OGLASU} priloga.`,
+    );
+  }
+}
+
 @Injectable()
 export class PrilogOglasaService {
+  private readonly logger = new Logger(PrilogOglasaService.name);
+
   constructor(
     @InjectRepository(PrilogOglasa)
     private prilogRepository: Repository<PrilogOglasa>,
@@ -38,10 +50,15 @@ export class PrilogOglasaService {
     private dataSource: DataSource,
   ) {}
 
-  async dodaj(oglasId: number, fajl: Express.Multer.File | undefined) {
+  async dodaj(
+    oglasId: number,
+    brojPriloga: number,
+    fajl: Express.Multer.File | undefined,
+  ) {
     if (!fajl) {
       throw greskaPolja('prilog', 'Izaberi fajl.');
     }
+    proveriBroj(brojPriloga);
 
     const osnova = `oglasi/${oglasId}/${randomUUID()}`;
     const naziv = nazivZaPrikaz(fajl.originalname);
@@ -84,15 +101,11 @@ export class PrilogOglasaService {
         if (oglas.datumSakrivanja !== null) {
           throw new ConflictException(PORUKA_SAKRIVEN);
         }
-        const broj = await manager.count(PrilogOglasa, {
-          where: { oglas: { id: oglasId } },
-        });
-        if (broj >= MAKS_PRILOGA_PO_OGLASU) {
-          throw greskaPolja(
-            'prilog',
-            `Oglas može imati najviše ${MAKS_PRILOGA_PO_OGLASU} priloga.`,
-          );
-        }
+        proveriBroj(
+          await manager.count(PrilogOglasa, {
+            where: { oglas: { id: oglasId } },
+          }),
+        );
         const { identifiers } = await manager.insert(PrilogOglasa, {
           ...prilog,
           oglas: { id: oglasId },
@@ -117,8 +130,16 @@ export class PrilogOglasaService {
     const kljucevi = prilozi.flatMap((p) =>
       p.kljucSlicice ? [p.kljuc, p.kljucSlicice] : [p.kljuc],
     );
-    if (kljucevi.length > 0) {
+    if (kljucevi.length === 0) {
+      return;
+    }
+    try {
       await this.skladiste.obrisi(...kljucevi);
+    } catch (greska) {
+      this.logger.error(
+        `Fajlovi ${kljucevi.join(', ')} nisu obrisani.`,
+        greska,
+      );
     }
   }
 

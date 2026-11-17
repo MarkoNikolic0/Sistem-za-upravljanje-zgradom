@@ -27,20 +27,27 @@ export const neprocitaniOglasi = createEffect(
       }),
       concatLatestFrom(() => store.select(neprocitaniOglasiFeature.selectListaOtvorena)),
       concatMap(([akcija, listaOtvorena]) => {
-        const otvaranje = akcija.type === NeprocitaniOglasiActions.listaOtvorena.type;
-        return service.brojNeprocitanih().pipe(
-          switchMap(({ broj, procitanoDo }) =>
-            otvaranje || (listaOtvorena && broj > 0)
-              ? service.procitajSve().pipe(
-                  map(() =>
-                    NeprocitaniOglasiApiActions.oznaceniProcitani({
-                      procitanoDo,
-                      osveziListu: !otvaranje,
-                    }),
+        const procitaj = (osveziListu: boolean) =>
+          service
+            .procitajSve()
+            .pipe(
+              map(({ procitanoDo }) =>
+                NeprocitaniOglasiApiActions.oznaceniProcitani({ procitanoDo, osveziListu }),
+              ),
+            );
+        const zahtev =
+          akcija.type === NeprocitaniOglasiActions.listaOtvorena.type
+            ? procitaj(false)
+            : service
+                .brojNeprocitanih()
+                .pipe(
+                  switchMap(({ broj }) =>
+                    listaOtvorena && broj > 0
+                      ? procitaj(true)
+                      : of(NeprocitaniOglasiApiActions.brojUcitan({ broj })),
                   ),
-                )
-              : of(NeprocitaniOglasiApiActions.brojUcitan({ broj })),
-          ),
+                );
+        return zahtev.pipe(
           catchError(() => EMPTY),
           takeUntil(actions$.pipe(ofType(VezaActions.zaustavi))),
         );

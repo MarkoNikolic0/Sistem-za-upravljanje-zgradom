@@ -56,17 +56,15 @@ export class OglasPravaService {
       where: { id },
       relations: { zgrada: true, autor: true, prilozi: true },
     });
-    if (!oglas) {
-      throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
-    }
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     const vidi =
-      sadrzi(p.upravlja, oglas.zgrada.id) ||
-      (sadrzi(p.zgrade, oglas.zgrada.id) &&
-        ((oglas.datumSakrivanja === null && !istekao(oglas)) ||
-          oglas.autor.id === korisnikId));
+      oglas !== null &&
+      (sadrzi(p.upravlja, oglas.zgrada.id) ||
+        (sadrzi(p.zgrade, oglas.zgrada.id) &&
+          ((oglas.datumSakrivanja === null && !istekao(oglas)) ||
+            oglas.autor.id === korisnikId)));
     if (!vidi) {
-      throw new ForbiddenException('Nemate pristup ovom oglasu!');
+      throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
     }
     return { oglas, p };
   }

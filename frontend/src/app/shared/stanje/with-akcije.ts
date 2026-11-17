@@ -14,6 +14,7 @@ export function withAkcije() {
     withState<AkcijeState>({ poruka: null, akcijaUToku: false }),
     withMethods((store) => {
       let verzija = 0;
+      const uToku = new Set<string>();
       async function izvrsi(
         akcija: () => Promise<void>,
         uspeh: string,
@@ -59,6 +60,17 @@ export function withAkcije() {
           patchState(store, { poruka: null });
         },
         izvrsi,
+        async jednom(kljuc: string, akcija: () => Promise<boolean>): Promise<boolean> {
+          if (uToku.has(kljuc)) {
+            return false;
+          }
+          uToku.add(kljuc);
+          try {
+            return await akcija();
+          } finally {
+            uToku.delete(kljuc);
+          }
+        },
         izvrsiZahtev(
           zahtev: Observable<unknown>,
           uspeh: string,

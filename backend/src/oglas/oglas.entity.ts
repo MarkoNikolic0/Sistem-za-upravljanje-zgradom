@@ -33,7 +33,7 @@ export class Oglas {
   @Column({
     type: 'boolean',
     generatedType: 'STORED',
-    asExpression: `vrsta = '${VrstaOglasa.OBAVESTENJE}'`,
+    asExpression: `vrsta = '${VrstaOglasa.OBAVESTENJE}' AND "datumSakrivanja" IS NULL`,
   })
   zakaceno: boolean;
 

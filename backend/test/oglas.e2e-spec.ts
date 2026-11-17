@@ -1,3 +1,4 @@
+import { Uloga } from '../src/shared/enums/uloga.enum.js';
 import { MS_PO_DANU } from '../src/shared/vreme.js';
 import {
   type Akter,
@@ -6,6 +7,8 @@ import {
   type TestAplikacija,
 } from './pomoc/aplikacija.js';
 import {
+  napraviKorisnika,
+  useli,
   napraviZgraduSaLjudima,
   noviKontakt,
   noviOglas,
@@ -48,6 +51,38 @@ describe('oglasi, dokumenti i kontakti', () => {
   });
 
   describe('oglasi', () => {
+    it('oglas druge zgrade i nepostojeći oglas daju isti odgovor', async () => {
+      const druga = await napraviZgraduSaLjudima(t, 'OglasiDruga');
+      const tudj = (
+        await kao(t, druga.vlasnik)
+          .post('/oglas')
+          .send(noviOglas(druga.id))
+          .expect(201)
+      ).body.id as number;
+      const naTudj = await kao(t, z.vlasnik).get(`/oglas/${tudj}`).expect(404);
+      const naNepostojeci = await kao(t, z.vlasnik)
+        .get(`/oglas/${tudj + 100000}`)
+        .expect(404);
+      expect(naTudj.body.message).toBe(`Oglas sa id-jem ${tudj} ne postoji!`);
+      expect(naNepostojeci.body.message).toBe(
+        `Oglas sa id-jem ${tudj + 100000} ne postoji!`,
+      );
+    });
+
+    it('sakriveno obaveštenje više nije zakačeno na vrh', async () => {
+      const admin = await napraviKorisnika(t, 'AdminOglasa', {
+        uloga: Uloga.ADMIN,
+      });
+      const obavestenje = await objavi(admin, { vrsta: 'obavestenje' });
+      await kao(t, z.upravnik)
+        .patch(`/oglas/${obavestenje}/sakrij`)
+        .send({ razlog: 'Zastarelo.' })
+        .expect(200);
+      const noviji = await objavi();
+      const ids = await idsUListi(z.upravnik);
+      expect(ids.indexOf(noviji)).toBeLessThan(ids.indexOf(obavestenje));
+    });
+
     it('obaveštenje upravnika stoji na vrhu, ispred novijih oglasa', async () => {
       const obavestenje = await objavi(z.upravnik, { vrsta: 'obavestenje' });
       const noviji = await objavi();
@@ -66,7 +101,7 @@ describe('oglasi, dokumenti i kontakti', () => {
       await sakrij(z.upravnik).expect(200);
       await sakrij(z.upravnik).expect(409);
 
-      await kao(t, z.sused).get(`/oglas/${oglas}`).expect(403);
+      await kao(t, z.sused).get(`/oglas/${oglas}`).expect(404);
       expect(await idsUListi(z.sused)).not.toContain(oglas);
       expect(await idsUListi(z.vlasnik)).toContain(oglas);
       expect(await idsUListi(z.upravnik)).toContain(oglas);
@@ -104,10 +139,10 @@ describe('oglasi, dokumenti i kontakti', () => {
       await kao(t, z.vlasnik).patch(`/oglas/${oglas}/obnovi`).expect(409);
       await istekni(oglas);
 
-      await kao(t, z.sused).get(`/oglas/${oglas}`).expect(403);
+      await kao(t, z.sused).get(`/oglas/${oglas}`).expect(404);
       expect(await idsUListi(z.sused)).not.toContain(oglas);
       expect(await idsUListi(z.vlasnik)).toContain(oglas);
-      await kao(t, z.sused).patch(`/oglas/${oglas}/obnovi`).expect(403);
+      await kao(t, z.sused).patch(`/oglas/${oglas}/obnovi`).expect(404);
 
       const obnovljen = await kao(t, z.vlasnik)
         .patch(`/oglas/${oglas}/obnovi`)
@@ -154,7 +189,12 @@ describe('oglasi, dokumenti i kontakti', () => {
       const broj = async () =>
         (await kao(t, z.sused).get('/oglas/broj-neprocitanih').expect(200)).body
           .broj as number;
-      await kao(t, z.sused).put('/oglas/procitano').expect(204);
+      const prvo = await kao(t, z.sused).put('/oglas/procitano').expect(200);
+      expect(Date.parse(prvo.body.procitanoDo)).not.toBeNaN();
+      const drugo = await kao(t, z.sused).put('/oglas/procitano').expect(200);
+      expect(Date.parse(drugo.body.procitanoDo)).toBeGreaterThan(
+        Date.parse(prvo.body.procitanoDo),
+      );
       expect(await broj()).toBe(0);
 
       await objavi(z.sused);
@@ -168,7 +208,7 @@ describe('oglasi, dokumenti i kontakti', () => {
         .send({ razlog: 'Sakriveno.' })
         .expect(200);
       expect(await broj()).toBe(1);
-      await kao(t, z.sused).put('/oglas/procitano').expect(204);
+      await kao(t, z.sused).put('/oglas/procitano').expect(200);
       expect(await broj()).toBe(0);
     });
 
@@ -185,6 +225,71 @@ describe('oglasi, dokumenti i kontakti', () => {
           tekst: 'Važno obaveštenje: „Nema vode sutra“.',
         });
       }
+    });
+
+    it('važno obaveštenje označeno izmenom stiže jednom', async () => {
+      const obavestenje = await objavi(z.upravnik, {
+        vrsta: 'obavestenje',
+        naslov: 'Čišćenje podruma',
+      });
+      const vazna = async () =>
+        (
+          await kao(t, z.sused).get('/notifikacija?poStrani=50').expect(200)
+        ).body.stavke.filter(
+          (n: { tekst: string }) =>
+            n.tekst === 'Važno obaveštenje: „Čišćenje podruma u subotu“.',
+        ).length as number;
+
+      await kao(t, z.upravnik)
+        .patch(`/oglas/${obavestenje}`)
+        .send({ naslov: 'Čišćenje podruma u subotu', vazno: true })
+        .expect(200);
+      expect(await vazna()).toBe(1);
+      await kao(t, z.upravnik)
+        .patch(`/oglas/${obavestenje}`)
+        .send({ tekst: 'Od 9 do 12.', vazno: true })
+        .expect(200);
+      expect(await vazna()).toBe(1);
+    });
+
+    it('autor menja svoje obaveštenje i kad više ne upravlja zgradom', async () => {
+      const obavestenje = await objavi(z.upravnik, { vrsta: 'obavestenje' });
+      const veza = await useli(t, z.upravnik, z.stanovi[2], false);
+      await t.baza.query(
+        `UPDATE zgrada SET "upravnikId" = NULL WHERE id = $1`,
+        [z.id],
+      );
+      try {
+        await kao(t, z.upravnik)
+          .patch(`/oglas/${obavestenje}`)
+          .send({ vrsta: 'obavestenje', naslov: 'Ispravljen naslov' })
+          .expect(200);
+        await kao(t, z.upravnik)
+          .patch(`/oglas/${await objavi(z.upravnik)}`)
+          .send({ vrsta: 'obavestenje' })
+          .expect(403);
+      } finally {
+        await t.baza.query(
+          `UPDATE zgrada SET "upravnikId" = $1 WHERE id = $2`,
+          [z.upravnik.id, z.id],
+        );
+        await t.baza.query('DELETE FROM stanar_stana WHERE id = $1', [veza]);
+      }
+    });
+
+    it('oglas je obrisan i kad brisanje fajlova u skladištu ne uspe', async () => {
+      const oglas = await objavi();
+      await kao(t, z.vlasnik)
+        .post(`/oglas/${oglas}/prilog`)
+        .attach('prilog', pdf(), 'racun.pdf')
+        .expect(201);
+      const brisanje = vi
+        .spyOn(t.skladiste, 'obrisi')
+        .mockRejectedValueOnce(new Error('Garage nije dostupan'));
+      await kao(t, z.vlasnik).delete(`/oglas/${oglas}`).expect(204);
+      expect(brisanje).toHaveBeenCalledOnce();
+      brisanje.mockRestore();
+      await kao(t, z.vlasnik).get(`/oglas/${oglas}`).expect(404);
     });
 
     it('prilozi: najviše 5, slika i PDF, fajlovi se brišu sa oglasom', async () => {
@@ -217,7 +322,10 @@ describe('oglasi, dokumenti i kontakti', () => {
       for (let i = 0; i < 3; i += 1) {
         await dodaj(pdf(), `prilog${i}.pdf`).expect(201);
       }
-      await dodaj(pdf(), 'sesti.pdf').expect(400);
+      const cuvanje = vi.spyOn(t.skladiste, 'sacuvaj');
+      await dodaj(fotografija, 'sesta.png').expect(400);
+      expect(cuvanje).not.toHaveBeenCalled();
+      cuvanje.mockRestore();
       expect(t.skladiste.fajlovi.size).toBe(pre + 6);
 
       await kao(t, z.sused)

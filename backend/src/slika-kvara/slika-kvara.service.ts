@@ -18,7 +18,6 @@ import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
 import { obradiSliku } from '../shared/skladiste/obrada-slike.js';
 import { MAKS_SLIKA_PO_KVARU } from './slika-kvara.constants.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
-import { sakrijKontakt } from '../korisnik/kontakt-serializer.interceptor.js';
 
 @Injectable()
 export class SlikaKvaraService {
@@ -32,22 +31,13 @@ export class SlikaKvaraService {
   ) {}
 
   async findZaKvar(kvarId: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
+    await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
     const slike = await this.slikaRepository.find({
       where: { kvar: { id: kvarId } },
       relations: { korisnik: true },
       order: { datumOtpremanja: 'ASC', id: 'ASC' },
     });
-    if (
-      await this.kvarPravaService.skrivaKontakte(
-        kvar.zgrada.id,
-        korisnikId,
-        uloga,
-      )
-    ) {
-      sakrijKontakt(slike.map((slika) => slika.korisnik));
-    }
     return await Promise.all(slike.map((slika) => this.saLinkovima(slika)));
   }
 

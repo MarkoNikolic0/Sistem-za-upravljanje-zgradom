@@ -68,7 +68,6 @@ export class OglasController {
 
   @Put('procitano')
   @Roles(Uloga.STANAR, Uloga.UPRAVNIK)
-  @HttpCode(HttpStatus.NO_CONTENT)
   procitajSve(@TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci) {
     return this.procitanoService.procitajSve(korisnik.id);
   }

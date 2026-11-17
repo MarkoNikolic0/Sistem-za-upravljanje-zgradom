@@ -39,6 +39,10 @@ import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
 import { NotifikacijaGateway } from '../notifikacija/notifikacija.gateway.js';
 
+function jeVaznoObavestenje(oglas: { vrsta?: VrstaOglasa; vazno?: boolean }) {
+  return oglas.vrsta === VrstaOglasa.OBAVESTENJE && oglas.vazno === true;
+}
+
 const KRAJ_NOVOG_ROKA = `(date_trunc('day', now() AT TIME ZONE '${VREMENSKA_ZONA}')
   + interval '${DANA_VAZENJA + 1} days' - interval '1 millisecond') AT TIME ZONE '${VREMENSKA_ZONA}'`;
 
@@ -124,15 +128,11 @@ export class OglasService {
               dto.glasanjeId === undefined ? null : { id: dto.glasanjeId },
           }),
         );
-        if (dto.vazno && dto.vrsta === VrstaOglasa.OBAVESTENJE) {
-          await this.notifikacije.obavesti(
+        if (jeVaznoObavestenje(dto)) {
+          await this.obavestiOVaznom(
             manager,
-            await stanariZgrade(manager, dto.zgradaId),
-            {
-              tip: TipNotifikacije.VAZNO_OBAVESTENJE,
-              tekst: `Važno obaveštenje: „${dto.naslov}“.`,
-              link: '/oglasi',
-            },
+            dto.zgradaId,
+            dto.naslov,
             korisnikId,
           );
         }
@@ -146,6 +146,24 @@ export class OglasService {
       }
       throw greska;
     }
+  }
+
+  private async obavestiOVaznom(
+    manager: EntityManager,
+    zgradaId: number,
+    naslov: string,
+    autorId: number,
+  ) {
+    await this.notifikacije.obavesti(
+      manager,
+      await stanariZgrade(manager, zgradaId),
+      {
+        tip: TipNotifikacije.VAZNO_OBAVESTENJE,
+        tekst: `Važno obaveštenje: „${naslov}“.`,
+        link: '/oglasi',
+      },
+      autorId,
+    );
   }
 
   private async javiNovOglas(zgradaId: number, autorId: number) {
@@ -175,40 +193,58 @@ export class OglasService {
       uloga,
       'menja',
     );
-    if (dto.vrsta) {
-      this.prava.proveriVrstu(dto.vrsta, p, oglas.zgrada.id);
+    const novaVrsta =
+      dto.vrsta !== undefined && dto.vrsta !== null && dto.vrsta !== oglas.vrsta
+        ? dto.vrsta
+        : null;
+    if (novaVrsta) {
+      this.prava.proveriVrstu(novaVrsta, p, oglas.zgrada.id);
     }
     if (
-      dto.vrsta &&
-      dto.vrsta !== VrstaOglasa.OBAVESTENJE &&
+      novaVrsta &&
+      novaVrsta !== VrstaOglasa.OBAVESTENJE &&
       (await this.oglasRepository.existsBy({ id, glasanje: Not(IsNull()) }))
     ) {
       throw greskaPolja('vrsta', 'Objava odluke ostaje obaveštenje.');
     }
 
-    const izmene: Partial<Oglas> = {
+    const izmene = {
       naslov: dto.naslov ?? oglas.naslov,
       tekst: dto.tekst ?? oglas.tekst,
       vrsta: dto.vrsta ?? oglas.vrsta,
       vazno: dto.vazno ?? oglas.vazno,
       vaziDo: dto.vaziDo === undefined ? oglas.vaziDo : dto.vaziDo,
     };
-    if (
+    const datumIzmene =
       izmene.naslov !== oglas.naslov ||
       izmene.tekst !== oglas.tekst ||
       izmene.vrsta !== oglas.vrsta
-    ) {
-      izmene.datumIzmene = new Date();
-    }
+        ? { datumIzmene: new Date() }
+        : {};
 
-    const rezultat = await this.oglasRepository.update(
-      { id, datumSakrivanja: IsNull() },
-      izmene,
+    await this.dataSource.transaction(async (manager) => {
+      const rezultat = await manager.update(
+        Oglas,
+        { id, datumSakrivanja: IsNull() },
+        { ...izmene, ...datumIzmene },
+      );
+      if (rezultat.affected === 0) {
+        throw new ConflictException(PORUKA_SAKRIVEN);
+      }
+      if (jeVaznoObavestenje(izmene) && !jeVaznoObavestenje(oglas)) {
+        await this.obavestiOVaznom(
+          manager,
+          oglas.zgrada.id,
+          izmene.naslov,
+          korisnikId,
+        );
+      }
+    });
+    return this.saPravima(
+      Object.assign(oglas, izmene, datumIzmene),
+      korisnikId,
+      p,
     );
-    if (rezultat.affected === 0) {
-      throw new ConflictException(PORUKA_SAKRIVEN);
-    }
-    return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
@@ -242,7 +278,7 @@ export class OglasService {
       'menja',
     );
     this.proveriDaNijeSakriven(oglas);
-    return this.prilogService.dodaj(oglas.id, fajl);
+    return this.prilogService.dodaj(oglas.id, oglas.prilozi.length, fajl);
   }
 
   async obrisiPrilog(

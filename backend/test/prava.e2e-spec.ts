@@ -449,7 +449,7 @@ describe('prava pristupa', () => {
       await kao(t, svet.bezStana)
         .get(`/kvar/${sadrzaj.kvarZajednicki}`)
         .expect(403);
-      await kao(t, svet.bezStana).get(`/oglas/${sadrzaj.oglas}`).expect(403);
+      await kao(t, svet.bezStana).get(`/oglas/${sadrzaj.oglas}`).expect(404);
     });
   });
 

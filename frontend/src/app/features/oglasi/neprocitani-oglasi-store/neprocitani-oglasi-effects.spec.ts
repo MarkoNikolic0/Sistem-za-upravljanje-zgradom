@@ -28,7 +28,7 @@ describe('neprocitani oglasi efekat', () => {
     listaOtvorena = new BehaviorSubject(false);
     service = {
       brojNeprocitanih: vi.fn(() => of({ broj: 3, procitanoDo: DO })),
-      procitajSve: vi.fn(() => of(undefined)),
+      procitajSve: vi.fn(() => of({ procitanoDo: DO })),
     };
     const store = { select: () => listaOtvorena } as unknown as Store;
     efekat = pokreniEfekat((akcije) =>
@@ -59,6 +59,16 @@ describe('neprocitani oglasi efekat', () => {
     expect(efekat.izlaz).toEqual([
       NeprocitaniOglasiApiActions.oznaceniProcitani({ procitanoDo: DO, osveziListu: false }),
     ]);
+    expect(service.brojNeprocitanih).not.toHaveBeenCalled();
+  });
+
+  it('nov oglas dok je lista otvorena, a nema nepročitanih, ne označava pročitano', () => {
+    prijavi('stanar');
+    listaOtvorena.next(true);
+    service.brojNeprocitanih = vi.fn(() => of({ broj: 0, procitanoDo: DO }));
+    efekat.posalji(VezaActions.novOglas());
+    expect(efekat.izlaz).toEqual([NeprocitaniOglasiApiActions.brojUcitan({ broj: 0 })]);
+    expect(service.procitajSve).not.toHaveBeenCalled();
   });
 
   it('nov oglas dok je lista otvorena označava pročitano i osvežava listu', () => {
