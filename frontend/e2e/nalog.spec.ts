@@ -55,3 +55,30 @@ test('pogrešna lozinka ne prijavljuje', async ({ page }) => {
   await expect(page.getByRole('alert')).toBeVisible();
   await expect(page).toHaveURL(/\/login/);
 });
+
+test('upravnik odbija zahtev uz razlog, a stanar vidi razlog', async ({ page }) => {
+  const { b, bezStana } = await ucitajSvet();
+  const razlog = `U stanu 2 živi druga porodica (${Date.now()}).`;
+  await prijavi(page, bezStana.email);
+  await page.goto('/povezivanje');
+  await page.getByRole('combobox', { name: 'Zgrada' }).click();
+  await page.getByRole('option', { name: /Beta/ }).click();
+  await page.getByRole('combobox', { name: 'Stan' }).click();
+  await page.getByRole('option', { name: /^Stan 2 ·/ }).click();
+  await page.getByRole('button', { name: 'Pošalji zahtev' }).click();
+  await expect(page.getByText('Zahtev je poslat upravniku zgrade.')).toBeVisible();
+
+  await page.context().clearCookies();
+  await prijavi(page, b.upravnik.email);
+  await page.goto('/zahtevi');
+  const zahtev = page.getByRole('article').filter({ hasText: bezStana.email });
+  await zahtev.getByRole('button', { name: 'Odbij' }).click();
+  await zahtev.getByLabel(/Razlog odbijanja/).fill(razlog);
+  await zahtev.getByRole('button', { name: 'Odbij zahtev' }).click();
+  await expect(page.getByText(/Zahtev je odbijen:/)).toBeVisible();
+
+  await page.context().clearCookies();
+  await prijavi(page, bezStana.email);
+  await page.goto('/povezivanje');
+  await expect(page.getByText(`Razlog: ${razlog}`)).toBeVisible();
+});

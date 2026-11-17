@@ -18,7 +18,7 @@ import {
   tap,
 } from 'rxjs';
 import { ProfileService } from '../../profile/profile-service';
-import { KLJUC_TOASTA, putanjaAdrese } from '../notifikacija-models';
+import { KLJUC_TOASTA, putanjaAdrese, TIPOVI_ZA_PROFIL } from '../notifikacija-models';
 import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import { notifikacijeFeature } from './notifikacije-reducer';
@@ -226,7 +226,7 @@ export const osveziProfil = createEffect(
   (actions$ = inject(Actions), profileService = inject(ProfileService)) =>
     actions$.pipe(
       ofType(VezaActions.stigla),
-      filter(({ notifikacija }) => notifikacija.tip === 'zahtev_obradjen'),
+      filter(({ notifikacija }) => TIPOVI_ZA_PROFIL.includes(notifikacija.tip)),
       tap(() => profileService.profil.reload()),
     ),
   { functional: true, dispatch: false },

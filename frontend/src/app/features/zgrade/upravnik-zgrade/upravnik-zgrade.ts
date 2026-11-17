@@ -13,12 +13,20 @@ import { AkcijeStore } from '../../../shared/stanje/with-akcije';
 import { KorisnikPretrage } from '../../korisnici/korisnik-models';
 import { KorisnikService } from '../../korisnici/korisnik-service';
 import { ZgradaService } from '../zgrada-service';
+import { EmailVeza } from '../../../shared/email-veza/email-veza';
 
 const MIN_PRETRAGE = 2;
 
 @Component({
   selector: 'app-upravnik-zgrade',
-  imports: [FormsModule, AutoCompleteModule, ButtonModule, MessageModule, SkeletonModule],
+  imports: [
+    FormsModule,
+    AutoCompleteModule,
+    ButtonModule,
+    MessageModule,
+    SkeletonModule,
+    EmailVeza,
+  ],
   providers: [AkcijeStore],
   templateUrl: './upravnik-zgrade.html',
   styleUrl: './upravnik-zgrade.scss',
@@ -106,7 +114,7 @@ export class UpravnikZgrade {
     const dugme = event.currentTarget as HTMLElement;
     this.confirmationService.confirm({
       header: 'Promena upravnika',
-      message: `${this.ime(novi)} postaje upravnik zgrade, a ${this.ime(stari)} se vraća u stanara i gubi prava upravnika. Ako ne stanuje u zgradi, oglasi koje je objavio se sakrivaju, a obaveštenja ostaju.`,
+      message: `${this.ime(novi)} postaje upravnik zgrade, a ${this.ime(stari)} više ne upravlja ovom zgradom. Ako ne vodi nijednu drugu zgradu, vraća se u stanara. Ako ne stanuje u ovoj zgradi, oglasi koje je ovde objavio se sakrivaju, a obaveštenja ostaju.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Promeni upravnika' },
@@ -124,7 +132,7 @@ export class UpravnikZgrade {
     this.akcije.ponisti();
     this.confirmationService.confirm({
       header: 'Razrešenje upravnika',
-      message: `${this.ime(stari)} više neće upravljati zgradom i vraća se u stanara. Zgrada ostaje bez upravnika dok ne postaviš novog. Ako ne stanuje u zgradi, oglasi koje je objavio se sakrivaju, a obaveštenja ostaju.`,
+      message: `${this.ime(stari)} više neće upravljati ovom zgradom. Ako ne vodi nijednu drugu zgradu, vraća se u stanara. Zgrada ostaje bez upravnika dok ne postaviš novog. Ako ne stanuje u ovoj zgradi, oglasi koje je ovde objavio se sakrivaju, a obaveštenja ostaju.`,
       defaultFocus: 'reject',
       rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
       acceptButtonProps: { label: 'Razreši', severity: 'danger' },

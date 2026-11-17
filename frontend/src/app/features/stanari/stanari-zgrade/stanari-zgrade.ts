@@ -23,6 +23,7 @@ import { poSpratovima } from '../../../shared/spratovi/spratovi';
 import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { meniReda } from '../../../shared/liste/meni-reda';
 import { KorisniciSistema } from '../../korisnici/korisnici-sistema/korisnici-sistema';
+import { EmailVeza } from '../../../shared/email-veza/email-veza';
 
 const SVI = 'svi';
 type Izbor = number | typeof SVI;
@@ -45,6 +46,7 @@ interface Izabran {
     SkeletonModule,
     SpratPipe,
     KorisniciSistema,
+    EmailVeza,
   ],
   providers: [ConfirmationService, AkcijeStore],
   selector: 'app-stanari-zgrade',

@@ -25,6 +25,7 @@ interface Obrada {
   zahtev: ZahtevUpravnika;
   status: 'prihvacen' | 'odbijen';
   vlasnik?: boolean;
+  razlog?: string;
 }
 
 interface ZahteviState {
@@ -86,7 +87,11 @@ export const ZahteviStore = signalStore(
         tap(({ zahtev }) => patchState(store, { zahtevUObradiId: zahtev.id, poruka: null })),
         concatMap((obrada) =>
           zahtevService
-            .obradi(obrada.zahtev.id, { status: obrada.status, vlasnik: obrada.vlasnik })
+            .obradi(obrada.zahtev.id, {
+              status: obrada.status,
+              vlasnik: obrada.vlasnik,
+              razlog: obrada.razlog,
+            })
             .pipe(
               tapResponse({
                 next: () => {
@@ -128,8 +133,8 @@ export const ZahteviStore = signalStore(
       prihvati(zahtev: ZahtevUpravnika, vlasnik: boolean): void {
         obradi({ zahtev, status: 'prihvacen', vlasnik });
       },
-      odbij(zahtev: ZahtevUpravnika): void {
-        obradi({ zahtev, status: 'odbijen' });
+      odbij(zahtev: ZahtevUpravnika, razlog: string): void {
+        obradi({ zahtev, status: 'odbijen', razlog: razlog || undefined });
       },
     };
   }),

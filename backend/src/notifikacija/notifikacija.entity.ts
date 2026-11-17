@@ -17,6 +17,7 @@ export enum TipNotifikacije {
   KVAR_KOMENTAR = 'kvar_komentar',
   ZAHTEV_NOVI = 'zahtev_novi',
   ZAHTEV_OBRADJEN = 'zahtev_obradjen',
+  STANOVANJE = 'stanovanje',
   SASTANAK_NOVI = 'sastanak_novi',
   SASTANAK_IZMENJEN = 'sastanak_izmenjen',
   SASTANAK_OTKAZAN = 'sastanak_otkazan',

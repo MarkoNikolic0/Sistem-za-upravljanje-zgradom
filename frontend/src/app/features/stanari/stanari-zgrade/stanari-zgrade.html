@@ -118,9 +118,7 @@
                                   <a [href]="'tel:' + stanar.korisnik.telefon">{{
                                     telefon(stanar.korisnik.telefon)
                                   }}</a>
-                                  <a [href]="'mailto:' + stanar.korisnik.email">{{
-                                    stanar.korisnik.email
-                                  }}</a>
+                                  <app-email-veza [adresa]="stanar.korisnik.email" />
                                 </p>
                               </div>
                               <button

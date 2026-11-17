@@ -99,6 +99,9 @@
           <p class="mt-1 text-sm text-priguseno">
             {{ zahtev.stan.zgrada.naziv }}, {{ zahtev.stan.zgrada.adresa }}
           </p>
+          @if (zahtev.razlogOdbijanja) {
+            <p class="mt-1 text-sm">Razlog: {{ zahtev.razlogOdbijanja }}</p>
+          }
         </div>
         <p-tag
           class="shrink-0"

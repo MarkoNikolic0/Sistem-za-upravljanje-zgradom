@@ -1,3 +1,4 @@
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StanarStana } from './stanar-stana.entity.js';
@@ -17,6 +18,7 @@ import { OglasModule } from '../oglas/oglas.module.js';
     GlasanjeModule,
     PratilacKvaraModule,
     OglasModule,
+    NotifikacijaModule,
   ],
   controllers: [StanarStanaController],
   providers: [StanarStanaService],

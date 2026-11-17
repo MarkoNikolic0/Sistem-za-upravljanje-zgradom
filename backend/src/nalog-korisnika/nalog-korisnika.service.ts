@@ -22,6 +22,7 @@ import { TokenNalogaService } from '../auth/token-naloga/token-naloga.service.js
 import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { PushService } from '../notifikacija/push/push.service.js';
+import { odbijZahteve } from '../zahtev-povezivanje/odbij-zahteve.js';
 
 @Injectable()
 export class NalogKorisnikaService {
@@ -61,7 +62,12 @@ export class NalogKorisnikaService {
       }
 
       if (dto.uloga === Uloga.SERVISER) {
-        await this.odbijZahteve(manager, id);
+        await odbijZahteve(
+          manager,
+          this.notifikacije,
+          { korisnik: { id } },
+          'Nalog je postao serviserski.',
+        );
         if (
           await manager.exists(StanarStana, { where: { korisnik: { id } } })
         ) {
@@ -88,7 +94,14 @@ export class NalogKorisnikaService {
       if (korisnik.deaktiviran) {
         return;
       }
-      await this.odbijZahteve(manager, id);
+      await manager.update(
+        ZahtevPovezivanje,
+        { korisnik: { id }, status: StatusZahteva.NA_CEKANJU },
+        {
+          status: StatusZahteva.ODBIJEN,
+          razlogOdbijanja: 'Nalog je deaktiviran.',
+        },
+      );
       await this.oglasService.sakrijOglase(
         manager,
         { autor: { id } },
@@ -127,13 +140,5 @@ export class NalogKorisnikaService {
       throw new ForbiddenException('Nalog administratora se ne menja ovde.');
     }
     return korisnik;
-  }
-
-  private async odbijZahteve(manager: EntityManager, id: number) {
-    await manager.update(
-      ZahtevPovezivanje,
-      { korisnik: { id }, status: StatusZahteva.NA_CEKANJU },
-      { status: StatusZahteva.ODBIJEN },
-    );
   }
 }

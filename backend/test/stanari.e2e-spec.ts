@@ -3,6 +3,8 @@ import { Korisnik } from '../src/korisnik/korisnik.entity.js';
 import { PratilacKvara } from '../src/pratilac-kvara/pratilac-kvara.entity.js';
 import { ServiserSpecijalnost } from '../src/serviser-specijalnost/serviser-specijalnost.entity.js';
 import { LokacijaTip } from '../src/shared/enums/kvar.enums.js';
+import { VrstaSastanka } from '../src/shared/enums/sastanak.enums.js';
+import { PotvrdaPrisustva } from '../src/sastanak/potvrda-prisustva.entity.js';
 import { Uloga } from '../src/shared/enums/uloga.enum.js';
 import { StanarStana } from '../src/stanar-stana/stanar-stana.entity.js';
 import { Zgrada } from '../src/zgrada/zgrada.entity.js';
@@ -21,6 +23,7 @@ import {
   novaOdluka,
   noviKvar,
   noviOglas,
+  noviSastanak,
   prijavi,
   useli,
   type ZgradaSveta,
@@ -124,7 +127,49 @@ describe('stanari, nalozi i zgrade', () => {
       const zahtev = await id(posalji(drugi, z.stanovi[1]).expect(201));
       await obradi(zahtev, { status: 'odbijen' }).expect(200);
       expect(await veze(drugi)).toBe(0);
+      expect(await obavestenja(drugi)).toContain(
+        'Zahtev za stan 2 je odbijen.',
+      );
       await posalji(drugi, z.stanovi[1]).expect(201);
+    });
+
+    it('odbijanje čuva razlog i šalje ga u obaveštenju', async () => {
+      const korisnik = await napraviKorisnika(t, 'Razlog');
+      const zahtev = await id(posalji(korisnik, z.stanovi[0]).expect(201));
+      await obradi(zahtev, {
+        status: 'odbijen',
+        razlog: 'x'.repeat(1001),
+      }).expect(400);
+      const odgovor = await obradi(zahtev, {
+        status: 'odbijen',
+        razlog: '  Stan 1 ima drugog vlasnika.  ',
+      }).expect(200);
+      expect(odgovor.body.razlogOdbijanja).toBe('Stan 1 ima drugog vlasnika.');
+      const moji = await kao(t, korisnik)
+        .get('/zahtev-povezivanje/moji-zahtevi')
+        .expect(200);
+      expect(moji.body[0]).toMatchObject({
+        status: 'odbijen',
+        razlogOdbijanja: 'Stan 1 ima drugog vlasnika.',
+      });
+      expect(await obavestenja(korisnik)).toContain(
+        'Zahtev za stan 1 je odbijen. Razlog: Stan 1 ima drugog vlasnika.',
+      );
+
+      const prihvacen = await id(posalji(korisnik, z.stanovi[0]).expect(201));
+      const prihvatanje = await obradi(prihvacen, {
+        status: 'prihvacen',
+        razlog: 'Ne čuva se.',
+      }).expect(200);
+      expect(prihvatanje.body.razlogOdbijanja).toBeNull();
+    });
+
+    it('prihvatanje zahteva kad je korisnik već povezan sa stanom ne pada', async () => {
+      const korisnik = await napraviKorisnika(t, 'VecPovezan');
+      const zahtev = await id(posalji(korisnik, z.stanovi[1]).expect(201));
+      await useli(t, korisnik, z.stanovi[1], false);
+      await obradi(zahtev, { status: 'prihvacen' }).expect(200);
+      expect(await veze(korisnik)).toBe(1);
     });
 
     it('dva istovremena prihvatanja useljavaju jednom', async () => {
@@ -194,6 +239,18 @@ describe('stanari, nalozi i zgrade', () => {
       const mojOglas = await id(
         kao(t, stanar).post('/oglas').send(noviOglas(z.id)).expect(201),
       );
+      const sastanak = await id(
+        kao(t, z.upravnik)
+          .post('/sastanak')
+          .send(noviSastanak(z.id, VrstaSastanka.ZBOR))
+          .expect(201),
+      );
+      for (const akter of [stanar, z.vlasnik]) {
+        await kao(t, akter)
+          .put(`/sastanak/${sastanak}/najava`)
+          .send({ dolazi: true })
+          .expect(200);
+      }
 
       await kao(t, z.vlasnik)
         .delete(`/zgrada/${z.id}/stanar/${veza}`)
@@ -219,6 +276,14 @@ describe('stanari, nalozi i zgrade', () => {
       expect(await oglas(z.upravnik, mojOglas)).toMatchObject({
         razlogSakrivanja: 'Autor se odselio iz zgrade.',
       });
+      const najave = await t.baza.getRepository(PotvrdaPrisustva).find({
+        where: { sastanak: { id: sastanak } },
+        relations: { korisnik: true },
+      });
+      expect(najave.map((n) => n.korisnik.id)).toEqual([z.vlasnik.id]);
+      expect(await obavestenja(stanar)).toContainEqual(
+        expect.stringMatching(/^Više nisi stanar stana \d+ u zgradi „.+“\.$/),
+      );
       await kao(t, z.vlasnik).get(`/oglas/${mojOglas}`).expect(404);
 
       for (const putanja of [`/kvar/${mojKvar}`, `/kvar/${tudjKvar}`]) {
@@ -365,6 +430,9 @@ describe('stanari, nalozi i zgrade', () => {
         .send({ vlasnik: false })
         .expect(200);
       expect(izmena.body).toEqual({ id: z.vezaVlasnika, vlasnik: false });
+      expect(await obavestenja(z.vlasnik)).toContainEqual(
+        expect.stringMatching(/^Sada si ukućanin stana 1 u zgradi „.+“\.$/),
+      );
 
       const glasovi = await t.baza.getRepository(Glas).find({
         where: { korisnik: { id: z.vlasnik.id } },
@@ -551,6 +619,9 @@ describe('stanari, nalozi i zgrade', () => {
       expect(moji.body.map((z0: { status: string }) => z0.status)).toEqual([
         'odbijen',
       ]);
+      expect(await obavestenja(korisnik)).toContain(
+        'Zahtev za stan 3 je odbijen. Razlog: Nalog je postao serviserski.',
+      );
       await kao(t, admin)
         .put(`/korisnik/${korisnik.id}/specijalnosti`)
         .send({ kategorije: ['vodovod', 'struja'] })
@@ -783,6 +854,16 @@ describe('stanari, nalozi i zgrade', () => {
         .put(`/glasanje/${anketa.id}/glas`)
         .send({ opcijaId: anketa.opcije[0].id })
         .expect(200);
+      const sastanak = await id(
+        kao(t, z.upravnik)
+          .post('/sastanak')
+          .send(noviSastanak(z.id, VrstaSastanka.ZBOR))
+          .expect(201),
+      );
+      await kao(t, z.vlasnik)
+        .put(`/sastanak/${sastanak}/najava`)
+        .send({ dolazi: true })
+        .expect(200);
 
       await kao(t, z.upravnik).put(`/zgrada/${z.id}/arhiva`).expect(403);
       await kao(t, admin).put(`/zgrada/${z.id}/arhiva`).expect(204);
@@ -790,6 +871,11 @@ describe('stanari, nalozi i zgrade', () => {
 
       for (const stanar of [z.vlasnik, z.ukucanin, z.sused]) {
         expect(await veze(stanar)).toBe(0);
+        expect(
+          (await obavestenja(stanar)).filter((n) =>
+            /^Zgrada „.+“ je arhivirana, pa više nisi njen stanar\.$/.test(n),
+          ),
+        ).toHaveLength(1);
       }
       expect(await uBazi(z.upravnik)).toMatchObject({
         uloga: Uloga.STANAR,
@@ -804,8 +890,19 @@ describe('stanari, nalozi i zgrade', () => {
         .get('/zahtev-povezivanje/moji-zahtevi')
         .expect(200);
       expect(
-        moji.body.find((m: { id: number }) => m.id === zahtev).status,
-      ).toBe('odbijen');
+        moji.body.find((m: { id: number }) => m.id === zahtev),
+      ).toMatchObject({
+        status: 'odbijen',
+        razlogOdbijanja: 'Zgrada je arhivirana.',
+      });
+      expect(await obavestenja(novajlija)).toContain(
+        'Zahtev za stan 3 je odbijen. Razlog: Zgrada je arhivirana.',
+      );
+      expect(
+        await t.baza
+          .getRepository(PotvrdaPrisustva)
+          .countBy({ sastanak: { id: sastanak } }),
+      ).toBe(0);
       const upravljanje = await kao(t, admin)
         .get('/zgrada/upravljanje')
         .expect(200);

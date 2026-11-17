@@ -26,7 +26,7 @@
             <p class="text-naslov">{{ ime(u) }}</p>
             <p class="veze">
               <a [href]="'tel:' + u.telefon">{{ telefon(u.telefon) }}</a>
-              <a [href]="'mailto:' + u.email">{{ u.email }}</a>
+              <app-email-veza [adresa]="u.email" />
             </p>
           </div>
         </div>

@@ -20,6 +20,7 @@ export const NASLOVI_PUSH: Record<TipNotifikacije, string> = {
   [TipNotifikacije.KVAR_KOMENTAR]: 'Nov komentar',
   [TipNotifikacije.ZAHTEV_NOVI]: 'Nov zahtev',
   [TipNotifikacije.ZAHTEV_OBRADJEN]: 'Zahtev je obrađen',
+  [TipNotifikacije.STANOVANJE]: 'Promena stanovanja',
   [TipNotifikacije.SASTANAK_NOVI]: 'Zakazan sastanak',
   [TipNotifikacije.SASTANAK_IZMENJEN]: 'Sastanak je izmenjen',
   [TipNotifikacije.SASTANAK_OTKAZAN]: 'Sastanak je otkazan',

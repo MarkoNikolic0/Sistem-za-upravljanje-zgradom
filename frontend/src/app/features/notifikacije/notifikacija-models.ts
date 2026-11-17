@@ -6,6 +6,7 @@ export type TipNotifikacije =
   | 'kvar_komentar'
   | 'zahtev_novi'
   | 'zahtev_obradjen'
+  | 'stanovanje'
   | 'sastanak_novi'
   | 'sastanak_izmenjen'
   | 'sastanak_otkazan'
@@ -39,6 +40,7 @@ export const DOGADJAJI_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   kvar_komentar: 'Nov komentar',
   zahtev_novi: 'Nov zahtev',
   zahtev_obradjen: 'Zahtev je obrađen',
+  stanovanje: 'Promena stanovanja',
   sastanak_novi: 'Zakazan sastanak',
   sastanak_izmenjen: 'Sastanak je izmenjen',
   sastanak_otkazan: 'Sastanak je otkazan',
@@ -62,6 +64,7 @@ export const IKONICE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   kvar_komentar: 'pi pi-comment',
   zahtev_novi: 'pi pi-link',
   zahtev_obradjen: 'pi pi-link',
+  stanovanje: 'pi pi-home',
   sastanak_novi: 'pi pi-calendar',
   sastanak_izmenjen: 'pi pi-calendar',
   sastanak_otkazan: 'pi pi-calendar-times',
@@ -81,6 +84,7 @@ export const BOJE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   kvar_komentar: KVAR,
   zahtev_novi: ZAHTEV,
   zahtev_obradjen: ZAHTEV,
+  stanovanje: ZAHTEV,
   sastanak_novi: SASTANAK,
   sastanak_izmenjen: SASTANAK,
   sastanak_otkazan: SASTANAK,
@@ -95,6 +99,8 @@ export function doPonoci(sada = new Date()): number {
 }
 
 export const KLJUC_TOASTA = 'notifikacija';
+
+export const TIPOVI_ZA_PROFIL: TipNotifikacije[] = ['zahtev_obradjen', 'stanovanje'];
 
 export interface GrupaNotifikacija {
   naziv: string;

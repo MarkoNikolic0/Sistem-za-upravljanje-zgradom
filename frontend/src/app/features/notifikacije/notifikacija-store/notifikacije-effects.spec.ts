@@ -3,11 +3,13 @@ import { Store } from '@ngrx/store';
 import { MessageService } from 'primeng/api';
 import { of, Subject, throwError } from 'rxjs';
 import { pokreniEfekat } from '../../../../testiranje/efekti';
-import { Notifikacija } from '../notifikacija-models';
+import { Notifikacija, TipNotifikacije } from '../notifikacija-models';
+import { ProfileService } from '../../profile/profile-service';
 import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import {
   neprocitane,
+  osveziProfil,
   prikaziToast,
   procitaj,
   procitajSve,
@@ -24,6 +26,19 @@ const notifikacija = (id: number, procitano = false): Notifikacija => ({
 });
 
 describe('notifikacije efekti', () => {
+  it('profil se osvežava kad stigne obrada zahteva ili promena stanovanja', () => {
+    const profileService = { profil: { reload: vi.fn() } };
+    const { posalji } = pokreniEfekat((a) =>
+      osveziProfil(a, profileService as unknown as ProfileService),
+    );
+    const stigla = (tip: TipNotifikacije) =>
+      posalji(VezaActions.stigla({ notifikacija: { ...notifikacija(1), tip }, naStranici: false }));
+    stigla('kvar_status');
+    stigla('zahtev_obradjen');
+    stigla('stanovanje');
+    expect(profileService.profil.reload).toHaveBeenCalledTimes(2);
+  });
+
   it('broj neprocitanih se učitava po povezivanju i novoj notifikaciji, ali ne kad je na stranici', () => {
     const service = { neprocitane: vi.fn(() => of({ broj: 2, linkovi: {} })) };
     const { posalji, izlaz } = pokreniEfekat((a) =>

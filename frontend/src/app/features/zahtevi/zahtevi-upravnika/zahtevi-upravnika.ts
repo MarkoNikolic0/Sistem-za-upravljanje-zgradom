@@ -1,4 +1,4 @@
-import { afterRenderEffect, Component, ElementRef, inject, viewChild } from '@angular/core';
+import { afterRenderEffect, Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { SkeletonModule } from 'primeng/skeleton';
+import { fokusPosleCrtanja } from '../../../shared/fokus';
+import { FormaRazloga } from '../../../shared/forme/forma-razloga/forma-razloga';
 import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import {
@@ -33,6 +35,7 @@ import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
     TagModule,
     SpratPipe,
     Paginacija,
+    FormaRazloga,
   ],
   providers: [ZahteviStore, ConfirmationService],
   selector: 'app-zahtevi-upravnika',
@@ -43,6 +46,9 @@ export class ZahteviUpravnika {
   protected readonly store = inject(ZahteviStore);
   private confirmationService = inject(ConfirmationService);
   private readonly porukaObrade = viewChild.required<ElementRef<HTMLElement>>('porukaObrade');
+  private readonly fokusiraj = fokusPosleCrtanja();
+
+  protected readonly odbijanjeId = signal<number | null>(null);
 
   protected readonly naziviStatusa = NAZIVI_STATUSA_ZAHTEVA;
   protected readonly bojeStatusa = BOJE_STATUSA_ZAHTEVA;
@@ -75,16 +81,17 @@ export class ZahteviUpravnika {
     });
   }
 
-  protected odbij(event: Event, zahtev: ZahtevUpravnika): void {
-    const dugme = event.currentTarget as HTMLElement;
-    this.confirmationService.confirm({
-      header: 'Odbijanje zahteva',
-      message: `Odbiti zahtev: ${zahtev.korisnik.ime} ${zahtev.korisnik.prezime}, stan ${zahtev.stan.broj}? Stanar će morati da pošalje novi zahtev.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Odbij', severity: 'danger' },
-      accept: () => this.store.odbij(zahtev),
-      reject: () => dugme.focus(),
-    });
+  protected otvoriOdbijanje(zahtev: ZahtevUpravnika): void {
+    this.odbijanjeId.set(zahtev.id);
+  }
+
+  protected odbij(zahtev: ZahtevUpravnika, razlog: string): void {
+    this.odbijanjeId.set(null);
+    this.store.odbij(zahtev, razlog);
+  }
+
+  protected odustaniOdOdbijanja(zahtev: ZahtevUpravnika): void {
+    this.odbijanjeId.set(null);
+    this.fokusiraj(`#odbij-${zahtev.id}`);
   }
 }

@@ -21,6 +21,7 @@ export interface ZahtevResponse {
   id: number;
   status: StatusZahteva;
   datumPodnosenjaZahteva: string;
+  razlogOdbijanja: string | null;
   stan: StanOsnovno & { zgrada: ZgradaOsnovno & { arhivirana: string | null } };
 }
 
@@ -39,6 +40,7 @@ export interface UpitZahteva extends UpitStrane {
 export interface ObradaZahtevaRequest {
   status: 'prihvacen' | 'odbijen';
   vlasnik?: boolean;
+  razlog?: string;
 }
 
 export type FilterZahteva = 'na_cekanju' | 'svi';

@@ -1,3 +1,4 @@
+import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Zgrada } from './zgrada.entity.js';
@@ -32,6 +33,7 @@ import { OglasModule } from '../oglas/oglas.module.js';
     AuthModule,
     KorisnikModule,
     OglasModule,
+    NotifikacijaModule,
   ],
   controllers: [ZgradaController],
   providers: [

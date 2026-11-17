@@ -10,7 +10,7 @@ export function zakljucajVeze(
   return manager.find(StanarStana, {
     where: { korisnik: { id: korisnikId }, stan: { zgrada: { id: zgradaId } } },
     relations: { stan: true },
-    select: { id: true, vlasnik: true, stan: { id: true } },
+    select: { id: true, vlasnik: true, stan: { id: true, broj: true } },
     order: { id: 'ASC' },
     lock: { mode, tables: ['stanar_stana'] },
   });

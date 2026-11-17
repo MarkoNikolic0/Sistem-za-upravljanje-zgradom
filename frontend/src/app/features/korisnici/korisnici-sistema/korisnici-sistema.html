@@ -90,7 +90,7 @@
             </p>
             <p class="veze">
               <a [href]="'tel:' + k.telefon">{{ telefon(k.telefon) }}</a>
-              <a [href]="'mailto:' + k.email">{{ k.email }}</a>
+              <app-email-veza [adresa]="k.email" />
             </p>
             @if (k.upravlja.length > 0) {
               <p class="opis">Upravlja {{ upravljaneZgrade(k) }}</p>

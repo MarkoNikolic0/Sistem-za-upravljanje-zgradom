@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { StanarStana } from './stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -12,16 +11,18 @@ import { zakljucajVeze } from './veze-u-zgradi.js';
 import { stanoviSaStanarima } from './stanovi-sa-stanarima.js';
 import { UpdateStanarStanaDto } from './dto/update-stanar-stana.dto.js';
 import { OglasService } from '../oglas/oglas.service.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { obrisiBuduceNajave } from '../sastanak/najave-prisustva.js';
 
 @Injectable()
 export class StanarStanaService {
   constructor(
-    @InjectRepository(StanarStana)
-    private stanarStanaRepository: Repository<StanarStana>,
     private korisnikService: KorisnikService,
     private glasoviService: GlasanjeGlasoviService,
     private pracenjaService: PratilacKvaraService,
     private oglasService: OglasService,
+    private notifikacije: NotifikacijaService,
     private dataSource: DataSource,
   ) {}
 
@@ -61,6 +62,16 @@ export class StanarStanaService {
         );
       }
       await manager.update(StanarStana, id, { vlasnik: dto.vlasnik });
+      if (veza.vlasnik !== dto.vlasnik) {
+        await this.obavestiStanara(
+          manager,
+          stanarId,
+          zgradaId,
+          korisnikId,
+          (zgrada) =>
+            `Sada si ${dto.vlasnik ? 'vlasnik' : 'ukućanin'} stana ${veza.stan.broj} u zgradi „${zgrada}“.`,
+        );
+      }
       return { id, vlasnik: dto.vlasnik };
     });
   }
@@ -75,7 +86,38 @@ export class StanarStanaService {
         id,
       );
       await this.odseli(manager, stanarId, zgradaId, veza, ostajeUZgradi);
+      await this.obavestiStanara(
+        manager,
+        stanarId,
+        zgradaId,
+        korisnikId,
+        (zgrada) =>
+          `Više nisi stanar stana ${veza.stan.broj} u zgradi „${zgrada}“.`,
+      );
     });
+  }
+
+  private async obavestiStanara(
+    manager: EntityManager,
+    stanarId: number,
+    zgradaId: number,
+    akterId: number,
+    tekst: (zgrada: string) => string,
+  ) {
+    const zgrada = await manager.findOneOrFail(Zgrada, {
+      where: { id: zgradaId },
+      select: { id: true, naziv: true },
+    });
+    await this.notifikacije.obavesti(
+      manager,
+      [stanarId],
+      {
+        tip: TipNotifikacije.STANOVANJE,
+        tekst: tekst(zgrada.naziv),
+        link: '/profil',
+      },
+      akterId,
+    );
   }
 
   async odseliIzSvihStanova(manager: EntityManager, korisnikId: number) {
@@ -120,6 +162,7 @@ export class StanarStanaService {
     );
     if (!ostajeUZgradi) {
       await this.pracenjaService.ukloniPracenja(manager, korisnikId, zgradaId);
+      await obrisiBuduceNajave(manager, zgradaId, korisnikId);
       const upravlja = await manager.existsBy(Zgrada, {
         id: zgradaId,
         upravnikId: korisnikId,

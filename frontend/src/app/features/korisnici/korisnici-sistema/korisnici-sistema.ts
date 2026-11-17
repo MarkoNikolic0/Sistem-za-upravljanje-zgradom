@@ -21,6 +21,7 @@ import { meniReda } from '../../../shared/liste/meni-reda';
 import { DodeljivaUloga, KorisnikSistema, StanjeNaloga } from '../korisnik-models';
 import { KorisnikService } from '../korisnik-service';
 import { ListaKorisnikaStore } from '../lista-korisnika-store';
+import { EmailVeza } from '../../../shared/email-veza/email-veza';
 
 @Component({
   imports: [
@@ -36,6 +37,7 @@ import { ListaKorisnikaStore } from '../lista-korisnika-store';
     SelectButtonModule,
     SkeletonModule,
     Paginacija,
+    EmailVeza,
   ],
   providers: [ListaKorisnikaStore, ConfirmationService],
   selector: 'app-korisnici-sistema',

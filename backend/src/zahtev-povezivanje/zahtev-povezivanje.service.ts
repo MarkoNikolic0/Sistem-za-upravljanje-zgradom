@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,12 +16,12 @@ import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { ResponseZahtevDto } from './dto/response-zahtev.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
-import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Stranica, stranicenje } from '../shared/stranicenje.js';
 import { ZahtevUpitDto } from './dto/zahtev-upit.dto.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { upravnikZgrade } from '../notifikacija/primaoci.js';
+import { tekstObrade } from './odbij-zahteve.js';
 
 @Injectable()
 export class ZahtevPovezivanjeService {
@@ -125,46 +124,50 @@ export class ZahtevPovezivanjeService {
       throw new NotFoundException(`Zahtev sa id-jem ${zahtevId} ne postoji!`);
     }
 
-    if (uloga !== Uloga.ADMIN) {
-      const zgrade = await this.korisnikService.zgradeUpravnika(korisnikId);
-      if (!sadrzi(zgrade, zahtev.stan.zgrada.id)) {
-        throw new ForbiddenException(
-          'Možete obrađivati samo zahteve za svoju zgradu!',
-        );
-      }
-    }
+    await this.korisnikService.proveriUpravnikaZgrade(
+      korisnikId,
+      uloga,
+      zahtev.stan.zgrada.id,
+      'Možete obrađivati samo zahteve za svoju zgradu!',
+    );
+    const razlogOdbijanja =
+      dto.status === StatusZahteva.ODBIJEN && dto.razlog ? dto.razlog : null;
 
     return await this.dataSource.transaction(async (manager) => {
       const rezultat = await manager.update(
         ZahtevPovezivanje,
         { id: zahtevId, status: StatusZahteva.NA_CEKANJU },
-        { status: dto.status },
+        { status: dto.status, razlogOdbijanja },
       );
       if (rezultat.affected === 0) {
         throw new ConflictException('Zahtev je već obrađen.');
       }
 
       if (dto.status === StatusZahteva.PRIHVACEN) {
-        const veza = manager.create(StanarStana, {
-          korisnik: zahtev.korisnik,
-          stan: zahtev.stan,
-          vlasnik: dto.vlasnik ?? false,
-        });
-        await manager.save(veza);
+        await manager
+          .createQueryBuilder()
+          .insert()
+          .into(StanarStana)
+          .values({
+            korisnik: { id: zahtev.korisnik.id },
+            stan: { id: zahtev.stan.id },
+            vlasnik: dto.vlasnik ?? false,
+          })
+          .orIgnore()
+          .execute();
       }
       await this.notifikacije.obavesti(
         manager,
         [zahtev.korisnik.id],
         {
           tip: TipNotifikacije.ZAHTEV_OBRADJEN,
-          tekst: `Zahtev za stan ${zahtev.stan.broj} je ${dto.status === StatusZahteva.PRIHVACEN ? 'prihvaćen' : 'odbijen'}.`,
+          tekst: tekstObrade(zahtev.stan.broj, dto.status, razlogOdbijanja),
           link: '/povezivanje',
         },
         korisnikId,
       );
 
-      zahtev.status = dto.status;
-      return zahtev;
+      return Object.assign(zahtev, { status: dto.status, razlogOdbijanja });
     });
   }
 

@@ -2,12 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, Raw } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
-import { ZahtevPovezivanje } from '../zahtev-povezivanje/zahtev-povezivanje.entity.js';
 import { Glas } from '../glasanje/glas.entity.js';
 import { PratilacKvara } from '../pratilac-kvara/pratilac-kvara.entity.js';
-import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
 import { UpravnikZgradeService } from './upravnik-zgrade.service.js';
 import { OglasService } from '../oglas/oglas.service.js';
+import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
+import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { stanariZgrade } from '../notifikacija/primaoci.js';
+import { odbijZahteve } from '../zahtev-povezivanje/odbij-zahteve.js';
+import { obrisiBuduceNajave } from '../sastanak/najave-prisustva.js';
 
 function uZgradi(
   tabela: 'stan' | 'kvar' | 'glasanje',
@@ -27,6 +30,7 @@ export class ArhivaZgradeService {
     private dataSource: DataSource,
     private upravnikService: UpravnikZgradeService,
     private oglasService: OglasService,
+    private notifikacije: NotifikacijaService,
   ) {}
 
   async arhiviraj(zgradaId: number) {
@@ -35,14 +39,22 @@ export class ArhivaZgradeService {
       if (zgrada.arhivirana) {
         return;
       }
-      await manager.update(
-        ZahtevPovezivanje,
-        {
-          stan: { id: uZgradi('stan', zgradaId) },
-          status: StatusZahteva.NA_CEKANJU,
-        },
-        { status: StatusZahteva.ODBIJEN },
+      await odbijZahteve(
+        manager,
+        this.notifikacije,
+        { stan: { zgrada: { id: zgradaId } } },
+        'Zgrada je arhivirana.',
       );
+      await this.notifikacije.obavesti(
+        manager,
+        await stanariZgrade(manager, zgradaId),
+        {
+          tip: TipNotifikacije.STANOVANJE,
+          tekst: `Zgrada „${zgrada.naziv}“ je arhivirana, pa više nisi njen stanar.`,
+          link: '/profil',
+        },
+      );
+      await obrisiBuduceNajave(manager, zgradaId);
       await manager.delete(StanarStana, {
         stan: { id: uZgradi('stan', zgradaId) },
       });
@@ -73,7 +85,7 @@ export class ArhivaZgradeService {
   private async zakljucaj(manager: EntityManager, zgradaId: number) {
     const zgrada = await manager.findOne(Zgrada, {
       where: { id: zgradaId },
-      select: { id: true, arhivirana: true },
+      select: { id: true, naziv: true, arhivirana: true },
       lock: { mode: 'pessimistic_write' },
     });
     if (!zgrada) {
