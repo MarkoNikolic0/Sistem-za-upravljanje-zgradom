@@ -3,6 +3,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
@@ -13,10 +14,12 @@ import {
   JwtStrategy,
   type JwtPayload,
 } from '../auth/strategies/jwt.strategy.js';
+import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { Notifikacija } from './notifikacija.entity.js';
 import {
   DOGADJAJ_NOTIFIKACIJA,
   DOGADJAJ_NOV_OGLAS,
+  DOGADJAJ_TOKEN,
   DOGADJAJ_VIDLJIVOST,
   NAJVISE_VEZA_PO_KORISNIKU,
   SOBA_KORISNIKA,
@@ -24,9 +27,14 @@ import {
 } from './notifikacija.constants.js';
 
 @WebSocketGateway({ namespace: 'notifikacije' })
-export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
+export class NotifikacijaGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   private server: Namespace;
+
+  private readonly brojVeza = new Map<number, number>();
+  private readonly istekVeze = new WeakMap<Socket, NodeJS.Timeout>();
 
   constructor(
     private jwtService: JwtService,
@@ -42,15 +50,24 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   async handleConnection(socket: Socket) {
-    const istek = setTimeout(
-      () => socket.disconnect(true),
-      (socket.data.istice as number) - Date.now(),
-    );
-    socket.once('disconnect', () => clearTimeout(istek));
     await socket.join([
       SOBA_KORISNIKA(socket.data.korisnikId as number),
       SOBA_SESIJE(socket.data.sid as string),
     ]);
+  }
+
+  handleDisconnect(socket: Socket) {
+    clearTimeout(this.istekVeze.get(socket));
+    const korisnikId = socket.data.korisnikId as number | undefined;
+    if (korisnikId === undefined) {
+      return;
+    }
+    const broj = (this.brojVeza.get(korisnikId) ?? 1) - 1;
+    if (broj > 0) {
+      this.brojVeza.set(korisnikId, broj);
+    } else {
+      this.brojVeza.delete(korisnikId);
+    }
   }
 
   posalji(notifikacije: Notifikacija[]) {
@@ -67,6 +84,25 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
     @MessageBody() vidljiv: unknown,
   ) {
     socket.data.vidljiv = vidljiv === true;
+  }
+
+  @SubscribeMessage(DOGADJAJ_TOKEN)
+  async obnoviToken(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() token: unknown,
+  ) {
+    try {
+      const { korisnik, istice } = await this.proveri(token);
+      if (
+        korisnik.id !== socket.data.korisnikId ||
+        korisnik.sid !== socket.data.sid
+      ) {
+        throw new Error('Token druge sesije.');
+      }
+      this.zakaziIstek(socket, istice);
+    } catch {
+      socket.disconnect(true);
+    }
   }
 
   async vidljiveSesije(korisnici: number[]): Promise<Set<string>> {
@@ -104,6 +140,21 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
       token?: unknown;
       vidljiv?: unknown;
     };
+    const { korisnik, istice } = await this.proveri(token);
+    const broj = this.brojVeza.get(korisnik.id) ?? 0;
+    if (broj >= NAJVISE_VEZA_PO_KORISNIKU) {
+      throw new Error('Previše otvorenih veza.');
+    }
+    this.brojVeza.set(korisnik.id, broj + 1);
+    socket.data.korisnikId = korisnik.id;
+    socket.data.sid = korisnik.sid;
+    socket.data.vidljiv = vidljiv === true;
+    this.zakaziIstek(socket, istice);
+  }
+
+  private async proveri(
+    token: unknown,
+  ): Promise<{ korisnik: TrenutniKorisnikPodaci; istice: number }> {
     if (typeof token !== 'string') {
       throw new Error('Nema tokena.');
     }
@@ -111,15 +162,14 @@ export class NotifikacijaGateway implements OnGatewayInit, OnGatewayConnection {
       JwtPayload & { exp: number }
     >(token);
     const korisnik = await this.jwtStrategy.validate(payload);
-    const veze = await this.server
-      .in(SOBA_KORISNIKA(korisnik.id))
-      .fetchSockets();
-    if (veze.length >= NAJVISE_VEZA_PO_KORISNIKU) {
-      throw new Error('Previše otvorenih veza.');
-    }
-    socket.data.korisnikId = korisnik.id;
-    socket.data.sid = korisnik.sid;
-    socket.data.istice = payload.exp * 1000;
-    socket.data.vidljiv = vidljiv === true;
+    return { korisnik, istice: payload.exp * 1000 };
+  }
+
+  private zakaziIstek(socket: Socket, istice: number) {
+    clearTimeout(this.istekVeze.get(socket));
+    this.istekVeze.set(
+      socket,
+      setTimeout(() => socket.disconnect(true), istice - Date.now()),
+    );
   }
 }

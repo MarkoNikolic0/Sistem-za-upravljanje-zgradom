@@ -69,3 +69,9 @@ export const STAVKE_NAVIGACIJE: StavkaNavigacije[] = [
     uloge: ['admin'],
   },
 ];
+
+export function smeNaAdresu(adresa: string, uloga: Uloga): boolean {
+  const odeljak = `/${adresa.split(/[?#/]/)[1] ?? ''}`;
+  const stavka = STAVKE_NAVIGACIJE.find((s) => s.putanja === odeljak);
+  return !stavka || stavka.uloge.includes(uloga);
+}

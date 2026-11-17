@@ -149,7 +149,6 @@ export class NotifikacijaService {
         .createQueryBuilder('stara')
         .select('stara.id')
         .where('stara.datumKreiranja < :granica')
-        .orderBy('stara.id')
         .limit(BRISANJE_PO);
       const rezultat = await this.notifikacijaRepository
         .createQueryBuilder()

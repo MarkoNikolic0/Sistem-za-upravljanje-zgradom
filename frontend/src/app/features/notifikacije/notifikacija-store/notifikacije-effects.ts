@@ -19,6 +19,8 @@ import {
 } from 'rxjs';
 import { ProfileService } from '../../profile/profile-service';
 import { TokenRefresh } from '../../auth/sesija/token-refresh';
+import { AuthStore } from '../../auth/sesija/auth-store';
+import { smeNaAdresu } from '../../layout/navigacija';
 import {
   KLJUC_TOASTA,
   putanjaAdrese,
@@ -75,7 +77,11 @@ export const veza = createEffect(
 export const neprocitane = createEffect(
   (actions$ = inject(Actions), service = inject(NotifikacijaService)) =>
     actions$.pipe(
-      ofType(VezaActions.povezan),
+      ofType(VezaActions.povezan, VezaActions.stigla),
+      filter(
+        (akcija) =>
+          !('notifikacija' in akcija) || TIPOVI_ZA_PROFIL.includes(akcija.notifikacija.tip),
+      ),
       switchMap(() =>
         service.neprocitane().pipe(
           map((neprocitane) => NotifikacijeApiActions.neprocitaneUcitane(neprocitane)),
@@ -238,11 +244,26 @@ export const osveziProfil = createEffect(
 );
 
 export const osveziUlogu = createEffect(
-  (actions$ = inject(Actions), tokenRefresh = inject(TokenRefresh)) =>
+  (
+    actions$ = inject(Actions),
+    tokenRefresh = inject(TokenRefresh),
+    authStore = inject(AuthStore),
+    router = inject(Router),
+  ) =>
     actions$.pipe(
       ofType(VezaActions.stigla),
       filter(({ notifikacija }) => TIPOVI_ZA_ULOGU.includes(notifikacija.tip)),
-      exhaustMap(() => tokenRefresh.osvezi().pipe(catchError(() => EMPTY))),
+      exhaustMap(() =>
+        tokenRefresh.osvezi().pipe(
+          tap(() => {
+            const uloga = authStore.korisnik()?.uloga;
+            if (uloga && !smeNaAdresu(router.url, uloga)) {
+              void router.navigateByUrl('/');
+            }
+          }),
+          catchError(() => EMPTY),
+        ),
+      ),
     ),
   { functional: true, dispatch: false },
 );

@@ -6,14 +6,20 @@ import { io } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from '../auth/sesija/auth-store';
 import { TokenRefresh } from '../auth/sesija/token-refresh';
+import { procitajJwtPayload } from '../auth/sesija/jwt-payload';
 import { naPrijavu } from '../auth/pristup/povratak';
 import { Notifikacija } from './notifikacija-models';
 
 const DOGADJAJ_NOTIFIKACIJA = 'notifikacija';
 const DOGADJAJ_NOV_OGLAS = 'nov-oglas';
 const DOGADJAJ_VIDLJIVOST = 'vidljivost';
+const DOGADJAJ_TOKEN = 'token';
 const PRVA_PAUZA_MS = 1000;
 const NAJDUZA_PAUZA_MS = 30_000;
+const OBNOVA_PRE_ISTEKA_MS = 60_000;
+const NAJKRACA_PAUZA_OBNOVE_MS = 30_000;
+
+const jeIstekla = (greska: unknown) => greska instanceof HttpErrorResponse && greska.status === 401;
 
 export type DogadjajVeze =
   { tip: 'povezan' } | { tip: 'notifikacija'; notifikacija: Notifikacija } | { tip: 'nov-oglas' };
@@ -39,8 +45,38 @@ export class NotifikacijeVeza {
       };
       this.document.addEventListener('visibilitychange', javiVidljivost);
       const osvezavanje = new Subscription();
+      let obnova = Subscription.EMPTY;
       let pokusaj = 0;
       let ceka = false;
+
+      const idiNaPrijavu = () => void this.router.navigateByUrl(naPrijavu(this.router));
+
+      const zakaziObnovu = () => {
+        obnova.unsubscribe();
+        const token = this.authStore.accessToken();
+        if (!token) {
+          return;
+        }
+        const pauza = Math.max(
+          NAJKRACA_PAUZA_OBNOVE_MS,
+          procitajJwtPayload(token).exp * 1000 - Date.now() - OBNOVA_PRE_ISTEKA_MS,
+        );
+        obnova = timer(pauza)
+          .pipe(switchMap(() => this.tokenRefresh.osvezi()))
+          .subscribe({
+            next: (novi) => {
+              if (socket.connected) {
+                socket.emit(DOGADJAJ_TOKEN, novi);
+                zakaziObnovu();
+              }
+            },
+            error: (greska: unknown) => {
+              if (jeIstekla(greska)) {
+                idiNaPrijavu();
+              }
+            },
+          });
+      };
 
       const poveziSaNovimTokenom = () => {
         if (ceka) {
@@ -60,8 +96,8 @@ export class NotifikacijeVeza {
               },
               error: (greska: unknown) => {
                 ceka = false;
-                if (greska instanceof HttpErrorResponse && greska.status === 401) {
-                  void this.router.navigateByUrl(naPrijavu(this.router));
+                if (jeIstekla(greska)) {
+                  idiNaPrijavu();
                 } else {
                   poveziSaNovimTokenom();
                 }
@@ -72,6 +108,7 @@ export class NotifikacijeVeza {
 
       socket.on('connect', () => {
         pokusaj = 0;
+        zakaziObnovu();
         pretplatnik.next({ tip: 'povezan' });
       });
       socket.on(DOGADJAJ_NOTIFIKACIJA, (notifikacija: Notifikacija) =>
@@ -84,6 +121,7 @@ export class NotifikacijeVeza {
         }
       });
       socket.on('disconnect', (razlog) => {
+        obnova.unsubscribe();
         if (razlog === 'io server disconnect') {
           poveziSaNovimTokenom();
         }
@@ -92,6 +130,7 @@ export class NotifikacijeVeza {
       return () => {
         this.document.removeEventListener('visibilitychange', javiVidljivost);
         osvezavanje.unsubscribe();
+        obnova.unsubscribe();
         socket.disconnect();
       };
     });

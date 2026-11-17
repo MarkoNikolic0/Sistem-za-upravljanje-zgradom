@@ -13,7 +13,8 @@ export function tokenZa(
   id = 1,
   email = 'đorđe.šćekić@example.com',
   sid = `sesija-${id}`,
+  exp = 0,
 ): string {
-  const payload = { sub: id, email, uloga, sid, iat: 0, exp: 0 };
+  const payload = { sub: id, email, uloga, sid, iat: 0, exp };
   return `zaglavlje.${base64url(JSON.stringify(payload))}.potpis`;
 }

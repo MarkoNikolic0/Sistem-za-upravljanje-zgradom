@@ -158,31 +158,63 @@ describe('notifikacije uživo i push', () => {
       expect(await prekinut).toBe('io server disconnect');
     });
 
-    it('veza se prekida kad access token istekne', async () => {
-      const token = await t.app.get(JwtService).signAsync(
+    const tokenSused = (sid: string, trajanje: number) =>
+      t.app.get(JwtService).signAsync(
         {
           sub: svet.b.sused.id,
           email: svet.b.sused.email,
           uloga: 'stanar',
-          sid: randomUUID(),
+          sid,
         },
-        { expiresIn: 1 },
+        { expiresIn: trajanje },
       );
-      const socket = await povezi(token);
+
+    it('veza se prekida kad access token istekne', async () => {
+      const socket = await povezi(await tokenSused(randomUUID(), 1));
 
       expect(await prekid(socket)).toBe('io server disconnect');
     });
 
+    it('nov token iste sesije produžava vezu bez prekida', async () => {
+      const sid = randomUUID();
+      const socket = await povezi(await tokenSused(sid, 1));
+      let prekinut = false;
+      socket.on('disconnect', () => (prekinut = true));
+
+      socket.emit('token', await tokenSused(sid, 60));
+      await sacekaj(1500);
+
+      expect(prekinut).toBe(false);
+      expect(socket.connected).toBe(true);
+    });
+
+    it('token druge sesije ili neispravan token prekida vezu', async () => {
+      const prva = await povezi(await tokenSused(randomUUID(), 60));
+      const prekidPrve = prekid(prva);
+      prva.emit('token', await tokenSused(randomUUID(), 60));
+      expect(await prekidPrve).toBe('io server disconnect');
+
+      const druga = await povezi(await tokenSused(randomUUID(), 60));
+      const prekidDruge = prekid(druga);
+      druga.emit('token', 'nije-token');
+      expect(await prekidDruge).toBe('io server disconnect');
+    });
+
     it(`dozvoljava najviše ${NAJVISE_VEZA_PO_KORISNIKU} veza po korisniku`, async () => {
       const korisnik = await napraviKorisnika(t, 'Mnogoveza');
-      for (let i = 0; i < NAJVISE_VEZA_PO_KORISNIKU; i++) {
-        await povezi(korisnik.token);
-      }
+      const pokusaji = await Promise.allSettled(
+        Array.from({ length: NAJVISE_VEZA_PO_KORISNIKU + 5 }, () =>
+          povezi(korisnik.token),
+        ),
+      );
 
+      expect(pokusaji.filter((p) => p.status === 'fulfilled')).toHaveLength(
+        NAJVISE_VEZA_PO_KORISNIKU,
+      );
       await expect(povezi(korisnik.token)).rejects.toThrow(
         'Neispravan ili istekao token.',
       );
-      soketi.at(-2)?.close();
+      soketi.find((s) => s.connected)?.close();
       await sacekaj(100);
       await expect(povezi(korisnik.token)).resolves.toBeDefined();
     });

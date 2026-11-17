@@ -5,6 +5,9 @@ import { of, throwError } from 'rxjs';
 import { AuthStore } from '../auth/sesija/auth-store';
 import { TokenRefresh } from '../auth/sesija/token-refresh';
 import { NotifikacijeVeza } from './notifikacije-veza';
+import { tokenZa } from '../../../testiranje/sesija';
+
+const MINUT = 60_000;
 
 const { soketi, LazniSocket } = vi.hoisted(() => {
   class LazniSocket {
@@ -38,15 +41,17 @@ vi.mock('socket.io-client', () => ({
 describe('veza za obaveštenja uživo', () => {
   let osvezi: ReturnType<typeof vi.fn>;
   let navigateByUrl: ReturnType<typeof vi.fn>;
+  let token: string;
 
   beforeEach(() => {
     vi.useFakeTimers();
+    token = tokenZa('stanar', 1, 'a@b.rs', 'sesija-1', (Date.now() + 15 * MINUT) / 1000);
     soketi.length = 0;
     osvezi = vi.fn();
     navigateByUrl = vi.fn();
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthStore, useValue: { accessToken: () => 'token' } },
+        { provide: AuthStore, useValue: { accessToken: () => token } },
         { provide: TokenRefresh, useValue: { osvezi } },
         {
           provide: Router,
@@ -113,6 +118,40 @@ describe('veza za obaveštenja uživo', () => {
     expect(osvezi).toHaveBeenCalledTimes(3);
     expect(socket.connect).toHaveBeenCalledTimes(1);
     expect(navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  const otvori = (socket: (typeof soketi)[number]) => {
+    socket.connected = true;
+    socket.okini('connect');
+  };
+
+  it('minut pre isteka osveži token i pošalje ga kroz otvorenu vezu, bez prekida', () => {
+    osvezi.mockReturnValue(of('novi'));
+    const { socket } = povezi();
+    otvori(socket);
+
+    vi.advanceTimersByTime(14 * MINUT - 1);
+    expect(osvezi).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+
+    expect(osvezi).toHaveBeenCalledTimes(1);
+    expect(socket.emit).toHaveBeenCalledWith('token', 'novi');
+    expect(socket.connect).not.toHaveBeenCalled();
+  });
+
+  it('ne obnavlja token dok je veza prekinuta, a istekla sesija pri obnovi vodi na prijavu', () => {
+    osvezi.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
+    const { socket } = povezi();
+    otvori(socket);
+    socket.connected = false;
+    socket.okini('disconnect', 'transport close');
+    vi.advanceTimersByTime(20 * MINUT);
+    expect(osvezi).not.toHaveBeenCalled();
+
+    otvori(socket);
+    vi.advanceTimersByTime(14 * MINUT);
+    expect(navigateByUrl).toHaveBeenCalledTimes(1);
+    expect(socket.emit).not.toHaveBeenCalledWith('token', expect.anything());
   });
 
   it('dok osvežavanje čeka, novi prekid ne pokreće drugo osvežavanje, a odjava ga otkazuje', () => {

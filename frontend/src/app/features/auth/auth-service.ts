@@ -1,12 +1,15 @@
-import { inject, Service } from '@angular/core';
+import { DOCUMENT, inject, Service } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { defer, firstValueFrom, from, Observable } from 'rxjs';
 import { ChangePasswordRequest, LoginResponse, RegisterRequest } from './auth-models';
+
+const BRAVA_OSVEZAVANJA = 'osvezavanje-sesije';
 
 @Service()
 export class AuthService {
   private http = inject(HttpClient);
+  private brave = inject(DOCUMENT).defaultView?.navigator.locks;
   private apiUrl = `${environment.apiUrl}/auth`;
 
   login(email: string, lozinka: string): Observable<LoginResponse> {
@@ -30,9 +33,13 @@ export class AuthService {
   }
 
   refresh(): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, null, {
+    const zahtev = this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, null, {
       withCredentials: true,
     });
+    const brave = this.brave;
+    return brave
+      ? defer(() => from(brave.request(BRAVA_OSVEZAVANJA, () => firstValueFrom(zahtev))))
+      : zahtev;
   }
 
   logout(): Observable<void> {

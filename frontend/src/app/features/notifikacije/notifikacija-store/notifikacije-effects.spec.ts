@@ -6,6 +6,7 @@ import { pokreniEfekat } from '../../../../testiranje/efekti';
 import { Notifikacija, TipNotifikacije } from '../notifikacija-models';
 import { ProfileService } from '../../profile/profile-service';
 import { TokenRefresh } from '../../auth/sesija/token-refresh';
+import { AuthStore } from '../../auth/sesija/auth-store';
 import { NotifikacijaService } from '../notifikacija-service';
 import { NotifikacijeActions, NotifikacijeApiActions, VezaActions } from './notifikacije-actions';
 import {
@@ -50,16 +51,44 @@ describe('notifikacije efekti', () => {
         .mockReturnValueOnce(throwError(() => new Error('mreža')))
         .mockReturnValueOnce(of('novi-token')),
     };
+    const authStore = { korisnik: () => ({ uloga: 'upravnik' }) };
+    const router = { url: '/zahtevi', navigateByUrl: vi.fn() };
     const { posalji } = pokreniEfekat((a) =>
-      osveziUlogu(a, tokenRefresh as unknown as TokenRefresh),
+      osveziUlogu(
+        a,
+        tokenRefresh as unknown as TokenRefresh,
+        authStore as unknown as InstanceType<typeof AuthStore>,
+        router as unknown as Router,
+      ),
     );
     posalji(stiglaTipa('stanovanje'));
     posalji(stiglaTipa('upravljanje'));
     posalji(stiglaTipa('upravljanje'));
     expect(tokenRefresh.osvezi).toHaveBeenCalledTimes(2);
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
-  it('broj nepročitanih se učitava samo po povezivanju, nova notifikacija ga ne traži ponovo', () => {
+  it('razrešen upravnik sa stranice samo za upravnika ide na početnu, sa ostalih ostaje', () => {
+    const tokenRefresh = { osvezi: vi.fn(() => of('novi-token')) };
+    const authStore = { korisnik: () => ({ uloga: 'stanar' }) };
+    const router = { url: '/zahtevi?strana=2', navigateByUrl: vi.fn() };
+    const { posalji } = pokreniEfekat((a) =>
+      osveziUlogu(
+        a,
+        tokenRefresh as unknown as TokenRefresh,
+        authStore as unknown as InstanceType<typeof AuthStore>,
+        router as unknown as Router,
+      ),
+    );
+    posalji(stiglaTipa('upravljanje'));
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
+
+    router.url = '/kvarovi/5';
+    posalji(stiglaTipa('upravljanje'));
+    expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('broj nepročitanih se učitava po povezivanju i kad server obriše obaveštenja, ne za svako novo', () => {
     const service = { neprocitane: vi.fn(() => of({ broj: 2, linkovi: {} })) };
     const { posalji, izlaz } = pokreniEfekat((a) =>
       neprocitane(a, service as unknown as NotifikacijaService),
@@ -68,7 +97,11 @@ describe('notifikacije efekti', () => {
     posalji(VezaActions.stigla({ notifikacija: notifikacija(1), naStranici: true }));
     posalji(VezaActions.stigla({ notifikacija: notifikacija(2), naStranici: false }));
     expect(service.neprocitane).toHaveBeenCalledTimes(1);
-    expect(izlaz).toEqual([NotifikacijeApiActions.neprocitaneUcitane({ broj: 2, linkovi: {} })]);
+
+    posalji(stiglaTipa('stanovanje'));
+    posalji(stiglaTipa('upravljanje'));
+    expect(service.neprocitane).toHaveBeenCalledTimes(3);
+    expect(izlaz).toHaveLength(3);
   });
 
   it('greška pri učitavanju broja ne prekida efekat', () => {
