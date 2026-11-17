@@ -240,10 +240,12 @@ describe('oglasi, dokumenti i kontakti', () => {
             n.tekst === 'Važno obaveštenje: „Čišćenje podruma u subotu“.',
         ).length as number;
 
-      await kao(t, z.upravnik)
-        .patch(`/oglas/${obavestenje}`)
-        .send({ naslov: 'Čišćenje podruma u subotu', vazno: true })
-        .expect(200);
+      const oznaci = () =>
+        kao(t, z.upravnik)
+          .patch(`/oglas/${obavestenje}`)
+          .send({ naslov: 'Čišćenje podruma u subotu', vazno: true })
+          .expect(200);
+      await Promise.all([oznaci(), oznaci()]);
       expect(await vazna()).toBe(1);
       await kao(t, z.upravnik)
         .patch(`/oglas/${obavestenje}`)

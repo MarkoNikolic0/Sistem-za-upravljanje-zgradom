@@ -223,15 +223,16 @@ export class OglasService {
         : {};
 
     await this.dataSource.transaction(async (manager) => {
-      const rezultat = await manager.update(
-        Oglas,
-        { id, datumSakrivanja: IsNull() },
-        { ...izmene, ...datumIzmene },
-      );
-      if (rezultat.affected === 0) {
+      const trenutni = await manager.findOne(Oglas, {
+        where: { id, datumSakrivanja: IsNull() },
+        select: { id: true, vrsta: true, vazno: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!trenutni) {
         throw new ConflictException(PORUKA_SAKRIVEN);
       }
-      if (jeVaznoObavestenje(izmene) && !jeVaznoObavestenje(oglas)) {
+      await manager.update(Oglas, id, { ...izmene, ...datumIzmene });
+      if (jeVaznoObavestenje(izmene) && !jeVaznoObavestenje(trenutni)) {
         await this.obavestiOVaznom(
           manager,
           oglas.zgrada.id,

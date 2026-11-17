@@ -9,6 +9,9 @@ import type { Reflector } from '@nestjs/core';
 import type { DataSource } from 'typeorm';
 import { mergeMap } from 'rxjs';
 import { Uloga } from '../shared/enums/uloga.enum.js';
+import { StanjeKvara } from '../shared/enums/kvar.enums.js';
+import { StatusZahteva } from '../shared/enums/status-zahteva.enum.js';
+import { STATUSI_PO_STANJU } from '../kvar/kvar.constants.js';
 import { Korisnik } from './korisnik.entity.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 
@@ -55,7 +58,8 @@ export async function korisniciSaKontaktom(
     `WITH zgrade AS (
        SELECT id FROM zgrada WHERE "upravnikId" = $1 AND $2 = $5
        UNION
-       SELECT "zgradaId" FROM kvar WHERE "serviserId" = $1 AND $2 = $6
+       SELECT "zgradaId" FROM kvar
+       WHERE "serviserId" = $1 AND $2 = $6 AND status::text = ANY($7::text[])
      )
      SELECT k.id FROM korisnik k
      WHERE k.id = ANY($3::int[])
@@ -69,7 +73,8 @@ export async function korisniciSaKontaktom(
          OR EXISTS (
            SELECT 1 FROM zahtev_povezivanje zp
            JOIN stan s ON s.id = zp."stanId"
-           WHERE zp."korisnikId" = k.id AND s."zgradaId" IN (SELECT id FROM zgrade)
+           WHERE zp."korisnikId" = k.id AND zp.status::text = $8
+             AND s."zgradaId" IN (SELECT id FROM zgrade)
          )
          OR EXISTS (
            SELECT 1 FROM zgrada z
@@ -83,6 +88,8 @@ export async function korisniciSaKontaktom(
       ULOGE_JAVNOG_KONTAKTA,
       Uloga.UPRAVNIK,
       Uloga.SERVISER,
+      STATUSI_PO_STANJU[StanjeKvara.AKTIVNI],
+      StatusZahteva.NA_CEKANJU,
     ],
   );
   return new Set(redovi.map((red) => red.id));
@@ -137,7 +144,9 @@ export class KontaktSerializerInterceptor extends ClassSerializerInterceptor {
       return;
     }
     const tudji = korisniciUOdgovoru(odgovor).filter(
-      (korisnik) => korisnik.id !== posmatrac.id,
+      (korisnik) =>
+        korisnik.id !== posmatrac.id &&
+        !ULOGE_JAVNOG_KONTAKTA.includes(korisnik.uloga),
     );
     if (tudji.length === 0) {
       return;

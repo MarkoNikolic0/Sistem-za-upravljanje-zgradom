@@ -102,11 +102,20 @@ describe('kontakti po odnosu prema zgradi', () => {
       true,
     );
     const novi = await napraviKorisnika(t, 'PodnosilacKontakti');
-    await kao(t, novi)
-      .post('/zahtev-povezivanje')
-      .send({ stanId: z.stanovi[2] })
-      .expect(201);
+    const zahtev = (
+      await kao(t, novi)
+        .post('/zahtev-povezivanje')
+        .send({ stanId: z.stanovi[2] })
+        .expect(201)
+    ).body.id as number;
     expect(await vidi(z.upravnik, '/zahtev-povezivanje', novi)).toBe(true);
+    await kao(t, z.upravnik)
+      .patch(`/zahtev-povezivanje/${zahtev}/obradjen`)
+      .send({ status: 'odbijen' })
+      .expect(200);
+    expect(
+      await vidi(z.upravnik, '/zahtev-povezivanje?status=odbijen', novi),
+    ).toBe(false);
     expect(
       await vidi(druga.upravnik, `/zgrada/${druga.id}/stanar`, z.upravnik),
     ).toBe(true);
@@ -126,6 +135,12 @@ describe('kontakti po odnosu prema zgradi', () => {
     expect(await vidi(serviser, `/kvar/${kvar}`, z.vlasnik)).toBe(true);
     expect(await vidi(serviser, `/kvar/${kvar}`, z.upravnik)).toBe(true);
     expect(await vidi(z.vlasnik, `/kvar/${kvar}`, serviser)).toBe(false);
+
+    await t.baza.query(`UPDATE kvar SET status = 'zatvoren' WHERE id = $1`, [
+      kvar,
+    ]);
+    expect(await vidi(serviser, `/kvar/${kvar}`, z.vlasnik)).toBe(false);
+    expect(await vidi(serviser, `/kvar/${kvar}`, serviser)).toBe(true);
   });
 
   it('svoje kontakte korisnik uvek vidi', async () => {
