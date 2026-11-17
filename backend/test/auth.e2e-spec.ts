@@ -679,6 +679,9 @@ describe('nalog i prijava', () => {
       const upit = t.baza.createQueryRunner();
       await upit.connect();
       try {
+        const [{ pid }]: { pid: number }[] = await upit.query(
+          'SELECT pg_backend_pid() AS pid',
+        );
         await upit.startTransaction();
         await upit.query('UPDATE korisnik SET lozinka = $1 WHERE id = $2', [
           await bcrypt.hash(DRUGA_LOZINKA, 10),
@@ -692,9 +695,8 @@ describe('nalog i prijava', () => {
           async () => {
             const [{ broj }]: { broj: number }[] = await t.baza.query(
               `SELECT count(*)::int AS broj FROM pg_stat_activity
-               WHERE datname = current_database()
-                 AND wait_event_type = 'Lock'
-                 AND query LIKE '%"korisnik"%'`,
+               WHERE $1 = ANY(pg_blocking_pids(pid))`,
+              [pid],
             );
             expect(broj).toBeGreaterThan(0);
           },

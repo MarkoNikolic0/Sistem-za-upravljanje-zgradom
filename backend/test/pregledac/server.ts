@@ -1,4 +1,3 @@
-import { IME_BAZE } from './okruzenje.js';
 import { createServer, type Server } from 'node:http';
 import { Zgrada } from '../../src/zgrada/zgrada.entity.js';
 import { pokreniAplikaciju, type TestAplikacija } from '../pomoc/aplikacija.js';
@@ -11,6 +10,7 @@ import {
   napraviZgraduSaLjudima,
 } from '../pomoc/podaci.js';
 import { napraviBazu } from '../pomoc/test-baza.js';
+import { IME_BAZE } from './okruzenje.js';
 
 const PORT_API = 3100;
 const PORT_POMOCI = 3101;
