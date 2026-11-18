@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, Page, test } from '@playwright/test';
 import { popuniPrijavu } from './pomoc/prijava';
 import { ucitajSvet } from './pomoc/svet';
@@ -67,11 +68,30 @@ test('manifest ima ikone, snimke i prečice tačnih dimenzija', async ({ page, r
   expect(await dimenzije(page, '/favicon.svg')).toMatch(/^\d+x\d+$/);
 });
 
-test('index.html ne učitava ništa sa spoljnih servera', async ({ request }) => {
+const SPOLJNA = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
+
+test('index.html i build ne učitavaju ništa sa spoljnih servera', async ({ request }) => {
   const html = await (await request.get('/index.html')).text();
-  const adrese = [...html.matchAll(/(?:src|href)="([^"]*)"/g)].map(([, adresa]) => adresa);
+  const adrese = [
+    ...[...html.matchAll(/(?:src|href|content)="([^"]*)"/g)].map(([, adresa]) => adresa),
+    ...[...html.matchAll(/srcset="([^"]*)"/g)].flatMap(([, spisak]) =>
+      spisak.split(',').map((deo) => deo.trim().split(/\s+/)[0]),
+    ),
+    ...[...html.matchAll(/url\(\s*['"]?([^'")]+)/g)].map(([, adresa]) => adresa),
+  ];
   expect(adrese.length).toBeGreaterThan(0);
-  expect(adrese.filter((adresa) => /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(adresa))).toEqual([]);
+  expect(adrese.filter((adresa) => SPOLJNA.test(adresa) && !adresa.startsWith('data:'))).toEqual(
+    [],
+  );
+
+  const angular = JSON.parse(readFileSync('angular.json', 'utf8')) as {
+    projects: Record<string, { architect: { build: { options: Record<string, unknown> } } }>;
+  };
+  const build = Object.values(angular.projects)[0].architect.build.options;
+  const fajlovi = [build['styles'], build['scripts']]
+    .flatMap((spisak) => (Array.isArray(spisak) ? spisak : []))
+    .map((fajl: string | { input: string }) => (typeof fajl === 'string' ? fajl : fajl.input));
+  expect(fajlovi.filter((fajl) => SPOLJNA.test(fajl))).toEqual([]);
 });
 
 test('prečica vodi neprijavljenog na prijavu pa na obaveštenja', async ({ page }) => {
@@ -93,5 +113,20 @@ test('bez mreže se pojavi poruka, a kad se veza vrati nestane', async ({ page, 
   await expect(poruka).toBeVisible();
 
   await context.setOffline(false);
+  await expect(poruka).toBeHidden();
+});
+
+test('poruka se pojavi i kad je mreža tu, a server ne odgovara', async ({ page }) => {
+  const { a } = await ucitajSvet();
+  await page.goto('/login');
+  await expect(page.getByRole('button', { name: 'Prijavi se' })).toBeVisible();
+  await page.route('**/auth/login', (ruta) => ruta.abort('internetdisconnected'));
+  await popuniPrijavu(page, a.vlasnik.email);
+  const poruka = page.getByRole('status').getByText('Nema mreže.');
+  await expect(poruka).toBeVisible();
+
+  await page.unroute('**/auth/login');
+  await page.getByRole('button', { name: 'Prijavi se' }).click();
+  await expect(page).not.toHaveURL(/\/login/);
   await expect(poruka).toBeHidden();
 });

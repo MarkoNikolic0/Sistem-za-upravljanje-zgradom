@@ -1,6 +1,6 @@
 .poruka {
   position: fixed;
-  top: calc(env(safe-area-inset-top) + 0.5rem);
+  bottom: calc(var(--odmak-donje-trake, env(safe-area-inset-bottom)) + 0.75rem);
   left: 50%;
   z-index: 1200;
   display: flex;

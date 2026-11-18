@@ -20,6 +20,7 @@ import { providePrimeNG } from 'primeng/config';
 import { ZgradaPreset } from './theme/zgrada-preset';
 import { AuthStore } from './features/auth/sesija/auth-store';
 import { authInterceptor } from './features/auth/sesija/auth-interceptor';
+import { mrezaInterceptor } from './features/pwa/mreza-interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeSrLatn from '@angular/common/locales/sr-Latn';
 import { PREVOD_PRIMENG } from './theme/prevod-primeng';
@@ -42,7 +43,7 @@ export const appConfig: ApplicationConfig = {
         onViewTransitionCreated: preskociNepotrebanPrelaz,
       }),
     ),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([mrezaInterceptor, authInterceptor])),
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),
     { provide: LOCALE_ID, useValue: 'sr-Latn' },
     provideStore(),
