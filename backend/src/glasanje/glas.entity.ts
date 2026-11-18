@@ -23,6 +23,7 @@ export class Glas {
   @ManyToOne(() => Glasanje, { nullable: false, onDelete: 'CASCADE' })
   glasanje: Glasanje;
 
+  @Index()
   @ManyToOne(() => OpcijaGlasanja, { nullable: false, onDelete: 'CASCADE' })
   opcija: OpcijaGlasanja;
 

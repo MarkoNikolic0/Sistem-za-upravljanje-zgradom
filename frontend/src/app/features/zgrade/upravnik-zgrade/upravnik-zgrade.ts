@@ -14,6 +14,7 @@ import { KorisnikPretrage } from '../../korisnici/korisnik-models';
 import { KorisnikService } from '../../korisnici/korisnik-service';
 import { ZgradaService } from '../zgrada-service';
 import { EmailVeza } from '../../../shared/email-veza/email-veza';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 const MIN_PRETRAGE = 2;
 
@@ -115,9 +116,7 @@ export class UpravnikZgrade {
     this.confirmationService.confirm({
       header: 'Promena upravnika',
       message: `${this.ime(novi)} postaje upravnik zgrade, a ${this.ime(stari)} više ne upravlja ovom zgradom. Ako ne vodi nijednu drugu zgradu, vraća se u stanara. Ako ne stanuje u ovoj zgradi, oglasi koje je ovde objavio se sakrivaju, a obaveštenja ostaju.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Promeni upravnika' },
+      ...dugmadPotvrde('Promeni upravnika'),
       accept: () => this.izvrsiPostavljanje(novi),
       reject: () => dugme.focus(),
     });
@@ -133,9 +132,7 @@ export class UpravnikZgrade {
     this.confirmationService.confirm({
       header: 'Razrešenje upravnika',
       message: `${this.ime(stari)} više neće upravljati ovom zgradom. Ako ne vodi nijednu drugu zgradu, vraća se u stanara. Zgrada ostaje bez upravnika dok ne postaviš novog. Ako ne stanuje u ovoj zgradi, oglasi koje je ovde objavio se sakrivaju, a obaveštenja ostaju.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Razreši', severity: 'danger' },
+      ...dugmadPotvrde('Razreši', true),
       accept: async () => {
         await this.akcije.izvrsi(
           async () => {

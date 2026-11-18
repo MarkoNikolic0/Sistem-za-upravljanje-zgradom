@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import request from 'supertest';
@@ -10,6 +11,7 @@ import {
 import { LozinkaService } from '../src/auth/token-naloga/lozinka.service.js';
 import { PotvrdaEmailaService } from '../src/auth/token-naloga/potvrda-emaila.service.js';
 import { Korisnik } from '../src/korisnik/korisnik.entity.js';
+import { CORS_KES_SEKUNDI } from '../src/podesi-aplikaciju.js';
 import { Uloga } from '../src/shared/enums/uloga.enum.js';
 import {
   type Akter,
@@ -906,5 +908,30 @@ describe('ograničenje broja zahteva', () => {
       .post('/auth/zaboravljena-lozinka')
       .send({ email: novEmail('Uporni') })
       .expect(202);
+  });
+});
+
+describe('CORS', () => {
+  let t: TestAplikacija;
+
+  beforeAll(async () => {
+    t = await pokreniAplikaciju();
+  });
+
+  afterAll(async () => {
+    await t?.app.close();
+  });
+
+  it('pregledač pamti preflight odgovor da ne bi pitao pre svakog zahteva', async () => {
+    const frontend = t.app.get(ConfigService).get<string>('FRONTEND_URL')!;
+    const odgovor = await request(t.server)
+      .options('/kvar')
+      .set('Origin', frontend)
+      .set('Access-Control-Request-Method', 'GET')
+      .set('Access-Control-Request-Headers', 'authorization')
+      .expect(204);
+    expect(odgovor.headers['access-control-max-age']).toBe(
+      String(CORS_KES_SEKUNDI),
+    );
   });
 });

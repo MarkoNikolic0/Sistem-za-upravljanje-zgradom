@@ -22,6 +22,7 @@ import { DodeljivaUloga, KorisnikSistema, StanjeNaloga } from '../korisnik-model
 import { KorisnikService } from '../korisnik-service';
 import { ListaKorisnikaStore } from '../lista-korisnika-store';
 import { EmailVeza } from '../../../shared/email-veza/email-veza';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -225,9 +226,7 @@ export class KorisniciSistema {
     this.confirmationService.confirm({
       header: 'Deaktivacija naloga',
       message: `${this.ime(k)} više neće moći da se prijavi. ${posledice.join(' ')} Nalog može ponovo da se aktivira.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Deaktiviraj', severity: 'danger' },
+      ...dugmadPotvrde('Deaktiviraj', true),
       accept: () =>
         this.izvrsi(
           this.korisnikService.deaktiviraj(k.id),

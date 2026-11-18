@@ -2,7 +2,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -18,6 +17,7 @@ import { SkladisteService } from '../shared/skladiste/skladiste.service.js';
 import { obradiSliku } from '../shared/skladiste/obrada-slike.js';
 import { MAKS_SLIKA_PO_KVARU } from './slika-kvara.constants.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class SlikaKvaraService {
@@ -125,7 +125,7 @@ export class SlikaKvaraService {
       relations: { korisnik: true },
     });
     if (!slika) {
-      throw new NotFoundException(`Slika sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Slika', id);
     }
 
     if (!(await this.kvarPravaService.smeDaUpravlja(kvar, korisnikId, uloga))) {

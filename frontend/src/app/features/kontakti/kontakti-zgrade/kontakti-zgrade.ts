@@ -23,6 +23,7 @@ import { KontaktService } from '../kontakt-service';
 import { FormaKontakta } from '../forma-kontakta/forma-kontakta';
 import { RedKontakta } from '../red-kontakta/red-kontakta';
 import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -118,9 +119,7 @@ export class KontaktiZgrade {
     this.confirmationService.confirm({
       header: 'Brisanje kontakta',
       message: `Obrisati kontakt „${kontakt.naziv}“? Stanari ga više neće videti na početnoj.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         const osvezi = () => this.kontakti.reload();
         await this.akcije.izvrsiZahtev(

@@ -34,6 +34,7 @@ import {
 import { DokumentService } from '../dokument-service';
 import { FormaDokumenta } from '../forma-dokumenta/forma-dokumenta';
 import { RedDokumenta } from '../red-dokumenta/red-dokumenta';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -181,9 +182,7 @@ export class DokumentiZgrade {
     this.confirmationService.confirm({
       header: 'Brisanje dokumenta',
       message: `Obrisati dokument „${dokument.naziv}“? Fajl se briše i stanari ga više neće videti.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         const osvezi = () => {
           const poslednjiNaStrani =

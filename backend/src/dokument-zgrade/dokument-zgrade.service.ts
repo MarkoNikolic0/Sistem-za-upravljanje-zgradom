@@ -2,7 +2,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -21,6 +20,7 @@ import { PDF } from '../shared/skladiste/otpremanje-fajla.js';
 import { CreateDokumentDto } from './dto/create-dokument.dto.js';
 import { UpdateDokumentDto } from './dto/update-dokument.dto.js';
 import { DokumentUpitDto } from './dto/dokument-upit.dto.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 export type SacuvanFajl = Pick<DokumentZgrade, 'kljuc' | 'tip' | 'velicina'>;
 
@@ -181,7 +181,7 @@ export class DokumentZgradeService {
       where: { id, zgrada: { id: zgradaId } },
     });
     if (!dokument) {
-      throw new NotFoundException(`Dokument sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Dokument', id);
     }
     return dokument;
   }

@@ -18,6 +18,7 @@ import { RazlogPromene } from '../../status/razlog-promene/razlog-promene';
 import { fokusPosleCrtanja } from '../../../../shared/fokus';
 import { ocenaServisera } from '../../pravila-kvara';
 import { FormaRazloga } from '../../../../shared/forme/forma-razloga/forma-razloga';
+import { dugmadPotvrde } from '../../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -113,9 +114,7 @@ export class UpravljanjeKvarom {
     this.confirmationService.confirm({
       header: 'Zatvaranje kvara',
       message: 'Zatvoriti kvar? Kvar prelazi u završene i više ne može da se menja.',
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Zatvori kvar' },
+      ...dugmadPotvrde('Zatvori kvar'),
       accept: () => this.store.zatvori(),
       reject: () => dugme.focus(),
     });

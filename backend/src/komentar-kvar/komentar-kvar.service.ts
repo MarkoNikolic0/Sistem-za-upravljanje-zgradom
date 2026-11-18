@@ -2,7 +2,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { KomentarKvar } from './komentar-kvar.entity.js';
@@ -17,6 +16,7 @@ import { KvarPravaService } from '../kvar/kvar-prava.service.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ObavestenjaKvaraService } from '../kvar/obavestenja-kvara.service.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -98,9 +98,7 @@ export class KomentarKvarService {
       relations: { korisnik: true },
     });
     if (!komentar) {
-      throw new NotFoundException(
-        `Komentar sa id-jem ${komentarId} ne postoji!`,
-      );
+      throw nePostoji('Komentar', komentarId);
     }
 
     if (!(await this.kvarPravaService.smeDaUpravlja(kvar, korisnikId, uloga))) {

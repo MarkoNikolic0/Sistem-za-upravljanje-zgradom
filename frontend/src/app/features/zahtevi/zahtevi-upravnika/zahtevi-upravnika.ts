@@ -21,6 +21,7 @@ import {
 import { ZahteviStore } from '../zahtev-store';
 import { TagModule } from 'primeng/tag';
 import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -72,9 +73,7 @@ export class ZahteviUpravnika {
     this.confirmationService.confirm({
       header: 'Prihvatanje kao vlasnika',
       message: `Prihvatiti kao vlasnika: ${zahtev.korisnik.ime} ${zahtev.korisnik.prezime}, stan ${zahtev.stan.broj}? Vlasnik ima pravo glasa u skupštini zgrade.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Prihvati' },
+      ...dugmadPotvrde('Prihvati'),
       accept: () => this.store.prihvati(zahtev, true),
       // PrimeNG ne vraća fokus posle zatvaranja
       reject: () => dugme.focus(),

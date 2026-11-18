@@ -40,6 +40,7 @@ export const AuthStore = signalStore(
   })),
   withMethods((store, authService = inject(AuthService)) => {
     function postaviToken(accessToken: string): void {
+      procitajJwtPayload(accessToken);
       patchState(store, { accessToken, status: 'prijavljen' });
     }
 

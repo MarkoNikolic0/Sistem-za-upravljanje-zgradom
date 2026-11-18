@@ -3,15 +3,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
+import { ButtonDirective } from 'primeng/button';
+import { Toast } from 'primeng/toast';
 import { filter } from 'rxjs';
 import { Instalacija } from './features/pwa/instalacija';
 
 const KLJUC_VERZIJE = 'nova-verzija';
 
 @Component({
-  imports: [RouterOutlet, ToastModule, ButtonModule],
+  imports: [RouterOutlet, Toast, ButtonDirective],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

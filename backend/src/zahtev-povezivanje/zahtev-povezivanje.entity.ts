@@ -24,6 +24,7 @@ export class ZahtevPovezivanje {
   @ManyToOne(() => Korisnik, { nullable: false })
   korisnik: Korisnik;
 
+  @Index()
   @ManyToOne(() => Stan, { nullable: false })
   stan: Stan;
 

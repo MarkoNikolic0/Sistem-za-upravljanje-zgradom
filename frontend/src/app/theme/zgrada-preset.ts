@@ -1,7 +1,7 @@
 import { definePreset } from '@primeuix/themes';
-import Aura from '@primeuix/themes/aura';
+import { AuraKomponente } from './aura-komponente';
 
-export const ZgradaPreset = definePreset(Aura, {
+export const ZgradaPreset = definePreset(AuraKomponente, {
   semantic: {
     primary: {
       50: '#fef8ea',

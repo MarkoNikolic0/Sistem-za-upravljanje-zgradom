@@ -35,6 +35,7 @@ import { PriloziOglasa } from '../prilozi-oglasa/prilozi-oglasa';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { GlasanjeService } from '../../glasanje/glasanje-service';
 import { objavaOdluke } from '../../glasanje/pravila-glasanja';
+import { izaberiJedinu } from '../../../shared/forme/izaberi-jedinu';
 
 type Polje = 'zgradaId' | 'vrsta' | 'naslov' | 'tekst' | 'vaziDo';
 
@@ -172,12 +173,7 @@ export class FormaOglasa {
   );
 
   constructor() {
-    effect(() => {
-      const zgrade = this.zgrade();
-      if (!this.izmena() && zgrade.length === 1 && this.forma.controls.zgradaId.value === null) {
-        this.forma.controls.zgradaId.setValue(zgrade[0].id);
-      }
-    });
+    izaberiJedinu(this.forma.controls.zgradaId, this.zgrade, () => !this.izmena());
 
     effect(() => {
       if (this.oglas.hasValue()) {

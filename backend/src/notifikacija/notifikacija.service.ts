@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EntityManager, In, LessThan, Repository } from 'typeorm';
@@ -10,6 +10,7 @@ import { Stranica, velicinaStrane } from '../shared/stranicenje.js';
 import { MS_PO_DANU } from '../shared/vreme.js';
 import { BRISANJE_PO, DANA_CUVANJA } from './notifikacija.constants.js';
 import { NotifikacijaGateway } from './notifikacija.gateway.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 export interface NovaNotifikacija {
   tip: TipNotifikacije;
@@ -95,7 +96,7 @@ export class NotifikacijaService {
       { procitano: true },
     );
     if (rezultat.affected === 0) {
-      throw new NotFoundException(`Notifikacija sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Notifikacija', id);
     }
   }
 

@@ -24,6 +24,7 @@ import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { meniReda } from '../../../shared/liste/meni-reda';
 import { KorisniciSistema } from '../../korisnici/korisnici-sistema/korisnici-sistema';
 import { EmailVeza } from '../../../shared/email-veza/email-veza';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 const SVI = 'svi';
 type Izbor = number | typeof SVI;
@@ -162,9 +163,7 @@ export class StanariZgrade {
     this.confirmationService.confirm({
       header: 'Promena u ukućanina',
       message: `${ime} više neće glasati u odlukama za stan ${stan.broj}. Glasovi ovog stanara za stan ${stan.broj} u odlukama koje traju biće obrisani.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Postavi za ukućanina' },
+      ...dugmadPotvrde('Postavi za ukućanina'),
       accept: promeni,
       reject: () => this.meniReda.vratiFokus(),
     });
@@ -179,9 +178,7 @@ export class StanariZgrade {
     this.confirmationService.confirm({
       header: 'Odseljenje',
       message: `${ime} više neće biti stanar stana ${stan.broj}. Glasovi za ovaj stan u odlukama koje traju se brišu, a ako nema drugi stan u zgradi, brišu se i glasovi u anketama i praćenja kvarova, a oglasi se sakrivaju ako ne upravlja zgradom (obaveštenja ostaju). Nalog ostaje.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Odseli', severity: 'danger' },
+      ...dugmadPotvrde('Odseli', true),
       accept: () =>
         this.izvrsi(
           this.stanariService.odseli(zgradaId, stanar.id),

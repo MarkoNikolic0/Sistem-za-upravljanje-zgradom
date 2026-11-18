@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
 import { jeDupliUnos } from '../shared/greske-baze.js';
@@ -22,6 +18,7 @@ import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { upravnikZgrade } from '../notifikacija/primaoci.js';
 import { tekstObrade } from './odbij-zahteve.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class ZahtevPovezivanjeService {
@@ -42,7 +39,7 @@ export class ZahtevPovezivanjeService {
       relations: { zgrada: true },
     });
     if (!stan) {
-      throw new NotFoundException(`Stan sa id-jem ${dto.stanId} ne postoji!`);
+      throw nePostoji('Stan', dto.stanId);
     }
 
     const vecPovezan = await this.stanarStanaRepository.exists({
@@ -121,7 +118,7 @@ export class ZahtevPovezivanjeService {
       relations: { korisnik: true, stan: { zgrada: true } },
     });
     if (!zahtev) {
-      throw new NotFoundException(`Zahtev sa id-jem ${zahtevId} ne postoji!`);
+      throw nePostoji('Zahtev', zahtevId);
     }
 
     await this.korisnikService.proveriUpravnikaZgrade(

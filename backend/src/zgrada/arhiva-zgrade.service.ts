@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager, Raw } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
@@ -11,6 +11,7 @@ import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
 import { odbijZahteve } from '../zahtev-povezivanje/odbij-zahteve.js';
 import { obrisiBuduceNajave } from '../sastanak/najave-prisustva.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 function uZgradi(
   tabela: 'stan' | 'kvar' | 'glasanje',
@@ -91,7 +92,7 @@ export class ArhivaZgradeService {
       lock: { mode: 'pessimistic_write' },
     });
     if (!zgrada) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+      throw nePostoji('Zgrada', zgradaId);
     }
     return zgrada;
   }

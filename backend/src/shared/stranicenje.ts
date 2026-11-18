@@ -1,7 +1,8 @@
 import { Type } from 'class-transformer';
-import { IsInt, Min } from 'class-validator';
+import { IsInt, Max, Min } from 'class-validator';
 
 export const MAKS_PO_STRANI = 50;
+export const MAKS_STRANA = 10_000;
 
 export class PoStraniDto {
   @Type(() => Number)
@@ -14,6 +15,7 @@ export class StranicenjeDto extends PoStraniDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAKS_STRANA)
   strana: number = 1;
 }
 

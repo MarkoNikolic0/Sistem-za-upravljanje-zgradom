@@ -1,6 +1,6 @@
 import { FormControl } from '@angular/forms';
 import { SADA } from '../../../testiranje/podaci';
-import { danaDo, danaDoUSrbiji, formatRoka, krajDana, rokNijeProsao, zaDana } from './datum';
+import { danaDo, formatRoka, krajDana, rokNijeProsao, zaDana } from './datum';
 
 describe('datum', () => {
   beforeEach(() => vi.setSystemTime(SADA));
@@ -12,23 +12,24 @@ describe('datum', () => {
     expect(zaDana(1, new Date(2026, 11, 31))).toEqual(new Date(2027, 0, 1));
   });
 
-  it('danaDo broji kalendarske dane, ne 24 sata', () => {
-    expect(danaDo(new Date(2026, 5, 10, 23, 59))).toBe(0);
-    expect(danaDo(new Date(2026, 5, 11, 0, 1))).toBe(1);
-    expect(danaDo(new Date(2026, 5, 9, 23, 0))).toBe(-1);
-    expect(danaDo(new Date(2026, 5, 20).toISOString())).toBe(10);
+  it('danaDo broji kalendarske dane u Srbiji, ne 24 sata', () => {
+    const sada = new Date('2026-06-10T12:00:00+02:00');
+    expect(danaDo('2026-06-10T23:59:00+02:00', sada)).toBe(0);
+    expect(danaDo('2026-06-11T00:01:00+02:00', sada)).toBe(1);
+    expect(danaDo('2026-06-09T23:00:00+02:00', sada)).toBe(-1);
+    expect(danaDo(new Date('2026-06-20T00:00:00+02:00'), sada)).toBe(10);
   });
 
   it('danaDo ne greši pri prelasku na letnje računanje vremena', () => {
-    expect(danaDo(new Date(2026, 2, 30), new Date(2026, 2, 28, 12))).toBe(2);
-    expect(danaDo(new Date(2026, 9, 26), new Date(2026, 9, 24, 12))).toBe(2);
+    expect(danaDo('2026-03-30T00:00:00+02:00', new Date('2026-03-28T12:00:00+01:00'))).toBe(2);
+    expect(danaDo('2026-10-26T00:00:00+01:00', new Date('2026-10-24T12:00:00+02:00'))).toBe(2);
   });
 
-  it('danaDoUSrbiji broji dane po vremenu u Srbiji, kao server', () => {
+  it('danaDo broji dane po vremenu u Srbiji, kao server', () => {
     const sada = new Date('2026-06-10T21:30:00Z');
-    expect(danaDoUSrbiji('2026-06-10T22:30:00Z', sada)).toBe(1);
-    expect(danaDoUSrbiji('2026-06-10T21:45:00Z', sada)).toBe(0);
-    expect(danaDoUSrbiji('2026-06-13T10:00:00Z', sada)).toBe(3);
+    expect(danaDo('2026-06-10T22:30:00Z', sada)).toBe(1);
+    expect(danaDo('2026-06-10T21:45:00Z', sada)).toBe(0);
+    expect(danaDo('2026-06-13T10:00:00Z', sada)).toBe(3);
   });
 
   it('krajDana je poslednja milisekunda istog dana', () => {

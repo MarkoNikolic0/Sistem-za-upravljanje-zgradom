@@ -7,6 +7,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -16,6 +17,7 @@ import type { PrilogOglasa } from './prilog-oglasa.entity.js';
 import type { Glasanje } from '../glasanje/glasanje.entity.js';
 
 @Entity()
+@Index(['zgrada', 'datumKreiranja'])
 export class Oglas {
   @PrimaryGeneratedColumn()
   id: number;

@@ -11,6 +11,7 @@ import { FormaDokumenta } from '../../dokumenti/forma-dokumenta/forma-dokumenta'
 import { RedDokumenta } from '../../dokumenti/red-dokumenta/red-dokumenta';
 import { Sastanak } from '../sastanak-models';
 import { SastanakService } from '../sastanak-service';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   selector: 'app-zapisnik-sastanka',
@@ -71,9 +72,7 @@ export class ZapisnikSastanka {
       message:
         'Ukloniti zapisnik? Fajl se briše i iz Dokumenata zgrade.' +
         (vrsta === 'skupstina' ? ' Evidencija prisustva ponovo može da se menja.' : ''),
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Ukloni', severity: 'danger' },
+      ...dugmadPotvrde('Ukloni', true),
       accept: async () => {
         await this.akcije.izvrsi(
           async () => {

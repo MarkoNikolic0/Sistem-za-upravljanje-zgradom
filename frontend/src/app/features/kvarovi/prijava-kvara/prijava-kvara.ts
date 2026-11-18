@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -32,6 +32,7 @@ import { NIJE_PRAZNO } from '../../../shared/forme/nije-prazno';
 import { IKONICE_KATEGORIJA } from '../izgled-kvara';
 import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
 import { IzabraniFajlovi } from '../../../shared/fajlovi/izabrani-fajlovi/izabrani-fajlovi';
+import { izaberiJedinu } from '../../../shared/forme/izaberi-jedinu';
 
 type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
 
@@ -128,12 +129,7 @@ export class PrijavaKvara {
   });
 
   constructor() {
-    effect(() => {
-      const stanovi = this.stanovi();
-      if (stanovi.length === 1 && this.forma.controls.stanId.value === null) {
-        this.forma.controls.stanId.setValue(stanovi[0].id);
-      }
-    });
+    izaberiJedinu(this.forma.controls.stanId, this.stanovi);
   }
 
   protected nevazece(polje: Polje): boolean {

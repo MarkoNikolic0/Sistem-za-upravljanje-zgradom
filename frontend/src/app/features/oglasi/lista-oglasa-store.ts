@@ -1,15 +1,9 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { tapResponse } from '@ngrx/operators';
-import { firstValueFrom, pipe, switchMap, tap } from 'rxjs';
-import {
-  setError,
-  setFulfilled,
-  setPending,
-  withRequestStatus,
-} from '../../shared/stanje/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { firstValueFrom } from 'rxjs';
+import { withRequestStatus } from '../../shared/stanje/with-request-status';
+import { withPaginacija } from '../../shared/liste/with-paginacija';
+import { ucitavanjeStrane } from '../../shared/liste/ucitavanje-strane';
 import { Oglas, VrstaOglasa } from './oglas-models';
 import { OglasService } from './oglas-service';
 import { OGLASA_PO_STRANI } from './pravila-oglasa';
@@ -32,32 +26,16 @@ export const ListaOglasaStore = signalStore(
   withAkcije(),
   withPaginacija(OGLASA_PO_STRANI),
   withMethods((store, oglasService = inject(OglasService)) => {
-    const ucitaj = rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, setPending())),
-        switchMap(() =>
-          oglasService
-            .lista({
-              vrsta: store.vrsta(),
-              zgradaId: store.zgradaId(),
-              strana: store.strana(),
-              poStrani: store.poStrani,
-            })
-            .pipe(
-              tapResponse({
-                next: ({ stavke, ukupno }) => {
-                  if (jePraznaStrana(stavke, store.strana())) {
-                    patchState(store, { strana: store.strana() - 1 });
-                    ucitaj();
-                    return;
-                  }
-                  patchState(store, { oglasi: stavke, ukupno }, setFulfilled());
-                },
-                error: () => patchState(store, setError('Oglasi trenutno ne mogu da se učitaju.')),
-              }),
-            ),
-        ),
-      ),
+    const { ucitaj, promeniStranu, odPrveStrane } = ucitavanjeStrane(
+      store,
+      (strana) =>
+        oglasService.lista({
+          vrsta: store.vrsta(),
+          zgradaId: store.zgradaId(),
+          ...strana,
+        }),
+      (oglasi) => ({ oglasi }),
+      'Oglasi trenutno ne mogu da se učitaju.',
     );
 
     function zameni(oglas: Oglas): void {
@@ -67,17 +45,12 @@ export const ListaOglasaStore = signalStore(
     return {
       ucitaj,
       promeniVrstu(vrsta: VrstaOglasa | null): void {
-        patchState(store, { vrsta, strana: 1 });
-        ucitaj();
+        odPrveStrane({ vrsta });
       },
       promeniZgradu(zgradaId: number | null): void {
-        patchState(store, { zgradaId, strana: 1 });
-        ucitaj();
+        odPrveStrane({ zgradaId });
       },
-      promeniStranu(strana: number): void {
-        patchState(store, { strana });
-        ucitaj();
-      },
+      promeniStranu,
       obrisi(id: number): Promise<boolean> {
         return store.jednom(`obrisi-${id}`, () =>
           store.izvrsi(

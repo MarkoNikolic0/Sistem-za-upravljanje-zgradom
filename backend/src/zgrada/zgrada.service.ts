@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Zgrada } from './zgrada.entity.js';
 import { AKTIVNA_ZGRADA } from './aktivna-zgrada.js';
@@ -17,6 +13,7 @@ import { Sastanak } from '../sastanak/sastanak.entity.js';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { brojPoZgradi } from './broj-po-zgradi.js';
 import { DokumentZgrade } from '../dokument-zgrade/dokument-zgrade.entity.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class ZgradaService {
@@ -85,7 +82,7 @@ export class ZgradaService {
       where: { id, ...AKTIVNA_ZGRADA },
     });
     if (!zgrada) {
-      throw new NotFoundException(`Zgrada sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Zgrada', id);
     }
     return zgrada;
   }
@@ -103,7 +100,7 @@ export class ZgradaService {
         lock: { mode: 'pessimistic_write' },
       });
       if (!zgrada) {
-        throw new NotFoundException(`Zgrada sa id-jem ${id} ne postoji!`);
+        throw nePostoji('Zgrada', id);
       }
 
       const veze = {

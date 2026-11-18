@@ -3,16 +3,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { concatMap, pipe, switchMap, tap } from 'rxjs';
+import { concatMap, pipe, tap } from 'rxjs';
 import { ZahtevService } from './zahtev-service';
 import { FilterZahteva, ZahtevUpravnika } from './zahtev-models';
-import {
-  setError,
-  setFulfilled,
-  setPending,
-  withRequestStatus,
-} from '../../shared/stanje/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { withRequestStatus } from '../../shared/stanje/with-request-status';
+import { withPaginacija } from '../../shared/liste/with-paginacija';
+import { ucitavanjeStrane } from '../../shared/liste/ucitavanje-strane';
 
 const ZAHTEVA_PO_STRANI = 10;
 
@@ -55,31 +51,15 @@ export const ZahteviStore = signalStore(
   withPaginacija(ZAHTEVA_PO_STRANI),
   withRequestStatus(),
   withMethods((store, zahtevService = inject(ZahtevService)) => {
-    const ucitaj = rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, setPending())),
-        switchMap(() =>
-          zahtevService
-            .zahteviZaObradu({
-              status: store.filter() === 'na_cekanju' ? 'na_cekanju' : undefined,
-              strana: store.strana(),
-              poStrani: store.poStrani,
-            })
-            .pipe(
-              tapResponse({
-                next: ({ stavke, ukupno }) => {
-                  if (jePraznaStrana(stavke, store.strana())) {
-                    patchState(store, { strana: store.strana() - 1 });
-                    ucitaj();
-                    return;
-                  }
-                  patchState(store, { zahtevi: stavke, ukupno }, setFulfilled());
-                },
-                error: () => patchState(store, setError('Zahtevi trenutno ne mogu da se učitaju.')),
-              }),
-            ),
-        ),
-      ),
+    const { ucitaj, promeniStranu, odPrveStrane } = ucitavanjeStrane(
+      store,
+      (strana) =>
+        zahtevService.zahteviZaObradu({
+          status: store.filter() === 'na_cekanju' ? 'na_cekanju' : undefined,
+          ...strana,
+        }),
+      (zahtevi) => ({ zahtevi }),
+      'Zahtevi trenutno ne mogu da se učitaju.',
     );
 
     const obradi = rxMethod<Obrada>(
@@ -123,13 +103,9 @@ export const ZahteviStore = signalStore(
     return {
       ucitaj,
       promeniFilter(filter: FilterZahteva): void {
-        patchState(store, { filter, strana: 1, poruka: null });
-        ucitaj();
+        odPrveStrane({ filter, poruka: null });
       },
-      promeniStranu(strana: number): void {
-        patchState(store, { strana });
-        ucitaj();
-      },
+      promeniStranu,
       prihvati(zahtev: ZahtevUpravnika, vlasnik: boolean): void {
         obradi({ zahtev, status: 'prihvacen', vlasnik });
       },

@@ -27,6 +27,19 @@ describe('withAkcije', () => {
     expect(osvezi).toHaveBeenCalledOnce();
   });
 
+  it('akcija ostaje u toku dok se ne završe sve istovremene akcije', async () => {
+    const prva = new Subject<void>();
+    const druga = new Subject<void>();
+    const prviRezultat = store.izvrsiZahtev(prva, 'Da', 'Ne', osvezi);
+    const drugiRezultat = store.izvrsiZahtev(druga, 'Da', 'Ne', osvezi);
+    prva.next();
+    await prviRezultat;
+    expect(store.akcijaUToku()).toBe(true);
+    druga.next();
+    await drugiRezultat;
+    expect(store.akcijaUToku()).toBe(false);
+  });
+
   it('greška polja sa servera ima prednost nad porukom servera i opštom porukom', async () => {
     const telo = { greske: { naslov: 'Naslov je predug.' }, message: 'Neispravno' };
     await store.izvrsiZahtev(

@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -38,6 +37,7 @@ import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
 import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
 import { NotifikacijaGateway } from '../notifikacija/notifikacija.gateway.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 function jeVaznoObavestenje(oglas: { vrsta?: VrstaOglasa; vazno?: boolean }) {
   return oglas.vrsta === VrstaOglasa.OBAVESTENJE && oglas.vazno === true;
@@ -299,7 +299,7 @@ export class OglasService {
     );
     const prilog = oglas.prilozi.find((p) => p.id === prilogId);
     if (!prilog) {
-      throw new NotFoundException(`Prilog sa id-jem ${prilogId} ne postoji!`);
+      throw nePostoji('Prilog', prilogId);
     }
     this.proveriDaNijeSakriven(oglas);
     await this.prilogService.obrisi(prilog);

@@ -23,15 +23,8 @@ import { authInterceptor } from './features/auth/sesija/auth-interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeSrLatn from '@angular/common/locales/sr-Latn';
 import { PREVOD_PRIMENG } from './theme/prevod-primeng';
-import { provideStore, provideState } from '@ngrx/store';
-import { provideEffects } from '@ngrx/effects';
 import { MessageService } from 'primeng/api';
-import { notifikacijeFeature } from './features/notifikacije/notifikacija-store/notifikacije-reducer';
-import * as notifikacijeEffects from './features/notifikacije/notifikacija-store/notifikacije-effects';
-import { neprocitaniOglasiFeature } from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-reducer';
-import * as neprocitaniOglasiEffects from './features/oglasi/neprocitani-oglasi-store/neprocitani-oglasi-effects';
-import { cekaGlasFeature } from './features/glasanje/ceka-glas-store/ceka-glas-reducer';
-import * as cekaGlasEffects from './features/glasanje/ceka-glas-store/ceka-glas-effects';
+import { provideStore } from '@ngrx/store';
 import { provideServiceWorker } from '@angular/service-worker';
 
 registerLocaleData(localeSrLatn);
@@ -53,10 +46,6 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(AuthStore).pokreniSesiju()),
     { provide: LOCALE_ID, useValue: 'sr-Latn' },
     provideStore(),
-    provideState(notifikacijeFeature),
-    provideState(neprocitaniOglasiFeature),
-    provideState(cekaGlasFeature),
-    provideEffects(notifikacijeEffects, neprocitaniOglasiEffects, cekaGlasEffects),
     MessageService,
     providePrimeNG({
       license:

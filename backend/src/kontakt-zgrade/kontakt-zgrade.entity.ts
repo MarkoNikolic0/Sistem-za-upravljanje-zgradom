@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 
 @Entity()
@@ -16,6 +22,7 @@ export class KontaktZgrade {
   @Column({ length: 16 })
   telefon: string;
 
+  @Index()
   @ManyToOne(() => Zgrada, { nullable: false, onDelete: 'CASCADE' })
   zgrada: Zgrada;
 }

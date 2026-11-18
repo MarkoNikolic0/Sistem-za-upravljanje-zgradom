@@ -11,6 +11,7 @@ export class PrisutanStan {
   @ManyToOne(() => Sastanak, { nullable: false, onDelete: 'CASCADE' })
   sastanak: Sastanak;
 
+  @Index()
   @ManyToOne(() => Stan, { nullable: false })
   stan: Stan;
 }

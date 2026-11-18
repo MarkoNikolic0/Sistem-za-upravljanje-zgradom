@@ -17,6 +17,7 @@ export class StanarStana {
   @ManyToOne(() => Korisnik, { nullable: false, onDelete: 'CASCADE' })
   korisnik: Korisnik;
 
+  @Index()
   @ManyToOne(() => Stan, { nullable: false, onDelete: 'CASCADE' })
   stan: Stan;
 

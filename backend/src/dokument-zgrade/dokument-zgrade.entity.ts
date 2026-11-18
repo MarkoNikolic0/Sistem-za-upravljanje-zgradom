@@ -6,6 +6,7 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
@@ -37,6 +38,7 @@ export class DokumentZgrade {
   @Column()
   velicina: number;
 
+  @Index()
   @ManyToOne(() => Zgrada, { nullable: false, onDelete: 'CASCADE' })
   zgrada: Zgrada;
 

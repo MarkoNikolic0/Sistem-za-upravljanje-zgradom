@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { prijavljenGuard } from './features/auth/pristup/prijavljen-guard';
 import { gostGuard } from './features/auth/pristup/gost-guard';
 import { ulogaGuard } from './features/auth/pristup/uloga-guard';
-import { pocetnaGuard } from './features/auth/pristup/pocetna-guard';
 import { pozivUZgradu } from './features/auth/pristup/poziv-u-zgradu';
 
 export const routes: Routes = [
@@ -59,94 +58,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    loadComponent: () => import('./features/layout/app-layout/app-layout').then((m) => m.AppLayout),
     canActivate: [prijavljenGuard],
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/dashboard/home/home').then((m) => m.Home),
-        canActivate: [pocetnaGuard],
-        title: 'Početna | Upravljanje zgradom',
-      },
-      {
-        path: 'profil',
-        loadComponent: () =>
-          import('./features/profile/my-profile/my-profile').then((m) => m.MyProfile),
-        title: 'Moj profil | Upravljanje zgradom',
-      },
-      {
-        path: 'notifikacije',
-        loadComponent: () =>
-          import('./features/notifikacije/notifikacije/notifikacije').then((m) => m.Notifikacije),
-        title: 'Obaveštenja | Upravljanje zgradom',
-      },
-      {
-        path: 'povezivanje',
-        canActivate: [ulogaGuard('stanar', 'upravnik')],
-        loadComponent: () =>
-          import('./features/zahtevi/novi-zahtev/novi-zahtev').then((m) => m.NoviZahtev),
-        title: 'Povezivanje sa stanom | Upravljanje zgradom',
-      },
-      {
-        path: 'kvarovi',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'serviser', 'admin')],
-        loadChildren: () => import('./features/kvarovi/kvarovi.routes'),
-      },
-      {
-        path: 'oglasi',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
-        loadChildren: () => import('./features/oglasi/oglasi.routes'),
-      },
-      {
-        path: 'sastanci',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
-        loadChildren: () => import('./features/sastanci/sastanci.routes'),
-      },
-      {
-        path: 'glasanje',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
-        loadChildren: () => import('./features/glasanje/glasanje.routes'),
-      },
-      {
-        path: 'zahtevi',
-        canActivate: [ulogaGuard('upravnik', 'admin')],
-        loadComponent: () =>
-          import('./features/zahtevi/zahtevi-upravnika/zahtevi-upravnika').then(
-            (m) => m.ZahteviUpravnika,
-          ),
-        title: 'Zahtevi | Upravljanje zgradom',
-      },
-      {
-        path: 'dokumenti',
-        canActivate: [ulogaGuard('stanar', 'upravnik', 'admin')],
-        loadComponent: () =>
-          import('./features/dokumenti/dokumenti-zgrade/dokumenti-zgrade').then(
-            (m) => m.DokumentiZgrade,
-          ),
-        title: 'Dokumenti | Upravljanje zgradom',
-      },
-      {
-        path: 'kontakti',
-        canActivate: [ulogaGuard('upravnik', 'admin')],
-        loadComponent: () =>
-          import('./features/kontakti/kontakti-zgrade/kontakti-zgrade').then(
-            (m) => m.KontaktiZgrade,
-          ),
-        title: 'Važni kontakti | Upravljanje zgradom',
-      },
-      {
-        path: 'stanari',
-        canActivate: [ulogaGuard('upravnik', 'admin')],
-        loadComponent: () =>
-          import('./features/stanari/stanari-zgrade/stanari-zgrade').then((m) => m.StanariZgrade),
-        title: 'Stanari | Upravljanje zgradom',
-      },
-      {
-        path: 'zgrade',
-        canActivate: [ulogaGuard('admin')],
-        loadChildren: () => import('./features/zgrade/zgrade.routes'),
-      },
-    ],
+    loadChildren: () => import('./features/layout/layout.routes'),
   },
-  { path: '**', redirectTo: '' },
 ];

@@ -1,20 +1,14 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { signalStore, withMethods, withState } from '@ngrx/signals';
 import { Events, on, withEventHandlers, withReducer } from '@ngrx/signals/events';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { tapResponse } from '@ngrx/operators';
-import { filter, pipe, switchMap, tap } from 'rxjs';
-import {
-  setError,
-  setFulfilled,
-  setPending,
-  withRequestStatus,
-} from '../../shared/stanje/with-request-status';
+import { filter, tap } from 'rxjs';
+import { withRequestStatus } from '../../shared/stanje/with-request-status';
 import { kvarEvents } from './kvar-events';
 import { KategorijaKvara, Kvar, PrioritetKvara, StanjeKvara } from './kvar-models';
 import { KvarService } from './kvar-service';
 import { jeZavrsen, KVAROVA_PO_STRANI } from './pravila-kvara';
-import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { withPaginacija } from '../../shared/liste/with-paginacija';
+import { ucitavanjeStrane } from '../../shared/liste/ucitavanje-strane';
 import { zgradaIzAdrese } from '../zgrade/zgrade-korisnika';
 
 interface ListaKvarovaState {
@@ -36,34 +30,18 @@ export const ListaKvarovaStore = signalStore(
   withRequestStatus(),
   withPaginacija(KVAROVA_PO_STRANI),
   withMethods((store, kvarService = inject(KvarService)) => {
-    const ucitaj = rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, setPending())),
-        switchMap(() =>
-          kvarService
-            .lista({
-              stanje: store.stanje(),
-              kategorija: store.kategorija(),
-              prioritet: store.prioritet(),
-              zgradaId: store.zgradaId(),
-              strana: store.strana(),
-              poStrani: store.poStrani,
-            })
-            .pipe(
-              tapResponse({
-                next: ({ stavke, ukupno }) => {
-                  if (jePraznaStrana(stavke, store.strana())) {
-                    patchState(store, { strana: store.strana() - 1 });
-                    ucitaj();
-                    return;
-                  }
-                  patchState(store, { kvarovi: stavke, ukupno }, setFulfilled());
-                },
-                error: () => patchState(store, setError('Kvarovi trenutno ne mogu da se učitaju.')),
-              }),
-            ),
-        ),
-      ),
+    const { ucitaj, promeniStranu, odPrveStrane } = ucitavanjeStrane(
+      store,
+      (strana) =>
+        kvarService.lista({
+          stanje: store.stanje(),
+          kategorija: store.kategorija(),
+          prioritet: store.prioritet(),
+          zgradaId: store.zgradaId(),
+          ...strana,
+        }),
+      (kvarovi) => ({ kvarovi }),
+      'Kvarovi trenutno ne mogu da se učitaju.',
     );
 
     return {
@@ -74,29 +52,21 @@ export const ListaKvarovaStore = signalStore(
         }
       },
       promeniStanje(stanje: StanjeKvara): void {
-        patchState(store, { stanje, strana: 1 });
-        ucitaj();
+        odPrveStrane({ stanje });
       },
       promeniKategoriju(kategorija: KategorijaKvara | null): void {
-        patchState(store, { kategorija, strana: 1 });
-        ucitaj();
+        odPrveStrane({ kategorija });
       },
       promeniPrioritet(prioritet: PrioritetKvara | null): void {
-        patchState(store, { prioritet, strana: 1 });
-        ucitaj();
+        odPrveStrane({ prioritet });
       },
       ponistiFiltere(): void {
-        patchState(store, { kategorija: null, prioritet: null, strana: 1 });
-        ucitaj();
+        odPrveStrane({ kategorija: null, prioritet: null });
       },
       promeniZgradu(zgradaId: number | null): void {
-        patchState(store, { zgradaId, strana: 1 });
-        ucitaj();
+        odPrveStrane({ zgradaId });
       },
-      promeniStranu(strana: number): void {
-        patchState(store, { strana });
-        ucitaj();
-      },
+      promeniStranu,
     };
   }),
   withReducer(

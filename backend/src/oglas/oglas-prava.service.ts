@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Oglas } from './oglas.entity.js';
@@ -17,6 +13,7 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaOglasa } from '../shared/enums/vrsta-oglasa.enum.js';
 import { OglasUpitDto } from './dto/oglas-upit.dto.js';
 import { istekao, vidljivSvima } from './oglas.constants.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 // Šta sa oglasom sme samo onaj ko ga je objavio
 type RadnjaAutora = 'menja' | 'obriše' | 'obnovi';
@@ -64,7 +61,7 @@ export class OglasPravaService {
           ((oglas.datumSakrivanja === null && !istekao(oglas)) ||
             oglas.autor.id === korisnikId)));
     if (!vidi) {
-      throw new NotFoundException(`Oglas sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Oglas', id);
     }
     return { oglas, p };
   }

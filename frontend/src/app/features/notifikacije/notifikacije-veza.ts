@@ -1,8 +1,8 @@
 import { DOCUMENT, inject, Service } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subscription, switchMap, timer } from 'rxjs';
-import { io } from 'socket.io-client';
+import { from, Observable, Subscription, switchMap, timer } from 'rxjs';
+import type { io as Io } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthStore } from '../auth/sesija/auth-store';
 import { TokenRefresh } from '../auth/sesija/token-refresh';
@@ -32,6 +32,10 @@ export class NotifikacijeVeza {
   private document = inject(DOCUMENT);
 
   dogadjaji(): Observable<DogadjajVeze> {
+    return from(import('socket.io-client')).pipe(switchMap(({ io }) => this.veza(io)));
+  }
+
+  private veza(io: typeof Io): Observable<DogadjajVeze> {
     return new Observable<DogadjajVeze>((pretplatnik) => {
       const vidljiv = () => this.document.visibilityState === 'visible';
       const socket = io(`${environment.apiUrl}/notifikacije`, {

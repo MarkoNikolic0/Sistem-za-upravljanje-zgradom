@@ -1,8 +1,9 @@
 @use 'tailwindcss';
 @import 'primeicons/primeicons.css';
+@import '@fontsource-variable/inter/wght.css';
 
 @theme static {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
   // Povrsine, od najtamnije ka svetlijoj
   --color-pozadina: #090909;

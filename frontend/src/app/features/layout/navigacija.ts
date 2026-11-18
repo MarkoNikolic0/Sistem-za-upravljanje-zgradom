@@ -72,6 +72,6 @@ export const STAVKE_NAVIGACIJE: StavkaNavigacije[] = [
 
 export function smeNaAdresu(adresa: string, uloga: Uloga): boolean {
   const odeljak = `/${adresa.split(/[?#/]/)[1] ?? ''}`;
-  const stavka = STAVKE_NAVIGACIJE.find((s) => s.putanja === odeljak);
-  return !stavka || stavka.uloge.includes(uloga);
+  const stavke = STAVKE_NAVIGACIJE.filter((s) => s.putanja === odeljak);
+  return stavke.length === 0 || stavke.some((s) => s.uloge.includes(uloga));
 }

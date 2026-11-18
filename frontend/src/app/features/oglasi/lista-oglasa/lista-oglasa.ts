@@ -24,6 +24,7 @@ import { AuthStore } from '../../auth/sesija/auth-store';
 import { NeprocitaniOglasiActions } from '../neprocitani-oglasi-store/neprocitani-oglasi-actions';
 import { neprocitaniOglasiFeature } from '../neprocitani-oglasi-store/neprocitani-oglasi-reducer';
 import { jeNov } from '../pravila-oglasa';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -129,9 +130,7 @@ export class ListaOglasa {
     this.confirmationService.confirm({
       header: 'Brisanje oglasa',
       message: `Obrisati oglas „${oglas.naslov}“? Ovo ne može da se poništi.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         await this.store.obrisi(oglas.id);
         this.fokusiraj('#poruka-oglasa');

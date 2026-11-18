@@ -58,6 +58,14 @@ describe('AuthStore', () => {
     expect(store.accessToken()).toBeNull();
   });
 
+  it('token koji nije ispravan JWT ne prijavljuje korisnika', async () => {
+    const sesija = store.pokreniSesiju();
+    http.expectOne(`${AUTH}/refresh`).flush({ accessToken: 'nije-jwt' });
+    await sesija;
+    expect(store.status()).toBe('odjavljen');
+    expect(store.korisnik()).toBeNull();
+  });
+
   it('odjava briše sesiju i kad server ne odgovori', async () => {
     store.postaviToken(tokenZa('admin'));
     const odjava = store.logout();

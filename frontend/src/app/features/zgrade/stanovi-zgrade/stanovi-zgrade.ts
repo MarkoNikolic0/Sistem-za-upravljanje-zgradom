@@ -15,6 +15,7 @@ import { StanariService } from '../../stanari/stanari-service';
 import { FormaStana } from '../forma-stana/forma-stana';
 import { FormaViseStanova } from '../forma-vise-stanova/forma-vise-stanova';
 import { StanService } from '../stan-service';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 type Forma = 'jedan' | 'vise' | StanSaStanarima;
 
@@ -91,9 +92,7 @@ export class StanoviZgrade {
     this.confirmationService.confirm({
       header: 'Brisanje stana',
       message: `Obrisati stan ${stan.broj}? Stan sa kvarovima, zahtevima ili glasovima ne može da se obriše.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         const osvezi = () => this.stanovi.reload();
         await this.akcije.izvrsi(

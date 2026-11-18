@@ -13,6 +13,7 @@ import { OglasService } from '../oglas/oglas.service.js';
 import { zakljucajVeze } from '../stanar-stana/veze-u-zgradi.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class UpravnikZgradeService {
@@ -38,7 +39,7 @@ export class UpravnikZgradeService {
       },
     });
     if (!zgrada) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+      throw nePostoji('Zgrada', zgradaId);
     }
     return { korisnik: zgrada.upravnik };
   }
@@ -138,7 +139,7 @@ export class UpravnikZgradeService {
       lock: { mode: 'pessimistic_write' },
     });
     if (!zgrada) {
-      throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+      throw nePostoji('Zgrada', zgradaId);
     }
     return zgrada;
   }

@@ -70,14 +70,15 @@ describe('veza za obaveštenja uživo', () => {
     vi.useRealTimers();
   });
 
-  const povezi = () => {
+  const povezi = async () => {
     const pretplata = TestBed.inject(NotifikacijeVeza).dogadjaji().subscribe();
+    await vi.dynamicImportSettled();
     return { socket: soketi[0], pretplata };
   };
 
-  it('kad server prekine vezu, osveži token i ponovo se poveže', () => {
+  it('kad server prekine vezu, osveži token i ponovo se poveže', async () => {
     osvezi.mockReturnValue(of('novi'));
-    const { socket } = povezi();
+    const { socket } = await povezi();
 
     socket.okini('disconnect', 'io server disconnect');
     vi.advanceTimersByTime(0);
@@ -87,9 +88,9 @@ describe('veza za obaveštenja uživo', () => {
     expect(navigateByUrl).not.toHaveBeenCalled();
   });
 
-  it('istekla sesija (401) vodi na prijavu', () => {
+  it('istekla sesija (401) vodi na prijavu', async () => {
     osvezi.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
-    const { socket } = povezi();
+    const { socket } = await povezi();
 
     socket.okini('connect_error', new Error('Neispravan ili istekao token.'));
     vi.advanceTimersByTime(0);
@@ -98,12 +99,12 @@ describe('veza za obaveštenja uživo', () => {
     expect(socket.connect).not.toHaveBeenCalled();
   });
 
-  it('mrežna greška pri osvežavanju ne odjavljuje, nego pokušava ponovo sa pauzom', () => {
+  it('mrežna greška pri osvežavanju ne odjavljuje, nego pokušava ponovo sa pauzom', async () => {
     osvezi
       .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })))
       .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 502 })))
       .mockReturnValue(of('novi'));
-    const { socket } = povezi();
+    const { socket } = await povezi();
 
     socket.okini('connect_error', new Error('Neispravan ili istekao token.'));
     vi.advanceTimersByTime(0);
@@ -125,9 +126,9 @@ describe('veza za obaveštenja uživo', () => {
     socket.okini('connect');
   };
 
-  it('minut pre isteka osveži token i pošalje ga kroz otvorenu vezu, bez prekida', () => {
+  it('minut pre isteka osveži token i pošalje ga kroz otvorenu vezu, bez prekida', async () => {
     osvezi.mockReturnValue(of('novi'));
-    const { socket } = povezi();
+    const { socket } = await povezi();
     otvori(socket);
 
     vi.advanceTimersByTime(14 * MINUT - 1);
@@ -139,9 +140,9 @@ describe('veza za obaveštenja uživo', () => {
     expect(socket.connect).not.toHaveBeenCalled();
   });
 
-  it('ne obnavlja token dok je veza prekinuta, a istekla sesija pri obnovi vodi na prijavu', () => {
+  it('ne obnavlja token dok je veza prekinuta, a istekla sesija pri obnovi vodi na prijavu', async () => {
     osvezi.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 401 })));
-    const { socket } = povezi();
+    const { socket } = await povezi();
     otvori(socket);
     socket.connected = false;
     socket.okini('disconnect', 'transport close');
@@ -154,9 +155,9 @@ describe('veza za obaveštenja uživo', () => {
     expect(socket.emit).not.toHaveBeenCalledWith('token', expect.anything());
   });
 
-  it('dok osvežavanje čeka, novi prekid ne pokreće drugo osvežavanje, a odjava ga otkazuje', () => {
+  it('dok osvežavanje čeka, novi prekid ne pokreće drugo osvežavanje, a odjava ga otkazuje', async () => {
     osvezi.mockReturnValue(of('novi'));
-    const { socket, pretplata } = povezi();
+    const { socket, pretplata } = await povezi();
 
     socket.okini('connect_error', new Error('Neispravan ili istekao token.'));
     socket.okini('disconnect', 'io server disconnect');

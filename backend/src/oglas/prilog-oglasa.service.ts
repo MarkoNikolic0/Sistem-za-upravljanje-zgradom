@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
@@ -18,6 +13,7 @@ import {
   PORUKA_SAKRIVEN,
 } from './oglas.constants.js';
 import { PDF } from '../shared/skladiste/otpremanje-fajla.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 function nazivZaPrikaz(originalno: string) {
   const ime = originalno
@@ -96,7 +92,7 @@ export class PrilogOglasaService {
           lock: { mode: 'pessimistic_write' },
         });
         if (!oglas) {
-          throw new NotFoundException(`Oglas sa id-jem ${oglasId} ne postoji!`);
+          throw nePostoji('Oglas', oglasId);
         }
         if (oglas.datumSakrivanja !== null) {
           throw new ConflictException(PORUKA_SAKRIVEN);

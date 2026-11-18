@@ -6,6 +6,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -13,6 +14,7 @@ import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
 import type { TackaDnevnogReda } from './tacka-dnevnog-reda.entity.js';
 
 @Entity()
+@Index(['zgrada', 'pocetak'])
 export class Sastanak {
   @PrimaryGeneratedColumn()
   id: number;

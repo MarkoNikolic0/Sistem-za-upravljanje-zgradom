@@ -1,17 +1,28 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
-import { patchState, signalStore, signalStoreFeature, withMethods, withState } from '@ngrx/signals';
+import { computed } from '@angular/core';
+import {
+  patchState,
+  signalStore,
+  signalStoreFeature,
+  withComputed,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { porukaServera, prvaGreskaPolja } from '../forme/greske-servera';
 import { Poruka } from './poruka';
 
 interface AkcijeState {
   poruka: Poruka | null;
-  akcijaUToku: boolean;
+  brojAkcija: number;
 }
 
 export function withAkcije() {
   return signalStoreFeature(
-    withState<AkcijeState>({ poruka: null, akcijaUToku: false }),
+    withState<AkcijeState>({ poruka: null, brojAkcija: 0 }),
+    withComputed(({ brojAkcija }) => ({
+      akcijaUToku: computed(() => brojAkcija() > 0),
+    })),
     withMethods((store) => {
       let verzija = 0;
       const uToku = new Set<string>();
@@ -28,7 +39,7 @@ export function withAkcije() {
             patchState(store, { poruka });
           }
         };
-        patchState(store, { akcijaUToku: true, poruka: null });
+        patchState(store, (s) => ({ brojAkcija: s.brojAkcija + 1, poruka: null }));
         try {
           await akcija();
           prikazi({ tip: 'uspeh', tekst: uspeh });
@@ -48,7 +59,7 @@ export function withAkcije() {
           }
           return false;
         } finally {
-          patchState(store, { akcijaUToku: false });
+          patchState(store, (s) => ({ brojAkcija: s.brojAkcija - 1 }));
         }
       }
       return {

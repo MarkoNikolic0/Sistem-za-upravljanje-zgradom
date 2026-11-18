@@ -2,7 +2,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -23,6 +22,7 @@ import { PromeniUloguDto } from './dto/promeni-ulogu.dto.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { PushService } from '../notifikacija/push/push.service.js';
 import { odbijZahteve } from '../zahtev-povezivanje/odbij-zahteve.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class NalogKorisnikaService {
@@ -134,7 +134,7 @@ export class NalogKorisnikaService {
       lock: { mode: 'for_no_key_update', tables: ['korisnik'] },
     });
     if (!korisnik) {
-      throw new NotFoundException(`Korisnik sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Korisnik', id);
     }
     if (korisnik.uloga === Uloga.ADMIN) {
       throw new ForbiddenException('Nalog administratora se ne menja ovde.');

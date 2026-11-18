@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsRelations, Repository } from 'typeorm';
 import { Sastanak } from './sastanak.entity.js';
@@ -14,6 +10,7 @@ import {
 } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 const DETALJI: FindOptionsRelations<Sastanak> = {
   zgrada: true,
@@ -56,7 +53,7 @@ export class SastanakPravaService {
       !sastanak ||
       !sadrzi(zgradeVrste(sastanak.vrsta, p), sastanak.zgrada.id)
     ) {
-      throw new NotFoundException(`Sastanak sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Sastanak', id);
     }
     return { sastanak, p };
   }

@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Glasanje } from './glasanje.entity.js';
@@ -17,6 +13,7 @@ import {
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { PORUKA_STANARI, PORUKA_VLASNICI } from './glasanje.constants.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class GlasanjePravaService {
@@ -54,7 +51,7 @@ export class GlasanjePravaService {
     const zgrade =
       glasanje?.vrsta === VrstaGlasanja.ODLUKA ? zgradeVlasnika(p) : p.zgrade;
     if (!glasanje || !sadrzi(zgrade, glasanje.zgrada.id)) {
-      throw new NotFoundException(`Glasanje sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Glasanje', id);
     }
     return { glasanje, p };
   }

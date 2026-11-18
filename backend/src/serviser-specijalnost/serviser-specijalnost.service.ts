@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, Not, In } from 'typeorm';
 import { ServiserSpecijalnost } from './serviser-specijalnost.entity.js';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -10,6 +6,7 @@ import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { PostaviSpecijalnostiDto } from './dto/postavi-specijalnosti.dto.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { KategorijaKvara } from '../shared/enums/kvar.enums.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class ServiserSpecijalnostService {
@@ -23,9 +20,7 @@ export class ServiserSpecijalnostService {
         lock: { mode: 'for_no_key_update' },
       });
       if (!korisnik) {
-        throw new NotFoundException(
-          `Korisnik sa id-jem ${korisnikId} ne postoji!`,
-        );
+        throw nePostoji('Korisnik', korisnikId);
       }
       if (korisnik.uloga !== Uloga.SERVISER) {
         throw new BadRequestException('Struke se dodeljuju samo serviseru.');

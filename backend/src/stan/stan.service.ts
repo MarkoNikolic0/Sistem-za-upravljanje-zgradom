@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stan } from './stan.entity.js';
@@ -21,6 +20,7 @@ import { PrisutanStan } from '../sastanak/prisutan-stan.entity.js';
 import { poRedosleduStanova } from './redosled-stanova.js';
 import { CreateStanoviDto } from './dto/create-stanovi.dto.js';
 import { jeDupliUnos } from '../shared/greske-baze.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class StanService {
@@ -61,7 +61,7 @@ export class StanService {
       relations: { zgrada: true },
     });
     if (!stan) {
-      throw new NotFoundException(`Stan sa id-jem ${stanId} ne postoji!`);
+      throw nePostoji('Stan', stanId);
     }
     return stan;
   }
@@ -104,7 +104,7 @@ export class StanService {
         lock: { mode: 'pessimistic_write' },
       });
       if (!zakljucan) {
-        throw new NotFoundException(`Stan sa id-jem ${id} ne postoji!`);
+        throw nePostoji('Stan', id);
       }
       const uStanu = { where: { stan: { id } } };
       const [stanari, kvarovi, zahtevi, glasovi, prisustva] = await Promise.all(

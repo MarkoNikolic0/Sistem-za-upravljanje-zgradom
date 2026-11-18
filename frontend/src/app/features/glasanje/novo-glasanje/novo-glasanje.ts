@@ -30,6 +30,7 @@ import {
 import { GlasanjeService } from '../glasanje-service';
 import { DANA_ANKETE, NAJVISE_DANA_ANKETE, razliciteOpcije } from '../pravila-glasanja';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { izaberiJedinu } from '../../../shared/forme/izaberi-jedinu';
 
 type Polje = 'zgradaId' | 'vrsta' | 'pitanje' | 'opis' | 'opcije' | 'vecina' | 'rok';
 
@@ -125,12 +126,7 @@ export class NovoGlasanje {
         vecina.disable();
       }
     });
-    effect(() => {
-      const zgrade = this.zgrade();
-      if (zgrade.length === 1 && this.forma.controls.zgradaId.value === null) {
-        this.forma.controls.zgradaId.setValue(zgrade[0].id);
-      }
-    });
+    izaberiJedinu(this.forma.controls.zgradaId, this.zgrade);
   }
 
   private novaOpcija() {

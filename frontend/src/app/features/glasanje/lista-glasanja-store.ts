@@ -3,14 +3,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { EMPTY, firstValueFrom, forkJoin, Observable, pipe, switchMap, tap, timer } from 'rxjs';
-import {
-  setError,
-  setFulfilled,
-  setPending,
-  withRequestStatus,
-} from '../../shared/stanje/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { EMPTY, firstValueFrom, forkJoin, Observable, pipe, switchMap, timer } from 'rxjs';
+import { withRequestStatus } from '../../shared/stanje/with-request-status';
+import { withPaginacija } from '../../shared/liste/with-paginacija';
+import { ucitavanjeStrane } from '../../shared/liste/ucitavanje-strane';
 import { withAkcije } from '../../shared/stanje/with-akcije';
 import { porukaServera } from '../../shared/forme/greske-servera';
 import { Store } from '@ngrx/store';
@@ -46,33 +42,16 @@ export const ListaGlasanjaStore = signalStore(
   withAkcije(),
   withPaginacija(GLASANJA_PO_STRANI),
   withMethods((store, glasanjeService = inject(GlasanjeService), globalniStore = inject(Store)) => {
-    const ucitaj = rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, setPending())),
-        switchMap(() =>
-          glasanjeService
-            .lista({
-              stanje: store.stanje(),
-              zgradaId: store.zgradaId(),
-              strana: store.strana(),
-              poStrani: store.poStrani,
-            })
-            .pipe(
-              tapResponse({
-                next: ({ stavke, ukupno }) => {
-                  if (jePraznaStrana(stavke, store.strana())) {
-                    patchState(store, { strana: store.strana() - 1 });
-                    ucitaj();
-                    return;
-                  }
-                  patchState(store, { glasanja: stavke, ukupno }, setFulfilled());
-                },
-                error: () =>
-                  patchState(store, setError('Glasanja trenutno ne mogu da se učitaju.')),
-              }),
-            ),
-        ),
-      ),
+    const { ucitaj, promeniStranu, odPrveStrane } = ucitavanjeStrane(
+      store,
+      (strana) =>
+        glasanjeService.lista({
+          stanje: store.stanje(),
+          zgradaId: store.zgradaId(),
+          ...strana,
+        }),
+      (glasanja) => ({ glasanja }),
+      'Glasanja trenutno ne mogu da se učitaju.',
     );
 
     const osveziIstekla = rxMethod<Glasanje[]>(
@@ -148,13 +127,9 @@ export const ListaGlasanjaStore = signalStore(
         ucitaj();
       },
       promeniZgradu(zgradaId: number | null): void {
-        patchState(store, { zgradaId, strana: 1 });
-        ucitaj();
+        odPrveStrane({ zgradaId });
       },
-      promeniStranu(strana: number): void {
-        patchState(store, { strana });
-        ucitaj();
-      },
+      promeniStranu,
       glasaj(glasanje: Glasanje, opcijaId: number): Promise<IshodGlasa> {
         const opcija = glasanje.opcije.find((o) => o.id === opcijaId);
         return promeniGlas(

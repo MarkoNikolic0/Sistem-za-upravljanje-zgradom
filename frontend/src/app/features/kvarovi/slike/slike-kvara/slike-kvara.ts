@@ -14,6 +14,7 @@ import { SlikeKvaraStore } from '../slike-kvara-store';
 import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { jeZavrsen, PRAVILA_SLIKA_KVARA } from '../../pravila-kvara';
 import { IzborFajlova } from '../../../../shared/fajlovi/izbor-fajlova/izbor-fajlova';
+import { dugmadPotvrde } from '../../../../shared/dugmad-potvrde';
 
 interface Poruka {
   tip: 'uspeh' | 'greska';
@@ -108,9 +109,7 @@ export class SlikeKvara {
     this.confirmationService.confirm({
       header: 'Brisanje slike',
       message: 'Obrisati ovu sliku? Ovo ne može da se poništi.',
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         try {
           await this.store.obrisi(this.kvar().id, slika.id);

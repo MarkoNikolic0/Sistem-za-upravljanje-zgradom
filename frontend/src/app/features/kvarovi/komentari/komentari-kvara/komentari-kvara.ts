@@ -17,6 +17,7 @@ import { DetaljKvaraStore } from '../../detalj-kvara-store';
 import { jeZavrsen, PRAVILA_KOMENTARA_KVARA } from '../../pravila-kvara';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
+import { dugmadPotvrde } from '../../../../shared/dugmad-potvrde';
 
 interface OznakaRazloga {
   tekst: string;
@@ -135,9 +136,7 @@ export class KomentariKvara {
     this.confirmationService.confirm({
       header: 'Brisanje komentara',
       message: 'Obrisati ovaj komentar? Ovo ne može da se poništi.',
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         try {
           await this.store.obrisi(komentar.id);

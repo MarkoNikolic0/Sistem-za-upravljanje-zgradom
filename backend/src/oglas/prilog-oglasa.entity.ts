@@ -4,6 +4,7 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import type { Oglas } from './oglas.entity.js';
@@ -32,6 +33,7 @@ export class PrilogOglasa {
   @Column()
   velicina: number;
 
+  @Index()
   @ManyToOne('Oglas', 'prilozi', { nullable: false, onDelete: 'CASCADE' })
   oglas: Oglas;
 

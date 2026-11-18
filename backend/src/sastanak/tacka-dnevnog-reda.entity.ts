@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Glasanje } from '../glasanje/glasanje.entity.js';
 import type { Sastanak } from './sastanak.entity.js';
 
@@ -16,6 +22,7 @@ export class TackaDnevnogReda {
   @Column({ type: 'text', nullable: true })
   opis: string | null;
 
+  @Index()
   @ManyToOne('Sastanak', 'tacke', { nullable: false, onDelete: 'CASCADE' })
   sastanak: Sastanak;
 

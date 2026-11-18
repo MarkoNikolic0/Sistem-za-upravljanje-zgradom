@@ -16,6 +16,7 @@ import { Glasanje, StanjeGlasanja } from '../glasanje-models';
 import { ListaGlasanjaStore } from '../lista-glasanja-store';
 import { KarticaGlasanja } from '../kartica-glasanja/kartica-glasanja';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -129,9 +130,7 @@ export class ListaGlasanja {
     this.confirmationService.confirm({
       header: podaci.header,
       message: podaci.message,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: podaci.natpis, severity: 'danger' },
+      ...dugmadPotvrde(podaci.natpis, true),
       accept: async () => {
         await podaci.akcija();
         this.fokusiraj('#poruka-glasanja');

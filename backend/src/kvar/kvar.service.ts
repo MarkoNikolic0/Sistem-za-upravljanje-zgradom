@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateKvarDto } from './dto/create-kvar.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Kvar } from './kvar.entity.js';
@@ -34,6 +30,7 @@ import { proveriAktivnu } from '../zgrada/aktivna-zgrada.js';
 import { SlicniKvaroviUpitDto } from './dto/slicni-kvarovi-upit.dto.js';
 import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
 import { ObavestenjaKvaraService } from './obavestenja-kvara.service.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 export interface ServiserSaOcenom {
   id: number;
@@ -171,7 +168,7 @@ export class KvarService {
       relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
     });
     if (!kvar || kvar.zgrada.arhivirana) {
-      throw new NotFoundException(`Kvar sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Kvar', id);
     }
     return kvar;
   }
@@ -179,7 +176,7 @@ export class KvarService {
   async findDostupan(id: number, korisnikId: number, uloga: Uloga) {
     const kvar = await this.findOne(id);
     if (!(await this.prava.smeDaVidi(kvar, korisnikId, uloga))) {
-      throw new NotFoundException(`Kvar sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Kvar', id);
     }
     return kvar;
   }

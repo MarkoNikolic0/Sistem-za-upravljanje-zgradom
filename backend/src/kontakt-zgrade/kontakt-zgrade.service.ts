@@ -2,7 +2,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -15,6 +14,7 @@ import { sadrzi } from '../korisnik/pristup-zgradama.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { CreateKontaktDto } from './dto/create-kontakt.dto.js';
 import { UpdateKontaktDto } from './dto/update-kontakt.dto.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 export const MAKS_KONTAKATA = 20;
 
@@ -59,7 +59,7 @@ export class KontaktZgradeService {
         lock: { mode: 'pessimistic_write' },
       });
       if (!zgrada) {
-        throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+        throw nePostoji('Zgrada', zgradaId);
       }
       const broj = await manager.count(KontaktZgrade, {
         where: { zgrada: { id: zgradaId } },
@@ -122,7 +122,7 @@ export class KontaktZgradeService {
       where: { id, zgrada: { id: zgradaId } },
     });
     if (!kontakt) {
-      throw new NotFoundException(`Kontakt sa id-jem ${id} ne postoji!`);
+      throw nePostoji('Kontakt', id);
     }
     return kontakt;
   }

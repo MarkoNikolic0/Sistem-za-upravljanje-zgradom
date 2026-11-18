@@ -1,18 +1,13 @@
 import { inject } from '@angular/core';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
+import { signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { tapResponse } from '@ngrx/operators';
-import { debounceTime, distinctUntilChanged, map, pipe, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, pipe, tap } from 'rxjs';
 import { Uloga } from '../auth/auth-models';
 import { KorisnikService } from './korisnik-service';
 import { KorisnikSistema, StanjeNaloga } from './korisnik-models';
-import {
-  setError,
-  setFulfilled,
-  setPending,
-  withRequestStatus,
-} from '../../shared/stanje/with-request-status';
-import { jePraznaStrana, withPaginacija } from '../../shared/liste/with-paginacija';
+import { withRequestStatus } from '../../shared/stanje/with-request-status';
+import { withPaginacija } from '../../shared/liste/with-paginacija';
+import { ucitavanjeStrane } from '../../shared/liste/ucitavanje-strane';
 import { withAkcije } from '../../shared/stanje/with-akcije';
 
 const KORISNIKA_PO_STRANI = 20;
@@ -38,33 +33,17 @@ export const ListaKorisnikaStore = signalStore(
   withRequestStatus(),
   withAkcije(),
   withMethods((store, korisnikService = inject(KorisnikService)) => {
-    const ucitaj = rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, setPending())),
-        switchMap(() =>
-          korisnikService
-            .lista({
-              pretraga: store.pretraga() || undefined,
-              uloga: store.uloga() ?? undefined,
-              stanje: store.stanje(),
-              strana: store.strana(),
-              poStrani: store.poStrani,
-            })
-            .pipe(
-              tapResponse({
-                next: ({ stavke, ukupno }) => {
-                  if (jePraznaStrana(stavke, store.strana())) {
-                    patchState(store, { strana: store.strana() - 1 });
-                    ucitaj();
-                    return;
-                  }
-                  patchState(store, { korisnici: stavke, ukupno }, setFulfilled());
-                },
-                error: () => patchState(store, setError('Korisnike trenutno nije moguće učitati.')),
-              }),
-            ),
-        ),
-      ),
+    const { ucitaj, promeniStranu, odPrveStrane } = ucitavanjeStrane(
+      store,
+      (strana) =>
+        korisnikService.lista({
+          pretraga: store.pretraga() || undefined,
+          uloga: store.uloga() ?? undefined,
+          stanje: store.stanje(),
+          ...strana,
+        }),
+      (korisnici) => ({ korisnici }),
+      'Korisnike trenutno nije moguće učitati.',
     );
 
     const pretrazi = rxMethod<string>(
@@ -74,8 +53,7 @@ export const ListaKorisnikaStore = signalStore(
         debounceTime(300),
         distinctUntilChanged(),
         tap((pretraga) => {
-          patchState(store, { pretraga, strana: 1 });
-          ucitaj();
+          odPrveStrane({ pretraga });
         }),
       ),
     );
@@ -84,17 +62,12 @@ export const ListaKorisnikaStore = signalStore(
       ucitaj,
       pretrazi,
       promeniUlogu(uloga: Uloga | null): void {
-        patchState(store, { uloga, strana: 1 });
-        ucitaj();
+        odPrveStrane({ uloga });
       },
       promeniStanje(stanje: StanjeNaloga): void {
-        patchState(store, { stanje, strana: 1 });
-        ucitaj();
+        odPrveStrane({ stanje });
       },
-      promeniStranu(strana: number): void {
-        patchState(store, { strana });
-        ucitaj();
-      },
+      promeniStranu,
     };
   }),
   withHooks({

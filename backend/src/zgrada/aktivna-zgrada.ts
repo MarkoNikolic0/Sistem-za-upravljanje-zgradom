@@ -1,6 +1,6 @@
-import { NotFoundException } from '@nestjs/common';
 import { EntityManager, IsNull } from 'typeorm';
 import { Zgrada } from './zgrada.entity.js';
+import { nePostoji } from '../shared/ne-postoji.js';
 
 export const AKTIVNA_ZGRADA = { arhivirana: IsNull() };
 
@@ -15,6 +15,6 @@ export async function proveriAktivnu(
     ...(zakljucaj && { lock: { mode: zakljucaj } }),
   });
   if (!zgrada) {
-    throw new NotFoundException(`Zgrada sa id-jem ${zgradaId} ne postoji!`);
+    throw nePostoji('Zgrada', zgradaId);
   }
 }

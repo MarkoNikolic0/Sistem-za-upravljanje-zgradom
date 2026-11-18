@@ -16,6 +16,7 @@ import { StanoviZgrade } from '../stanovi-zgrade/stanovi-zgrade';
 import { UpravnikZgrade } from '../upravnik-zgrade/upravnik-zgrade';
 import { ZgradaOsnovno } from '../zgrada-models';
 import { ZgradaService } from '../zgrada-service';
+import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 
 @Component({
   imports: [
@@ -92,9 +93,7 @@ export class DetaljZgrade {
     this.confirmationService.confirm({
       header: 'Brisanje zgrade',
       message: `Obrisati zgradu „${zgrada.naziv}“? Briše se samo zgrada bez stanova, upravnika i istorije (kvarova, oglasa, glasanja, sastanaka). Zgradu sa podacima arhiviraj.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Obriši', severity: 'danger' },
+      ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         this.brisanje.set(true);
         try {
@@ -124,9 +123,7 @@ export class DetaljZgrade {
     this.confirmationService.confirm({
       header: 'Arhiviranje zgrade',
       message: `Zgrada „${zgrada.naziv}“ nestaje iz aplikacije za sve. Stanari se odseljavaju i dobijaju obaveštenje, upravnik prestaje da upravlja njome (u stanara se vraća ako ne vodi drugu zgradu), zahtevi na čekanju se odbijaju, a oglasi se sakrivaju. Stanovi, kvarovi, obaveštenja, glasanja i sastanci ostaju sačuvani i vraćaju se kad vratiš zgradu.`,
-      defaultFocus: 'reject',
-      rejectButtonProps: { label: 'Odustani', severity: 'secondary', outlined: true },
-      acceptButtonProps: { label: 'Arhiviraj', severity: 'danger' },
+      ...dugmadPotvrde('Arhiviraj', true),
       accept: async () => {
         this.arhiviranje.set(true);
         try {

@@ -27,6 +27,7 @@ export class RefreshToken {
   @Column({ type: 'timestamptz', nullable: true })
   datumOpoziva: Date | null;
 
+  @Index()
   @ManyToOne(() => Korisnik, { onDelete: 'CASCADE' })
   korisnik: Korisnik;
 
