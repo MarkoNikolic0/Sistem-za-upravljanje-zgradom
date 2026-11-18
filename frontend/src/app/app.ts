@@ -4,11 +4,12 @@ import { RouterOutlet } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { filter } from 'rxjs';
 import { Instalacija } from './features/pwa/instalacija';
+import { BezMreze } from './features/pwa/bez-mreze/bez-mreze';
 import { NovaVerzija } from './features/pwa/nova-verzija/nova-verzija';
 import type { PorukaVerzije } from './features/pwa/nova-verzija/nova-verzija';
 
 @Component({
-  imports: [RouterOutlet, NovaVerzija],
+  imports: [RouterOutlet, NovaVerzija, BezMreze],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

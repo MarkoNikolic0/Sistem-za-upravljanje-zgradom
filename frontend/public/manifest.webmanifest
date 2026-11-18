@@ -28,5 +28,44 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Obaveštenja",
+      "short_name": "Obaveštenja",
+      "description": "Sva obaveštenja o tvojoj zgradi.",
+      "url": "/notifikacije",
+      "icons": [
+        {
+          "src": "icons/precica-obavestenja-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/telefon-pocetna.webp",
+      "sizes": "750x1624",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Početna stanara sa važnim obaveštenjem, glasanjem i sledećim sastankom"
+    },
+    {
+      "src": "screenshots/telefon-kvarovi.webp",
+      "sizes": "750x1624",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Prijavljeni kvarovi zgrade sa stanjem popravke"
+    },
+    {
+      "src": "screenshots/racunar-pocetna.webp",
+      "sizes": "1920x1200",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Početna upravnika sa stvarima koje čekaju na računaru"
+    }
   ]
 }
