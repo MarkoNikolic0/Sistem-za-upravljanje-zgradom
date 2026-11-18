@@ -7,6 +7,7 @@ import { AuthStore } from './auth-store';
 import { TokenRefresh } from './token-refresh';
 import { naPrijavu } from '../pristup/povratak';
 
+// Ovde 401 znači pogrešnu lozinku ili istekao kolačić, pa ne sme da pokrene osvežavanje tokena.
 const BEZ_TOKENA = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'].map(
   (putanja) => `${environment.apiUrl}${putanja}`,
 );

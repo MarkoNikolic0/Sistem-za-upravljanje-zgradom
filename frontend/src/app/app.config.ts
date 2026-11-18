@@ -35,6 +35,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(
       routes,
+      // Bez ovoga store zakačen na rutu preživi odjavu, pa sledeći korisnik vidi tuđe podatke.
       withAutoCleanupInjectors(),
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),

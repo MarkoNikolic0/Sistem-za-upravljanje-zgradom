@@ -119,6 +119,7 @@ export class KvarService {
       ...(upit.prioritet && { prioritet: upit.prioritet }),
     };
     const [stavke, ukupno] = await this.kvarRepository.findAndCount({
+      // Niz u where TypeORM spaja sa OR, pa filter mora u svaku granu, inače bi važio samo za jednu.
       where: vidljivi.map((uslov) => ({ ...uslov, ...filter })),
       relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
       order: { datumPrijave: 'DESC', id: 'DESC' },

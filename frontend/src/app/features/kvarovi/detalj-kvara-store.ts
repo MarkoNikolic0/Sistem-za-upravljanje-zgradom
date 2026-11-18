@@ -45,6 +45,7 @@ function porukaGreske(err: HttpErrorResponse): string {
   }
 }
 
+// 403 se prikazuje kao 404 da korisnik ne sazna da tuđ kvar sa tim brojem postoji.
 function nePostoji(err: HttpErrorResponse): boolean {
   return err.status === 403 || err.status === 404;
 }
@@ -109,6 +110,7 @@ export const DetaljKvaraStore = signalStore(
         pipe(
           tap(() => patchState(store, { kvar: null, porukaAkcije: null }, setPending())),
           switchMap((id) => {
+            // /kvarovi/abc daje NaN; bez zahteva serveru prikazuje se kao nepostojeći kvar, a ne kao greška.
             if (!jeIspravanId(id)) {
               patchState(store, { porukaPosleUcitavanja: null }, setFulfilled());
               return EMPTY;

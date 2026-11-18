@@ -29,6 +29,7 @@ export function podesiAplikaciju(app: INestApplication) {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      // Pravi instance DTO-a, pa rade podrazumevane vrednosti (poStrani = 20) i @Type pretvaranje u broj.
       transform: true,
       exceptionFactory: greskeValidacije,
     }),

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
 
+// Veći poStrani se tiho smanjuje na najviše, umesto greške 400, kao u Google AIP-158.
 export const MAKS_PO_STRANI = 50;
 export const MAKS_STRANA = 10_000;
 

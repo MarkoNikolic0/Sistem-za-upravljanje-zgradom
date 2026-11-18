@@ -76,6 +76,7 @@ export class KomentarKvarService {
     const [stavke, ukupno] = await this.komentarKvarRepository.findAndCount({
       where: {
         kvar: { id: kvarId },
+        // Kursor umesto strane: novi komentari ne pomeraju starije, pa Učitaj starije ne vraća duplikate.
         ...(upit.preId ? { id: LessThan(upit.preId) } : {}),
       },
       relations: { korisnik: true },

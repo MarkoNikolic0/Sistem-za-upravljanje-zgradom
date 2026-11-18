@@ -73,6 +73,7 @@ export const KomentariKvaraStore = signalStore(
     ),
     ucitajStarije: rxMethod<void>(
       pipe(
+        // Dupli klik ne sme da pošalje drugi zahtev sa istim kursorom i doda iste komentare dvaput.
         exhaustMap(() => {
           const kvarId = store.kvarId();
           if (kvarId === null) {

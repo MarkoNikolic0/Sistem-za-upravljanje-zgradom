@@ -131,6 +131,7 @@ export class ZahtevPovezivanjeService {
       dto.status === StatusZahteva.ODBIJEN && dto.razlog ? dto.razlog : null;
 
     return await this.dataSource.transaction(async (manager) => {
+      // Uslov na status sprečava da dva istovremena prihvatanja ili odbijanja uspeju oba.
       const rezultat = await manager.update(
         ZahtevPovezivanje,
         { id: zahtevId, status: StatusZahteva.NA_CEKANJU },

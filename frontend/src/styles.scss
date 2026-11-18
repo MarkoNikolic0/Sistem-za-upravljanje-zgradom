@@ -237,6 +237,7 @@ body {
   }
 }
 
+// Link se ::after razvlači preko cele kartice, pa čitač ekrana kao ime linka čita samo naslov, a ne celu karticu.
 .kartica-link {
   &::after {
     content: '';
