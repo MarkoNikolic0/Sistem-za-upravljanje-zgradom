@@ -58,7 +58,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canActivate: [prijavljenGuard],
+    canMatch: [prijavljenGuard],
     loadChildren: () => import('./features/layout/layout.routes'),
   },
 ];

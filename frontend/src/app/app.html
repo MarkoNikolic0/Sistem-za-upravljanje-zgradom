@@ -1,15 +1,4 @@
 <router-outlet></router-outlet>
-@defer (on idle) {
-  <p-toast [key]="kljucVerzije" position="top-center" class="toast-verzije">
-    <ng-template #message let-poruka>
-      <div class="nova-verzija">
-        <span class="plocica-ikonice" aria-hidden="true"><i class="pi pi-refresh"></i></span>
-        <div class="min-w-0 flex-1">
-          <p class="naslov">{{ poruka.summary }}</p>
-          <p class="opis">{{ poruka.detail }}</p>
-        </div>
-        <button pButton type="button" size="small" (click)="osvezi()">Osveži</button>
-      </div>
-    </ng-template>
-  </p-toast>
+@defer (when porukaVerzije()) {
+  <app-nova-verzija [poruka]="porukaVerzije()!" />
 }

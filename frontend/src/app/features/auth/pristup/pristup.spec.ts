@@ -85,3 +85,26 @@ describe('pristup stranicama', () => {
     expect(bezbednaAdresa('/\\zlo.example.com')).toBe('/');
   });
 });
+
+describe('zaštićen deo koji se učitava lenjo', () => {
+  it('gost ne učitava deo aplikacije, nego ide na prijavu sa adresom za povratak', async () => {
+    const ucitaj = vi.fn(() => [{ path: 'kvarovi', component: Prazna }]);
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: 'login', component: Prazna },
+          { path: '', canMatch: [prijavljenGuard], loadChildren: ucitaj },
+        ]),
+      ],
+    });
+    const router = TestBed.inject(Router);
+
+    await router.navigateByUrl('/kvarovi?strana=2');
+    expect(router.url).toBe('/login?returnUrl=%2Fkvarovi%3Fstrana%3D2');
+    expect(ucitaj).not.toHaveBeenCalled();
+
+    TestBed.inject(AuthStore).postaviToken(tokenZa('stanar'));
+    await router.navigateByUrl('/kvarovi');
+    expect(router.url).toBe('/kvarovi');
+  });
+});

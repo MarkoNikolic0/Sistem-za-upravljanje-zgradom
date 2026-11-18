@@ -1,8 +1,11 @@
+/// <reference types="node" />
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { AuraKomponente } from './aura-komponente';
 
 const MODULI = 'node_modules';
+
+const uvoz = (paket: string) => new RegExp(`from ['"]${paket}/([a-z]+)['"]`, 'g');
 
 function fajloviAplikacije(folder: string): string[] {
   return readdirSync(folder).flatMap((ime) => {
@@ -20,15 +23,15 @@ function stiloviKomponenti(): Set<string> {
     }
     posecene.add(modul);
     const izvor = readFileSync(join(MODULI, 'primeng/fesm2022', `primeng-${modul}.mjs`), 'utf8');
-    for (const [, stil] of izvor.matchAll(/from '@primeuix\/styles\/([a-z]+)'/g)) {
+    for (const [, stil] of izvor.matchAll(uvoz('@primeuix/styles'))) {
       stilovi.add(stil);
     }
-    for (const [, zavisnost] of izvor.matchAll(/from 'primeng\/([a-z]+)'/g)) {
+    for (const [, zavisnost] of izvor.matchAll(uvoz('primeng'))) {
       obidji(zavisnost);
     }
   };
   for (const fajl of fajloviAplikacije('src/app').filter((f) => f.endsWith('.ts'))) {
-    for (const [, modul] of readFileSync(fajl, 'utf8').matchAll(/from 'primeng\/([a-z]+)'/g)) {
+    for (const [, modul] of readFileSync(fajl, 'utf8').matchAll(uvoz('primeng'))) {
       obidji(modul);
     }
   }

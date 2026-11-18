@@ -1,25 +1,20 @@
-import { Component, DOCUMENT, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
-import { MessageService } from 'primeng/api';
-import { ButtonDirective } from 'primeng/button';
-import { Toast } from 'primeng/toast';
 import { filter } from 'rxjs';
 import { Instalacija } from './features/pwa/instalacija';
-
-const KLJUC_VERZIJE = 'nova-verzija';
+import { NovaVerzija } from './features/pwa/nova-verzija/nova-verzija';
+import type { PorukaVerzije } from './features/pwa/nova-verzija/nova-verzija';
 
 @Component({
-  imports: [RouterOutlet, Toast, ButtonDirective],
+  imports: [RouterOutlet, NovaVerzija],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
 export class App {
-  private messageService = inject(MessageService);
-  private document = inject(DOCUMENT);
-  protected readonly kljucVerzije = KLJUC_VERZIJE;
+  protected readonly porukaVerzije = signal<PorukaVerzije | null>(null);
 
   constructor() {
     inject(Instalacija).pokreni();
@@ -33,27 +28,16 @@ export class App {
         takeUntilDestroyed(),
       )
       .subscribe(() =>
-        this.ponudiOsvezavanje(
-          'Dostupna je nova verzija aplikacije.',
-          'Osveži da bi koristio najnoviju verziju.',
-        ),
+        this.porukaVerzije.set({
+          naslov: 'Dostupna je nova verzija aplikacije.',
+          opis: 'Osveži da bi koristio najnoviju verziju.',
+        }),
       );
-    swUpdate.unrecoverable
-      .pipe(takeUntilDestroyed())
-      .subscribe(() =>
-        this.ponudiOsvezavanje(
-          'Aplikacija mora ponovo da se učita.',
-          'Deo aplikacije više nije dostupan na uređaju.',
-        ),
-      );
-  }
-
-  protected osvezi(): void {
-    this.document.location.reload();
-  }
-
-  private ponudiOsvezavanje(summary: string, detail: string): void {
-    this.messageService.clear(KLJUC_VERZIJE);
-    this.messageService.add({ key: KLJUC_VERZIJE, sticky: true, closable: false, summary, detail });
+    swUpdate.unrecoverable.pipe(takeUntilDestroyed()).subscribe(() =>
+      this.porukaVerzije.set({
+        naslov: 'Aplikacija mora ponovo da se učita.',
+        opis: 'Deo aplikacije više nije dostupan na uređaju.',
+      }),
+    );
   }
 }

@@ -1,11 +1,11 @@
 import { computed, effect, inject, Service } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { NavigationStart, Router } from '@angular/router';
+import { filter, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ProfileResponse, UpdateProfileRequest } from './profile-models';
 import { AuthStore } from '../auth/sesija/auth-store';
-
-const SVEZ_PROFIL_MS = 10_000;
 
 @Service()
 export class ProfileService {
@@ -13,23 +13,30 @@ export class ProfileService {
   private authStore = inject(AuthStore);
   private apiUrl = `${environment.apiUrl}/korisnik/moj-profil`;
   private readonly korisnikId = computed(() => this.authStore.korisnik()?.id);
-  private ucitan = 0;
+  private navigacija = 0;
+  private ucitanPriNavigaciji = -1;
 
   readonly profil = httpResource<ProfileResponse>(() =>
     this.korisnikId() ? this.apiUrl : undefined,
   );
 
   constructor() {
+    inject(Router)
+      .events.pipe(
+        filter((dogadjaj) => dogadjaj instanceof NavigationStart),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ id }) => (this.navigacija = id));
     effect(() => {
       if (this.profil.hasValue()) {
         this.profil.value();
-        this.ucitan = Date.now();
+        this.ucitanPriNavigaciji = this.navigacija;
       }
     });
   }
 
   osvezenProfil() {
-    if (!this.profil.isLoading() && Date.now() - this.ucitan > SVEZ_PROFIL_MS) {
+    if (!this.profil.isLoading() && this.ucitanPriNavigaciji !== this.navigacija) {
       this.profil.reload();
     }
     return this.profil;
