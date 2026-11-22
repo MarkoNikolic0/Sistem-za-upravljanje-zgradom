@@ -22,6 +22,7 @@ import { ZahteviStore } from '../zahtev-store';
 import { TagModule } from 'primeng/tag';
 import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [
@@ -61,6 +62,10 @@ export class ZahteviUpravnika {
   ];
 
   constructor() {
+    osveziNaNotifikaciju(
+      () => '/zahtevi',
+      () => this.store.ucitaj(),
+    );
     afterRenderEffect(() => {
       if (this.store.poruka()) {
         this.porukaObrade().nativeElement.focus();

@@ -14,6 +14,7 @@ import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TagModule } from 'primeng/tag';
 import { porukaServera } from '../../../shared/forme/greske-servera';
 import { ispravanIdIzAdrese } from '../../../shared/ispravan-id';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, TagModule, SpratPipe],
@@ -75,6 +76,10 @@ export class NoviZahtev {
   );
 
   constructor() {
+    osveziNaNotifikaciju(
+      () => '/povezivanje',
+      () => this.zahtevi.reload(),
+    );
     this.forma.controls.zgradaId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.forma.controls.stanId.reset());
