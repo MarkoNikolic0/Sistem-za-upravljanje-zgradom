@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PorukaStrane } from './poruka-strane';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
@@ -29,7 +30,7 @@ import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
     StanoviZgrade,
     UpravnikZgrade,
   ],
-  providers: [ConfirmationService],
+  providers: [ConfirmationService, PorukaStrane],
   selector: 'app-detalj-zgrade',
   templateUrl: './detalj-zgrade.html',
   styleUrl: './detalj-zgrade.scss',
@@ -58,6 +59,7 @@ export class DetaljZgrade {
   protected readonly brisanje = signal(false);
   protected readonly arhiviranje = signal(false);
   protected readonly poruka = signal<Poruka | null>(null);
+  protected readonly porukaVidljiva = inject(PorukaStrane).prati('zgrada', this.poruka);
 
   constructor() {
     const navigacija = this.router.currentNavigation();

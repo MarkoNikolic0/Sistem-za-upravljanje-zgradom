@@ -1,8 +1,5 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { nePostoji } from '../shared/ne-postoji.js';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Korisnik } from './korisnik.entity.js';
 import { POTVRDJEN_EMAIL } from './aktivan-korisnik.js';
 import { Brackets, In, Repository } from 'typeorm';
@@ -272,7 +269,7 @@ export class KorisnikService {
       where: { id: korisnikId },
     });
     if (!korisnik) {
-      throw new NotFoundException('Korisnik ne postoji.');
+      throw nePostoji('Korisnik', korisnikId);
     }
     return korisnik;
   }

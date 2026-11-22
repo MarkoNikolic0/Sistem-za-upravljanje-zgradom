@@ -10,6 +10,7 @@ import { Poruka } from '../../../shared/stanje/poruka';
 import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { poSpratovima } from '../../../shared/spratovi/spratovi';
 import { AkcijeStore } from '../../../shared/stanje/with-akcije';
+import { PorukaStrane } from '../detalj-zgrade/poruka-strane';
 import { StanSaStanarima } from '../../stanari/stanari-models';
 import { StanariService } from '../../stanari/stanari-service';
 import { FormaStana } from '../forma-stana/forma-stana';
@@ -40,6 +41,7 @@ export class StanoviZgrade {
   private stanService = inject(StanService);
   private confirmationService = inject(ConfirmationService);
   protected readonly akcije = inject(AkcijeStore);
+  protected readonly porukaVidljiva = inject(PorukaStrane).prati('stanovi', this.akcije.poruka);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly zgradaId = input.required<number>();

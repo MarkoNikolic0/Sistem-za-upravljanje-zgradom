@@ -1,8 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { nePostoji } from '../../shared/ne-postoji.js';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
@@ -83,7 +80,7 @@ export class LozinkaService {
         lock: { mode: 'for_no_key_update' },
       });
       if (!korisnik) {
-        throw new NotFoundException('Korisnik ne postoji.');
+        throw nePostoji('Korisnik', id);
       }
 
       const trenutnaIspravna = await bcrypt.compare(

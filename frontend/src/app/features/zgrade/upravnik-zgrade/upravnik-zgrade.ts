@@ -10,6 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { AkcijeStore } from '../../../shared/stanje/with-akcije';
+import { PorukaStrane } from '../detalj-zgrade/poruka-strane';
 import { KorisnikPretrage } from '../../korisnici/korisnik-models';
 import { KorisnikService } from '../../korisnici/korisnik-service';
 import { ZgradaService } from '../zgrada-service';
@@ -39,6 +40,7 @@ export class UpravnikZgrade {
   private korisnikService = inject(KorisnikService);
   private confirmationService = inject(ConfirmationService);
   protected readonly akcije = inject(AkcijeStore);
+  protected readonly porukaVidljiva = inject(PorukaStrane).prati('upravnik', this.akcije.poruka);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   readonly zgradaId = input.required<number>();

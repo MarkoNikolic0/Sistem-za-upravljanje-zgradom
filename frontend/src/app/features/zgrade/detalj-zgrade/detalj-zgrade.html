@@ -100,7 +100,7 @@
     }
 
     <div id="poruka-zgrade" tabindex="-1" class="mt-6 outline-none empty:hidden">
-      @if (poruka(); as p) {
+      @if (porukaVidljiva() && poruka(); as p) {
         <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
       }
     </div>

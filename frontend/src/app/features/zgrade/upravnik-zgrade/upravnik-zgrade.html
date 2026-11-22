@@ -4,7 +4,7 @@
   </div>
 
   <div id="poruka-upravnika" tabindex="-1" class="mb-4 outline-none empty:hidden">
-    @if (akcije.poruka(); as p) {
+    @if (porukaVidljiva() && akcije.poruka(); as p) {
       <p-message [severity]="p.tip === 'uspeh' ? 'success' : 'error'">{{ p.tekst }}</p-message>
     }
   </div>

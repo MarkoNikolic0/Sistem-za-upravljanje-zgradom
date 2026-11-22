@@ -55,7 +55,7 @@ export class UpravnikZgradeService {
         select: { id: true, uloga: true },
       });
       if (!korisnik) {
-        throw new NotFoundException('Korisnik ne postoji.');
+        throw nePostoji('Korisnik', korisnikId);
       }
       if (
         korisnik.uloga !== Uloga.STANAR &&
