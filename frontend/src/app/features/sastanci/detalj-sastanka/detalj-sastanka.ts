@@ -69,7 +69,7 @@ export class DetaljSastanka {
       this.poruka.set(stanje.poruka);
     }
     osveziNaNotifikaciju(
-      () => `/sastanci/${this.id()}`,
+      ({ link }) => link === `/sastanci/${this.id()}`,
       () => this.sastanak.reload(),
     );
   }

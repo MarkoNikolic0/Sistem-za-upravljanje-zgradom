@@ -77,7 +77,7 @@ export class NoviZahtev {
 
   constructor() {
     osveziNaNotifikaciju(
-      () => '/povezivanje',
+      ({ link }) => link === '/povezivanje',
       () => this.zahtevi.reload(),
     );
     this.forma.controls.zgradaId.valueChanges

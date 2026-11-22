@@ -120,7 +120,7 @@ export class DetaljKvara {
     this.store.ucitaj(this.id);
     this.komentariStore.ucitaj(this.id);
     osveziNaNotifikaciju(
-      () => `/kvarovi/${this.id()}`,
+      ({ link }) => link === `/kvarovi/${this.id()}`,
       () => {
         this.store.osvezi(this.id());
         this.komentariStore.osveziNove();

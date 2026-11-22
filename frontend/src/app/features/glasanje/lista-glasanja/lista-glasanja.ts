@@ -69,7 +69,7 @@ export class ListaGlasanja {
 
   constructor() {
     osveziNaNotifikaciju(
-      () => '/glasanje',
+      ({ link }) => link === '/glasanje',
       () => this.store.ucitaj(),
     );
     const navigacija = this.router.currentNavigation();

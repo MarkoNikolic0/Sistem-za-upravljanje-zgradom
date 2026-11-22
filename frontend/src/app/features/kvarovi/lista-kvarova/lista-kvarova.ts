@@ -32,6 +32,7 @@ import { Store } from '@ngrx/store';
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
 import { PozivObavestenja } from '../../notifikacije/poziv-obavestenja/poziv-obavestenja';
 import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [
@@ -135,5 +136,9 @@ export class ListaKvarova {
 
   constructor() {
     this.store.prikaziListu();
+    osveziNaNotifikaciju(
+      ({ tip, link }) => tip !== 'kvar_komentar' && !!link?.startsWith('/kvarovi/'),
+      () => this.store.ucitaj(),
+    );
   }
 }

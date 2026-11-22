@@ -63,7 +63,7 @@ export class ZahteviUpravnika {
 
   constructor() {
     osveziNaNotifikaciju(
-      () => '/zahtevi',
+      ({ link }) => link === '/zahtevi',
       () => this.store.ucitaj(),
     );
     afterRenderEffect(() => {
