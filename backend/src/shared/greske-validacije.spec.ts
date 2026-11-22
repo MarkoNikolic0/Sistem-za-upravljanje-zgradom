@@ -18,6 +18,21 @@ describe('greskeValidacije', () => {
     });
   });
 
+  it('polje koje ne postoji u DTO-u dobija poruku na srpskom', () => {
+    const greske: ValidationError[] = [
+      {
+        property: 'specijalnosti',
+        constraints: {
+          whitelistValidation: 'property specijalnosti should not exist',
+        },
+      },
+    ];
+    expect(greskeValidacije(greske).getResponse()).toMatchObject({
+      message: ['Polje specijalnosti nije dozvoljeno.'],
+      greske: { specijalnosti: 'Polje specijalnosti nije dozvoljeno.' },
+    });
+  });
+
   it('ugnježdenim poljima daje punu putanju', () => {
     const greske: ValidationError[] = [
       {

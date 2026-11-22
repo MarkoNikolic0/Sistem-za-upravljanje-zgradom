@@ -17,9 +17,11 @@ import { ListaGlasanjaStore } from '../lista-glasanja-store';
 import { KarticaGlasanja } from '../kartica-glasanja/kartica-glasanja';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     FormsModule,
     RouterLink,
     ButtonModule,

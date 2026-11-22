@@ -23,9 +23,11 @@ import { TagModule } from 'primeng/tag';
 import { Paginacija } from '../../../shared/liste/paginacija/paginacija';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     DatePipe,
     FormsModule,
     RouterLink,

@@ -39,9 +39,11 @@ import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
 import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
 import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     DatePipe,
     FormsModule,
     RouterLink,

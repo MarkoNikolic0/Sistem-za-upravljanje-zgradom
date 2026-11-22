@@ -35,7 +35,7 @@
         @if (lista === null) {
           <p class="prazna-zgrada">
             Kontakte ove zgrade trenutno nije moguće učitati.
-            <button type="button" class="ponovo" (click)="kontakti.reload()">Pokušaj ponovo</button>
+            <button appPokusajPonovo type="button" class="ponovo" (click)="kontakti.reload()">Pokušaj ponovo</button>
           </p>
         } @else if (lista) {
           @if (lista.length > 0) {

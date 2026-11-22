@@ -79,7 +79,9 @@
     }
   } @else if (profil.error() || zahtevi.error()) {
     <p-message severity="error">Početnu trenutno nije moguće učitati.</p-message>
-    <button pButton type="button" outlined class="mt-4" (click)="ponovo()">Pokušaj ponovo</button>
+    <button appPokusajPonovo pButton type="button" outlined class="mt-4" (click)="ponovo()">
+      Pokušaj ponovo
+    </button>
   } @else {
     <div class="ucitavanje" aria-hidden="true">
       <p-skeleton width="5rem" height="0.75rem" />

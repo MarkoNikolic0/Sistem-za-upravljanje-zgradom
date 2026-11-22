@@ -12,7 +12,7 @@
   @if (upravnik.error()) {
     <p class="text-sm text-priguseno">
       Upravnika trenutno nije moguće učitati.
-      <button type="button" class="ponovo" (click)="upravnik.reload()">Pokušaj ponovo</button>
+      <button appPokusajPonovo type="button" class="ponovo" (click)="upravnik.reload()">Pokušaj ponovo</button>
     </p>
   } @else if (!upravnik.hasValue()) {
     <div class="ucitavanje" aria-hidden="true"><p-skeleton height="5rem" /></div>

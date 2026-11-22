@@ -24,10 +24,11 @@ import { doPonoci, Notifikacija, poDanima } from '../notifikacija-models';
 import { IkonicaNotifikacije } from '../ikonica-notifikacije/ikonica-notifikacije';
 import { notifikacijeFeature } from '../notifikacija-store/notifikacije-reducer';
 import { NotifikacijeActions } from '../notifikacija-store/notifikacije-actions';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   selector: 'app-notifikacije',
-  imports: [
+  imports: [PokusajPonovo, 
     DatePipe,
     FormsModule,
     RouterLink,

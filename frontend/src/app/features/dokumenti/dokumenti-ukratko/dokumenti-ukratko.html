@@ -20,7 +20,7 @@
         @if (stranica === null) {
           <p class="prazna-zgrada">
             Dokumente ove zgrade trenutno nije moguće učitati.
-            <button type="button" class="ponovo" (click)="dokumenti.reload()">
+            <button appPokusajPonovo type="button" class="ponovo" (click)="dokumenti.reload()">
               Pokušaj ponovo
             </button>
           </p>

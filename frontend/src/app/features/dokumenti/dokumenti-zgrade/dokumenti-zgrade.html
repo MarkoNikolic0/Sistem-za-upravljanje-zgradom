@@ -89,7 +89,9 @@
       @if (dokumenti.error()) {
         <p class="text-sm text-priguseno">
           Dokumente trenutno nije moguće učitati.
-          <button type="button" class="ponovo" (click)="dokumenti.reload()">Pokušaj ponovo</button>
+          <button appPokusajPonovo type="button" class="ponovo" (click)="dokumenti.reload()">
+            Pokušaj ponovo
+          </button>
         </p>
       } @else if (!dokumenti.hasValue()) {
         <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
@@ -232,4 +234,4 @@
   }
 </div>
 
-<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />

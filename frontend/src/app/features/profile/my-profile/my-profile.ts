@@ -18,11 +18,13 @@ import { MAX_DUZINA_IMENA, PRAVILA_IMENA } from '../../auth/pravila-naloga';
 import { TagModule } from 'primeng/tag';
 import { InstalacijaAplikacije } from '../../pwa/instalacija-aplikacije/instalacija-aplikacije';
 import { ObavestenjaNaUredjaju } from '../../notifikacije/obavestenja-na-uredjaju/obavestenja-na-uredjaju';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 type Polje = 'ime' | 'prezime' | 'telefon';
 
 @Component({
   imports: [
+    PokusajPonovo,
     ReactiveFormsModule,
     ButtonModule,
     InputTextModule,

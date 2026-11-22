@@ -12,9 +12,18 @@ import { Poruka, StanjeNavigacije } from '../../../shared/stanje/poruka';
 import { FormaZgrade } from '../forma-zgrade/forma-zgrade';
 import { ZgradaOsnovno } from '../zgrada-models';
 import { ZgradaService } from '../zgrada-service';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
-  imports: [DatePipe, RouterLink, ButtonModule, MessageModule, SkeletonModule, FormaZgrade],
+  imports: [
+    PokusajPonovo,
+    DatePipe,
+    RouterLink,
+    ButtonModule,
+    MessageModule,
+    SkeletonModule,
+    FormaZgrade,
+  ],
   selector: 'app-lista-zgrada',
   templateUrl: './lista-zgrada.html',
   styleUrl: './lista-zgrada.scss',

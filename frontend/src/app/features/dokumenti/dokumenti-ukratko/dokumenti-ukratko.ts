@@ -8,10 +8,11 @@ import { ZgradaOsnovno } from '../../zgrade/zgrada-models';
 import { OSVEZI_LINKOVE_MS } from '../dokument-models';
 import { DokumentService } from '../dokument-service';
 import { RedDokumenta } from '../red-dokumenta/red-dokumenta';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   selector: 'app-dokumenti-ukratko',
-  imports: [RouterLink, ButtonModule, SkeletonModule, RedDokumenta],
+  imports: [PokusajPonovo, RouterLink, ButtonModule, SkeletonModule, RedDokumenta],
   templateUrl: './dokumenti-ukratko.html',
   styleUrl: './dokumenti-ukratko.scss',
 })

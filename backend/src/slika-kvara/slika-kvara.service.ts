@@ -130,7 +130,7 @@ export class SlikaKvaraService {
 
     if (!(await this.kvarPravaService.smeDaUpravlja(kvar, korisnikId, uloga))) {
       if (slika.korisnik?.id !== korisnikId) {
-        throw new ForbiddenException('Možete brisati samo svoje slike!');
+        throw new ForbiddenException('Možeš da brišeš samo svoje slike!');
       }
       if (jeZavrsen(kvar.status)) {
         throw new ConflictException(

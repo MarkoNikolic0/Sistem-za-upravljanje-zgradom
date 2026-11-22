@@ -34,7 +34,14 @@
     @switch (status()) {
       @case ('greska') {
         <p-message severity="error">Obaveštenja nisu učitana.</p-message>
-        <button pButton type="button" outlined class="mt-4" (click)="otvori(samoNeprocitane())">
+        <button
+          appPokusajPonovo
+          pButton
+          type="button"
+          outlined
+          class="mt-4"
+          (click)="otvori(samoNeprocitane())"
+        >
           Pokušaj ponovo
         </button>
       }

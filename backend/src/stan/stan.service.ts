@@ -188,7 +188,7 @@ export class StanService {
       korisnikId,
       uloga,
       zgradaId,
-      'Možete upravljati samo stanovima svoje zgrade!',
+      'Možeš da upravljaš samo stanovima svoje zgrade!',
     );
   }
 }

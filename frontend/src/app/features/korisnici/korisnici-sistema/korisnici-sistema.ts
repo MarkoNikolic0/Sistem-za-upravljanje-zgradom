@@ -23,9 +23,11 @@ import { KorisnikService } from '../korisnik-service';
 import { ListaKorisnikaStore } from '../lista-korisnika-store';
 import { EmailVeza } from '../../../shared/email-veza/email-veza';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     FormsModule,
     RouterLink,
     ButtonModule,

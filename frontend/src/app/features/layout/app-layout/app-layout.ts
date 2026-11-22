@@ -1,6 +1,13 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { AuthStore } from '../../auth/sesija/auth-store';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  isActive,
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { MenuModule } from 'primeng/menu';
 import { SidebarModule } from 'primeng/sidebar';
 import { STAVKE_NAVIGACIJE } from '../navigacija';
@@ -112,6 +119,19 @@ export class AppLayout {
   private readonly ostaleStavke = computed(() => this.stavke().slice(this.stavkeTrake().length));
 
   protected readonly tackaVise = computed(() => this.ostaleStavke().some((stavka) => stavka.tacka));
+
+  private readonly aktivneVise = computed(() =>
+    this.ostaleStavke().map((stavka) =>
+      isActive(stavka.putanja, this.router, {
+        paths: 'subset',
+        queryParams: 'ignored',
+        matrixParams: 'ignored',
+        fragment: 'ignored',
+      }),
+    ),
+  );
+
+  protected readonly viseAktivno = computed(() => this.aktivneVise().some((aktivna) => aktivna()));
 
   protected readonly stavkeVise = computed((): MenuItem[] =>
     this.ostaleStavke().map((stavka) => ({

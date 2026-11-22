@@ -297,15 +297,10 @@ export class KvarAkcijeService {
             status: StatusKvara.ZATVOREN,
           })),
         );
-        const kvarovi = await manager.find(Kvar, {
-          where: { id: In(redovi.map(({ id }) => id)) },
-          relations: {
-            zgrada: true,
-            stan: true,
-            korisnik: true,
-            serviser: true,
-          },
-        });
+        const kvarovi = await this.kvaroviZaObavestenja(
+          manager,
+          redovi.map(({ id }) => id),
+        );
         for (const kvar of kvarovi) {
           await this.obavestenja.promenaStatusa(manager, {
             kvar,
@@ -350,7 +345,26 @@ export class KvarAkcijeService {
           korisnik: { id: korisnikId },
         })),
       );
+      const vraceni = await this.kvaroviZaObavestenja(
+        manager,
+        kvarovi.map(({ id }) => id),
+      );
+      for (const kvar of vraceni) {
+        await this.obavestenja.promenaStatusa(manager, {
+          kvar,
+          izStatusa: [StatusKvara.DODELJEN, StatusKvara.U_TOKU],
+          status: StatusKvara.PRIHVACEN,
+          akterId: korisnikId,
+        });
+      }
     }
+  }
+
+  private kvaroviZaObavestenja(manager: EntityManager, ids: number[]) {
+    return manager.find(Kvar, {
+      where: { id: In(ids) },
+      relations: { zgrada: true, stan: true, korisnik: true, serviser: true },
+    });
   }
 
   private async prelaz(

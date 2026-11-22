@@ -25,12 +25,14 @@ import { DokumentiUkratko } from '../../dokumenti/dokumenti-ukratko/dokumenti-uk
 import { zgradeIzProfila } from '../../zgrade/zgrade-korisnika';
 import { PozivObavestenja } from '../../notifikacije/poziv-obavestenja/poziv-obavestenja';
 import { PozivInstalacije } from '../../pwa/poziv-instalacije/poziv-instalacije';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 // Prvi korak za stanara koji jos nema stan
 type PrviKorak = 'povezi' | 'ceka' | 'odbijen';
 
 @Component({
   imports: [
+    PokusajPonovo,
     DatePipe,
     RouterLink,
     ButtonModule,

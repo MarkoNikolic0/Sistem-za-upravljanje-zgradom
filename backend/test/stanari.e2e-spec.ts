@@ -609,6 +609,20 @@ describe('stanari, nalozi i zgrade', () => {
         status: 'resen',
         serviser: { id: serviser.id },
       });
+      const broj = (poruke: string[], tekst: string) =>
+        poruke.filter((p) => p === tekst).length;
+      expect(
+        broj(
+          await obavestenja(z.upravnik),
+          'Serviser više ne radi na kvaru „Curi cev“. Dodeli novog servisera.',
+        ),
+      ).toBe(2);
+      expect(
+        broj(
+          await obavestenja(z.vlasnik),
+          'Kvar „Curi cev“ čeka novog servisera.',
+        ),
+      ).toBe(2);
     });
   });
 
@@ -675,6 +689,12 @@ describe('stanari, nalozi i zgrade', () => {
       ).toBe(0);
       const posle = await kao(t, z.upravnik).get(`/kvar/${kvar}`).expect(200);
       expect(posle.body).toMatchObject({ status: 'prihvacen', serviser: null });
+      expect(await obavestenja(z.upravnik)).toContain(
+        'Serviser više ne radi na kvaru „Curi cev“. Dodeli novog servisera.',
+      );
+      expect(await obavestenja(z.vlasnik)).toContain(
+        'Kvar „Curi cev“ čeka novog servisera.',
+      );
       await kao(t, serviser).get(`/kvar/${kvar}`).expect(404);
       await kao(t, admin)
         .put(`/korisnik/${serviser.id}/specijalnosti`)

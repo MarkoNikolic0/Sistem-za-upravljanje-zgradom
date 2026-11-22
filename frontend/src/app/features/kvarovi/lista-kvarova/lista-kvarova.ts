@@ -33,9 +33,11 @@ import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notif
 import { PozivObavestenja } from '../../notifikacije/poziv-obavestenja/poziv-obavestenja';
 import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     NovoObavestenje,
     DatePipe,
     FormsModule,
@@ -128,6 +130,9 @@ export class ListaKvarova {
     }
     if (this.serviser()) {
       return 'Kad ti upravnik dodeli kvar, pojaviće se ovde.';
+    }
+    if (this.stanarBezStana()) {
+      return 'Kad povežeš nalog sa stanom, ovde ćeš videti kvarove svog stana i zgrade.';
     }
     return this.imaStan()
       ? 'Sve radi kako treba. Kad nešto prijaviš, pojaviće se ovde.'

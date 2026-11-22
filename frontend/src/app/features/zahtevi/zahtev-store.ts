@@ -43,7 +43,7 @@ function porukaUspeha({ zahtev, status, vlasnik }: Obrada): string {
   if (status === 'odbijen') {
     return `Zahtev je odbijen: ${ko}.`;
   }
-  return `Zahtev je prihvaćen: ${ko} (${vlasnik ? 'vlasnik' : 'stanar'}).`;
+  return `Zahtev je prihvaćen: ${ko} (${vlasnik ? 'vlasnik' : 'ukućanin'}).`;
 }
 
 export const ZahteviStore = signalStore(

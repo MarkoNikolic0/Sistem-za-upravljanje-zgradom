@@ -35,3 +35,16 @@ test('upravnik dve zgrade bira zgradu na početnoj i kod stanara', async ({ page
   await expect(page.getByText('VlasnikZeta Probić')).toBeVisible();
   await expect(page.getByText('VlasnikEpsilon Probić')).toHaveCount(0);
 });
+
+test('stavka Više je označena kad je otvorena stranica iz nje', async ({ page }) => {
+  const { a } = await ucitajSvet();
+  await prijavi(page, a.upravnik.email);
+  const vise = page.getByRole('navigation').getByRole('button', { name: 'Više' });
+  await expect(vise).not.toHaveClass(/aktivna/);
+  await page.goto('/oglasi');
+  await expect(page.getByRole('heading', { name: 'Oglasi' })).toBeVisible();
+  await expect(vise).toHaveClass(/aktivna/);
+  await page.goto('/kvarovi');
+  await expect(page.getByRole('heading', { name: 'Kvarovi' })).toBeVisible();
+  await expect(vise).not.toHaveClass(/aktivna/);
+});

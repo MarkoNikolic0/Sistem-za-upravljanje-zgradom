@@ -3,7 +3,15 @@
 
   @if (pregled.error()) {
     <p class="text-sm text-priguseno">Pregled zgrada trenutno nije moguće učitati.</p>
-    <button pButton type="button" size="small" outlined class="mt-3" (click)="pregled.reload()">
+    <button
+      appPokusajPonovo
+      pButton
+      type="button"
+      size="small"
+      outlined
+      class="mt-3"
+      (click)="pregled.reload()"
+    >
       Pokušaj ponovo
     </button>
   } @else if (!pregled.hasValue()) {

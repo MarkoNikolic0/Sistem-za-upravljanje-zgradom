@@ -195,7 +195,14 @@
   } @else if (store.error(); as greska) {
     <section class="odeljak">
       <p-message severity="error">{{ greska }}</p-message>
-      <button pButton type="button" outlined class="mt-4" (click)="store.ucitaj(id())">
+      <button
+        appPokusajPonovo
+        pButton
+        type="button"
+        outlined
+        class="mt-4"
+        (click)="store.ucitaj(id())"
+      >
         Pokušaj ponovo
       </button>
     </section>

@@ -15,12 +15,14 @@ import { KorisnikService } from '../../korisnici/korisnik-service';
 import { ZgradaService } from '../zgrada-service';
 import { EmailVeza } from '../../../shared/email-veza/email-veza';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 const MIN_PRETRAGE = 2;
 
 @Component({
   selector: 'app-upravnik-zgrade',
   imports: [
+    PokusajPonovo,
     FormsModule,
     AutoCompleteModule,
     ButtonModule,

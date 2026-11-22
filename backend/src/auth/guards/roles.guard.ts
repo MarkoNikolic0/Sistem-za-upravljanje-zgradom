@@ -1,7 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator.js';
 import { Uloga } from '../../shared/enums/uloga.enum.js';
+
+export const PORUKA_ULOGA = 'Ova radnja nije dozvoljena za tvoju ulogu.';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -16,6 +23,9 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.includes(user?.uloga);
+    if (!requiredRoles.includes(user?.uloga)) {
+      throw new ForbiddenException(PORUKA_ULOGA);
+    }
+    return true;
   }
 }

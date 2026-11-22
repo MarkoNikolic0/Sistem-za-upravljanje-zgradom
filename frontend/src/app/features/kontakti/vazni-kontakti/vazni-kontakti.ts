@@ -6,10 +6,11 @@ import { ZgradaOsnovno } from '../../zgrade/zgrada-models';
 import { HITNE_SLUZBE } from '../kontakt-models';
 import { KontaktService } from '../kontakt-service';
 import { RedKontakta } from '../red-kontakta/red-kontakta';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   selector: 'app-vazni-kontakti',
-  imports: [RouterLink, ButtonModule, SkeletonModule, RedKontakta],
+  imports: [PokusajPonovo, RouterLink, ButtonModule, SkeletonModule, RedKontakta],
   templateUrl: './vazni-kontakti.html',
   styleUrl: './vazni-kontakti.scss',
 })

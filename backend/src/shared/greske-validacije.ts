@@ -8,7 +8,12 @@ function sakupi(
 ): string[] {
   return errors.flatMap((greska) => {
     const putanja = roditelj + greska.property;
-    const poruke = Object.values(greska.constraints ?? {});
+    const poruke = Object.entries(greska.constraints ?? {}).map(
+      ([pravilo, poruka]) =>
+        pravilo === 'whitelistValidation'
+          ? `Polje ${putanja} nije dozvoljeno.`
+          : poruka,
+    );
     if (poruke.length > 0) {
       greske[putanja] = poruke[0];
     }

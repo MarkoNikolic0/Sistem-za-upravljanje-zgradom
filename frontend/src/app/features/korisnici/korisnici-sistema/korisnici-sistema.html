@@ -54,7 +54,7 @@
   @if (store.error(); as greska) {
     <p class="text-sm text-priguseno">
       {{ greska }}
-      <button type="button" class="ponovo" (click)="store.ucitaj()">Pokušaj ponovo</button>
+      <button appPokusajPonovo type="button" class="ponovo" (click)="store.ucitaj()">Pokušaj ponovo</button>
     </p>
   } @else if (store.isPending() && store.korisnici().length === 0) {
     <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">
@@ -140,7 +140,7 @@
   (onShow)="meniReda.prikazan(true)"
   (onHide)="meniReda.prikazan(false)"
 />
-<p-confirmdialog [closable]="false" [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
+<p-confirmdialog [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }" />
 
 <p-dialog
   [header]="'Uloga: ' + imeIzabranog()"

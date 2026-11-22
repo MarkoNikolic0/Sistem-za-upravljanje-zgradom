@@ -49,7 +49,7 @@ export class DokumentZgradeService {
     await proveriAktivnu(this.dataSource.manager, zgradaId);
     const p = await this.korisnikService.pristupZgradama(korisnikId, uloga);
     if (!sadrzi(p.zgrade, zgradaId)) {
-      throw new ForbiddenException('Nemate pristup ovoj zgradi!');
+      throw new ForbiddenException('Nemaš pristup ovoj zgradi!');
     }
 
     const [stavke, ukupno] = await this.dokumentRepository.findAndCount({

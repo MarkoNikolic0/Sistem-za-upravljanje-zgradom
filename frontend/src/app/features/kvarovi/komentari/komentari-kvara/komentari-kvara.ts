@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -76,6 +76,27 @@ export class KomentariKvara {
   });
   protected readonly greskaKomentara = signal('');
   protected readonly zavrsenPriSlanju = signal(false);
+
+  private readonly najstarijiPreUcitavanja = signal<number | null>(null);
+
+  constructor() {
+    effect(() => {
+      const prethodni = this.najstarijiPreUcitavanja();
+      if (prethodni === null || this.store.ucitavaStarije()) {
+        return;
+      }
+      const najstariji = this.store.komentari().at(0);
+      untracked(() => this.najstarijiPreUcitavanja.set(null));
+      if (najstariji && najstariji.id !== prethodni) {
+        this.fokusiraj(`#komentar-${najstariji.id}`);
+      }
+    });
+  }
+
+  protected prikaziStarije(): void {
+    this.najstarijiPreUcitavanja.set(this.store.komentari().at(0)?.id ?? null);
+    this.store.ucitajStarije();
+  }
 
   protected ucitajPonovo(): void {
     this.store.ucitaj(this.kvar().id);

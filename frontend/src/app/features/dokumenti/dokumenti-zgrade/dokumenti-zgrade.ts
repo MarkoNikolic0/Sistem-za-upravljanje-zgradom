@@ -35,9 +35,11 @@ import { DokumentService } from '../dokument-service';
 import { FormaDokumenta } from '../forma-dokumenta/forma-dokumenta';
 import { RedDokumenta } from '../red-dokumenta/red-dokumenta';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     FormsModule,
     RouterLink,
     ButtonModule,

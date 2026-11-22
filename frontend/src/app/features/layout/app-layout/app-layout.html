@@ -126,6 +126,7 @@
           <button
             type="button"
             class="stavka-trake"
+            [class.aktivna]="viseAktivno()"
             aria-haspopup="true"
             [attr.aria-expanded]="viseOtvoreno()"
             (click)="vise.toggle($event)"

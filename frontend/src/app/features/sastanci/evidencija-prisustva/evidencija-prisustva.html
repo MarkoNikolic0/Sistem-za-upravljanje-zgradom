@@ -30,7 +30,7 @@
     @if (spisak.error()) {
       <p class="text-sm text-priguseno">
         Spisak trenutno nije moguće učitati.
-        <button type="button" class="ponovo" (click)="spisak.reload()">Pokušaj ponovo</button>
+        <button appPokusajPonovo type="button" class="ponovo" (click)="spisak.reload()">Pokušaj ponovo</button>
       </p>
     } @else if (!spisak.hasValue()) {
       <div class="ucitavanje" aria-hidden="true">

@@ -6,10 +6,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { zaDanas } from '../danas/za-danas';
 import { Fasada } from '../fasada/fasada';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   selector: 'app-zgrade-upravnika',
-  imports: [DatePipe, RouterLink, ButtonModule, SkeletonModule, Fasada],
+  imports: [PokusajPonovo, DatePipe, RouterLink, ButtonModule, SkeletonModule, Fasada],
   templateUrl: './zgrade-upravnika.html',
   styleUrl: './zgrade-upravnika.scss',
 })

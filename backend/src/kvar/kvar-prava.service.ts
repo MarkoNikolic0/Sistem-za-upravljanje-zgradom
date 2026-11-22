@@ -178,7 +178,7 @@ export class KvarPravaService {
   async proveriUpravljanje(kvar: Kvar, korisnikId: number, uloga: Uloga) {
     if (!(await this.smeDaUpravlja(kvar, korisnikId, uloga))) {
       throw new ForbiddenException(
-        'Možete upravljati samo kvarovima svoje zgrade!',
+        'Možeš da upravljaš samo kvarovima svoje zgrade!',
       );
     }
   }

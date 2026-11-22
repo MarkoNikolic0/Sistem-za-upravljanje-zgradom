@@ -14,13 +14,14 @@ import { uMnozini } from '../../../shared/tekst/mnozina';
 import { predstoji, zaDanas } from './za-danas';
 import { cekaGlas, NAJVISE_AKTIVNIH } from '../../glasanje/pravila-glasanja';
 import { Fasada } from '../fasada/fasada';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 const BROJ_SASTANAKA = 3;
 const BROJ_OGLASA = 3;
 
 @Component({
   selector: 'app-danas',
-  imports: [DatePipe, RouterLink, ButtonModule, SkeletonModule, Fasada],
+  imports: [PokusajPonovo, DatePipe, RouterLink, ButtonModule, SkeletonModule, Fasada],
   templateUrl: './danas.html',
   styleUrl: './danas.scss',
 })

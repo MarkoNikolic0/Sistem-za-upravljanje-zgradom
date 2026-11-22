@@ -35,7 +35,7 @@ test.describe.serial('nov stanar', () => {
     await prijavi(page, a.upravnik.email);
     await page.goto('/zahtevi');
     const zahtev = page.getByRole('article').filter({ hasText: email });
-    await zahtev.getByRole('button', { name: 'Prihvati kao stanara' }).click();
+    await zahtev.getByRole('button', { name: 'Prihvati kao ukućanina' }).click();
     await expect(page.getByText(email)).toHaveCount(0);
 
     await page.context().clearCookies();

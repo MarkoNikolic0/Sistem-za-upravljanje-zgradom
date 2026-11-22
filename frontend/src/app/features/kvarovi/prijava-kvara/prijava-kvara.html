@@ -204,7 +204,14 @@
   } @else if (profil.error()) {
     <section class="odeljak">
       <p-message severity="error">Podaci za prijavu trenutno ne mogu da se učitaju.</p-message>
-      <button pButton type="button" outlined class="mt-4" (click)="profil.reload()">
+      <button
+        appPokusajPonovo
+        pButton
+        type="button"
+        outlined
+        class="mt-4"
+        (click)="profil.reload()"
+      >
         Pokušaj ponovo
       </button>
     </section>

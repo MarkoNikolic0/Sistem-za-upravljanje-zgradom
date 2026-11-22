@@ -1,4 +1,5 @@
 import { LokacijaTip } from '../src/shared/enums/kvar.enums.js';
+import { PORUKA_ULOGA } from '../src/auth/guards/roles.guard.js';
 import { VrstaSastanka } from '../src/shared/enums/sastanak.enums.js';
 import { Uloga } from '../src/shared/enums/uloga.enum.js';
 import {
@@ -151,7 +152,7 @@ const SVI_PRIJAVLJENI = [
 ];
 
 const NEPOSTOJECI_ID = '987654';
-const ODBIJENO_PO_ULOZI = 'Forbidden resource';
+const ODBIJENO_PO_ULOZI = PORUKA_ULOGA;
 
 describe('prava pristupa', () => {
   let t: TestAplikacija;

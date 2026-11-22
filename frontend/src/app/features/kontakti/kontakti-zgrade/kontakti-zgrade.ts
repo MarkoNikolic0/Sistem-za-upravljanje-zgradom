@@ -24,9 +24,11 @@ import { FormaKontakta } from '../forma-kontakta/forma-kontakta';
 import { RedKontakta } from '../red-kontakta/red-kontakta';
 import { injectZgradeUpravnika } from '../../zgrade/zgrade-korisnika';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     FormsModule,
     RouterLink,
     ButtonModule,

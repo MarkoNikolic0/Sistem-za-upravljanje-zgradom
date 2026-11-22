@@ -33,11 +33,13 @@ import { IKONICE_KATEGORIJA } from '../izgled-kvara';
 import { VecPrijavljeno } from './vec-prijavljeno/vec-prijavljeno';
 import { IzabraniFajlovi } from '../../../shared/fajlovi/izabrani-fajlovi/izabrani-fajlovi';
 import { izaberiJedinu } from '../../../shared/forme/izaberi-jedinu';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 type Polje = 'stanId' | 'kategorija' | 'naslov' | 'opis';
 
 @Component({
   imports: [
+    PokusajPonovo,
     ReactiveFormsModule,
     RouterLink,
     ButtonModule,

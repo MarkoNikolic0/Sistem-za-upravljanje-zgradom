@@ -46,7 +46,9 @@ export class ZahtevPovezivanjeService {
       where: { korisnik: { id: korisnikId }, stan: { id: dto.stanId } },
     });
     if (vecPovezan) {
-      throw new ConflictException('Već ste povezani sa ovim stanom!');
+      throw new ConflictException(
+        'Ovaj stan je već povezan sa tvojim nalogom!',
+      );
     }
 
     const zahtev = this.zahtevRepository.create({
@@ -70,9 +72,7 @@ export class ZahtevPovezivanjeService {
       });
     } catch (greska) {
       if (jeDupliUnos(greska)) {
-        throw new ConflictException(
-          'Već imate zahtev na čekanju za ovaj stan!',
-        );
+        throw new ConflictException('Već imaš zahtev na čekanju za ovaj stan!');
       }
       throw greska;
     }
@@ -125,7 +125,7 @@ export class ZahtevPovezivanjeService {
       korisnikId,
       uloga,
       zahtev.stan.zgrada.id,
-      'Možete obrađivati samo zahteve za svoju zgradu!',
+      'Možeš da obrađuješ samo zahteve za svoju zgradu!',
     );
     const razlogOdbijanja =
       dto.status === StatusZahteva.ODBIJEN && dto.razlog ? dto.razlog : null;

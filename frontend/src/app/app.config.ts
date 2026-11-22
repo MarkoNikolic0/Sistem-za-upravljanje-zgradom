@@ -54,6 +54,10 @@ export const appConfig: ApplicationConfig = {
         'eyJpZCI6ImRjZTdjNTlkLWEzYmEtNDc0Yy1iOTNlLTU3YmY1Njc3YTUzZiIsInByb2R1Y3QiOiJwcmltZXVpIiwidGllciI6ImNvbW11bml0eSIsInR5cGUiOiJkZXYiLCJpYXQiOjE3OTI3OTIyNTYsImV4cCI6MTgyNDMyODI1Nn0.7gZFgQqtT2nZ6Iyzi1IrFsfk6WBtPLo5zNuuBg7CTY547X9AzP2PUbHY9sQha5Qw77UIKPG37BMn4T27xoO0Bg',
       overlayAppendTo: 'body',
       translation: PREVOD_PRIMENG,
+      pt: {
+        dialog: { pcCloseButton: { root: { 'aria-label': 'Zatvori' } } },
+        confirmdialog: { pcCloseButton: { root: { 'aria-label': 'Zatvori' } } },
+      },
       theme: {
         preset: ZgradaPreset,
         options: {

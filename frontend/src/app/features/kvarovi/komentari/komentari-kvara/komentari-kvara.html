@@ -12,7 +12,7 @@
         size="small"
         class="mb-2"
         [disabled]="store.ucitavaStarije()"
-        (click)="store.ucitajStarije()"
+        (click)="prikaziStarije()"
       >
         Prikaži starije komentare ({{ store.preostaloStarijih() }})
       </button>
@@ -20,6 +20,8 @@
 
     @for (komentar of store.komentari(); track komentar.id) {
       <article
+        [id]="'komentar-' + komentar.id"
+        tabindex="-1"
         class="komentar"
         [class.razlog]="oznakaRazloga(komentar)"
         [attr.aria-label]="'Komentar: ' + komentar.korisnik.ime"

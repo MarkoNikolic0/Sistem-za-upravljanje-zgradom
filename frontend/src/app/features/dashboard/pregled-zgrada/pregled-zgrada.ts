@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { PregledZgrade } from '../../zgrade/zgrada-models';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 interface Brojac {
   naziv: string;
@@ -21,7 +22,7 @@ const BROJACI: Brojac[] = [
 
 @Component({
   selector: 'app-pregled-zgrada',
-  imports: [DatePipe, RouterLink, ButtonModule, SkeletonModule],
+  imports: [PokusajPonovo, DatePipe, RouterLink, ButtonModule, SkeletonModule],
   templateUrl: './pregled-zgrada.html',
   styleUrl: './pregled-zgrada.scss',
 })

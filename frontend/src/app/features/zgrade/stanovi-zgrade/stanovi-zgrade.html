@@ -69,7 +69,9 @@
   @if (stanovi.error()) {
     <p class="text-sm text-priguseno">
       Stanove trenutno nije moguće učitati.
-      <button type="button" class="ponovo" (click)="stanovi.reload()">Pokušaj ponovo</button>
+      <button appPokusajPonovo type="button" class="ponovo" (click)="stanovi.reload()">
+        Pokušaj ponovo
+      </button>
     </p>
   } @else if (!stanovi.hasValue()) {
     <div class="ucitavanje flex flex-col gap-2" aria-hidden="true">

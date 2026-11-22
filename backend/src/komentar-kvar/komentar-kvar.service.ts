@@ -104,7 +104,7 @@ export class KomentarKvarService {
 
     if (!(await this.kvarPravaService.smeDaUpravlja(kvar, korisnikId, uloga))) {
       if (komentar.korisnik.id !== korisnikId) {
-        throw new ForbiddenException(`Možete brisati samo svoje komentare!`);
+        throw new ForbiddenException(`Možeš da brišeš samo svoje komentare!`);
       }
       if (jeZavrsen(kvar.status)) {
         throw new ConflictException(

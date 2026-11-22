@@ -42,6 +42,16 @@ export class ObavestenjaKvaraService {
 
     switch (p.status) {
       case StatusKvara.PRIHVACEN:
+        if (p.izStatusa.includes(StatusKvara.DODELJEN)) {
+          await posalji(
+            await upravnik(),
+            `Serviser više ne radi na kvaru ${naslov}. Dodeli novog servisera.`,
+          );
+          return posalji(
+            await stanari(),
+            `Kvar ${naslov} čeka novog servisera.`,
+          );
+        }
         return posalji(
           await stanari(),
           `Upravnik je prihvatio prijavu kvara ${naslov}.`,

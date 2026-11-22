@@ -17,9 +17,11 @@ import { Store } from '@ngrx/store';
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
 import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     NovoObavestenje,
     DatePipe,
     FormsModule,

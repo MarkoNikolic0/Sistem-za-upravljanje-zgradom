@@ -183,7 +183,7 @@
             </div>
             <p-tag
               class="shrink-0"
-              [value]="stan.vlasnik ? 'Vlasnik' : 'Stanar'"
+              [value]="stan.vlasnik ? 'Vlasnik' : 'Ukućanin'"
               [severity]="stan.vlasnik ? undefined : 'secondary'"
               [rounded]="true"
             />
@@ -200,7 +200,7 @@
     <app-obavestenja-na-uredjaju />
   } @else if (profil.error()) {
     <p-message severity="error">Profil trenutno nije moguće učitati.</p-message>
-    <button pButton type="button" outlined class="mt-4" (click)="profil.reload()">
+    <button appPokusajPonovo pButton type="button" outlined class="mt-4" (click)="profil.reload()">
       Pokušaj ponovo
     </button>
   } @else {

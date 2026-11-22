@@ -36,7 +36,9 @@
     @if (zgrade.error()) {
       <p class="text-sm text-priguseno">
         Zgrade trenutno nije moguće učitati.
-        <button type="button" class="ponovo" (click)="zgrade.reload()">Pokušaj ponovo</button>
+        <button appPokusajPonovo type="button" class="ponovo" (click)="zgrade.reload()">
+          Pokušaj ponovo
+        </button>
       </p>
     } @else if (!zgrade.hasValue()) {
       <div class="ucitavanje mreza" aria-hidden="true">

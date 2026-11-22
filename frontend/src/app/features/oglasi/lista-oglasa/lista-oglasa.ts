@@ -25,9 +25,11 @@ import { NeprocitaniOglasiActions } from '../neprocitani-oglasi-store/neprocitan
 import { neprocitaniOglasiFeature } from '../neprocitani-oglasi-store/neprocitani-oglasi-reducer';
 import { jeNov } from '../pravila-oglasa';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
   imports: [
+    PokusajPonovo,
     DatePipe,
     FormsModule,
     RouterLink,

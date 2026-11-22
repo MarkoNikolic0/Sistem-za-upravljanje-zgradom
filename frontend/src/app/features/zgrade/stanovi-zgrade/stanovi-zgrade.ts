@@ -16,12 +16,21 @@ import { FormaStana } from '../forma-stana/forma-stana';
 import { FormaViseStanova } from '../forma-vise-stanova/forma-vise-stanova';
 import { StanService } from '../stan-service';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 type Forma = 'jedan' | 'vise' | StanSaStanarima;
 
 @Component({
   selector: 'app-stanovi-zgrade',
-  imports: [ButtonModule, MessageModule, SkeletonModule, SpratPipe, FormaStana, FormaViseStanova],
+  imports: [
+    PokusajPonovo,
+    ButtonModule,
+    MessageModule,
+    SkeletonModule,
+    SpratPipe,
+    FormaStana,
+    FormaViseStanova,
+  ],
   providers: [AkcijeStore],
   templateUrl: './stanovi-zgrade.html',
   styleUrl: './stanovi-zgrade.scss',

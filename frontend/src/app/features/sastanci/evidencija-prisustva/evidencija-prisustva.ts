@@ -20,6 +20,7 @@ import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { stanova } from '../../glasanje/pravila-glasanja';
 import { PregledPrisustva, SpisakPrisustva, StanNaSpisku } from '../sastanak-models';
 import { SastanakService } from '../sastanak-service';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 function najavioDolazak(stan: StanNaSpisku): boolean {
   return stan.stanari.some((st) => st.dolazi === true);
@@ -34,7 +35,7 @@ function prisutniPoNajavi(spisak: SpisakPrisustva): Set<number> {
 }
 
 @Component({
-  imports: [DatePipe, ButtonModule, MessageModule, SkeletonModule, SpratPipe],
+  imports: [PokusajPonovo, DatePipe, ButtonModule, MessageModule, SkeletonModule, SpratPipe],
   providers: [AkcijeStore],
   selector: 'app-evidencija-prisustva',
   styleUrl: './evidencija-prisustva.scss',

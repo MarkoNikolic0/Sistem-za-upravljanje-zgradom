@@ -25,6 +25,7 @@ import { meniReda } from '../../../shared/liste/meni-reda';
 import { KorisniciSistema } from '../../korisnici/korisnici-sistema/korisnici-sistema';
 import { EmailVeza } from '../../../shared/email-veza/email-veza';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
+import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 const SVI = 'svi';
 type Izbor = number | typeof SVI;
@@ -36,6 +37,7 @@ interface Izabran {
 
 @Component({
   imports: [
+    PokusajPonovo,
     FormsModule,
     RouterLink,
     ButtonModule,
