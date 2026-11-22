@@ -7,13 +7,13 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -54,7 +54,7 @@ export class GlasanjeController {
     return this.glasanjeService.findAll(korisnik.id, korisnik.uloga, upit);
   }
 
-  // Pre :id, inače bi ParseIntPipe odbio reč odluke
+  // Pre :id, inače bi ParseIdPipe odbio reč odluke
   @Get('odluke')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   odlukeZgrade(
@@ -70,7 +70,7 @@ export class GlasanjeController {
 
   @Get(':id')
   findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.glasanjeService.findOne(id, korisnik.id, korisnik.uloga);
@@ -78,7 +78,7 @@ export class GlasanjeController {
 
   @Put(':id/glas')
   glasaj(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: GlasDto,
   ) {
@@ -92,7 +92,7 @@ export class GlasanjeController {
 
   @Delete(':id/glas')
   povuciGlas(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.glasoviService.povuciGlas(id, korisnik.id, korisnik.uloga);
@@ -101,7 +101,7 @@ export class GlasanjeController {
   @Patch(':id/zatvori')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   zatvori(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.glasanjeService.zatvori(id, korisnik.id, korisnik.uloga);
@@ -111,7 +111,7 @@ export class GlasanjeController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.glasanjeService.remove(id, korisnik.id, korisnik.uloga);

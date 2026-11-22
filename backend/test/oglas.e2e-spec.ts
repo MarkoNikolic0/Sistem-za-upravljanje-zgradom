@@ -107,6 +107,16 @@ describe('oglasi, dokumenti i kontakti', () => {
       expect(await idsUListi(z.upravnik)).toContain(oglas);
       const autoru = await kao(t, z.vlasnik).get(`/oglas/${oglas}`).expect(200);
       expect(autoru.body.razlogSakrivanja).toBe('Nije za oglasnu tablu.');
+      const obavestenja = await kao(t, z.vlasnik)
+        .get('/notifikacija?poStrani=50')
+        .expect(200);
+      expect(obavestenja.body.stavke).toContainEqual(
+        expect.objectContaining({
+          tip: 'oglas_sakriven',
+          tekst: `Tvoj oglas „${noviOglas(z.id).naslov}“ je sakriven. Razlog: Nije za oglasnu tablu.`,
+          link: '/oglasi',
+        }),
+      );
 
       await kao(t, z.vlasnik)
         .patch(`/oglas/${oglas}`)
@@ -132,6 +142,21 @@ describe('oglasi, dokumenti i kontakti', () => {
         .send({ naslov: 'Ispravka upravnika' })
         .expect(403);
       await kao(t, z.upravnik).delete(`/oglas/${tudj}`).expect(403);
+    });
+
+    it('sakriven tuđ oglas briše i upravnik zgrade, a ostali stanari ne', async () => {
+      const oglas = await objavi();
+      await kao(t, z.upravnik)
+        .patch(`/oglas/${oglas}/sakrij`)
+        .send({ razlog: 'Ne pripada oglasnoj tabli.' })
+        .expect(200);
+      const upravniku = await kao(t, z.upravnik)
+        .get(`/oglas/${oglas}`)
+        .expect(200);
+      expect(upravniku.body.smeDaObrise).toBe(true);
+      await kao(t, z.sused).delete(`/oglas/${oglas}`).expect(404);
+      await kao(t, z.upravnik).delete(`/oglas/${oglas}`).expect(204);
+      await kao(t, z.vlasnik).get(`/oglas/${oglas}`).expect(404);
     });
 
     it('istekao oglas vidi samo autor, koji može da ga obnovi na 30 dana', async () => {

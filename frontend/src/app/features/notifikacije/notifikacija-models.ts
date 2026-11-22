@@ -12,7 +12,8 @@ export type TipNotifikacije =
   | 'sastanak_izmenjen'
   | 'sastanak_otkazan'
   | 'glasanje_novo'
-  | 'vazno_obavestenje';
+  | 'vazno_obavestenje'
+  | 'oglas_sakriven';
 
 export interface Notifikacija {
   id: number;
@@ -48,6 +49,7 @@ export const DOGADJAJI_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   sastanak_otkazan: 'Sastanak je otkazan',
   glasanje_novo: 'Novo glasanje',
   vazno_obavestenje: 'Važno obaveštenje',
+  oglas_sakriven: 'Oglas je sakriven',
 };
 
 export function odeljakLinka(link: string): string {
@@ -73,6 +75,7 @@ export const IKONICE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   sastanak_otkazan: 'pi pi-calendar-times',
   glasanje_novo: 'pi pi-check-square',
   vazno_obavestenje: 'pi pi-megaphone',
+  oglas_sakriven: 'pi pi-eye-slash',
 };
 
 const KVAR = 'var(--color-upozorenje)';
@@ -94,6 +97,7 @@ export const BOJE_NOTIFIKACIJA: Record<TipNotifikacije, string> = {
   sastanak_otkazan: SASTANAK,
   glasanje_novo: 'var(--color-uspeh)',
   vazno_obavestenje: 'var(--color-greska)',
+  oglas_sakriven: 'var(--color-upozorenje)',
 };
 
 export function doPonoci(sada = new Date()): number {

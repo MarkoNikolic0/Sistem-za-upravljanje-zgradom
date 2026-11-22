@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -19,6 +20,7 @@ import { povratakNaPovezivanje } from '../pristup/poziv-u-zgradu';
 export class PotvrdaEmaila {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private location = inject(Location);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   private readonly adresa = inject(ActivatedRoute).snapshot.queryParamMap;
@@ -34,7 +36,8 @@ export class PotvrdaEmaila {
 
   constructor() {
     if (this.token) {
-      void this.router.navigate([], { replaceUrl: true });
+      // Token se skida iz adrese bez nove navigacije, da forma ne bi bila iscrtana ponovo
+      this.location.replaceState(this.location.path().split('?')[0]);
     }
   }
 

@@ -1,12 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Controller,
-  Delete,
-  Param,
-  ParseIntPipe,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Delete, Param, Put, UseGuards } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -20,7 +14,7 @@ export class PratilacKvaraController {
 
   @Put()
   prati(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.pratilacKvaraService.prati(kvarId, korisnik.id, korisnik.uloga);
@@ -28,7 +22,7 @@ export class PratilacKvaraController {
 
   @Delete()
   prestani(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.pratilacKvaraService.prestani(

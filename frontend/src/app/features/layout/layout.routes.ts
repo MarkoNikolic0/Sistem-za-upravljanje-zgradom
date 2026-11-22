@@ -6,7 +6,9 @@ import { neprocitaniOglasiFeature } from '../oglasi/neprocitani-oglasi-store/nep
 import * as neprocitaniOglasiEffects from '../oglasi/neprocitani-oglasi-store/neprocitani-oglasi-effects';
 import { cekaGlasFeature } from '../glasanje/ceka-glas-store/ceka-glas-reducer';
 import * as cekaGlasEffects from '../glasanje/ceka-glas-store/ceka-glas-effects';
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
+import { AuthStore } from '../auth/sesija/auth-store';
 import { AppLayout } from './app-layout/app-layout';
 import { ulogaGuard } from '../auth/pristup/uloga-guard';
 import { pocetnaGuard } from '../auth/pristup/pocetna-guard';
@@ -91,7 +93,11 @@ export default [
         canActivate: [ulogaGuard('upravnik', 'admin')],
         loadComponent: () =>
           import('../stanari/stanari-zgrade/stanari-zgrade').then((m) => m.StanariZgrade),
-        title: 'Stanari | Upravljanje zgradom',
+        // Admin ovde vidi sve naloge, pa se stranica kod njega zove Korisnici
+        title: () =>
+          inject(AuthStore).korisnik()?.uloga === 'admin'
+            ? 'Korisnici | Upravljanje zgradom'
+            : 'Stanari | Upravljanje zgradom',
       },
       {
         path: 'zgrade',

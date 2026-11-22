@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputPasswordModule } from 'primeng/inputpassword';
@@ -48,6 +49,7 @@ export class NovaLozinka {
   private authService = inject(AuthService);
   private authStore = inject(AuthStore);
   private router = inject(Router);
+  private location = inject(Location);
   private readonly fokusiraj = fokusPosleCrtanja();
 
   protected readonly token = inject(ActivatedRoute).snapshot.queryParamMap.get('token');
@@ -69,7 +71,8 @@ export class NovaLozinka {
 
   constructor() {
     if (this.token) {
-      void this.router.navigate([], { replaceUrl: true });
+      // Token se skida iz adrese bez nove navigacije, da forma ne bi bila iscrtana ponovo
+      this.location.replaceState(this.location.path().split('?')[0]);
     }
   }
 

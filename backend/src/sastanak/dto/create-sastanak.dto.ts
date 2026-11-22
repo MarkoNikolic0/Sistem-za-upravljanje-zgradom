@@ -37,8 +37,8 @@ export class TackaDto {
   opis?: string;
 
   @IsOptional()
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'Izaberi odluku.' })
+  @IsPositive({ message: 'Izaberi odluku.' })
   odlukaId?: number;
 }
 
@@ -74,7 +74,7 @@ export class CreateSastanakDto {
 
   // Bez podrazumevane vrednosti: PartialType bi je preneo u izmenu i tiho skidao oznaku
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'Oznaka Hitna sednica nije ispravna.' })
   hitno?: boolean;
 
   @ValidateNested({ each: true })
@@ -86,7 +86,7 @@ export class CreateSastanakDto {
   @IsArray({ message: 'Dodaj bar jednu tačku dnevnog reda.' })
   tacke: TackaDto[];
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'Izaberi zgradu.' })
+  @IsPositive({ message: 'Izaberi zgradu.' })
   zgradaId: number;
 }

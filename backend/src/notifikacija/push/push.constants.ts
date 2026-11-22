@@ -29,4 +29,5 @@ export const NASLOVI_PUSH: Record<TipNotifikacije, string> = {
   [TipNotifikacije.SASTANAK_OTKAZAN]: 'Sastanak je otkazan',
   [TipNotifikacije.GLASANJE_NOVO]: 'Novo glasanje',
   [TipNotifikacije.VAZNO_OBAVESTENJE]: 'Važno obaveštenje',
+  [TipNotifikacije.OGLAS_SAKRIVEN]: 'Oglas je sakriven',
 };

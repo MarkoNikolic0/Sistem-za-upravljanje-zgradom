@@ -5,10 +5,10 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -28,7 +28,7 @@ export class PrisustvoSastankaController {
 
   @Put('najava')
   najavi(
-    @Param('sastanakId', ParseIntPipe) sastanakId: number,
+    @Param('sastanakId', ParseIdPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: NajavaPrisustvaDto,
   ) {
@@ -42,7 +42,7 @@ export class PrisustvoSastankaController {
 
   @Delete('najava')
   povuci(
-    @Param('sastanakId', ParseIntPipe) sastanakId: number,
+    @Param('sastanakId', ParseIdPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.prisustvoService.povuci(
@@ -55,7 +55,7 @@ export class PrisustvoSastankaController {
   @Get('prisustvo')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   spisak(
-    @Param('sastanakId', ParseIntPipe) sastanakId: number,
+    @Param('sastanakId', ParseIdPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.prisustvoService.spisak(
@@ -68,7 +68,7 @@ export class PrisustvoSastankaController {
   @Put('prisustvo')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   evidentiraj(
-    @Param('sastanakId', ParseIntPipe) sastanakId: number,
+    @Param('sastanakId', ParseIdPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: EvidencijaPrisustvaDto,
   ) {

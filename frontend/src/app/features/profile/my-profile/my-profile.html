@@ -149,7 +149,7 @@
         </dl>
       }
     </section>
-    <app-change-password />
+    <app-change-password (otvorena)="sacuvano.set(false); greska.set('')" />
     @if (p.upravlja.length > 0) {
       <section class="odeljak" aria-labelledby="zgrada-upravnika">
         <div class="zaglavlje-odeljka">

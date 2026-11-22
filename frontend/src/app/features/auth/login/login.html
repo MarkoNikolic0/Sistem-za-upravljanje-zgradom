@@ -1,7 +1,7 @@
 <app-auth-layout>
   <h1 class="naslov-stranice">Prijavi se</h1>
 
-  <div aria-live="polite" class="mt-6 empty:hidden">
+  <div id="poruka-prijave" tabindex="-1" aria-live="polite" class="mt-6 outline-none empty:hidden">
     @if (obavestenje()) {
       <p-message severity="success">{{ obavestenje() }}</p-message>
     }

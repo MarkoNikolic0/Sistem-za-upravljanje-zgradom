@@ -16,6 +16,7 @@ import { kadaJe, poMesecima, tacaka } from '../pravila-sastanka';
 import { Store } from '@ngrx/store';
 import { notifikacijeFeature } from '../../notifikacije/notifikacija-store/notifikacije-reducer';
 import { NovoObavestenje } from '../../notifikacije/novo-obavestenje/novo-obavestenje';
+import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
 
 @Component({
   imports: [
@@ -78,4 +79,11 @@ export class ListaSastanaka {
     this.store.sastanci().filter((s) => s !== this.sledeci()),
   );
   protected readonly meseci = computed(() => poMesecima(this.ostali()));
+
+  constructor() {
+    osveziNaNotifikaciju(
+      ({ link }) => !!link?.startsWith('/sastanci/'),
+      () => this.store.ucitaj(),
+    );
+  }
 }

@@ -8,16 +8,25 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { ZgradaService } from '../../zgrade/zgrada-service';
 import { ZahtevService } from '../zahtev-service';
-import { BOJE_STATUSA_ZAHTEVA, NAZIVI_STATUSA_ZAHTEVA } from '../zahtev-models';
+import { BOJE_STATUSA_ZAHTEVA, NAZIVI_STATUSA_ZAHTEVA, ZahtevResponse } from '../zahtev-models';
 import { nazivSprata, SpratPipe } from '../../../shared/spratovi/sprat-pipe';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { TagModule } from 'primeng/tag';
 import { porukaServera } from '../../../shared/forme/greske-servera';
 import { ispravanIdIzAdrese } from '../../../shared/ispravan-id';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  imports: [ReactiveFormsModule, ButtonModule, MessageModule, SelectModule, TagModule, SpratPipe],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    ButtonModule,
+    MessageModule,
+    SelectModule,
+    TagModule,
+    SpratPipe,
+  ],
   selector: 'app-novi-zahtev',
   styleUrl: './novi-zahtev.scss',
   templateUrl: './novi-zahtev.html',
@@ -36,6 +45,9 @@ export class NoviZahtev {
   protected readonly salje = signal(false);
   protected readonly greska = signal('');
   protected readonly poslat = signal(false);
+  protected readonly obradjen = signal<ZahtevResponse | null>(null);
+  private readonly prihvaceniSada = signal<ReadonlySet<number>>(new Set());
+  private naCekanju = new Set<number>();
 
   protected readonly forma = this.fb.group({
     zgradaId: this.fb.control<number | null>(null, Validators.required),
@@ -72,7 +84,11 @@ export class NoviZahtev {
   );
 
   protected readonly neobradjeni = computed(() =>
-    this.zahtevi.hasValue() ? this.zahtevi.value().filter((z) => z.status !== 'prihvacen') : [],
+    this.zahtevi.hasValue()
+      ? this.zahtevi
+          .value()
+          .filter((z) => z.status !== 'prihvacen' || this.prihvaceniSada().has(z.id))
+      : [],
   );
 
   constructor() {
@@ -83,6 +99,26 @@ export class NoviZahtev {
     this.forma.controls.zgradaId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.forma.controls.stanId.reset());
+
+    // Upravnik je obradio zahtev dok je stranica otvorena: stara poruka više ne važi
+    effect(() => {
+      if (!this.zahtevi.hasValue()) {
+        return;
+      }
+      const zahtevi = this.zahtevi.value();
+      const obradjen = zahtevi.find((z) => z.status !== 'na_cekanju' && this.naCekanju.has(z.id));
+      this.naCekanju = new Set(zahtevi.filter((z) => z.status === 'na_cekanju').map((z) => z.id));
+      if (obradjen) {
+        untracked(() => {
+          this.poslat.set(false);
+          this.greska.set('');
+          this.obradjen.set(obradjen);
+          if (obradjen.status === 'prihvacen') {
+            this.prihvaceniSada.update((ids) => new Set([...ids, obradjen.id]));
+          }
+        });
+      }
+    });
 
     effect(() => {
       const zgrada = this.zgradaIzLinka();
@@ -106,6 +142,7 @@ export class NoviZahtev {
 
     this.greska.set('');
     this.poslat.set(false);
+    this.obradjen.set(null);
     this.salje.set(true);
 
     this.zahtevService

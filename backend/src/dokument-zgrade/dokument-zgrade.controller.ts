@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -15,6 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -40,7 +40,7 @@ export class DokumentZgradeController {
 
   @Get()
   findAll(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Query() upit: DokumentUpitDto,
   ) {
@@ -58,7 +58,7 @@ export class DokumentZgradeController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: DokumentUploadDto })
   create(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: CreateDokumentDto,
     @UploadedFile(proveraFajla('fajl', 'Dokument'))
@@ -76,8 +76,8 @@ export class DokumentZgradeController {
   @Patch(':id')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   update(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateDokumentDto,
   ) {
@@ -94,8 +94,8 @@ export class DokumentZgradeController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.dokumentService.remove(

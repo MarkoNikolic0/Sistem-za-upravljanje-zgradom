@@ -179,7 +179,7 @@
                         [disabled]="store.akcijaUToku()"
                         (click)="obnovi(oglas)"
                       >
-                        Obnovi
+                        Obnovi<span class="sr-only"> oglas „{{ oglas.naslov }}“</span>
                       </button>
                     }
                     @if (oglas.smeDaMenja) {
@@ -189,7 +189,7 @@
                         text
                         size="small"
                         severity="secondary"
-                        >Izmeni</a
+                        >Izmeni<span class="sr-only"> oglas „{{ oglas.naslov }}“</span></a
                       >
                     }
                     @if (oglas.smeDaObrise) {
@@ -202,7 +202,7 @@
                         [disabled]="store.akcijaUToku()"
                         (click)="obrisi($event, oglas)"
                       >
-                        Obriši
+                        Obriši<span class="sr-only"> oglas „{{ oglas.naslov }}“</span>
                       </button>
                     }
                     @if (oglas.smeDaSakrije) {
@@ -215,7 +215,7 @@
                         severity="danger"
                         (click)="sakrivanjeId.set(oglas.id)"
                       >
-                        Sakrij
+                        Sakrij<span class="sr-only"> oglas „{{ oglas.naslov }}“</span>
                       </button>
                     }
                   </div>

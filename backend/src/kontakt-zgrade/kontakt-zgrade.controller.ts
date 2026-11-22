@@ -7,11 +7,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -31,7 +31,7 @@ export class KontaktZgradeController {
 
   @Get()
   findAll(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.kontaktService.findAll(zgradaId, korisnik.id, korisnik.uloga);
@@ -40,7 +40,7 @@ export class KontaktZgradeController {
   @Post()
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   create(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: CreateKontaktDto,
   ) {
@@ -55,8 +55,8 @@ export class KontaktZgradeController {
   @Patch(':id')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   update(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateKontaktDto,
   ) {
@@ -73,8 +73,8 @@ export class KontaktZgradeController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.kontaktService.remove(

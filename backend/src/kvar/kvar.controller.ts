@@ -5,12 +5,12 @@ import {
   Get,
   Param,
   ParseEnumPipe,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { KvarService } from './kvar.service.js';
@@ -86,7 +86,7 @@ export class KvarController {
 
   @Get(':id')
   findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.kvarService.findDetalj(id, korisnik.id, korisnik.uloga);
@@ -96,7 +96,7 @@ export class KvarController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/prihvati')
   prihvati(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.kvarAkcijeService.prihvati(id, korisnik.id, korisnik.uloga);
@@ -106,7 +106,7 @@ export class KvarController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/odbij')
   odbij(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: RazlogDto,
   ) {
@@ -115,7 +115,7 @@ export class KvarController {
 
   @Patch(':id/povuci')
   povuci(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: OpcioniRazlogDto,
   ) {
@@ -126,7 +126,7 @@ export class KvarController {
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Patch(':id/prioritet')
   postaviPrioritet(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PostaviPrioritetDto,
   ) {
@@ -142,7 +142,7 @@ export class KvarController {
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Patch(':id/dodeli')
   dodeliServisera(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: DodeliServiseraDto,
   ) {
@@ -158,7 +158,7 @@ export class KvarController {
   @Roles(Uloga.SERVISER)
   @Patch(':id/status')
   promeniStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStatusKvarDto,
   ) {
@@ -174,7 +174,7 @@ export class KvarController {
   @Roles(Uloga.SERVISER)
   @Patch(':id/dolazak')
   postaviDolazak(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PostaviDolazakDto,
   ) {
@@ -188,7 +188,7 @@ export class KvarController {
 
   @Patch(':id/potvrdi')
   potvrdi(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PotvrdaDto,
   ) {
@@ -197,7 +197,7 @@ export class KvarController {
 
   @Patch(':id/vrati')
   vrati(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: RazlogDto,
   ) {
@@ -208,7 +208,7 @@ export class KvarController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/zatvori')
   zatvori(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.kvarAkcijeService.zatvori(id, korisnik.id, korisnik.uloga);

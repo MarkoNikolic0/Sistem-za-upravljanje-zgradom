@@ -10,11 +10,13 @@ import { UkloniRazmake } from '../../shared/ukloni-razmake.js';
 import { MAKS_RAZLOG_ODBIJANJA } from '../zahtev-povezivanje.entity.js';
 
 export class ResponseZahtevDto {
-  @IsIn([StatusZahteva.PRIHVACEN, StatusZahteva.ODBIJEN])
+  @IsIn([StatusZahteva.PRIHVACEN, StatusZahteva.ODBIJEN], {
+    message: 'Izaberi prihvatanje ili odbijanje.',
+  })
   status: StatusZahteva;
 
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'Izaberi vlasnika ili ukućanina.' })
   vlasnik?: boolean;
 
   @UkloniRazmake()

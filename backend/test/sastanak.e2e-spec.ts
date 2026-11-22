@@ -204,6 +204,24 @@ describe('sastanci', () => {
         .expect(403);
     });
 
+    it('obaveštenje o izmeni kaže šta je promenjeno', async () => {
+      const sastanak = await zakazi(ZBOR);
+      await kao(t, z.upravnik)
+        .patch(`/sastanak/${sastanak}`)
+        .send({ lokacija: 'Dvorište' })
+        .expect(200);
+      const odgovor = await kao(t, z.ukucanin)
+        .get('/notifikacija?poStrani=50')
+        .expect(200);
+      const izmena = (
+        odgovor.body.stavke as { link: string; tip: string; tekst: string }[]
+      ).find(
+        (n) =>
+          n.link === `/sastanci/${sastanak}` && n.tip === 'sastanak_izmenjen',
+      );
+      expect(izmena?.tekst).toMatch(/je izmenjen. Novo mesto: Dvorište.$/);
+    });
+
     it('zbor ne postaje skupština ako je termin preblizu', async () => {
       const zbor = await zakazi(ZBOR, { pocetak: zaDana(1) });
       await kao(t, z.upravnik)

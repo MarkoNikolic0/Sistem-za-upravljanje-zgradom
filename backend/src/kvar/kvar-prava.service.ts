@@ -74,6 +74,18 @@ export class KvarPravaService {
     ];
   }
 
+  // Isto kao smeDaPotvrdi, ograničeno na kvarove koje korisnik vidi kao stanar
+  async usloviPotvrde(
+    korisnikId: number,
+    zgradaId?: number,
+  ): Promise<FindOptionsWhere<Kvar>[]> {
+    const [uStanu, zajednicki] = await this.usloviStanara(korisnikId, zgradaId);
+    if (!uStanu) {
+      return [];
+    }
+    return [uStanu, { ...zajednicki, korisnik: { id: korisnikId } }];
+  }
+
   async smeDaVidi(
     kvar: Kvar,
     korisnikId: number,

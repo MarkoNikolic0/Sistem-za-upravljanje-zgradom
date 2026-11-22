@@ -37,7 +37,9 @@ export class Danas {
   private readonly upravnik = computed(() => this.profil().uloga === 'upravnik');
 
   protected readonly pregled = inject(ZgradaService).pregled(this.upravnik);
-  protected readonly kvarovi = inject(KvarService).najnoviji(1, this.zgrada);
+  private readonly kvarService = inject(KvarService);
+  protected readonly kvarovi = this.kvarService.najnoviji(1, this.zgrada);
+  private readonly zaPotvrdu = this.kvarService.zaPotvrdu(this.zgrada);
   protected readonly glasanja = inject(GlasanjeService).aktivna(NAJVISE_AKTIVNIH, this.zgrada);
   protected readonly sastanci = inject(SastanakService).predstojeci(BROJ_SASTANAKA, this.zgrada);
   protected readonly oglasi = inject(OglasService).najnoviji(BROJ_OGLASA, this.zgrada);
@@ -45,6 +47,7 @@ export class Danas {
   private readonly resursi = computed((): WritableResource<unknown>[] => [
     ...(this.upravnik() ? [this.pregled] : []),
     this.kvarovi,
+    this.zaPotvrdu,
     this.glasanja,
     this.sastanci,
     this.oglasi,
@@ -63,6 +66,7 @@ export class Danas {
       sastanci: this.sastanci.hasValue() ? this.sastanci.value().stavke : [],
       glasanja: this.glasanja.hasValue() ? this.glasanja.value().stavke : [],
       oglasi: this.oglasi.hasValue() ? this.oglasi.value().stavke : [],
+      zaPotvrdu: this.zaPotvrdu.hasValue() ? this.zaPotvrdu.value() : null,
     }),
   );
   private readonly pregledZgrade = computed(() => {

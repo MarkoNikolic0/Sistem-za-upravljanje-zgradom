@@ -1,6 +1,8 @@
 import { Glasanje } from '../../glasanje/glasanje-models';
 import { cekaGlas } from '../../glasanje/pravila-glasanja';
 import { Oglas } from '../../oglasi/oglas-models';
+import { Kvar } from '../../kvarovi/kvar-models';
+import { Stranica } from '../../../shared/liste/stranica';
 import { Sastanak, VRSTE_SASTANKA } from '../../sastanci/sastanak-models';
 import { kadaJe } from '../../sastanci/pravila-sastanka';
 import { PregledZgrade } from '../../zgrade/zgrada-models';
@@ -24,6 +26,7 @@ export interface PodaciDanas {
   sastanci: Sastanak[];
   glasanja: Glasanje[];
   oglasi: Oglas[];
+  zaPotvrdu: Stranica<Kvar> | null;
 }
 
 // Sastanak se ističe kad je za najviše 7 dana, obaveštenje dok je novije od 3 dana
@@ -49,7 +52,13 @@ function kadaSastanak(pocetak: string): string {
   return `Za ${uMnozini(dana, 'dan', 'dana', 'dana')}, u ${sat}`;
 }
 
-export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): StavkaDanas[] {
+export function zaDanas({
+  pregled,
+  sastanci,
+  glasanja,
+  oglasi,
+  zaPotvrdu,
+}: PodaciDanas): StavkaDanas[] {
   const stavke: { vaznost: number; stavka: StavkaDanas }[] = [];
   const dodaj = (vaznost: number, stavka: StavkaDanas) => stavke.push({ vaznost, stavka });
 
@@ -98,6 +107,22 @@ export function zaDanas({ pregled, sastanci, glasanja, oglasi }: PodaciDanas): S
             ? 'Ističe sutra'
             : `Ističe za ${uMnozini(istice, 'dan', 'dana', 'dana')}`,
       putanja: ['/glasanje'],
+      hitno: false,
+    });
+  }
+
+  const resen = zaPotvrdu?.stavke[0];
+  if (zaPotvrdu && resen) {
+    dodaj(3, {
+      kljuc: 'potvrda',
+      ikonica: 'pi pi-check-circle',
+      oznaka:
+        zaPotvrdu.ukupno === 1
+          ? 'Čeka tvoju potvrdu'
+          : `${uMnozini(zaPotvrdu.ukupno, 'kvar čeka', 'kvara čekaju', 'kvarova čeka')} tvoju potvrdu`,
+      naslov: resen.naslov,
+      opis: 'Serviser je završio popravku. Proveri da li sve radi.',
+      putanja: ['/kvarovi', resen.id],
       hitno: false,
     });
   }

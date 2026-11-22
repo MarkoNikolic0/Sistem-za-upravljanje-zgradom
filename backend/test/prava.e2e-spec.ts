@@ -272,11 +272,11 @@ describe('prava pristupa', () => {
       await kao(t, drugiServiser)
         .patch(`${kvar}/status`)
         .send({ status: 'u_toku' })
-        .expect(403);
+        .expect(404);
       await kao(t, drugiServiser)
         .patch(`${kvar}/dolazak`)
         .send({ dolazak: null })
-        .expect(403);
+        .expect(404);
     });
 
     it('među zgradama vidi samo one u kojima ima dodeljen kvar', async () => {
@@ -549,7 +549,7 @@ describe('prava pristupa', () => {
       await kao(t, upravnik).get(`/kvar/${sadrzaj.kvarZajednicki}`).expect(404);
       await kao(t, upravnik)
         .patch(`/kvar/${sadrzaj.kvarZajednicki}/prihvati`)
-        .expect(403);
+        .expect(404);
       await kao(t, upravnik).get(`/glasanje/${sadrzaj.anketa}`).expect(404);
     });
   });

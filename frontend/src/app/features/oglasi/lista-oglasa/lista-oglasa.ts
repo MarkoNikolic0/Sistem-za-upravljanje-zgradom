@@ -129,7 +129,10 @@ export class ListaOglasa {
     const dugme = event.currentTarget as HTMLElement;
     this.confirmationService.confirm({
       header: 'Brisanje oglasa',
-      message: `Obrisati oglas „${oglas.naslov}“? Ovo ne može da se poništi.`,
+      message:
+        oglas.autor.id === this.authStore.korisnik()?.id
+          ? `Obrisati oglas „${oglas.naslov}“? Ovo ne može da se poništi.`
+          : `Obrisati sakriven oglas „${oglas.naslov}“ (${oglas.autor.ime} ${oglas.autor.prezime}) sa prilozima? Ovo ne može da se poništi.`,
       ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         await this.store.obrisi(oglas.id);

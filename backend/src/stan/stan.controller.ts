@@ -5,11 +5,11 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { StanService } from './stan.service.js';
@@ -53,7 +53,7 @@ export class StanController {
   }
 
   @Get('zgrada/:zgradaId')
-  findByZgrada(@Param('zgradaId', ParseIntPipe) zgradaId: number) {
+  findByZgrada(@Param('zgradaId', ParseIdPipe) zgradaId: number) {
     return this.stanService.findByZgrada(zgradaId);
   }
 
@@ -61,7 +61,7 @@ export class StanController {
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStanDto,
   ) {
@@ -72,7 +72,7 @@ export class StanController {
   @Roles(Uloga.ADMIN, Uloga.UPRAVNIK)
   @Delete(':id')
   remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.stanService.remove(id, korisnik.id, korisnik.uloga);

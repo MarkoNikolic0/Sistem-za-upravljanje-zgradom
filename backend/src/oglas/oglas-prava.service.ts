@@ -16,7 +16,7 @@ import { istekao, vidljivSvima } from './oglas.constants.js';
 import { nePostoji } from '../shared/ne-postoji.js';
 
 // Šta sa oglasom sme samo onaj ko ga je objavio
-type RadnjaAutora = 'menja' | 'obriše' | 'obnovi';
+type RadnjaAutora = 'menja' | 'obnovi';
 
 @Injectable()
 export class OglasPravaService {
@@ -79,6 +79,23 @@ export class OglasPravaService {
       );
     }
     return dostupan;
+  }
+
+  async findZaBrisanje(id: number, korisnikId: number, uloga: Uloga) {
+    const dostupan = await this.findDostupan(id, korisnikId, uloga);
+    if (!this.smeDaObrise(dostupan.oglas, korisnikId, dostupan.p)) {
+      throw new ForbiddenException(
+        'Oglas briše onaj ko ga je objavio, a sakriven oglas i upravnik zgrade.',
+      );
+    }
+    return dostupan;
+  }
+
+  smeDaObrise(oglas: Oglas, korisnikId: number, p: PristupZgradama) {
+    return (
+      oglas.autor.id === korisnikId ||
+      (oglas.datumSakrivanja !== null && sadrzi(p.upravlja, oglas.zgrada.id))
+    );
   }
 
   smeDaSakrije(oglas: Oglas, korisnikId: number, p: PristupZgradama) {

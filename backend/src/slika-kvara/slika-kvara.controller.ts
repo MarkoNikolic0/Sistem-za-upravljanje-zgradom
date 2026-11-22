@@ -7,12 +7,12 @@ import {
   HttpStatus,
   Param,
   ParseFilePipeBuilder,
-  ParseIntPipe,
   Post,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
@@ -40,7 +40,7 @@ export class SlikaKvaraController {
 
   @Get()
   findZaKvar(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.slikaService.findZaKvar(kvarId, korisnik.id, korisnik.uloga);
@@ -53,7 +53,7 @@ export class SlikaKvaraController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: SlikaUploadDto })
   create(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @UploadedFile(PROVERA_TIPA) slika: Express.Multer.File | undefined,
   ) {
@@ -63,8 +63,8 @@ export class SlikaKvaraController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.slikaService.remove(kvarId, id, korisnik.id, korisnik.uloga);

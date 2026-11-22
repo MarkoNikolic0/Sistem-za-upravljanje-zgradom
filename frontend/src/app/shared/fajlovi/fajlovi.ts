@@ -14,24 +14,32 @@ export function pomocZaFajlove(pravila: PravilaFajlova): string {
     : osnovno;
 }
 
-export function greskaIzbora(
+// Ispravni fajlovi se prihvataju, a za odbijene se vraća jedna poruka
+export function proveriIzbor(
   fajlovi: File[],
   vecIma: number,
   pravila: PravilaFajlova,
-): string | null {
+): { ispravni: File[]; greska: string | null } {
   const { maksBroj, maksMb } = pravila;
   if (vecIma + fajlovi.length > maksBroj) {
-    return `${pravila.vlasnik} može imati najviše ${maksBroj} ${pravila.mnozina}. Možeš da dodaš još ${maksBroj - vecIma}.`;
+    return {
+      ispravni: [],
+      greska: `${pravila.vlasnik} može imati najviše ${maksBroj} ${pravila.mnozina}. Možeš da dodaš još ${maksBroj - vecIma}.`,
+    };
   }
-  for (const fajl of fajlovi) {
+  const greske: string[] = [];
+  const ispravni = fajlovi.filter((fajl) => {
     if (!pravila.tipovi.includes(fajl.type)) {
-      return `Fajl „${fajl.name}“ mora biti ${pravila.opisTipova}.`;
+      greske.push(`Fajl „${fajl.name}“ mora biti ${pravila.opisTipova}.`);
+      return false;
     }
     if (fajl.size > maksMb * 1024 * 1024) {
-      return `Fajl „${fajl.name}“ je veći od ${maksMb} MB.`;
+      greske.push(`Fajl „${fajl.name}“ je veći od ${maksMb} MB.`);
+      return false;
     }
-  }
-  return null;
+    return true;
+  });
+  return { ispravni, greska: greske.length > 0 ? greske.join(' ') : null };
 }
 
 export function jeSlika(tip: string): boolean {

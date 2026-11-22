@@ -63,6 +63,7 @@ interface IzmenaPoziva {
   staraVrsta: VrstaSastanka;
   vrsta: VrstaSastanka;
   ponisteneNajave: boolean;
+  promene: string[];
 }
 
 function kljucTacaka(tacke: TackaDto[]) {
@@ -265,6 +266,16 @@ export class SastanakService {
             staraVrsta: sastanak.vrsta,
             vrsta,
             ponisteneNajave,
+            promene: [
+              ...(pocetak.getTime() !== sastanak.pocetak.getTime()
+                ? [`Novi termin: ${danISat(pocetak)}.`]
+                : []),
+              ...(dto.lokacija !== undefined &&
+              dto.lokacija !== sastanak.lokacija
+                ? [`Novo mesto: ${dto.lokacija}.`]
+                : []),
+              ...(menjaTacke ? ['Promenjen je dnevni red.'] : []),
+            ],
           },
           korisnikId,
         );
@@ -342,8 +353,11 @@ export class SastanakService {
     await posalji(
       [...novi].filter((k) => stari.has(k)),
       TipNotifikacije.SASTANAK_IZMENJEN,
-      `Sastanak „${naslov}“ je izmenjen. Termin: ${danISat(pocetak)}.` +
-        (izmena.ponisteneNajave ? ' Potvrdi ponovo da li dolaziš.' : ''),
+      `Sastanak „${naslov}“ je izmenjen. ${
+        izmena.promene.length > 0
+          ? izmena.promene.join(' ')
+          : `Termin: ${danISat(pocetak)}.`
+      }` + (izmena.ponisteneNajave ? ' Potvrdi ponovo da li dolaziš.' : ''),
     );
     await posalji(
       [...novi].filter((k) => !stari.has(k)),

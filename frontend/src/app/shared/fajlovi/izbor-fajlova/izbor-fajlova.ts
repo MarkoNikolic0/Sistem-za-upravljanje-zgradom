@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { greskaIzbora, pomocZaFajlove, PravilaFajlova } from '../fajlovi';
+import { pomocZaFajlove, PravilaFajlova, proveriIzbor } from '../fajlovi';
 
 let sledeciId = 0;
 
@@ -29,11 +29,12 @@ export class IzborFajlova {
     if (fajlovi.length === 0) {
       return;
     }
-    const greska = greskaIzbora(fajlovi, this.vecIma(), this.pravila());
+    const { ispravni, greska } = proveriIzbor(fajlovi, this.vecIma(), this.pravila());
+    if (ispravni.length > 0) {
+      this.izabrano.emit(ispravni);
+    }
     if (greska) {
       this.greska.emit(greska);
-    } else {
-      this.izabrano.emit(fajlovi);
     }
   }
 }

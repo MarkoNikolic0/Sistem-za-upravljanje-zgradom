@@ -147,7 +147,15 @@ export const DetaljKvaraStore = signalStore(
           switchMap((id) =>
             kvarService.nadjiKvar(id).pipe(
               tapResponse({
-                next: (kvar) => prikazi(kvar),
+                next: (kvar) => {
+                  // Poruka uspeha opisuje stari status, a greška ostaje da je korisnik vidi
+                  const zastarela =
+                    store.porukaAkcije()?.tip === 'uspeh' && store.kvar()?.status !== kvar.status;
+                  prikazi(kvar);
+                  if (zastarela) {
+                    patchState(store, { porukaAkcije: null });
+                  }
+                },
                 error: (err: HttpErrorResponse) => {
                   if (nePostoji(err)) {
                     patchState(store, { kvar: null });

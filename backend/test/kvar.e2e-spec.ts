@@ -298,7 +298,7 @@ describe('kvarovi', () => {
         'Nije kvar zgrade.',
       );
       expect(await obavestenja(z.vlasnik, kvar)).toEqual([
-        'Prijava kvara „Curi cev“ je odbijena.',
+        'Prijava kvara „Curi cev“ je odbijena. Razlog: Nije kvar zgrade.',
       ]);
     });
 
@@ -383,8 +383,28 @@ describe('kvarovi', () => {
   describe('potvrda rešenja', () => {
     it('kvar u stanu potvrđuje bilo ko iz tog stana', async () => {
       const kvar = await doStatusa('resen', PRIVATNI_STAN);
-      await akcija(z.sused, kvar, 'potvrdi').expect(403);
+      await akcija(z.sused, kvar, 'potvrdi').expect(404);
       await akcija(z.ukucanin, kvar, 'potvrdi').expect(200);
+    });
+
+    it('lista za potvrdu daje samo rešene kvarove koje korisnik sme da potvrdi', async () => {
+      const uStanu = await doStatusa('resen', PRIVATNI_STAN);
+      const zajednicki = await doStatusa('resen');
+      const zaPotvrdu = async (akter: Akter) =>
+        (
+          await kao(t, akter)
+            .get('/kvar?zaPotvrdu=true&poStrani=50')
+            .expect(200)
+        ).body.stavke.map((k: { id: number }) => k.id) as number[];
+      expect(await zaPotvrdu(z.vlasnik)).toEqual(
+        expect.arrayContaining([uStanu, zajednicki]),
+      );
+      expect(await zaPotvrdu(z.ukucanin)).toContain(uStanu);
+      expect(await zaPotvrdu(z.ukucanin)).not.toContain(zajednicki);
+      expect(await zaPotvrdu(z.sused)).not.toContain(uStanu);
+      expect(await zaPotvrdu(z.sused)).not.toContain(zajednicki);
+      await akcija(z.vlasnik, uStanu, 'potvrdi').expect(200);
+      expect(await zaPotvrdu(z.ukucanin)).not.toContain(uStanu);
     });
 
     it('kvar u zajedničkom prostoru potvrđuje onaj ko ga je prijavio', async () => {
@@ -521,7 +541,7 @@ describe('kvarovi', () => {
         dolazakServisera: null,
       });
       await kao(t, serviser).get(`/kvar/${kvar}`).expect(404);
-      await status(kvar, 'u_toku').expect(403);
+      await status(kvar, 'u_toku').expect(404);
       await status(kvar, 'u_toku', drugiServiser).expect(200);
       expect(await obavestenja(serviser, kvar)).toContain(
         'Kvar „Curi cev“ je dodeljen drugom serviseru.',

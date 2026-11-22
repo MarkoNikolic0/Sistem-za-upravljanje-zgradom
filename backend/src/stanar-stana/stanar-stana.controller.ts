@@ -7,10 +7,10 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -29,7 +29,7 @@ export class StanarStanaController {
 
   @Get()
   findAll(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.stanarStanaService.findAll(
@@ -41,8 +41,8 @@ export class StanarStanaController {
 
   @Patch(':id')
   update(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateStanarStanaDto,
   ) {
@@ -58,8 +58,8 @@ export class StanarStanaController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('zgradaId', ParseIntPipe) zgradaId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('zgradaId', ParseIdPipe) zgradaId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.stanarStanaService.remove(

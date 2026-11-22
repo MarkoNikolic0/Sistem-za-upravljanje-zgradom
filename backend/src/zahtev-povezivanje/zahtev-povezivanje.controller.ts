@@ -4,12 +4,12 @@ import {
   Controller,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { ZahtevPovezivanjeService } from './zahtev-povezivanje.service.js';
@@ -41,7 +41,7 @@ export class ZahtevPovezivanjeController {
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   @Patch(':id/obradjen')
   response(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: ResponseZahtevDto,
   ) {

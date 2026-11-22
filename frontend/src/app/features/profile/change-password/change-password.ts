@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
@@ -26,6 +26,8 @@ export class ChangePassword {
   protected readonly minDuzinaLozinke = MIN_DUZINA_LOZINKE;
   protected readonly maxDuzinaLozinke = MAX_DUZINA_LOZINKE;
 
+  readonly otvorena = output<void>();
+
   protected readonly otvoreno = signal(false);
   protected readonly salje = signal(false);
   protected readonly greska = signal('');
@@ -49,12 +51,18 @@ export class ChangePassword {
     this.greska.set('');
     this.promenjena.set(false);
     this.otvoreno.set(true);
+    this.otvorena.emit();
     this.fokusiraj('#trenutnaLozinka');
   }
 
   otkazi(): void {
     this.otvoreno.set(false);
     this.fokusiraj('#promeni-lozinku');
+  }
+
+  // Jedna poruka na stranici: kad se menjaju lični podaci, stara o lozinki se sklanja
+  ukloniPoruku(): void {
+    this.promenjena.set(false);
   }
 
   sacuvaj(): void {

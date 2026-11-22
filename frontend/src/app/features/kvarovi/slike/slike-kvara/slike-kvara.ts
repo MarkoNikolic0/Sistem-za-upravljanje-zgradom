@@ -72,6 +72,16 @@ export class SlikeKvara {
     return autor || this.kvar().smeDaUpravlja;
   }
 
+  private odbijeno = '';
+
+  protected odbij(greska: string): void {
+    if (this.otpremanje()) {
+      this.odbijeno = greska;
+    } else {
+      this.poruka.set({ tip: 'greska', tekst: greska });
+    }
+  }
+
   protected async otpremi(fajlovi: File[]): Promise<void> {
     const kvarId = this.kvar().id;
     const nisuDodate: string[] = [];
@@ -93,13 +103,20 @@ export class SlikeKvara {
       this.detaljStore.osvezi(kvarId);
     }
 
+    const odbijeno = this.odbijeno;
+    this.odbijeno = '';
     if (nisuDodate.length > 0) {
-      this.poruka.set({ tip: 'greska', tekst: `Nije dodato: ${nisuDodate.join(', ')}. ${razlog}` });
-    } else {
       this.poruka.set({
-        tip: 'uspeh',
-        tekst: fajlovi.length === 1 ? 'Slika je dodata.' : 'Slike su dodate.',
+        tip: 'greska',
+        tekst: `Nije dodato: ${nisuDodate.join(', ')}. ${razlog} ${odbijeno}`.trim(),
       });
+    } else {
+      const uspeh = fajlovi.length === 1 ? 'Slika je dodata.' : 'Slike su dodate.';
+      this.poruka.set(
+        odbijeno
+          ? { tip: 'greska', tekst: `${uspeh} ${odbijeno}` }
+          : { tip: 'uspeh', tekst: uspeh },
+      );
     }
     this.fokusiraj(this.mozeJos() ? 'app-izbor-fajlova button' : '#slike-naslov');
   }

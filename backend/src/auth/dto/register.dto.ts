@@ -38,7 +38,7 @@ export class RegisterDto {
   lozinka: string;
 
   @IsOptional()
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'Zgrada nije ispravna.' })
+  @IsPositive({ message: 'Zgrada nije ispravna.' })
   zgradaId?: number;
 }

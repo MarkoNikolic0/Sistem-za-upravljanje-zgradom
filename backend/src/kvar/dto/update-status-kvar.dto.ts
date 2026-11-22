@@ -4,6 +4,8 @@ import { StatusKvara } from '../../shared/enums/kvar.enums.js';
 export type StatusRadaServisera = StatusKvara.U_TOKU | StatusKvara.RESEN;
 
 export class UpdateStatusKvarDto {
-  @IsIn([StatusKvara.U_TOKU, StatusKvara.RESEN])
+  @IsIn([StatusKvara.U_TOKU, StatusKvara.RESEN], {
+    message: 'Status rada nije ispravan.',
+  })
   status: StatusRadaServisera;
 }

@@ -11,7 +11,7 @@ import { PodaciStanaDto } from './create-stan.dto.js';
 export const MAKS_STANOVA_ODJEDNOM = 200;
 
 export class CreateStanoviDto {
-  @IsInt()
+  @IsInt({ message: 'Izaberi zgradu.' })
   zgradaId: number;
 
   @ValidateNested({ each: true })
@@ -20,6 +20,6 @@ export class CreateStanoviDto {
     message: `Odjednom se može dodati najviše ${MAKS_STANOVA_ODJEDNOM} stanova.`,
   })
   @ArrayMinSize(1, { message: 'Dodaj bar jedan stan.' })
-  @IsArray()
+  @IsArray({ message: 'Unesi stanove.' })
   stanovi: PodaciStanaDto[];
 }

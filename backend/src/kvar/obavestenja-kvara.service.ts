@@ -16,6 +16,7 @@ interface PromenaStatusa {
   status: StatusKvara;
   akterId?: number;
   noviServiserId?: number;
+  razlog?: string;
 }
 
 @Injectable()
@@ -46,7 +47,10 @@ export class ObavestenjaKvaraService {
           `Upravnik je prihvatio prijavu kvara ${naslov}.`,
         );
       case StatusKvara.ODBIJEN:
-        return posalji(await stanari(), `Prijava kvara ${naslov} je odbijena.`);
+        return posalji(
+          await stanari(),
+          `Prijava kvara ${naslov} je odbijena. Razlog: ${p.razlog}`,
+        );
       case StatusKvara.POVUCEN:
         return posalji(
           await upravnik(),

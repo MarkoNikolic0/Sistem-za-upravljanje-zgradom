@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
@@ -58,6 +58,7 @@ export class MyProfile {
   protected readonly salje = signal(false);
   protected readonly greska = signal('');
   protected readonly sacuvano = signal(false);
+  private readonly lozinka = viewChild(ChangePassword);
 
   protected readonly maxDuzinaImena = MAX_DUZINA_IMENA;
 
@@ -84,6 +85,7 @@ export class MyProfile {
     });
     this.greska.set('');
     this.sacuvano.set(false);
+    this.lozinka()?.ukloniPoruku();
     this.izmena.set(true);
     this.fokusiraj('#ime');
   }

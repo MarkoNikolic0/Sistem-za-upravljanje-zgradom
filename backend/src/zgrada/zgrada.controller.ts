@@ -7,12 +7,12 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { ZgradaService } from './zgrada.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -65,28 +65,28 @@ export class ZgradaController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseIdPipe) id: number) {
     return this.zgradaService.findOne(id);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN)
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateZgradaDto) {
+  update(@Param('id', ParseIdPipe) id: number, @Body() dto: UpdateZgradaDto) {
     return this.zgradaService.update(id, dto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id', ParseIdPipe) id: number) {
     return this.zgradaService.remove(id);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Uloga.ADMIN)
   @Get(':id/upravnik')
-  upravnik(@Param('id', ParseIntPipe) id: number) {
+  upravnik(@Param('id', ParseIdPipe) id: number) {
     return this.upravnikService.find(id);
   }
 
@@ -94,7 +94,7 @@ export class ZgradaController {
   @Roles(Uloga.ADMIN)
   @Put(':id/upravnik')
   postaviUpravnika(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @Body() dto: PostaviUpravnikaDto,
   ) {
     return this.upravnikService.postavi(id, dto.korisnikId);
@@ -104,7 +104,7 @@ export class ZgradaController {
   @Roles(Uloga.ADMIN)
   @Delete(':id/upravnik')
   @HttpCode(HttpStatus.NO_CONTENT)
-  razresiUpravnika(@Param('id', ParseIntPipe) id: number) {
+  razresiUpravnika(@Param('id', ParseIdPipe) id: number) {
     return this.upravnikService.razresi(id);
   }
 
@@ -112,7 +112,7 @@ export class ZgradaController {
   @Roles(Uloga.ADMIN)
   @Put(':id/arhiva')
   @HttpCode(HttpStatus.NO_CONTENT)
-  arhiviraj(@Param('id', ParseIntPipe) id: number) {
+  arhiviraj(@Param('id', ParseIdPipe) id: number) {
     return this.arhivaService.arhiviraj(id);
   }
 
@@ -120,7 +120,7 @@ export class ZgradaController {
   @Roles(Uloga.ADMIN)
   @Delete(':id/arhiva')
   @HttpCode(HttpStatus.NO_CONTENT)
-  vrati(@Param('id', ParseIntPipe) id: number) {
+  vrati(@Param('id', ParseIdPipe) id: number) {
     return this.arhivaService.vrati(id);
   }
 }

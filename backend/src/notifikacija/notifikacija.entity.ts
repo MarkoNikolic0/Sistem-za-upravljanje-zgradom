@@ -24,6 +24,7 @@ export enum TipNotifikacije {
   SASTANAK_OTKAZAN = 'sastanak_otkazan',
   GLASANJE_NOVO = 'glasanje_novo',
   VAZNO_OBAVESTENJE = 'vazno_obavestenje',
+  OGLAS_SAKRIVEN = 'oglas_sakriven',
 }
 
 @Entity()

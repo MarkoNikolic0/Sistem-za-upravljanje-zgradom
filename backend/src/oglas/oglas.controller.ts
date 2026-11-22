@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Put,
@@ -16,6 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -74,7 +74,7 @@ export class OglasController {
 
   @Get(':id')
   findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.oglasService.findDetalj(id, korisnik.id, korisnik.uloga);
@@ -82,7 +82,7 @@ export class OglasController {
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateOglasDto,
   ) {
@@ -91,7 +91,7 @@ export class OglasController {
 
   @Patch(':id/sakrij')
   sakrij(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: SakrijOglasDto,
   ) {
@@ -100,7 +100,7 @@ export class OglasController {
 
   @Patch(':id/obnovi')
   obnovi(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.oglasService.obnovi(id, korisnik.id, korisnik.uloga);
@@ -111,7 +111,7 @@ export class OglasController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: PrilogUploadDto })
   dodajPrilog(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @UploadedFile(proveraFajla('prilog', 'Prilog'))
     prilog: Express.Multer.File | undefined,
@@ -127,8 +127,8 @@ export class OglasController {
   @Delete(':id/prilog/:prilogId')
   @HttpCode(HttpStatus.NO_CONTENT)
   obrisiPrilog(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('prilogId', ParseIntPipe) prilogId: number,
+    @Param('id', ParseIdPipe) id: number,
+    @Param('prilogId', ParseIdPipe) prilogId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.oglasService.obrisiPrilog(
@@ -142,7 +142,7 @@ export class OglasController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.oglasService.remove(id, korisnik.id, korisnik.uloga);

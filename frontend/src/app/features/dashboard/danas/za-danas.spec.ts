@@ -1,7 +1,21 @@
-import { glasanje, oglas, pregled, SADA, sastanak, zaDanaU } from '../../../../testiranje/podaci';
+import {
+  glasanje,
+  kvar,
+  oglas,
+  pregled,
+  SADA,
+  sastanak,
+  zaDanaU,
+} from '../../../../testiranje/podaci';
 import { PodaciDanas, predstoji, zaDanas } from './za-danas';
 
-const prazno: PodaciDanas = { pregled: null, sastanci: [], glasanja: [], oglasi: [] };
+const prazno: PodaciDanas = {
+  pregled: null,
+  sastanci: [],
+  glasanja: [],
+  oglasi: [],
+  zaPotvrdu: null,
+};
 const kljucevi = (podaci: Partial<PodaciDanas>) =>
   zaDanas({ ...prazno, ...podaci }).map((s) => s.kljuc);
 
@@ -26,6 +40,25 @@ describe('zaDanas', () => {
         }),
       }),
     ).toEqual(['hitni', 'zahtevi', 'novi', 'odluke', 'zapisnik']);
+  });
+
+  it('rešen kvar koji čeka potvrdu vodi na prvi takav kvar, sa brojem kad ih je više', () => {
+    expect(kljucevi({ zaPotvrdu: { stavke: [], ukupno: 0 } })).toEqual([]);
+    const [jedan] = zaDanas({
+      ...prazno,
+      zaPotvrdu: { stavke: [kvar({ id: 9, status: 'resen' })], ukupno: 1 },
+    });
+    expect(jedan).toMatchObject({
+      kljuc: 'potvrda',
+      oznaka: 'Čeka tvoju potvrdu',
+      naslov: 'Curi slavina',
+      putanja: ['/kvarovi', 9],
+    });
+    const [vise] = zaDanas({
+      ...prazno,
+      zaPotvrdu: { stavke: [kvar({ id: 9, status: 'resen' })], ukupno: 3 },
+    });
+    expect(vise.oznaka).toBe('3 kvara čekaju tvoju potvrdu');
   });
 
   it('tekst stavke koristi pravu množinu i putanju', () => {

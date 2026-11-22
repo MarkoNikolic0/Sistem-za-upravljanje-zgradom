@@ -77,6 +77,26 @@ describe('OglasPravaService', () => {
     });
   });
 
+  describe('smeDaObrise', () => {
+    it('autor uvek, a upravnik zgrade samo sakriven oglas', () => {
+      const upravnik = pristup({ zgrade: [5], upravlja: [5] });
+      const sakriven = (autorId: number, zgradaId: number) =>
+        Object.assign(oglas(autorId, zgradaId), {
+          datumSakrivanja: new Date(),
+        });
+      const aktivan = (autorId: number, zgradaId: number) =>
+        Object.assign(oglas(autorId, zgradaId), { datumSakrivanja: null });
+      expect(prava.smeDaObrise(aktivan(2, 5), 2, pristup({}))).toBe(true);
+      expect(prava.smeDaObrise(sakriven(2, 5), 2, pristup({}))).toBe(true);
+      expect(prava.smeDaObrise(aktivan(1, 5), 2, upravnik)).toBe(false);
+      expect(prava.smeDaObrise(sakriven(1, 5), 2, upravnik)).toBe(true);
+      expect(prava.smeDaObrise(sakriven(1, 6), 2, upravnik)).toBe(false);
+      expect(
+        prava.smeDaObrise(sakriven(1, 5), 3, pristup({ zgrade: [5] })),
+      ).toBe(false);
+    });
+  });
+
   describe('proveriVrstu', () => {
     it('obaveštenje objavljuje samo upravnik te zgrade, ostale vrste svi', () => {
       const upravnik = pristup({ zgrade: [5, 6], upravlja: [5] });

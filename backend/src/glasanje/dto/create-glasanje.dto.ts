@@ -75,7 +75,7 @@ export class CreateGlasanjeDto {
   @Type(() => Date)
   rok: Date;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'Izaberi zgradu.' })
+  @IsPositive({ message: 'Izaberi zgradu.' })
   zgradaId: number;
 }

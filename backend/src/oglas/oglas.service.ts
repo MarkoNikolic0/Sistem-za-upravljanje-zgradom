@@ -252,7 +252,7 @@ export class OglasService {
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
-    await this.prava.findZaAutora(id, korisnikId, uloga, 'obriše');
+    await this.prava.findZaBrisanje(id, korisnikId, uloga);
     const prilozi = await this.dataSource.transaction(async (manager) => {
       await manager.findOne(Oglas, {
         where: { id },
@@ -323,13 +323,26 @@ export class OglasService {
       razlogSakrivanja: dto.razlog,
       glasanje: null,
     };
-    const rezultat = await this.oglasRepository.update(
-      { id, datumSakrivanja: IsNull() },
-      izmene,
-    );
-    if (rezultat.affected === 0) {
-      throw new ConflictException('Oglas je već sakriven.');
-    }
+    await this.dataSource.transaction(async (manager) => {
+      const rezultat = await manager.update(
+        Oglas,
+        { id, datumSakrivanja: IsNull() },
+        izmene,
+      );
+      if (rezultat.affected === 0) {
+        throw new ConflictException('Oglas je već sakriven.');
+      }
+      await this.notifikacije.obavesti(
+        manager,
+        [oglas.autor.id],
+        {
+          tip: TipNotifikacije.OGLAS_SAKRIVEN,
+          tekst: `Tvoj oglas „${oglas.naslov}“ je sakriven. Razlog: ${dto.razlog}`,
+          link: '/oglasi',
+        },
+        korisnikId,
+      );
+    });
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
@@ -403,7 +416,7 @@ export class OglasService {
         oglas.prilozi.toSorted((a, b) => a.id - b.id),
       ),
       smeDaMenja: autor && aktivan,
-      smeDaObrise: autor,
+      smeDaObrise: this.prava.smeDaObrise(oglas, korisnikId, p),
       smeDaSakrije: aktivan && this.prava.smeDaSakrije(oglas, korisnikId, p),
       isteklo,
       smeDaObnovi: autor && aktivan && isteklo,

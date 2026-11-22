@@ -44,7 +44,7 @@
           [vecIma]="store.slike().length"
           [otpremanje]="otpremanje()"
           (izabrano)="otpremi($event)"
-          (greska)="poruka.set({ tip: 'greska', tekst: $event })"
+          (greska)="odbij($event)"
         />
       } @else {
         <p class="mt-4 text-sm text-priguseno">

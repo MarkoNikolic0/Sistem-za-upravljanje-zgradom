@@ -1,12 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Param,
-  ParseIntPipe,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Param, Put, UseGuards } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { ServiserSpecijalnostService } from './serviser-specijalnost.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -25,7 +19,7 @@ export class ServiserSpecijalnostController {
 
   @Put()
   postavi(
-    @Param('korisnikId', ParseIntPipe) korisnikId: number,
+    @Param('korisnikId', ParseIdPipe) korisnikId: number,
     @Body() dto: PostaviSpecijalnostiDto,
   ) {
     return this.specijalnostService.postavi(korisnikId, dto);

@@ -19,7 +19,13 @@ export class ZgradeUpravnika {
   protected readonly kartice = computed(() =>
     this.pregled.hasValue()
       ? this.pregled.value().map((p) => {
-          const stavke = zaDanas({ pregled: p, sastanci: [], glasanja: [], oglasi: [] });
+          const stavke = zaDanas({
+            pregled: p,
+            sastanci: [],
+            glasanja: [],
+            oglasi: [],
+            zaPotvrdu: null,
+          });
           return {
             zgrada: p.zgrada,
             sastanak: p.sledeciSastanak,

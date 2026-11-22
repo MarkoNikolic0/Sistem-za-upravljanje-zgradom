@@ -48,6 +48,14 @@ export class KvarService {
     }));
   }
 
+  // Rešeni kvarovi koje korisnik treba da potvrdi (početna)
+  zaPotvrdu(zgradaId: Signal<number | null> = signal(null)) {
+    return httpResource<Stranica<Kvar>>(() => ({
+      url: this.apiUrl,
+      params: { zaPotvrdu: true, strana: 1, poStrani: 1, ...uZgradi(zgradaId()) },
+    }));
+  }
+
   zgradeSaKvarovima(ucitaj: Signal<boolean>) {
     return httpResource<ZgradaOsnovno[]>(() => (ucitaj() ? `${this.apiUrl}/zgrade` : undefined), {
       defaultValue: [],

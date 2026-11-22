@@ -5,11 +5,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -32,7 +32,7 @@ export class NalogKorisnikaController {
   @Patch('uloga')
   @HttpCode(HttpStatus.NO_CONTENT)
   promeniUlogu(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: PromeniUloguDto,
   ) {
@@ -42,7 +42,7 @@ export class NalogKorisnikaController {
   @Put('deaktivacija')
   @HttpCode(HttpStatus.NO_CONTENT)
   deaktiviraj(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.nalogService.deaktiviraj(id, korisnik.id);
@@ -51,7 +51,7 @@ export class NalogKorisnikaController {
   @Delete('deaktivacija')
   @HttpCode(HttpStatus.NO_CONTENT)
   aktiviraj(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.nalogService.aktiviraj(id, korisnik.id);

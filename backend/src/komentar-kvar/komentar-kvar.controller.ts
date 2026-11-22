@@ -7,11 +7,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { TrenutniKorisnik } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { KomentarKvarService } from './komentar-kvar.service.js';
@@ -27,7 +27,7 @@ export class KomentarKvarController {
 
   @Post()
   create(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: CreateKomentarDto,
   ) {
@@ -41,7 +41,7 @@ export class KomentarKvarController {
 
   @Get()
   findZaKvar(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Query() upit: KomentarUpitDto,
   ) {
@@ -56,8 +56,8 @@ export class KomentarKvarController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
-    @Param('kvarId', ParseIntPipe) kvarId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('kvarId', ParseIdPipe) kvarId: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.komentarKvarService.remove(

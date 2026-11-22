@@ -4,12 +4,12 @@ import {
   Controller,
   Delete,
   Param,
-  ParseIntPipe,
   Put,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -39,7 +39,7 @@ export class ZapisnikSastankaController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: ZapisnikUploadDto })
   async okaci(
-    @Param('sastanakId', ParseIntPipe) sastanakId: number,
+    @Param('sastanakId', ParseIdPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: ZapisnikDto,
     @UploadedFile(proveraFajla('fajl', 'Zapisnik'))
@@ -61,7 +61,7 @@ export class ZapisnikSastankaController {
 
   @Delete()
   async ukloni(
-    @Param('sastanakId', ParseIntPipe) sastanakId: number,
+    @Param('sastanakId', ParseIdPipe) sastanakId: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     await this.zapisnikService.ukloni(sastanakId, korisnik.id, korisnik.uloga);

@@ -54,6 +54,12 @@ export class Login {
     lozinka: ['', Validators.required],
   });
 
+  constructor() {
+    if (this.obavestenje()) {
+      this.fokusiraj('#poruka-prijave');
+    }
+  }
+
   nevazece(polje: 'email' | 'lozinka'): boolean {
     const kontrola = this.loginForm.controls[polje];
     return kontrola.invalid && kontrola.touched;

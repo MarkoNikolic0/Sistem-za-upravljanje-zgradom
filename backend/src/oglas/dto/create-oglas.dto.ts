@@ -32,7 +32,7 @@ export class CreateOglasDto {
   vrsta: VrstaOglasa;
 
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'Oznaka Važno nije ispravna.' })
   vazno?: boolean;
 
   @ApiProperty({ type: Date, nullable: true, required: false })
@@ -44,12 +44,12 @@ export class CreateOglasDto {
   @Type(() => Date)
   vaziDo?: Date | null;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'Izaberi zgradu.' })
+  @IsPositive({ message: 'Izaberi zgradu.' })
   zgradaId: number;
 
   @IsOptional()
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'Odluka nije ispravna.' })
+  @IsPositive({ message: 'Odluka nije ispravna.' })
   glasanjeId?: number;
 }

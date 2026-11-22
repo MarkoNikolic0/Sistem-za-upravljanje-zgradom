@@ -103,18 +103,18 @@ export class KvarService {
     uloga: Uloga,
     upit: KvarUpitDto,
   ): Promise<Stranica<Kvar>> {
-    const vidljivi = await this.prava.usloviVidljivosti(
-      korisnikId,
-      uloga,
-      upit.zgradaId,
-    );
+    const vidljivi = upit.zaPotvrdu
+      ? await this.prava.usloviPotvrde(korisnikId, upit.zgradaId)
+      : await this.prava.usloviVidljivosti(korisnikId, uloga, upit.zgradaId);
     if (vidljivi.length === 0) {
       return { stavke: [], ukupno: 0 };
     }
 
     // TypeORM baca grešku na undefined u where, pa se filter dodaje samo kad je zadat
     const filter: FindOptionsWhere<Kvar> = {
-      status: In(STATUSI_PO_STANJU[upit.stanje]),
+      status: upit.zaPotvrdu
+        ? StatusKvara.RESEN
+        : In(STATUSI_PO_STANJU[upit.stanje]),
       ...(upit.kategorija && { kategorija: upit.kategorija }),
       ...(upit.prioritet && { prioritet: upit.prioritet }),
     };

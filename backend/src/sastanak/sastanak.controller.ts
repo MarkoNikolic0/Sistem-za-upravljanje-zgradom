@@ -4,12 +4,12 @@ import {
   Controller,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ParseIdPipe } from '../shared/parse-id.pipe.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -48,7 +48,7 @@ export class SastanakController {
 
   @Get(':id')
   findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
   ) {
     return this.sastanakService.findOne(id, korisnik.id, korisnik.uloga);
@@ -57,7 +57,7 @@ export class SastanakController {
   @Patch(':id')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: UpdateSastanakDto,
   ) {
@@ -67,7 +67,7 @@ export class SastanakController {
   @Patch(':id/otkazi')
   @Roles(Uloga.UPRAVNIK, Uloga.ADMIN)
   otkazi(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIdPipe) id: number,
     @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
     @Body() dto: OtkaziSastanakDto,
   ) {

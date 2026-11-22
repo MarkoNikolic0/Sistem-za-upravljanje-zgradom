@@ -27,6 +27,6 @@ export class PodaciStanaDto {
 }
 
 export class CreateStanDto extends PodaciStanaDto {
-  @IsInt()
+  @IsInt({ message: 'Izaberi zgradu.' })
   zgradaId: number;
 }

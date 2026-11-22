@@ -18,6 +18,26 @@
     @if (greska()) {
       <p-message severity="error">{{ greska() }}</p-message>
     }
+    @if (obradjen(); as zahtev) {
+      @if (zahtev.status === 'prihvacen') {
+        <p-message severity="success">
+          <div class="flex flex-col items-start gap-3">
+            <span>
+              Zahtev za stan {{ zahtev.stan.broj }} ({{ zahtev.stan.zgrada.naziv }}) je prihvaćen.
+              Sad možeš da prijavljuješ kvarove, pratiš sastanke i glasaš.
+            </span>
+            <a pButton routerLink="/" size="small">Početna</a>
+          </div>
+        </p-message>
+      } @else {
+        <p-message severity="warn">
+          Zahtev za stan {{ zahtev.stan.broj }} ({{ zahtev.stan.zgrada.naziv }}) nije prihvaćen.
+          @if (zahtev.razlogOdbijanja) {
+            Razlog je u spisku ispod.
+          }
+        </p-message>
+      }
+    }
   </div>
 
   <section class="odeljak" aria-labelledby="novi-zahtev-naslov">

@@ -71,7 +71,7 @@ export class KvarAkcijeService {
   ) {}
 
   async prihvati(id: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
       kvar,
@@ -83,7 +83,7 @@ export class KvarAkcijeService {
   }
 
   async odbij(id: number, korisnikId: number, uloga: Uloga, dto: RazlogDto) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
       kvar,
@@ -101,7 +101,7 @@ export class KvarAkcijeService {
     uloga: Uloga,
     dto: OpcioniRazlogDto,
   ) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     this.prava.proveriPovlacenje(kvar, korisnikId);
     await this.prelaz(
       kvar,
@@ -130,7 +130,7 @@ export class KvarAkcijeService {
     uloga: Uloga,
     dto: PostaviPrioritetDto,
   ) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.izmeniAkoJeU(id, OTVORENI_STATUSI, {
       prioritet: dto.prioritet,
@@ -145,7 +145,7 @@ export class KvarAkcijeService {
     uloga: Uloga,
     dto: DodeliServiseraDto,
   ) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     if (kvar.serviser?.id === dto.serviserId) {
       throw new BadRequestException('Kvar je već dodeljen ovom serviseru.');
@@ -184,7 +184,7 @@ export class KvarAkcijeService {
     uloga: Uloga,
     dto: UpdateStatusKvarDto,
   ) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     this.prava.proveriServisera(kvar, korisnikId);
     await this.prelaz(
       kvar,
@@ -208,7 +208,7 @@ export class KvarAkcijeService {
     uloga: Uloga,
     dto: PostaviDolazakDto,
   ) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     this.prava.proveriServisera(kvar, korisnikId);
     const statusi = [StatusKvara.DODELJEN, StatusKvara.U_TOKU];
     if (
@@ -237,7 +237,7 @@ export class KvarAkcijeService {
   }
 
   async potvrdi(id: number, korisnikId: number, uloga: Uloga, dto: PotvrdaDto) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriPotvrdu(kvar, korisnikId);
     await this.prelaz(
       kvar,
@@ -250,7 +250,7 @@ export class KvarAkcijeService {
   }
 
   async vrati(id: number, korisnikId: number, uloga: Uloga, dto: RazlogDto) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriPotvrdu(kvar, korisnikId);
     await this.prelaz(
       kvar,
@@ -266,7 +266,7 @@ export class KvarAkcijeService {
   }
 
   async zatvori(id: number, korisnikId: number, uloga: Uloga) {
-    const kvar = await this.kvarService.findOne(id);
+    const kvar = await this.kvarService.findDostupan(id, korisnikId, uloga);
     await this.prava.proveriUpravljanje(kvar, korisnikId, uloga);
     await this.prelaz(
       kvar,
@@ -395,6 +395,7 @@ export class KvarAkcijeService {
         status,
         akterId: korisnikId,
         noviServiserId,
+        razlog: komentar,
       });
     });
   }
