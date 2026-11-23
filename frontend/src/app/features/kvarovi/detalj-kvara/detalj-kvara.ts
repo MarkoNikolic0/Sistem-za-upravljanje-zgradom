@@ -131,7 +131,6 @@ export class DetaljKvara {
     );
     osveziNaPromenu('kvar', (ids) => {
       if (ids.includes(this.id())) {
-        this.store.osvezi(this.id());
         this.komentariStore.uskladi();
       }
     });

@@ -83,9 +83,9 @@ export class DetaljSastanka {
       return;
     }
     const izmena = this.izmenaPrisustva;
-    const sastanak = await firstValueFrom(this.sastanakService.procitaj(id));
+    const { prisustvo } = await firstValueFrom(this.sastanakService.procitaj(id));
     if (izmena === this.izmenaPrisustva && this.id() === id) {
-      this.sastanak.set(sastanak);
+      this.sastanak.update((s) => s && { ...s, prisustvo });
     }
   }
 

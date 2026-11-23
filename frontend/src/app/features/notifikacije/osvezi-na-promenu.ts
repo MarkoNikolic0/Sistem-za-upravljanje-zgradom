@@ -8,16 +8,10 @@ import { VrstaPromene } from './notifikacija-models';
 export const GRUPISANJE_MS = 400;
 export const PROVERA_MS = 1000;
 
-const POLJE_ZA_UNOS =
-  'input:not([type=checkbox], [type=radio], [type=button], [type=submit], [type=reset]), textarea, select, [contenteditable]:not([contenteditable=false])';
 const OTVOREN_DIJALOG = '[aria-modal=true], dialog[open]';
 
-export function korisnikJeZauzet(document: Document): boolean {
-  return (
-    document.visibilityState === 'hidden' ||
-    document.activeElement?.matches(POLJE_ZA_UNOS) === true ||
-    document.querySelector(OTVOREN_DIJALOG) !== null
-  );
+export function trebaSacekati(document: Document): boolean {
+  return document.visibilityState === 'hidden' || document.querySelector(OTVOREN_DIJALOG) !== null;
 }
 
 export function osveziNaPromenu(
@@ -33,7 +27,7 @@ export function osveziNaPromenu(
 
   async function obradi(): Promise<void> {
     while (cekaju.size > 0 && !unisteno) {
-      if (korisnikJeZauzet(document)) {
+      if (trebaSacekati(document)) {
         await pauza();
         continue;
       }

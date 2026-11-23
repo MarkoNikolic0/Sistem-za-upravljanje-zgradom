@@ -66,18 +66,18 @@ describe('osveziNaPromenu', () => {
     expect(osvezi).toHaveBeenLastCalledWith([2, 3]);
   });
 
-  it('ne osvežava dok korisnik kuca, nego kad napusti polje', async () => {
-    dokument.body.innerHTML = '<textarea></textarea><input type="checkbox">';
+  it('osvežava odmah i dok korisnik kuca, bez diranja polja', async () => {
+    dokument.body.innerHTML = '<textarea></textarea>';
     const polje = dokument.querySelector('textarea')!;
     polje.focus();
+    polje.value = 'Pišem komentar';
     pokreni();
     javi(1);
-    await vi.advanceTimersByTimeAsync(GRUPISANJE_MS + PROVERA_MS * 3);
-    expect(osvezi).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(GRUPISANJE_MS);
 
-    dokument.querySelector<HTMLInputElement>('input')!.focus();
-    await vi.advanceTimersByTimeAsync(PROVERA_MS);
     expect(osvezi).toHaveBeenCalledExactlyOnceWith([1]);
+    expect(dokument.activeElement).toBe(polje);
+    expect(polje.value).toBe('Pišem komentar');
   });
 
   it('ne osvežava dok je otvoren dijalog', async () => {
