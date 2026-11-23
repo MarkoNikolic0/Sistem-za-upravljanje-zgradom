@@ -2,6 +2,7 @@ export const SOBA_KORISNIKA = (korisnikId: number) => `korisnik:${korisnikId}`;
 export const SOBA_SESIJE = (sid: string) => `sesija:${sid}`;
 export const DOGADJAJ_NOTIFIKACIJA = 'notifikacija';
 export const DOGADJAJ_NOV_OGLAS = 'nov-oglas';
+export const DOGADJAJ_PROMENA = 'promena';
 export const DOGADJAJ_VIDLJIVOST = 'vidljivost';
 export const DOGADJAJ_TOKEN = 'token';
 export const DANA_CUVANJA = 90;

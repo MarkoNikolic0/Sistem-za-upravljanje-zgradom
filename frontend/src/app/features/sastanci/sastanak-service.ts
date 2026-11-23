@@ -41,6 +41,10 @@ export class SastanakService {
     }));
   }
 
+  procitaj(id: number): Observable<Sastanak> {
+    return this.http.get<Sastanak>(`${this.apiUrl}/${id}`);
+  }
+
   sastanak(id: Signal<number | undefined>) {
     return httpResource<Sastanak>(() => {
       const sastanakId = id();

@@ -111,6 +111,28 @@ export const KomentariKvaraStore = signalStore(
         }),
       ),
     ),
+    uskladi: rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          const kvarId = store.kvarId();
+          if (kvarId === null || !store.isFulfilled()) {
+            return EMPTY;
+          }
+          const pre = new Set(store.komentari().map((k) => k.id));
+          return komentariKvaraService.komentari(kvarId, KOMENTARA_PO_STRANI).pipe(
+            tap(({ stavke }) => {
+              const naServeru = new Set(stavke.map((k) => k.id));
+              const granica = stavke.length < KOMENTARA_PO_STRANI ? 0 : Math.min(...naServeru);
+              const ostali = store
+                .komentari()
+                .filter((k) => !pre.has(k.id) || k.id < granica || naServeru.has(k.id));
+              patchState(store, { komentari: spoji(ostali, stavke, store.obrisani()) });
+            }),
+            catchError(() => EMPTY),
+          );
+        }),
+      ),
+    ),
     async dodaj(tekst: string): Promise<void> {
       const kvarId = store.kvarId();
       if (kvarId === null) {

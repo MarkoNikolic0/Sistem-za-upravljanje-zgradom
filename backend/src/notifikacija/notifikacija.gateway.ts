@@ -16,9 +16,11 @@ import {
 } from '../auth/strategies/jwt.strategy.js';
 import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisnik.decorator.js';
 import { Notifikacija } from './notifikacija.entity.js';
+import type { Promena } from './promene.service.js';
 import {
   DOGADJAJ_NOTIFIKACIJA,
   DOGADJAJ_NOV_OGLAS,
+  DOGADJAJ_PROMENA,
   DOGADJAJ_TOKEN,
   DOGADJAJ_VIDLJIVOST,
   NAJVISE_VEZA_PO_KORISNIKU,
@@ -124,6 +126,14 @@ export class NotifikacijaGateway
       this.server
         .to([...new Set(korisnici)].map(SOBA_KORISNIKA))
         .emit(DOGADJAJ_NOV_OGLAS);
+    }
+  }
+
+  javiPromenu(korisnici: number[], promena: Promena) {
+    if (korisnici.length > 0) {
+      this.server
+        .to([...new Set(korisnici)].map(SOBA_KORISNIKA))
+        .emit(DOGADJAJ_PROMENA, promena);
     }
   }
 

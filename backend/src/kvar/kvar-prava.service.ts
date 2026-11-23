@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import { EntityManager, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Kvar } from './kvar.entity.js';
 import { LokacijaTip, StatusKvara } from '../shared/enums/kvar.enums.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
@@ -8,6 +8,30 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { KorisnikService } from '../korisnik/korisnik.service.js';
 import { PORUKA_PRACENJE } from './kvar.constants.js';
 import { sadrzi, samoZgrada, uZgradama } from '../korisnik/pristup-zgradama.js';
+import { admini, upravnikZgrade } from '../notifikacija/primaoci.js';
+
+export async function koVidiKvar(
+  manager: EntityManager,
+  kvar: Kvar,
+): Promise<number[]> {
+  const [stanari, upravnik, svi] = await Promise.all([
+    manager.find(StanarStana, {
+      where: kvar.stan
+        ? { stan: { id: kvar.stan.id } }
+        : { stan: { zgrada: { id: kvar.zgrada.id } } },
+      relations: { korisnik: true },
+      select: { id: true, korisnik: { id: true } },
+    }),
+    upravnikZgrade(manager, kvar.zgrada.id),
+    admini(manager),
+  ]);
+  return [
+    ...stanari.map((veza) => veza.korisnik.id),
+    ...upravnik,
+    ...svi,
+    ...(kvar.serviser ? [kvar.serviser.id] : []),
+  ];
+}
 
 @Injectable()
 export class KvarPravaService {

@@ -15,6 +15,13 @@ export type TipNotifikacije =
   | 'vazno_obavestenje'
   | 'oglas_sakriven';
 
+export type VrstaPromene = 'glasanje' | 'sastanak' | 'kvar' | 'oglas';
+
+export interface Promena {
+  vrsta: VrstaPromene;
+  id: number;
+}
+
 export interface Notifikacija {
   id: number;
   tip: TipNotifikacije;

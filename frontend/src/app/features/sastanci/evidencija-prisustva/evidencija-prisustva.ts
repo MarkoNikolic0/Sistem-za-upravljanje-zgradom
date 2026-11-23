@@ -51,6 +51,9 @@ export class EvidencijaPrisustva {
   readonly promena = output<PregledPrisustva>();
   readonly osvezi = output();
   private readonly mojOdgovor = computed(() => this.prisustvo().mojOdgovor);
+  private readonly odgovori = computed(
+    () => `${this.prisustvo().dolazi}/${this.prisustvo().neDolazi}`,
+  );
 
   protected readonly otvoren = linkedSignal({
     source: this.sastanakId,
@@ -76,6 +79,7 @@ export class EvidencijaPrisustva {
   constructor() {
     effect(() => {
       this.mojOdgovor();
+      this.odgovori();
       untracked(() => {
         if (this.spisak.hasValue()) {
           this.spisak.reload();

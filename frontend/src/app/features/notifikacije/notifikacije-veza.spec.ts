@@ -167,4 +167,17 @@ describe('veza za obaveštenja uživo', () => {
     expect(osvezi).not.toHaveBeenCalled();
     expect(socket.disconnect).toHaveBeenCalledTimes(1);
   });
+
+  it('signal promene prosleđuje vrstu i id, bez obaveštenja', async () => {
+    const primljeni: unknown[] = [];
+    const pretplata = TestBed.inject(NotifikacijeVeza)
+      .dogadjaji()
+      .subscribe((dogadjaj) => primljeni.push(dogadjaj));
+    await vi.dynamicImportSettled();
+
+    soketi[0].okini('promena', { vrsta: 'glasanje', id: 4 });
+
+    expect(primljeni).toEqual([{ tip: 'promena', promena: { vrsta: 'glasanje', id: 4 } }]);
+    pretplata.unsubscribe();
+  });
 });

@@ -22,7 +22,11 @@ import { greskaPolja } from '../shared/greske-validacije.js';
 import { CreateGlasanjeDto } from './dto/create-glasanje.dto.js';
 import { GlasanjeUpitDto } from './dto/glasanje-upit.dto.js';
 import { ODGOVORI_ODLUKE } from './ishod-odluke.js';
-import { GlasanjePravaService } from './glasanje-prava.service.js';
+import {
+  GlasanjePravaService,
+  javiPromenuGlasanja,
+} from './glasanje-prava.service.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
 import { PORUKA_ODLUKA_OSTAJE, PORUKA_ZAVRSENA } from './glasanje.constants.js';
 import { Glas } from './glas.entity.js';
@@ -40,6 +44,7 @@ export class GlasanjeService {
     private prava: GlasanjePravaService,
     private rezultati: GlasanjeRezultatiService,
     private notifikacije: NotifikacijaService,
+    private promene: PromeneService,
   ) {}
 
   async findAll(
@@ -171,6 +176,7 @@ export class GlasanjeService {
     if (rezultat.affected === 0) {
       throw new ConflictException(PORUKA_ZAVRSENA);
     }
+    javiPromenuGlasanja(this.promene, glasanje, korisnikId);
     return this.rezultati.jedno(id, korisnikId, p);
   }
 
@@ -182,6 +188,7 @@ export class GlasanjeService {
     );
     if (glasanje.vrsta === VrstaGlasanja.ANKETA) {
       await this.glasanjeRepository.delete(id);
+      javiPromenuGlasanja(this.promene, glasanje, korisnikId);
       return;
     }
     await this.glasanjeRepository.manager.transaction(async (manager) => {
@@ -201,6 +208,7 @@ export class GlasanjeService {
       }
       await manager.delete(Glasanje, id);
     });
+    javiPromenuGlasanja(this.promene, glasanje, korisnikId);
   }
 
   async proveriObjavu(glasanjeId: number, zgradaId: number) {

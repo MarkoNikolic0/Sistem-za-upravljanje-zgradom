@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import type { Mock } from 'vitest';
 import { kvar } from '../../../../testiranje/podaci';
 import { Stranica } from '../../../shared/liste/stranica';
@@ -8,6 +8,7 @@ import { kvarEvents } from '../kvar-events';
 import { KomentarKvara } from '../kvar-models';
 import { KomentariKvaraService } from './komentari-kvara-service';
 import { KomentariKvaraStore } from './komentari-kvara-store';
+import { KOMENTARA_PO_STRANI } from '../pravila-kvara';
 
 const korisnik = { id: 1, ime: 'Ana', prezime: 'Anić', uloga: 'stanar' as const };
 const komentar = (id: number): KomentarKvara => ({
@@ -86,5 +87,73 @@ describe('KomentariKvaraStore', () => {
     dispatcher.dispatch(kvarEvents.azuriran({ kvar: izmenjen, prethodni: null }));
     dispatcher.dispatch(kvarEvents.azuriran({ kvar: izmenjen, prethodni: null }));
     expect(ids()).toEqual([3, 5, 6]);
+  });
+});
+
+describe('KomentariKvaraStore usklađivanje na promenu', () => {
+  let store: InstanceType<typeof KomentariKvaraStore>;
+  let komentari: Mock<() => Observable<Stranica<KomentarKvara>>>;
+  let dodaj: Mock<() => Observable<KomentarKvara>>;
+
+  const ids = () => store.komentari().map((k) => k.id);
+
+  beforeEach(() => {
+    komentari = vi.fn(() => strana(5, 3));
+    dodaj = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        KomentariKvaraStore,
+        { provide: KomentariKvaraService, useValue: { komentari, dodaj, obrisi: vi.fn() } },
+      ],
+    });
+    store = TestBed.inject(KomentariKvaraStore);
+    store.ucitaj(7);
+  });
+
+  it('dodaje nove i uklanja komentare koje je neko drugi obrisao', () => {
+    komentari.mockReturnValue(strana(8, 3));
+    store.uskladi();
+    expect(ids()).toEqual([3, 8]);
+
+    komentari.mockReturnValue(strana());
+    store.uskladi();
+    expect(ids()).toEqual([]);
+  });
+
+  it('ne dira starije komentare van poslednje strane', () => {
+    komentari.mockReturnValue(
+      of({
+        stavke: Array.from({ length: KOMENTARA_PO_STRANI }, (_, i) => komentar(40 - i)),
+        ukupno: KOMENTARA_PO_STRANI + 2,
+      }),
+    );
+    store.ucitaj(7);
+    komentari.mockReturnValue(
+      of({ stavke: [komentar(2), komentar(1)], ukupno: KOMENTARA_PO_STRANI + 2 }),
+    );
+    store.ucitajStarije();
+    komentari.mockReturnValue(
+      of({
+        stavke: Array.from({ length: KOMENTARA_PO_STRANI }, (_, i) => komentar(40 - i)),
+        ukupno: KOMENTARA_PO_STRANI + 2,
+      }),
+    );
+
+    store.uskladi();
+
+    expect(ids()).toContain(1);
+    expect(ids()).toContain(2);
+  });
+
+  it('ne uklanja komentar koji je korisnik poslao dok se usklađivanje učitavalo', async () => {
+    const odgovor = new Subject<Stranica<KomentarKvara>>();
+    komentari.mockReturnValue(odgovor);
+    store.uskladi();
+    dodaj.mockReturnValue(of(komentar(9)));
+    await store.dodaj('Komentar 9');
+
+    odgovor.next({ stavke: [komentar(5), komentar(3)], ukupno: 2 });
+
+    expect(ids()).toEqual([3, 5, 9]);
   });
 });

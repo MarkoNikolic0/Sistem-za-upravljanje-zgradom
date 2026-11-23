@@ -26,6 +26,7 @@ import { neprocitaniOglasiFeature } from '../neprocitani-oglasi-store/neprocitan
 import { jeNov } from '../pravila-oglasa';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
+import { osveziNaPromenu } from '../../notifikacije/osvezi-na-promenu';
 
 @Component({
   imports: [
@@ -98,6 +99,7 @@ export class ListaOglasa {
         untracked(() => this.store.ucitaj());
       }
     });
+    osveziNaPromenu('oglas', (ids) => this.store.osveziOglase(ids));
 
     const navigacija = this.router.currentNavigation();
     const stanje = navigacija?.extras.state as StanjeNavigacije | undefined;

@@ -8,10 +8,11 @@ import { AuthStore } from '../auth/sesija/auth-store';
 import { TokenRefresh } from '../auth/sesija/token-refresh';
 import { procitajJwtPayload } from '../auth/sesija/jwt-payload';
 import { naPrijavu } from '../auth/pristup/povratak';
-import { Notifikacija } from './notifikacija-models';
+import { Notifikacija, Promena } from './notifikacija-models';
 
 const DOGADJAJ_NOTIFIKACIJA = 'notifikacija';
 const DOGADJAJ_NOV_OGLAS = 'nov-oglas';
+const DOGADJAJ_PROMENA = 'promena';
 const DOGADJAJ_VIDLJIVOST = 'vidljivost';
 const DOGADJAJ_TOKEN = 'token';
 const PRVA_PAUZA_MS = 1000;
@@ -22,7 +23,10 @@ const NAJKRACA_PAUZA_OBNOVE_MS = 30_000;
 const jeIstekla = (greska: unknown) => greska instanceof HttpErrorResponse && greska.status === 401;
 
 export type DogadjajVeze =
-  { tip: 'povezan' } | { tip: 'notifikacija'; notifikacija: Notifikacija } | { tip: 'nov-oglas' };
+  | { tip: 'povezan' }
+  | { tip: 'notifikacija'; notifikacija: Notifikacija }
+  | { tip: 'nov-oglas' }
+  | { tip: 'promena'; promena: Promena };
 
 @Service()
 export class NotifikacijeVeza {
@@ -119,6 +123,9 @@ export class NotifikacijeVeza {
         pretplatnik.next({ tip: 'notifikacija', notifikacija }),
       );
       socket.on(DOGADJAJ_NOV_OGLAS, () => pretplatnik.next({ tip: 'nov-oglas' }));
+      socket.on(DOGADJAJ_PROMENA, (promena: Promena) =>
+        pretplatnik.next({ tip: 'promena', promena }),
+      );
       socket.on('connect_error', () => {
         if (!socket.active) {
           poveziSaNovimTokenom();

@@ -21,6 +21,7 @@ import { SastanakService } from '../sastanak-service';
 import { kadaJe, poceo } from '../pravila-sastanka';
 import { PregledPrisustva } from '../sastanak-models';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { osveziNaPromenu } from '../../notifikacije/osvezi-na-promenu';
 
 @Component({
   imports: [
@@ -61,6 +62,7 @@ export class DetaljSastanka {
   protected readonly poruka = signal<Poruka | null>(null);
   protected readonly otkazivanje = signal(false);
   protected readonly slanje = signal(false);
+  private izmenaPrisustva = 0;
 
   constructor() {
     const navigacija = this.router.currentNavigation();
@@ -72,9 +74,23 @@ export class DetaljSastanka {
       ({ link }) => link === `/sastanci/${this.id()}`,
       () => this.sastanak.reload(),
     );
+    osveziNaPromenu('sastanak', (ids) => this.osveziPrisustvo(ids));
+  }
+
+  private async osveziPrisustvo(ids: number[]): Promise<void> {
+    const id = this.id();
+    if (id === undefined || !ids.includes(id) || !this.sastanak.hasValue()) {
+      return;
+    }
+    const izmena = this.izmenaPrisustva;
+    const sastanak = await firstValueFrom(this.sastanakService.procitaj(id));
+    if (izmena === this.izmenaPrisustva && this.id() === id) {
+      this.sastanak.set(sastanak);
+    }
   }
 
   protected azurirajPrisustvo(prisustvo: PregledPrisustva): void {
+    this.izmenaPrisustva++;
     this.sastanak.update((s) => s && { ...s, prisustvo });
   }
 

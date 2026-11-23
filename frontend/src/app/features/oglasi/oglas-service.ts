@@ -37,6 +37,10 @@ export class OglasService {
     }));
   }
 
+  procitaj(id: number): Observable<Oglas> {
+    return this.http.get<Oglas>(`${this.apiUrl}/${id}`);
+  }
+
   oglas(id: Signal<number | undefined>) {
     return httpResource<Oglas>(() => {
       const oglasId = id();

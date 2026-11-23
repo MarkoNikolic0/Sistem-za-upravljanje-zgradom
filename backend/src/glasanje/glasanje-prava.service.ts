@@ -14,6 +14,25 @@ import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { PORUKA_STANARI, PORUKA_VLASNICI } from './glasanje.constants.js';
 import { nePostoji } from '../shared/ne-postoji.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
+import { vidiZgradu } from '../notifikacija/primaoci.js';
+
+export function javiPromenuGlasanja(
+  promene: PromeneService,
+  glasanje: Glasanje,
+  korisnikId: number,
+) {
+  promene.javi(
+    { vrsta: 'glasanje', id: glasanje.id },
+    (manager) =>
+      vidiZgradu(
+        manager,
+        glasanje.zgrada.id,
+        glasanje.vrsta === VrstaGlasanja.ODLUKA,
+      ),
+    [korisnikId],
+  );
+}
 
 @Injectable()
 export class GlasanjePravaService {

@@ -6,7 +6,11 @@ import {
 import { Glasanje } from './glasanje.entity.js';
 import { Glas, JEDAN_GLAS_ANKETE, JEDAN_GLAS_STANA } from './glas.entity.js';
 import { GlasanjeRezultatiService } from './glasanje-rezultati.service.js';
-import { GlasanjePravaService } from './glasanje-prava.service.js';
+import {
+  GlasanjePravaService,
+  javiPromenuGlasanja,
+} from './glasanje-prava.service.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaGlasanja } from '../shared/enums/glasanje.enums.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
@@ -25,6 +29,7 @@ export class GlasanjeGlasoviService {
     private rezultati: GlasanjeRezultatiService,
     private prava: GlasanjePravaService,
     private dataSource: DataSource,
+    private promene: PromeneService,
   ) {}
 
   async glasaj(id: number, korisnikId: number, uloga: Uloga, opcijaId: number) {
@@ -67,6 +72,7 @@ export class GlasanjeGlasoviService {
         })
         .execute();
     });
+    javiPromenuGlasanja(this.promene, glasanje, korisnikId);
     return this.rezultati.jedno(id, korisnikId, p);
   }
 
@@ -85,6 +91,7 @@ export class GlasanjeGlasoviService {
           glasanje.vrsta === VrstaGlasanja.ODLUKA ? Not(IsNull()) : IsNull(),
       });
     });
+    javiPromenuGlasanja(this.promene, glasanje, korisnikId);
     return this.rezultati.jedno(id, korisnikId, p);
   }
 

@@ -60,6 +60,8 @@ export const veza = createEffect(
                 return VezaActions.povezan();
               case 'nov-oglas':
                 return VezaActions.novOglas();
+              case 'promena':
+                return VezaActions.promena(dogadjaj.promena);
               case 'notifikacija':
                 return VezaActions.stigla({
                   notifikacija: dogadjaj.notifikacija,

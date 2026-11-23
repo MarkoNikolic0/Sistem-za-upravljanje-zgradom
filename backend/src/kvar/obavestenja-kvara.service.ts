@@ -124,15 +124,17 @@ export class ObavestenjaKvaraService {
 
   async komentar(manager: EntityManager, kvar: Kvar, akterId: number) {
     const posalji = this.posiljalac(manager, kvar, akterId);
+    const primaoci = [
+      ...(await this.stanari(manager, kvar)),
+      ...(await upravnikZgrade(manager, kvar.zgrada.id)),
+      ...(kvar.serviser ? [kvar.serviser.id] : []),
+    ];
     await posalji(
-      [
-        ...(await this.stanari(manager, kvar)),
-        ...(await upravnikZgrade(manager, kvar.zgrada.id)),
-        ...(kvar.serviser ? [kvar.serviser.id] : []),
-      ],
+      primaoci,
       `Nov komentar na kvaru „${kvar.naslov}“.`,
       TipNotifikacije.KVAR_KOMENTAR,
     );
+    return primaoci;
   }
 
   private async stanari(manager: EntityManager, kvar: Kvar) {

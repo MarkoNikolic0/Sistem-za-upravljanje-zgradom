@@ -39,6 +39,7 @@ import { RazlogPromene } from '../status/razlog-promene/razlog-promene';
 import { KomentariKvara } from '../komentari/komentari-kvara/komentari-kvara';
 import { KomentariKvaraStore } from '../komentari/komentari-kvara-store';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { osveziNaPromenu } from '../../notifikacije/osvezi-na-promenu';
 import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
 @Component({
@@ -128,6 +129,12 @@ export class DetaljKvara {
         this.komentariStore.osveziNove();
       },
     );
+    osveziNaPromenu('kvar', (ids) => {
+      if (ids.includes(this.id())) {
+        this.store.osvezi(this.id());
+        this.komentariStore.uskladi();
+      }
+    });
     afterRenderEffect(() => {
       if (this.store.porukaAkcije()?.fokus) {
         this.porukaAkcije().nativeElement.focus();

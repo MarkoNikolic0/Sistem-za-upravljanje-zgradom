@@ -1,6 +1,30 @@
 import type { EntityManager } from 'typeorm';
 import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import { Zgrada } from '../zgrada/zgrada.entity.js';
+import { Korisnik } from '../korisnik/korisnik.entity.js';
+import { AKTIVAN_KORISNIK } from '../korisnik/aktivan-korisnik.js';
+import { Uloga } from '../shared/enums/uloga.enum.js';
+
+export async function admini(manager: EntityManager): Promise<number[]> {
+  const korisnici = await manager.find(Korisnik, {
+    where: { uloga: Uloga.ADMIN, ...AKTIVAN_KORISNIK },
+    select: { id: true },
+  });
+  return korisnici.map((k) => k.id);
+}
+
+export async function vidiZgradu(
+  manager: EntityManager,
+  zgradaId: number,
+  samoVlasnici = false,
+): Promise<number[]> {
+  const delovi = await Promise.all([
+    stanariZgrade(manager, zgradaId, samoVlasnici),
+    upravnikZgrade(manager, zgradaId),
+    admini(manager),
+  ]);
+  return delovi.flat();
+}
 
 export async function upravnikZgrade(
   manager: EntityManager,

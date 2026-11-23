@@ -140,3 +140,62 @@ describe('ListaGlasanjaStore', () => {
     expect(zatvori).toHaveBeenCalledOnce();
   });
 });
+
+describe('ListaGlasanjaStore osvežavanje na promenu', () => {
+  let store: InstanceType<typeof ListaGlasanjaStore>;
+  let lista: Mock<() => Observable<Stranica<Glasanje>>>;
+  let glasaj: Mock<(id: number) => Observable<Glasanje>>;
+  let procitaj: Mock<(id: number) => Observable<Glasanje>>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(SADA);
+    lista = vi.fn(() => of({ stavke: [glasanje({ id: 1 }), glasanje({ id: 2 })], ukupno: 2 }));
+    glasaj = vi.fn();
+    procitaj = vi.fn((id: number) => of(glasanje({ id, pitanje: `Novo ${id}` })));
+    TestBed.configureTestingModule({
+      providers: [
+        ListaGlasanjaStore,
+        { provide: GlasanjeService, useValue: { lista, glasaj, procitaj } },
+        { provide: Store, useValue: { dispatch: vi.fn() } },
+      ],
+    });
+    store = TestBed.inject(ListaGlasanjaStore);
+    TestBed.tick();
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('ponovo učita samo promenjene kartice sa liste, bez cele liste', async () => {
+    await store.osveziGlasanja([2, 99]);
+
+    expect(procitaj).toHaveBeenCalledExactlyOnceWith(2);
+    expect(store.glasanja().map((g) => g.pitanje)).toEqual([glasanje().pitanje, 'Novo 2']);
+    expect(lista).toHaveBeenCalledOnce();
+  });
+
+  it('ne pita server za glasanja kojih nema na listi', async () => {
+    await store.osveziGlasanja([99]);
+    expect(procitaj).not.toHaveBeenCalled();
+  });
+
+  it('ne prepisuje karticu na kojoj je sopstveni glas krenuo dok se osvežavanje učitavalo', async () => {
+    const odgovor = new Subject<Glasanje>();
+    procitaj.mockReturnValueOnce(odgovor);
+    const osvezavanje = store.osveziGlasanja([1]);
+    glasaj.mockReturnValueOnce(of(glasanje({ id: 1, mojGlas: 5 })));
+    await store.glasaj(store.glasanja()[0], 5);
+
+    odgovor.next(glasanje({ id: 1, mojGlas: null, pitanje: 'Staro' }));
+    odgovor.complete();
+    await osvezavanje;
+
+    expect(store.glasanja()[0].mojGlas).toBe(5);
+  });
+
+  it('obrisano glasanje (404) ponovo učitava listu', async () => {
+    procitaj.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+    await store.osveziGlasanja([1]);
+    expect(lista).toHaveBeenCalledTimes(2);
+  });
+});

@@ -1,6 +1,6 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
 import { Stranica } from '../../../shared/liste/stranica';
-import { NeprocitaneNotifikacije, Notifikacija } from '../notifikacija-models';
+import { NeprocitaneNotifikacije, Notifikacija, Promena } from '../notifikacija-models';
 
 export const NotifikacijeActions = createActionGroup({
   source: 'Notifikacije',
@@ -21,6 +21,7 @@ export const VezaActions = createActionGroup({
     Povezan: emptyProps(),
     Stigla: props<{ notifikacija: Notifikacija; naStranici: boolean }>(),
     'Nov oglas': emptyProps(),
+    Promena: props<Promena>(),
   },
 });
 

@@ -54,6 +54,9 @@ export const ListaGlasanjaStore = signalStore(
       'Glasanja trenutno ne mogu da se učitaju.',
     );
 
+    let redniBroj = 0;
+    const izmenjeno = new Map<number, number>();
+
     const osveziIstekla = rxMethod<Glasanje[]>(
       pipe(
         switchMap((glasanja) => {
@@ -87,6 +90,7 @@ export const ListaGlasanjaStore = signalStore(
       poziv: () => Observable<Glasanje>,
       najava: string,
     ): Promise<IshodGlasa> {
+      izmenjeno.set(id, ++redniBroj);
       patchState(store, {
         glasoviUToku: [...store.glasoviUToku(), id],
         greskaGlasa: null,
@@ -115,13 +119,40 @@ export const ListaGlasanjaStore = signalStore(
         });
         return 'bez-veze';
       } finally {
+        izmenjeno.set(id, ++redniBroj);
         patchState(store, { glasoviUToku: store.glasoviUToku().filter((g) => g !== id) });
+      }
+    }
+
+    async function osveziGlasanja(ids: number[]): Promise<void> {
+      const naListi = ids.filter((id) => store.glasanja().some((g) => g.id === id));
+      if (naListi.length === 0) {
+        return;
+      }
+      const pocetak = redniBroj;
+      try {
+        const nova = await firstValueFrom(
+          forkJoin(naListi.map((id) => glasanjeService.procitaj(id))),
+        );
+        const poId = new Map(
+          nova
+            .filter(
+              (g) => !store.glasoviUToku().includes(g.id) && (izmenjeno.get(g.id) ?? 0) <= pocetak,
+            )
+            .map((g) => [g.id, g]),
+        );
+        patchState(store, { glasanja: store.glasanja().map((g) => poId.get(g.id) ?? g) });
+      } catch (err) {
+        if (err instanceof HttpErrorResponse && err.status === 404) {
+          ucitaj();
+        }
       }
     }
 
     return {
       ucitaj,
       osveziIstekla,
+      osveziGlasanja,
       promeniStanje(stanje: StanjeGlasanja): void {
         patchState(store, { stanje, strana: 1, poruka: null });
         ucitaj();

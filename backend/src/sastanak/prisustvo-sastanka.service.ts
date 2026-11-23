@@ -21,8 +21,10 @@ import { StanarStana } from '../stanar-stana/stanar-stana.entity.js';
 import {
   SAMO_ZGRADA,
   SastanakPravaService,
+  javiPromenuSastanka,
   smeDaNajavi,
 } from './sastanak-prava.service.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
 import { PORUKA_PROSAO } from './sastanak.constants.js';
 import {
   type OdgovorStanara,
@@ -52,6 +54,7 @@ export class PrisustvoSastankaService {
     private dokumentRepository: Repository<DokumentZgrade>,
     private prava: SastanakPravaService,
     private dataSource: DataSource,
+    private promene: PromeneService,
   ) {}
 
   async pregled(
@@ -89,6 +92,7 @@ export class PrisustvoSastankaService {
         ['sastanak', 'korisnik'],
       );
     });
+    javiPromenuSastanka(this.promene, sastanak, korisnikId);
     return this.pregled(sastanak, korisnikId, p);
   }
 
@@ -101,6 +105,7 @@ export class PrisustvoSastankaService {
         korisnik: { id: korisnikId },
       });
     });
+    javiPromenuSastanka(this.promene, sastanak, korisnikId);
     return this.pregled(sastanak, korisnikId, p);
   }
 
@@ -166,6 +171,7 @@ export class PrisustvoSastankaService {
         ukupnoStanova,
       });
     });
+    javiPromenuSastanka(this.promene, sastanak, korisnikId);
     return this.saSpiskom(sastanak, korisnikId, p);
   }
 

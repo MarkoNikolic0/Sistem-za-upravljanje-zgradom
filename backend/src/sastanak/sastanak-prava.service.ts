@@ -11,6 +11,25 @@ import {
 import { Uloga } from '../shared/enums/uloga.enum.js';
 import { VrstaSastanka } from '../shared/enums/sastanak.enums.js';
 import { nePostoji } from '../shared/ne-postoji.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
+import { vidiZgradu } from '../notifikacija/primaoci.js';
+
+export function javiPromenuSastanka(
+  promene: PromeneService,
+  sastanak: Sastanak,
+  korisnikId: number,
+) {
+  promene.javi(
+    { vrsta: 'sastanak', id: sastanak.id },
+    (manager) =>
+      vidiZgradu(
+        manager,
+        sastanak.zgrada.id,
+        sastanak.vrsta === VrstaSastanka.SKUPSTINA,
+      ),
+    [korisnikId],
+  );
+}
 
 const DETALJI: FindOptionsRelations<Sastanak> = {
   zgrada: true,

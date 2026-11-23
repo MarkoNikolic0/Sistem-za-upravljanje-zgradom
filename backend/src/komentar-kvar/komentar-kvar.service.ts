@@ -12,11 +12,12 @@ import { KvarService } from '../kvar/kvar.service.js';
 import { MAKS_PO_STRANI, Stranica } from '../shared/stranicenje.js';
 import { KomentarUpitDto } from './dto/komentar-upit.dto.js';
 import { PromenaStatusaKvara } from '../kvar/promena-statusa-kvara.entity.js';
-import { KvarPravaService } from '../kvar/kvar-prava.service.js';
+import { KvarPravaService, koVidiKvar } from '../kvar/kvar-prava.service.js';
 import { jeZavrsen } from '../kvar/kvar.constants.js';
 import { Kvar } from '../kvar/kvar.entity.js';
 import { ObavestenjaKvaraService } from '../kvar/obavestenja-kvara.service.js';
 import { nePostoji } from '../shared/ne-postoji.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
 
 @Injectable()
 export class KomentarKvarService {
@@ -29,6 +30,7 @@ export class KomentarKvarService {
     @InjectRepository(PromenaStatusaKvara)
     private promenaRepository: Repository<PromenaStatusaKvara>,
     private dataSource: DataSource,
+    private promene: PromeneService,
   ) {}
 
   async create(
@@ -39,25 +41,36 @@ export class KomentarKvarService {
   ) {
     const kvar = await this.kvarService.findDostupan(kvarId, korisnikId, uloga);
 
-    const id = await this.dataSource.transaction(async (manager) => {
-      const zakljucan = await manager.findOneOrFail(Kvar, {
-        where: { id: kvar.id },
-        select: { id: true, status: true },
-        lock: { mode: 'pessimistic_read' },
-      });
-      if (jeZavrsen(zakljucan.status)) {
-        throw new ConflictException(
-          'Kvar je završen, pa više ne može da se komentariše.',
+    const { id, obavesteni } = await this.dataSource.transaction(
+      async (manager) => {
+        const zakljucan = await manager.findOneOrFail(Kvar, {
+          where: { id: kvar.id },
+          select: { id: true, status: true },
+          lock: { mode: 'pessimistic_read' },
+        });
+        if (jeZavrsen(zakljucan.status)) {
+          throw new ConflictException(
+            'Kvar je završen, pa više ne može da se komentariše.',
+          );
+        }
+        const { identifiers } = await manager.insert(KomentarKvar, {
+          tekst: dto.tekst,
+          kvar: { id: kvar.id },
+          korisnik: { id: korisnikId },
+        });
+        const obavesteni = await this.obavestenja.komentar(
+          manager,
+          kvar,
+          korisnikId,
         );
-      }
-      const { identifiers } = await manager.insert(KomentarKvar, {
-        tekst: dto.tekst,
-        kvar: { id: kvar.id },
-        korisnik: { id: korisnikId },
-      });
-      await this.obavestenja.komentar(manager, kvar, korisnikId);
-      return identifiers[0].id as number;
-    });
+        return { id: identifiers[0].id as number, obavesteni };
+      },
+    );
+    this.promene.javi(
+      { vrsta: 'kvar', id: kvar.id },
+      (manager) => koVidiKvar(manager, kvar),
+      [korisnikId, ...obavesteni],
+    );
 
     return await this.komentarKvarRepository.findOneOrFail({
       where: { id },
@@ -122,5 +135,10 @@ export class KomentarKvarService {
     }
 
     await this.komentarKvarRepository.remove(komentar);
+    this.promene.javi(
+      { vrsta: 'kvar', id: kvar.id },
+      (manager) => koVidiKvar(manager, kvar),
+      [korisnikId],
+    );
   }
 }

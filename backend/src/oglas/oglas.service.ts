@@ -35,7 +35,12 @@ import { jeDupliUnos } from '../shared/greske-baze.js';
 import { greskaPolja } from '../shared/greske-validacije.js';
 import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { TipNotifikacije } from '../notifikacija/notifikacija.entity.js';
-import { stanariZgrade, upravnikZgrade } from '../notifikacija/primaoci.js';
+import {
+  stanariZgrade,
+  upravnikZgrade,
+  vidiZgradu,
+} from '../notifikacija/primaoci.js';
+import { PromeneService } from '../notifikacija/promene.service.js';
 import { NotifikacijaGateway } from '../notifikacija/notifikacija.gateway.js';
 import { nePostoji } from '../shared/ne-postoji.js';
 
@@ -59,6 +64,7 @@ export class OglasService {
     private prava: OglasPravaService,
     private notifikacije: NotifikacijaService,
     private gateway: NotifikacijaGateway,
+    private promene: PromeneService,
   ) {}
 
   async findAll(
@@ -244,6 +250,7 @@ export class OglasService {
         );
       }
     });
+    this.javiPromenu(oglas, korisnikId);
     return this.saPravima(
       Object.assign(oglas, izmene, datumIzmene),
       korisnikId,
@@ -252,7 +259,7 @@ export class OglasService {
   }
 
   async remove(id: number, korisnikId: number, uloga: Uloga) {
-    await this.prava.findZaBrisanje(id, korisnikId, uloga);
+    const { oglas } = await this.prava.findZaBrisanje(id, korisnikId, uloga);
     const prilozi = await this.dataSource.transaction(async (manager) => {
       await manager.findOne(Oglas, {
         where: { id },
@@ -266,6 +273,7 @@ export class OglasService {
       await manager.delete(Oglas, id);
       return prilozi;
     });
+    this.javiPromenu(oglas, korisnikId);
     await this.prilogService.obrisiFajlove(prilozi);
   }
 
@@ -282,7 +290,13 @@ export class OglasService {
       'menja',
     );
     this.proveriDaNijeSakriven(oglas);
-    return this.prilogService.dodaj(oglas.id, oglas.prilozi.length, fajl);
+    const prilog = await this.prilogService.dodaj(
+      oglas.id,
+      oglas.prilozi.length,
+      fajl,
+    );
+    this.javiPromenu(oglas, korisnikId);
+    return prilog;
   }
 
   async obrisiPrilog(
@@ -303,6 +317,7 @@ export class OglasService {
     }
     this.proveriDaNijeSakriven(oglas);
     await this.prilogService.obrisi(prilog);
+    this.javiPromenu(oglas, korisnikId);
   }
 
   async sakrij(
@@ -343,6 +358,7 @@ export class OglasService {
         korisnikId,
       );
     });
+    this.javiPromenu(oglas, korisnikId);
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
@@ -394,7 +410,16 @@ export class OglasService {
     const izmene = {
       vaziDo: (rezultat.raw as Pick<Oglas, 'vaziDo'>[])[0].vaziDo,
     };
+    this.javiPromenu(oglas, korisnikId);
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
+  }
+
+  private javiPromenu(oglas: Oglas, korisnikId: number) {
+    this.promene.javi(
+      { vrsta: 'oglas', id: oglas.id },
+      (manager) => vidiZgradu(manager, oglas.zgrada.id),
+      [korisnikId],
+    );
   }
 
   private proveriDaNijeSakriven(oglas: Oglas) {

@@ -67,7 +67,8 @@
 
       <a routerLink="/" class="brend" [class.uz-sidebar]="imaNavigaciju()">
         <app-logo />
-        <span>Upravljanje zgradom</span>
+        <span class="sm:hidden" aria-hidden="true">Zgrada</span>
+        <span class="max-sm:sr-only">Upravljanje zgradom</span>
       </a>
 
       <app-zvonce class="ml-auto" />

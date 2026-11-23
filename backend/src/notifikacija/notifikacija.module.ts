@@ -6,6 +6,7 @@ import { NotifikacijaController } from './notifikacija.controller.js';
 import { NotifikacijaService } from './notifikacija.service.js';
 import { NotifikacijaGateway } from './notifikacija.gateway.js';
 import { NotifikacijaSubscriber } from './notifikacija.subscriber.js';
+import { PromeneService } from './promene.service.js';
 import { PushPretplata } from './push/push-pretplata.entity.js';
 import { PushService } from './push/push.service.js';
 import { RefreshToken } from '../auth/refresh-token/refresh-token.entity.js';
@@ -21,7 +22,13 @@ import { RefreshToken } from '../auth/refresh-token/refresh-token.entity.js';
     NotifikacijaGateway,
     NotifikacijaSubscriber,
     PushService,
+    PromeneService,
   ],
-  exports: [NotifikacijaService, NotifikacijaGateway, PushService],
+  exports: [
+    NotifikacijaService,
+    NotifikacijaGateway,
+    PushService,
+    PromeneService,
+  ],
 })
 export class NotifikacijaModule {}

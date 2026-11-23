@@ -16,6 +16,7 @@ import { Glasanje, StanjeGlasanja } from '../glasanje-models';
 import { ListaGlasanjaStore } from '../lista-glasanja-store';
 import { KarticaGlasanja } from '../kartica-glasanja/kartica-glasanja';
 import { osveziNaNotifikaciju } from '../../notifikacije/osvezi-na-notifikaciju';
+import { osveziNaPromenu } from '../../notifikacije/osvezi-na-promenu';
 import { dugmadPotvrde } from '../../../shared/dugmad-potvrde';
 import { PokusajPonovo } from '../../../shared/pokusaj-ponovo';
 
@@ -74,6 +75,7 @@ export class ListaGlasanja {
       ({ link }) => link === '/glasanje',
       () => this.store.ucitaj(),
     );
+    osveziNaPromenu('glasanje', (ids) => this.store.osveziGlasanja(ids));
     const navigacija = this.router.currentNavigation();
     const stanje = navigacija?.extras.state as StanjeNavigacije | undefined;
     if (navigacija?.trigger === 'imperative' && stanje?.poruka) {
