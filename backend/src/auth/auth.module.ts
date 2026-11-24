@@ -41,6 +41,12 @@ import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
     NeuspelePrijaveService,
     JwtStrategy,
   ],
-  exports: [PassportModule, JwtModule, JwtStrategy, TokenNalogaService],
+  exports: [
+    PassportModule,
+    JwtModule,
+    JwtStrategy,
+    TokenNalogaService,
+    LozinkaService,
+  ],
 })
 export class AuthModule {}

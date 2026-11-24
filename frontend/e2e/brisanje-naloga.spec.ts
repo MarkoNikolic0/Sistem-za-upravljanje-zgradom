@@ -40,7 +40,9 @@ test('korisnik obriše svoj nalog uz lozinku i više ne može da se prijavi', as
   await lozinkaPolje.fill(lozinka);
   await page.getByRole('button', { name: 'Trajno obriši nalog' }).click();
   await expect(page).toHaveURL(/\/login/);
-  await expect(page.getByText('Nalog je obrisan. Potvrdu smo poslali na tvoj email.')).toBeVisible();
+  await expect(
+    page.getByText('Nalog je obrisan. Potvrdu smo poslali na tvoj email.'),
+  ).toBeVisible();
 
   await popuniPrijavu(page, email);
   await expect(page.getByText('Email ili lozinka nisu ispravni.')).toBeVisible();

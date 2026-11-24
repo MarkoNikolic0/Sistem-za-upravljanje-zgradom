@@ -457,7 +457,7 @@ export class OglasService {
       prilozi: await this.prilogService.saLinkovima(
         oglas.prilozi.toSorted((a, b) => a.id - b.id),
       ),
-      smeDaMenja: autor && aktivan,
+      smeDaMenja: aktivan && this.prava.smeDaMenja(oglas, korisnikId, p),
       smeDaObrise: this.prava.smeDaObrise(oglas, korisnikId, p),
       smeDaSakrije: aktivan && this.prava.smeDaSakrije(oglas, korisnikId, p),
       isteklo,

@@ -63,6 +63,7 @@ export async function korisniciSaKontaktom(
      )
      SELECT k.id FROM korisnik k
      WHERE k.id = ANY($3::int[])
+       AND k.obrisan IS NULL
        AND (
          k.uloga::text = ANY($4::text[])
          OR EXISTS (

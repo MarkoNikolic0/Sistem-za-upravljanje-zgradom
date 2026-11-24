@@ -73,7 +73,11 @@ export class OglasPravaService {
     radnja: RadnjaAutora,
   ) {
     const dostupan = await this.findDostupan(id, korisnikId, uloga);
-    if (dostupan.oglas.autor.id !== korisnikId) {
+    const sme =
+      radnja === 'menja'
+        ? this.smeDaMenja(dostupan.oglas, korisnikId, dostupan.p)
+        : dostupan.oglas.autor.id === korisnikId;
+    if (!sme) {
       throw new ForbiddenException(
         `Oglas može da ${radnja} samo onaj ko ga je objavio.`,
       );
@@ -91,10 +95,23 @@ export class OglasPravaService {
     return dostupan;
   }
 
+  smeDaMenja(oglas: Oglas, korisnikId: number, p: PristupZgradama) {
+    return oglas.autor.id === korisnikId || this.obavestenjeBezAutora(oglas, p);
+  }
+
   smeDaObrise(oglas: Oglas, korisnikId: number, p: PristupZgradama) {
     return (
       oglas.autor.id === korisnikId ||
+      this.obavestenjeBezAutora(oglas, p) ||
       (oglas.datumSakrivanja !== null && sadrzi(p.upravlja, oglas.zgrada.id))
+    );
+  }
+
+  private obavestenjeBezAutora(oglas: Oglas, p: PristupZgradama) {
+    return (
+      oglas.vrsta === VrstaOglasa.OBAVESTENJE &&
+      oglas.autor.deaktiviran !== null &&
+      sadrzi(p.upravlja, oglas.zgrada.id)
     );
   }
 

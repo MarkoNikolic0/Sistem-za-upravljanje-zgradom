@@ -4,6 +4,9 @@ import { Logger } from '@nestjs/common';
 import { io, type Socket } from 'socket.io-client';
 import request from 'supertest';
 import { Glas } from '../src/glasanje/glas.entity.js';
+import { PORUKA_POTVRDA_ZAKLJUCANA } from '../src/auth/auth.constants.js';
+import { KontaktZgrade } from '../src/kontakt-zgrade/kontakt-zgrade.entity.js';
+import { Kvar } from '../src/kvar/kvar.entity.js';
 import { Korisnik } from '../src/korisnik/korisnik.entity.js';
 import { KomentarKvar } from '../src/komentar-kvar/komentar-kvar.entity.js';
 import { Notifikacija } from '../src/notifikacija/notifikacija.entity.js';
@@ -13,7 +16,8 @@ import { PratilacKvara } from '../src/pratilac-kvara/pratilac-kvara.entity.js';
 import { StanarStana } from '../src/stanar-stana/stanar-stana.entity.js';
 import { Zgrada } from '../src/zgrada/zgrada.entity.js';
 import { Uloga } from '../src/shared/enums/uloga.enum.js';
-import { LokacijaTip } from '../src/shared/enums/kvar.enums.js';
+import { VrstaOglasa } from '../src/shared/enums/vrsta-oglasa.enum.js';
+import { LokacijaTip, StatusKvara } from '../src/shared/enums/kvar.enums.js';
 import {
   type Akter,
   kao,
@@ -28,6 +32,7 @@ import {
   napraviServisera,
   napraviZgraduSaLjudima,
   noviKvar,
+  noviOglas,
   prijavi,
   type Svet,
 } from './pomoc/podaci.js';
@@ -280,6 +285,164 @@ describe('brisanje naloga', () => {
       naTelefonu.close();
       naRacunaru.close();
     }
+  });
+
+  it('posle 5 pogrešnih lozinki potvrda se zaključava i sve sesije se gase', async () => {
+    const stanar = await napraviKorisnika(t, 'Pogadjanje');
+    const { kolacic } = await prijavi(t, stanar.email);
+    for (let i = 0; i < 4; i += 1) {
+      await obrisiSvoj(stanar, 'PogresnaLozinka1!').expect(400);
+    }
+
+    const peti = await obrisiSvoj(stanar, 'PogresnaLozinka1!').expect(429);
+
+    expect(peti.body.message).toBe(PORUKA_POTVRDA_ZAKLJUCANA);
+    await request(t.server)
+      .post('/auth/refresh')
+      .set('Cookie', kolacic)
+      .expect(401);
+    await obrisiSvoj(stanar).expect(429);
+    await kao(t, stanar)
+      .patch('/auth/lozinka')
+      .send({ trenutnaLozinka: LOZINKA, novaLozinka: 'NovaLozinka456!' })
+      .expect(429);
+    expect((await korisnik(stanar.id)).obrisan).toBeNull();
+  });
+
+  it('promena lozinke broji pogrešne lozinke zajedno sa brisanjem, a ispravna briše brojač', async () => {
+    const stanar = await napraviKorisnika(t, 'Brojac');
+    for (let i = 0; i < 4; i += 1) {
+      await kao(t, stanar)
+        .patch('/auth/lozinka')
+        .send({
+          trenutnaLozinka: 'PogresnaLozinka1!',
+          novaLozinka: 'NovaLozinka456!',
+        })
+        .expect(400);
+    }
+    await obrisiSvoj(stanar, 'PogresnaLozinka1!').expect(429);
+
+    const drugi = await napraviKorisnika(t, 'Ispravni');
+    for (let i = 0; i < 4; i += 1) {
+      await obrisiSvoj(drugi, 'PogresnaLozinka1!').expect(400);
+    }
+    await kao(t, drugi)
+      .patch('/auth/lozinka')
+      .send({ trenutnaLozinka: LOZINKA, novaLozinka: 'NovaLozinka456!' })
+      .expect(204);
+    await obrisiSvoj(drugi, 'PogresnaLozinka1!').expect(400);
+  });
+
+  it('kontakt zgrade sa brojem telefona obrisanog naloga se uklanja, ostali ostaju', async () => {
+    const svet = await napraviSvet('Kontakt');
+    const { upravnik } = svet.a;
+    const telefon = await t.baza
+      .getRepository(Korisnik)
+      .findOneByOrFail({ id: upravnik.id });
+    const sopstveni = await kao(t, upravnik)
+      .post(`/zgrada/${svet.a.id}/kontakt`)
+      .send({
+        naziv: 'Upravnik',
+        uloga: 'Upravnik zgrade',
+        telefon: telefon.telefon,
+      })
+      .expect(201);
+    const lift = await kao(t, upravnik)
+      .post(`/zgrada/${svet.a.id}/kontakt`)
+      .send({ naziv: 'Lift servis', uloga: 'Dežurni', telefon: '0651234987' })
+      .expect(201);
+
+    await obrisiSvoj(upravnik).expect(204);
+
+    const kontakti = t.baza.getRepository(KontaktZgrade);
+    expect(await kontakti.existsBy({ id: sopstveni.body.id })).toBe(false);
+    expect(await kontakti.existsBy({ id: lift.body.id })).toBe(true);
+  });
+
+  it('kontakt obrisanog servisera se ne vidi ni na završenom kvaru', async () => {
+    const svet = await napraviSvet('Majstor');
+    const sadrzaj = await napraviSadrzaj(t, svet, svet.a);
+    await t.baza
+      .getRepository(Kvar)
+      .update(sadrzaj.kvarServisera, { status: StatusKvara.ZATVOREN });
+    const serviserPre = await kao(t, svet.a.upravnik)
+      .get(`/kvar/${sadrzaj.kvarServisera}`)
+      .expect(200);
+    expect(serviserPre.body.serviser.email).toBe(svet.serviser.email);
+
+    await obrisiSvoj(svet.serviser).expect(204);
+
+    const odgovor = await kao(t, svet.a.upravnik)
+      .get(`/kvar/${sadrzaj.kvarServisera}`)
+      .expect(200);
+    expect(odgovor.body.serviser).toMatchObject({
+      ime: 'Bivši',
+      prezime: 'korisnik',
+    });
+    expect(odgovor.body.serviser.email).toBeUndefined();
+    expect(odgovor.body.serviser.telefon).toBeUndefined();
+  });
+
+  it('obaveštenje obrisanog upravnika novi upravnik menja i briše, a tuđe oglase aktivnih autora ne', async () => {
+    const svet = await napraviSvet('Nasledje');
+    const sadrzaj = await napraviSadrzaj(t, svet, svet.a);
+    const drugoObavestenje = await kao(t, svet.a.upravnik)
+      .post('/oglas')
+      .send(noviOglas(svet.a.id, VrstaOglasa.OBAVESTENJE))
+      .expect(201);
+    await obrisiSvoj(svet.a.upravnik).expect(204);
+    const novi = await napraviKorisnika(t, 'NoviUpravnik');
+    await kao(t, admin)
+      .put(`/zgrada/${svet.a.id}/upravnik`)
+      .send({ korisnikId: novi.id })
+      .expect((odgovor) => expect(odgovor.status).toBeLessThan(300));
+
+    const obavestenje = await kao(t, novi)
+      .get(`/oglas/${sadrzaj.obavestenje}`)
+      .expect(200);
+    expect(obavestenje.body).toMatchObject({
+      smeDaMenja: true,
+      smeDaObrise: true,
+    });
+    await kao(t, novi)
+      .patch(`/oglas/${sadrzaj.obavestenje}`)
+      .send({ naslov: 'Kućni red, nova verzija' })
+      .expect(200);
+    await kao(t, admin)
+      .patch(`/oglas/${sadrzaj.obavestenje}`)
+      .send({ naslov: 'Kućni red, ispravka' })
+      .expect(200);
+    await kao(t, novi).delete(`/oglas/${drugoObavestenje.body.id}`).expect(204);
+
+    const komsijin = await kao(t, svet.a.sused)
+      .post('/oglas')
+      .send(noviOglas(svet.a.id))
+      .expect(201);
+    const tudj = await kao(t, novi)
+      .get(`/oglas/${komsijin.body.id}`)
+      .expect(200);
+    expect(tudj.body).toMatchObject({ smeDaMenja: false, smeDaObrise: false });
+    await kao(t, novi)
+      .patch(`/oglas/${komsijin.body.id}`)
+      .send({ naslov: 'Tuđa izmena' })
+      .expect(403);
+    await kao(t, svet.a.sused)
+      .patch(`/oglas/${sadrzaj.obavestenje}`)
+      .send({ naslov: 'Stanar menja' })
+      .expect(403);
+  });
+
+  it('obaveštenje aktivnog upravnika admin ne menja', async () => {
+    const svet = await napraviSvet('Aktivni');
+    const sadrzaj = await napraviSadrzaj(t, svet, svet.a);
+    const odgovor = await kao(t, admin)
+      .get(`/oglas/${sadrzaj.obavestenje}`)
+      .expect(200);
+    expect(odgovor.body.smeDaMenja).toBe(false);
+    await kao(t, admin)
+      .patch(`/oglas/${sadrzaj.obavestenje}`)
+      .send({ naslov: 'Admin menja' })
+      .expect(403);
   });
 
   describe('admin briše nalog', () => {

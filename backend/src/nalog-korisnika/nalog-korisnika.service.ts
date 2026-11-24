@@ -28,7 +28,8 @@ import { NotifikacijaService } from '../notifikacija/notifikacija.service.js';
 import { PushService } from '../notifikacija/push/push.service.js';
 import { odbijZahteve } from '../zahtev-povezivanje/odbij-zahteve.js';
 import { nePostoji } from '../shared/ne-postoji.js';
-import { greskaPolja } from '../shared/greske-validacije.js';
+import { LozinkaService } from '../auth/token-naloga/lozinka.service.js';
+import { KontaktZgrade } from '../kontakt-zgrade/kontakt-zgrade.entity.js';
 import { MailService } from '../shared/mail/mail.service.js';
 import { generisiToken } from '../auth/token.util.js';
 import { mailNalogObrisan } from '../auth/token-naloga/mailovi-naloga.js';
@@ -38,8 +39,8 @@ import type { TrenutniKorisnikPodaci } from '../auth/decorators/trenutni-korisni
 import type { PrilogOglasa } from '../oglas/prilog-oglasa.entity.js';
 import { BrisanjeNalogaDto } from './dto/brisanje-naloga.dto.js';
 
-export const IME_OBRISANOG = 'Bivši';
-export const PREZIME_OBRISANOG = 'korisnik';
+const IME_OBRISANOG = 'Bivši';
+const PREZIME_OBRISANOG = 'korisnik';
 
 @Injectable()
 export class NalogKorisnikaService {
@@ -56,6 +57,7 @@ export class NalogKorisnikaService {
     private notifikacije: NotifikacijaService,
     private pushService: PushService,
     private mailService: MailService,
+    private lozinkaService: LozinkaService,
   ) {}
 
   async promeniUlogu(id: number, adminId: number, dto: PromeniUloguDto) {
@@ -153,15 +155,24 @@ export class NalogKorisnikaService {
         await this.upravnikService.zakljucajZgradeUpravnika(manager, id);
         const korisnik = await manager.findOne(Korisnik, {
           where: { id, ...AKTIVAN_KORISNIK },
-          select: { id: true, email: true, lozinka: true, deaktiviran: true },
+          select: {
+            id: true,
+            email: true,
+            telefon: true,
+            lozinka: true,
+            deaktiviran: true,
+          },
           lock: { mode: 'for_no_key_update', tables: ['korisnik'] },
         });
         if (!korisnik) {
           throw nePostoji('Korisnik', id);
         }
-        if (!(await bcrypt.compare(dto.lozinka, korisnik.lozinka))) {
-          throw greskaPolja('lozinka', 'Lozinka nije ispravna.');
-        }
+        await this.lozinkaService.proveriLozinku(
+          korisnik,
+          dto.lozinka,
+          'lozinka',
+          'Lozinka nije ispravna.',
+        );
         return this.anonimizuj(manager, korisnik, id);
       },
     );
@@ -190,7 +201,7 @@ export class NalogKorisnikaService {
 
   private async anonimizuj(
     manager: EntityManager,
-    korisnik: Pick<Korisnik, 'id' | 'email' | 'deaktiviran'>,
+    korisnik: Pick<Korisnik, 'id' | 'email' | 'telefon' | 'deaktiviran'>,
     izvrsilacId: number,
   ): Promise<{ email: string; prilozi: PrilogOglasa[] }> {
     const { id } = korisnik;
@@ -199,12 +210,16 @@ export class NalogKorisnikaService {
     await manager.delete(Notifikacija, { korisnik: { id } });
     await manager.delete(PratilacKvara, { korisnik: { id } });
     await manager.delete(ServiserSpecijalnost, { korisnik: { id } });
+    if (korisnik.telefon) {
+      await manager.delete(KontaktZgrade, { telefon: korisnik.telefon });
+    }
     const sada = new Date();
     await manager.update(Korisnik, id, {
       ime: IME_OBRISANOG,
       prezime: PREZIME_OBRISANOG,
       email: `obrisan-${id}@obrisan.invalid`,
       telefon: '',
+      uloga: Uloga.STANAR,
       lozinka: await bcrypt.hash(generisiToken(), 10),
       deaktiviran: korisnik.deaktiviran ?? sada,
       obrisan: sada,

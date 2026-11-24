@@ -136,7 +136,7 @@ export class ListaOglasa {
       message:
         oglas.autor.id === this.authStore.korisnik()?.id
           ? `Obrisati oglas „${oglas.naslov}“? Ovo ne može da se poništi.`
-          : `Obrisati sakriven oglas „${oglas.naslov}“ (${oglas.autor.ime} ${oglas.autor.prezime}) sa prilozima? Ovo ne može da se poništi.`,
+          : `Obrisati ${oglas.datumSakrivanja ? 'sakriven oglas' : 'oglas'} „${oglas.naslov}“ (${oglas.autor.ime} ${oglas.autor.prezime}) sa prilozima? Ovo ne može da se poništi.`,
       ...dugmadPotvrde('Obriši', true),
       accept: async () => {
         await this.store.obrisi(oglas.id);

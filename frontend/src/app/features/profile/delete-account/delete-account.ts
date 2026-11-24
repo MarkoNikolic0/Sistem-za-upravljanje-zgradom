@@ -7,7 +7,11 @@ import { ButtonModule } from 'primeng/button';
 import { InputPasswordModule } from 'primeng/inputpassword';
 import { MessageModule } from 'primeng/message';
 import { PoljeLozinke } from '../../../shared/forme/polje-lozinke/polje-lozinke';
-import { oznaciGreskuPolja, PREVISE_POKUSAJA } from '../../../shared/forme/greske-servera';
+import {
+  oznaciGreskuPolja,
+  porukaServera,
+  PREVISE_POKUSAJA,
+} from '../../../shared/forme/greske-servera';
 import { fokusPosleCrtanja } from '../../../shared/fokus';
 import { AuthStore } from '../../auth/sesija/auth-store';
 import { StanjePrijave } from '../../auth/auth-models';
@@ -90,7 +94,7 @@ export class DeleteAccount {
     }
     this.greska.set(
       err.status === 429
-        ? PREVISE_POKUSAJA
+        ? (porukaServera(err) ?? PREVISE_POKUSAJA)
         : 'Nalog nije obrisan. Pokušaj ponovo za nekoliko trenutaka.',
     );
   }

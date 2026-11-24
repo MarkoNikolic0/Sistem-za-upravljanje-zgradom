@@ -1,5 +1,11 @@
 import { nePostoji } from '../../shared/ne-postoji.js';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
@@ -10,7 +16,11 @@ import { RefreshTokenService } from '../refresh-token/refresh-token.service.js';
 import { NeuspelePrijaveService } from '../neuspele-prijave/neuspele-prijave.service.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
 import { NovaLozinkaDto } from '../dto/nova-lozinka.dto.js';
-import { PORUKA_LINK } from '../auth.constants.js';
+import {
+  PORUKA_LINK,
+  PORUKA_POTVRDA_ZAKLJUCANA,
+  POTVRDA_LOZINKE,
+} from '../auth.constants.js';
 import { SvrhaTokena } from './token-naloga.entity.js';
 import { TokenNalogaService } from './token-naloga.service.js';
 import { mailLozinkaPromenjena, mailNovaLozinka } from './mailovi-naloga.js';
@@ -74,6 +84,40 @@ export class LozinkaService {
     void this.mailService.posalji(mailLozinkaPromenjena(email));
   }
 
+  async proveriLozinku(
+    korisnik: Pick<Korisnik, 'id' | 'email' | 'lozinka'>,
+    lozinka: string,
+    polje: string,
+    poruka: string,
+  ): Promise<void> {
+    const { id, email } = korisnik;
+    if (await this.neuspelePrijaveService.zakljucan(email, POTVRDA_LOZINKE)) {
+      throw new HttpException(
+        PORUKA_POTVRDA_ZAKLJUCANA,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    if (await bcrypt.compare(lozinka, korisnik.lozinka)) {
+      await this.neuspelePrijaveService.obrisi(email, POTVRDA_LOZINKE);
+      return;
+    }
+    if (!(await this.neuspelePrijaveService.zabelezi(email, POTVRDA_LOZINKE))) {
+      throw greskaPolja(polje, poruka);
+    }
+    await this.refreshTokenService.opozoviSveSesije(
+      this.dataSource.manager,
+      id,
+    );
+    this.notifikacije.prekiniVeze(id);
+    this.logger.warn(
+      `Potvrda lozinkom zaključana posle više pogrešnih pokušaja, sesije naloga ${id} su ugašene.`,
+    );
+    throw new HttpException(
+      PORUKA_POTVRDA_ZAKLJUCANA,
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+
   async promeni(
     { id, sid }: TrenutniKorisnikPodaci,
     dto: ChangePasswordDto,
@@ -88,13 +132,12 @@ export class LozinkaService {
         throw nePostoji('Korisnik', id);
       }
 
-      const trenutnaIspravna = await bcrypt.compare(
+      await this.proveriLozinku(
+        korisnik,
         dto.trenutnaLozinka,
-        korisnik.lozinka,
+        'trenutnaLozinka',
+        'Trenutna lozinka nije ispravna.',
       );
-      if (!trenutnaIspravna) {
-        throw greskaPolja('trenutnaLozinka', 'Trenutna lozinka nije ispravna.');
-      }
 
       const istaKaoStara = await bcrypt.compare(
         dto.novaLozinka,
