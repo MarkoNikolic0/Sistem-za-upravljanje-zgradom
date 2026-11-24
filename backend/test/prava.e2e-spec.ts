@@ -54,6 +54,7 @@ const PO_ULOGAMA: Record<string, Uloga[]> = {
   'PATCH /korisnik/:id/uloga': [ADMIN],
   'PUT /korisnik/:id/deaktivacija': [ADMIN],
   'DELETE /korisnik/:id/deaktivacija': [ADMIN],
+  'DELETE /korisnik/:id': [ADMIN],
 
   'GET /zgrada/pregled': [UPRAVNIK, ADMIN],
   'POST /stan': [UPRAVNIK, ADMIN],
@@ -131,6 +132,7 @@ const SVI_PRIJAVLJENI = [
   'GET /zgrada/:id',
   'GET /korisnik/moj-profil',
   'PATCH /korisnik/moj-profil',
+  'POST /korisnik/moj-profil/brisanje',
   'GET /stan',
   'GET /stan/zgrada/:zgradaId',
   'GET /zahtev-povezivanje/moji-zahtevi',

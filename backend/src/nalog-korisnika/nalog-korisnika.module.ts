@@ -8,6 +8,8 @@ import { OglasModule } from '../oglas/oglas.module.js';
 import { NalogKorisnikaController } from './nalog-korisnika.controller.js';
 import { NalogKorisnikaService } from './nalog-korisnika.service.js';
 import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
+import { MailModule } from '../shared/mail/mail.module.js';
+import { MojNalogController } from './moj-nalog.controller.js';
 
 @Module({
   imports: [
@@ -18,8 +20,9 @@ import { NotifikacijaModule } from '../notifikacija/notifikacija.module.js';
     KvarModule,
     OglasModule,
     NotifikacijaModule,
+    MailModule,
   ],
-  controllers: [NalogKorisnikaController],
+  controllers: [NalogKorisnikaController, MojNalogController],
   providers: [NalogKorisnikaService],
 })
 export class NalogKorisnikaModule {}

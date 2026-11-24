@@ -47,6 +47,10 @@ export class KorisnikService {
     return this.http.delete<void>(`${this.apiUrl}/${id}/deaktivacija`);
   }
 
+  obrisi(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
   postaviSpecijalnosti(
     id: number,
     kategorije: KategorijaKvara[],

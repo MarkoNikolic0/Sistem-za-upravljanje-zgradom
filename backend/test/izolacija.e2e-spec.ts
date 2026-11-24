@@ -361,6 +361,7 @@ const SAMO_ADMIN = [
   'PATCH /korisnik/:id/uloga',
   'PUT /korisnik/:id/deaktivacija',
   'DELETE /korisnik/:id/deaktivacija',
+  'DELETE /korisnik/:id',
 ];
 
 const SAMO_SERVISER_I_ADMIN = ['GET /kvar/zgrade'];
@@ -378,6 +379,7 @@ const NISU_PODACI_ZGRADE: Record<string, string> = {
   'POST /auth/nova-lozinka': 'nalog',
   'GET /korisnik/moj-profil': 'sopstveni profil',
   'PATCH /korisnik/moj-profil': 'sopstveni profil',
+  'POST /korisnik/moj-profil/brisanje': 'sopstveni nalog',
   'PUT /notifikacija/procitano': 'sopstvena obaveštenja',
   'GET /notifikacija/push-kljuc': 'javni ključ servera',
   'PUT /notifikacija/push-pretplata': 'sopstveni uređaj',

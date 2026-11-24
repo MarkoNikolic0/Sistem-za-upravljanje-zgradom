@@ -1,0 +1,86 @@
+<section class="odeljak" aria-labelledby="brisanje-naslov">
+  <div class="zaglavlje-odeljka">
+    <h2 id="brisanje-naslov" class="naslov-odeljka">Brisanje naloga</h2>
+    @if (!otvoreno()) {
+      <button
+        pButton
+        id="obrisi-nalog"
+        type="button"
+        severity="danger"
+        outlined
+        size="small"
+        (click)="otvori()"
+      >
+        Obriši nalog
+      </button>
+    }
+  </div>
+
+  <div aria-live="polite" class="empty:hidden">
+    @if (greska()) {
+      <p-message severity="error">{{ greska() }}</p-message>
+    }
+  </div>
+
+  @if (otvoreno()) {
+    <form [formGroup]="forma" (ngSubmit)="obrisi()" class="flex flex-col gap-5">
+      <div id="posledice-brisanja" class="flex flex-col gap-2 text-sm">
+        <p>Brisanje ne može da se poništi.</p>
+        <ul class="list-disc pl-5 text-priguseno">
+          <li>Ime, email i telefon se brišu, a nalog više ne može da se koristi.</li>
+          <li>Tvoji oglasi se brišu, a veze sa stanovima prestaju.</li>
+          @if (upravlja()) {
+            <li>Prestaješ da upravljaš zgradom, a administrator postavlja novog upravnika.</li>
+          }
+          @if (serviser()) {
+            <li>Kvarovi na kojima radiš vraćaju se upravniku.</li>
+          }
+          <li>Prijave kvarova i komentari ostaju u istoriji zgrade, ali bez tvog imena.</li>
+        </ul>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="lozinkaBrisanja" class="text-sm font-medium">Potvrdi lozinkom</label>
+        <app-polje-lozinke #poljeLozinke oznaka="lozinku">
+          <input
+            pInputPassword
+            id="lozinkaBrisanja"
+            name="current-password"
+            formControlName="lozinka"
+            autocomplete="current-password"
+            enterkeyhint="done"
+            required
+            [mask]="poljeLozinke.sakrivena()"
+            [fluid]="true"
+            [invalid]="nevazece()"
+            [attr.aria-invalid]="nevazece()"
+            [attr.aria-describedby]="
+              nevazece() ? 'lozinka-brisanja-greska posledice-brisanja' : 'posledice-brisanja'
+            "
+          />
+        </app-polje-lozinke>
+        @if (nevazece()) {
+          <small id="lozinka-brisanja-greska" class="text-sm text-greska">
+            @if (forma.controls.lozinka.hasError('server')) {
+              {{ forma.controls.lozinka.getError('server') }}
+            } @else {
+              Unesi lozinku.
+            }
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button pButton type="submit" severity="danger" [disabled]="salje()">
+          @if (salje()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Brisanje…
+          } @else {
+            Trajno obriši nalog
+          }
+        </button>
+        <button pButton type="button" severity="secondary" text (click)="otkazi()">Otkaži</button>
+      </div>
+    </form>
+  }
+</section>

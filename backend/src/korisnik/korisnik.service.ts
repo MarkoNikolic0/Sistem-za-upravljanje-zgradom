@@ -125,6 +125,7 @@ export class KorisnikService {
           : 'korisnik.deaktiviran IS NOT NULL',
       )
       .andWhere(POTVRDJEN_EMAIL)
+      .andWhere('korisnik.obrisan IS NULL')
       .orderBy('korisnik.prezime')
       .addOrderBy('korisnik.ime')
       .addOrderBy('korisnik.id');

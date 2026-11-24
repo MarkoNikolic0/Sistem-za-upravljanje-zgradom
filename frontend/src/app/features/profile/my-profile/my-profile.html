@@ -198,6 +198,9 @@
     }
     <app-instalacija-aplikacije />
     <app-obavestenja-na-uredjaju />
+    @if (p.uloga !== 'admin') {
+      <app-delete-account [upravlja]="p.upravlja.length > 0" [serviser]="p.uloga === 'serviser'" />
+    }
   } @else if (profil.error()) {
     <p-message severity="error">Profil trenutno nije moguće učitati.</p-message>
     <button appPokusajPonovo pButton type="button" outlined class="mt-4" (click)="profil.reload()">

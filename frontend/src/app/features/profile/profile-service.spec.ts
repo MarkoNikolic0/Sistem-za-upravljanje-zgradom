@@ -60,4 +60,14 @@ describe('ProfileService', () => {
     TestBed.tick();
     http.expectOne(PROFIL).flush({ id: 14 });
   });
+
+  it('brisanje naloga šalje lozinku na posebnu adresu', () => {
+    let gotovo = false;
+    service.obrisiNalog('Lozinka123!').subscribe(() => (gotovo = true));
+    const zahtev = http.expectOne(`${PROFIL}/brisanje`);
+    expect(zahtev.request.method).toBe('POST');
+    expect(zahtev.request.body).toEqual({ lozinka: 'Lozinka123!' });
+    zahtev.flush(null, { status: 204, statusText: 'No Content' });
+    expect(gotovo).toBe(true);
+  });
 });

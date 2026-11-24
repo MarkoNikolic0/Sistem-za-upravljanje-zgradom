@@ -45,6 +45,10 @@ export class Korisnik {
 
   @Column({ type: 'timestamptz', nullable: true })
   @Exclude()
+  obrisan: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  @Exclude()
   emailPotvrdjen: Date | null;
 
   @Column({ type: 'timestamptz', default: () => 'now()' })

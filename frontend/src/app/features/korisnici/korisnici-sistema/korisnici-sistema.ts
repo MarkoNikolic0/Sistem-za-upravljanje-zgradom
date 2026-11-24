@@ -105,6 +105,12 @@ export class KorisniciSistema {
           disabled,
           command: () => this.aktiviraj(k),
         },
+        {
+          label: 'Obriši nalog',
+          icon: 'pi pi-trash',
+          disabled,
+          command: () => this.obrisi(k),
+        },
       ];
     }
     return [
@@ -243,6 +249,17 @@ export class KorisniciSistema {
       this.korisnikService.aktiviraj(k.id),
       `Nalog je ponovo aktivan: ${this.ime(k)}.`,
     );
+  }
+
+  private obrisi(k: KorisnikSistema): void {
+    this.confirmationService.confirm({
+      header: 'Brisanje naloga',
+      message: `Ime, email i telefon naloga ${this.ime(k)} trajno se brišu, kao i lični oglasi. Kvarovi, komentari i obaveštenja ostaju, ali bez imena. Brisanje ne može da se poništi.`,
+      ...dugmadPotvrde('Obriši nalog', true),
+      accept: () =>
+        this.izvrsi(this.korisnikService.obrisi(k.id), `Nalog je obrisan: ${this.ime(k)}.`),
+      reject: () => this.meniReda.vratiFokus(),
+    });
   }
 
   private async izvrsi(zahtev: Observable<unknown>, uspeh: string): Promise<void> {

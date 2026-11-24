@@ -115,6 +115,10 @@ export class NotifikacijaService {
     this.gateway.prekiniVeze(korisnikId);
   }
 
+  prekiniOstaleSesije(korisnikId: number, sid: string) {
+    this.gateway.prekiniOstaleSesije(korisnikId, sid);
+  }
+
   prekiniSesiju(sid: string) {
     this.gateway.prekiniSesiju(sid);
   }

@@ -45,4 +45,8 @@ export class ProfileService {
   update(podaci: UpdateProfileRequest): Observable<ProfileResponse> {
     return this.http.patch<ProfileResponse>(this.apiUrl, podaci);
   }
+
+  obrisiNalog(lozinka: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/brisanje`, { lozinka });
+  }
 }

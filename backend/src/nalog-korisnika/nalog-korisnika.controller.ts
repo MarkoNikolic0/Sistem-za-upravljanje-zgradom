@@ -48,6 +48,15 @@ export class NalogKorisnikaController {
     return this.nalogService.deaktiviraj(id, korisnik.id);
   }
 
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  obrisi(
+    @Param('id', ParseIdPipe) id: number,
+    @TrenutniKorisnik() korisnik: TrenutniKorisnikPodaci,
+  ) {
+    return this.nalogService.obrisi(id, korisnik.id);
+  }
+
   @Delete('deaktivacija')
   @HttpCode(HttpStatus.NO_CONTENT)
   aktiviraj(

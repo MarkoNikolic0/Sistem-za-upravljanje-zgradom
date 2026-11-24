@@ -362,6 +362,23 @@ export class OglasService {
     return this.saPravima(Object.assign(oglas, izmene), korisnikId, p);
   }
 
+  async obrisiLicneOglase(manager: EntityManager, autorId: number) {
+    const gde = {
+      autor: { id: autorId },
+      vrsta: Not(VrstaOglasa.OBAVESTENJE),
+    };
+    const prilozi = await manager.find(PrilogOglasa, {
+      where: { oglas: gde },
+      select: { id: true, kljuc: true, kljucSlicice: true },
+    });
+    await manager.delete(Oglas, gde);
+    return prilozi;
+  }
+
+  obrisiFajlovePriloga(prilozi: PrilogOglasa[]) {
+    return this.prilogService.obrisiFajlove(prilozi);
+  }
+
   async sakrijOglase(
     manager: EntityManager,
     gde: FindOptionsWhere<Oglas>,

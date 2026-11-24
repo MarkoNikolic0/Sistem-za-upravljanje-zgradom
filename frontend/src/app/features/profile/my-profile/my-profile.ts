@@ -10,6 +10,7 @@ import { NAZIVI_ULOGA } from '../../auth/auth-models';
 import { greskaPolja } from '../../../shared/forme/greske-servera';
 import { ProfileService } from '../profile-service';
 import { ChangePassword } from '../change-password/change-password';
+import { DeleteAccount } from '../delete-account/delete-account';
 import { RouterLink } from '@angular/router';
 import { formatirajTelefon } from '../../../shared/tekst/telefon';
 import { SpratPipe } from '../../../shared/spratovi/sprat-pipe';
@@ -32,6 +33,7 @@ type Polje = 'ime' | 'prezime' | 'telefon';
     SkeletonModule,
     TagModule,
     ChangePassword,
+    DeleteAccount,
     RouterLink,
     SpratPipe,
     InstalacijaAplikacije,

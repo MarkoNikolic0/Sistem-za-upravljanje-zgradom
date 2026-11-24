@@ -69,6 +69,26 @@ export function mailNovaLozinka(za: string, link: string): Mail {
   };
 }
 
+export function mailNalogObrisan(za: string): Mail {
+  const uvod =
+    'Tvoj nalog u aplikaciji za upravljanje zgradom je obrisan. Ime, email i telefon više nisu sačuvani, a lični oglasi su uklonjeni.';
+  const istorija =
+    'Prijave kvarova, komentari i glasovi ostaju u istoriji zgrade, ali bez tvog imena.';
+  const upozorenje =
+    'Ako nalog nisi obrisao ti, javi se upravniku zgrade ili administratoru.';
+
+  return {
+    za,
+    naslov: 'Nalog je obrisan',
+    tekst: `${uvod}
+
+${istorija}
+
+${upozorenje}`,
+    html: telo(uvod, istorija, upozorenje),
+  };
+}
+
 export function mailLozinkaPromenjena(za: string): Mail {
   const uvod = 'Lozinka na tvom nalogu je upravo promenjena.';
   const upozorenje =

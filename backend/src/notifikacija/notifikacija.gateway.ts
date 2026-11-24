@@ -141,6 +141,13 @@ export class NotifikacijaGateway
     this.server.in(SOBA_KORISNIKA(korisnikId)).disconnectSockets(true);
   }
 
+  prekiniOstaleSesije(korisnikId: number, sid: string) {
+    this.server
+      .in(SOBA_KORISNIKA(korisnikId))
+      .except(SOBA_SESIJE(sid))
+      .disconnectSockets(true);
+  }
+
   prekiniSesiju(sid: string) {
     this.server.in(SOBA_SESIJE(sid)).disconnectSockets(true);
   }
