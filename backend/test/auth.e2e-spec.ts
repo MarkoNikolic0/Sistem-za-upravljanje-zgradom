@@ -8,7 +8,9 @@ import {
   PORUKA_PRIJAVA,
   PORUKA_ZAKLJUCAN,
 } from '../src/auth/auth.constants.js';
+import { RefreshTokenService } from '../src/auth/refresh-token/refresh-token.service.js';
 import { LozinkaService } from '../src/auth/token-naloga/lozinka.service.js';
+import { TokenNalogaService } from '../src/auth/token-naloga/token-naloga.service.js';
 import { PotvrdaEmailaService } from '../src/auth/token-naloga/potvrda-emaila.service.js';
 import { Korisnik } from '../src/korisnik/korisnik.entity.js';
 import { CORS_KES_SEKUNDI } from '../src/podesi-aplikaciju.js';
@@ -827,6 +829,61 @@ describe('nalog i prijava', () => {
         await posleSlanja(() => zatrazi(email).expect(202, {}));
         expect(t.posta.za(email)).toEqual([]);
       }
+    });
+  });
+
+  describe('čišćenje po rasporedu', () => {
+    const broj = async (upit: string, parametar: number | string) => {
+      const [{ broj }] = await t.baza.query(upit, [parametar]);
+      return Number(broj);
+    };
+    const sesije = (korisnikId: number) =>
+      broj(
+        `SELECT count(*) AS broj FROM refresh_token WHERE "korisnikId" = $1`,
+        korisnikId,
+      );
+    const linkovi = (email: string) =>
+      broj(
+        `SELECT count(*) AS broj FROM token_naloga
+         WHERE "korisnikId" = (SELECT id FROM korisnik WHERE email = $1)`,
+        email,
+      );
+
+    it('istekle sesije se brišu, važeće ostaju', async () => {
+      const istekla = await napraviKorisnika(t, 'IsteklaSesija');
+      const vazeca = await napraviKorisnika(t, 'VazecaSesija');
+      await prijavi(t, istekla.email);
+      await prijavi(t, vazeca.email);
+      await t.baza.query(
+        `UPDATE refresh_token SET "datumIsteka" = now() - interval '1 minute'
+         WHERE "korisnikId" = $1`,
+        [istekla.id],
+      );
+
+      await t.app.get(RefreshTokenService).obrisiIstekle();
+
+      expect(await sesije(istekla.id)).toBe(0);
+      expect(await sesije(vazeca.id)).toBeGreaterThan(0);
+    });
+
+    it('istekli linkovi iz mejla se brišu, važeći ostaju, a nalog ostaje', async () => {
+      const istekao = novEmail('IstekaoLink');
+      const vazi = novEmail('VaziLink');
+      for (const email of [istekao, vazi]) {
+        await registruj(email);
+        await t.posta.sacekaj(email, 'Aktivacija naloga');
+      }
+      await t.baza.query(
+        `UPDATE token_naloga SET "datumIsteka" = now() - interval '1 minute'
+         WHERE "korisnikId" = (SELECT id FROM korisnik WHERE email = $1)`,
+        [istekao],
+      );
+
+      await t.app.get(TokenNalogaService).obrisiIstekle();
+
+      expect(await linkovi(istekao)).toBe(0);
+      expect(await linkovi(vazi)).toBeGreaterThan(0);
+      expect(await korisnici().countBy({ email: istekao })).toBe(1);
     });
   });
 

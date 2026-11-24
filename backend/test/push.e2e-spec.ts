@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { PushPretplata } from '../src/notifikacija/push/push-pretplata.entity.js';
+import { PushService } from '../src/notifikacija/push/push.service.js';
 import {
   type Akter,
   kao,
@@ -82,5 +83,33 @@ describe('push pretplata uređaja', () => {
       .expect(204);
     expect(await vlasnik(telefon)).toBeNull();
     expect(await vlasnik(racunar)).toBe(prvi.id);
+  });
+
+  it('po rasporedu se brišu uređaji čija je sesija opozvana ili istekla, aktivni ostaju', async () => {
+    const opozvan = await napraviKorisnika(t, 'OpozvanaSesija');
+    const istekao = await napraviKorisnika(t, 'IsteklaSesija');
+    const [prviUredjaj, drugiUredjaj, aktivan] = [
+      uredjaj(),
+      uredjaj(),
+      uredjaj(),
+    ];
+    await sacuvaj(opozvan, prviUredjaj);
+    await sacuvaj(istekao, drugiUredjaj);
+    await sacuvaj(prvi, aktivan);
+    await t.baza.query(
+      `UPDATE refresh_token SET "datumOpoziva" = now() WHERE "korisnikId" = $1`,
+      [opozvan.id],
+    );
+    await t.baza.query(
+      `UPDATE refresh_token SET "datumIsteka" = now() - interval '1 minute'
+       WHERE "korisnikId" = $1`,
+      [istekao.id],
+    );
+
+    await t.app.get(PushService).obrisiNeaktivne();
+
+    expect(await vlasnik(prviUredjaj)).toBeNull();
+    expect(await vlasnik(drugiUredjaj)).toBeNull();
+    expect(await vlasnik(aktivan)).toBe(prvi.id);
   });
 });
