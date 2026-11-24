@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import type { Application } from 'express';
+import helmet from 'helmet';
 import { DataSource } from 'typeorm';
 import { KontaktSerializerInterceptor } from './korisnik/kontakt-serializer.interceptor.js';
 import { greskeValidacije } from './shared/greske-validacije.js';
@@ -18,6 +19,7 @@ export function podesiAplikaciju(app: INestApplication) {
     const express: Application = app.getHttpAdapter().getInstance();
     express.set('trust proxy', proksiji);
   }
+  app.use(helmet());
   app.use(cookieParser());
   app.enableCors({
     origin: frontend,

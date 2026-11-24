@@ -1,5 +1,5 @@
 import { nePostoji } from '../../shared/ne-postoji.js';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { Korisnik } from '../../korisnik/korisnik.entity.js';
@@ -20,6 +20,8 @@ import type { TrenutniKorisnikPodaci } from '../decorators/trenutni-korisnik.dec
 
 @Injectable()
 export class LozinkaService {
+  private readonly logger = new Logger(LozinkaService.name);
+
   constructor(
     private dataSource: DataSource,
     private tokenNaloga: TokenNalogaService,
@@ -65,6 +67,9 @@ export class LozinkaService {
       return korisnik;
     });
     this.notifikacije.prekiniVeze(id);
+    this.logger.log(
+      `Nalog ${id} je postavio novu lozinku preko linka iz mejla.`,
+    );
 
     void this.mailService.posalji(mailLozinkaPromenjena(email));
   }
@@ -110,6 +115,7 @@ export class LozinkaService {
       return korisnik.email;
     });
     this.notifikacije.prekiniVeze(id);
+    this.logger.log(`Nalog ${id} je promenio lozinku.`);
 
     void this.mailService.posalji(mailLozinkaPromenjena(email));
   }

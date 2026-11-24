@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
@@ -19,6 +19,8 @@ import { NotifikacijaService } from '../../notifikacija/notifikacija.service.js'
 
 @Injectable()
 export class RefreshTokenService {
+  private readonly logger = new Logger(RefreshTokenService.name);
+
   constructor(
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>,
@@ -78,6 +80,9 @@ export class RefreshTokenService {
         where: { tokenHash },
       });
       if (postojeci?.datumOpoziva) {
+        this.logger.warn(
+          `Ponovo upotrebljen stari kolačić sesije, sesija ${postojeci.porodicaId} je ugašena.`,
+        );
         await this.opozoviPorodicu(postojeci.porodicaId);
       }
       throw new UnauthorizedException('Nevažeća sesija.');

@@ -12,6 +12,7 @@ import {
 import { SvrhaTokena } from './token-naloga.entity.js';
 import { TokenNalogaService } from './token-naloga.service.js';
 import { mailNalogPostoji, mailPotvrda } from './mailovi-naloga.js';
+import { stekGreske } from '../../shared/stek-greske.js';
 
 @Injectable()
 export class PotvrdaEmailaService {
@@ -90,7 +91,7 @@ export class PotvrdaEmailaService {
         await this.tokenNaloga.posalji(mail, poslati.token);
       }
     } catch (greska) {
-      this.logger.error('Registracija nije obrađena.', greska);
+      this.logger.error('Registracija nije obrađena.', stekGreske(greska));
     }
   }
 

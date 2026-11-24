@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { Korisnik } from '../korisnik/korisnik.entity.js';
@@ -26,6 +27,8 @@ import { nePostoji } from '../shared/ne-postoji.js';
 
 @Injectable()
 export class NalogKorisnikaService {
+  private readonly logger = new Logger(NalogKorisnikaService.name);
+
   constructor(
     private dataSource: DataSource,
     private stanariService: StanarStanaService,
@@ -84,6 +87,9 @@ export class NalogKorisnikaService {
         await manager.delete(ServiserSpecijalnost, { korisnik: { id } });
       }
       await manager.update(Korisnik, id, { uloga: dto.uloga });
+      this.logger.log(
+        `Admin ${adminId} je nalogu ${id} promenio ulogu iz ${korisnik.uloga} u ${dto.uloga}.`,
+      );
     });
   }
 
@@ -114,14 +120,18 @@ export class NalogKorisnikaService {
       await this.pushService.obrisiSve(manager, id);
       await this.tokenNaloga.obrisi(manager, id);
       await manager.update(Korisnik, id, { deaktiviran: new Date() });
+      this.logger.log(`Admin ${adminId} je deaktivirao nalog ${id}.`);
     });
     this.notifikacije.prekiniVeze(id);
   }
 
   async aktiviraj(id: number, adminId: number) {
     await this.dataSource.transaction(async (manager) => {
-      await this.zakljucaj(manager, id, adminId);
+      const korisnik = await this.zakljucaj(manager, id, adminId);
       await manager.update(Korisnik, id, { deaktiviran: null });
+      if (korisnik.deaktiviran) {
+        this.logger.log(`Admin ${adminId} je aktivirao nalog ${id}.`);
+      }
     });
   }
 

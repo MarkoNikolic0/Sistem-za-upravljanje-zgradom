@@ -2,6 +2,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -26,6 +27,8 @@ const LAZNI_HES = bcrypt.hashSync('lozinka-za-isto-vreme-odgovora', 10);
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(Korisnik)
     private korisnikRepository: Repository<Korisnik>,
@@ -43,7 +46,11 @@ export class AuthService {
       dto.lozinka,
       korisnik?.lozinka ?? LAZNI_HES,
     );
+    const nalog = korisnik ? `nalog ${korisnik.id}` : 'nepostojeći nalog';
     if (await this.neuspelePrijaveService.zakljucan(dto.email, ip)) {
+      this.logger.warn(
+        `Prijava odbijena dok je zaključana (${nalog}, IP ${ip}).`,
+      );
       throw new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS);
     }
     const dozvoljen =
@@ -52,6 +59,11 @@ export class AuthService {
       const zakljucan = await this.neuspelePrijaveService.zabelezi(
         dto.email,
         ip,
+      );
+      this.logger.warn(
+        zakljucan
+          ? `Prijava zaključana posle više pogrešnih pokušaja (${nalog}, IP ${ip}).`
+          : `Neuspela prijava (${nalog}, IP ${ip}).`,
       );
       throw zakljucan
         ? new HttpException(PORUKA_ZAKLJUCAN, HttpStatus.TOO_MANY_REQUESTS)

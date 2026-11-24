@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
+import { stekGreske } from '../stek-greske.js';
 
 export interface Mail {
   za: string;
@@ -39,7 +40,7 @@ export class MailService {
       });
       return true;
     } catch (greska) {
-      this.logger.error(`Mail „${naslov}“ nije poslat.`, greska);
+      this.logger.error(`Mail „${naslov}“ nije poslat.`, stekGreske(greska));
       return false;
     }
   }

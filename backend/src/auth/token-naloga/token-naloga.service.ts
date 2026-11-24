@@ -19,6 +19,7 @@ import {
   TRAJANJE_POTVRDE_SATI,
 } from '../auth.constants.js';
 import { SvrhaTokena, TokenNaloga } from './token-naloga.entity.js';
+import { stekGreske } from '../../shared/stek-greske.js';
 
 const TRAJANJE_MS: Record<SvrhaTokena, number> = {
   [SvrhaTokena.LOZINKA]: TRAJANJE_LINKA_MIN * 60 * 1000,
@@ -61,7 +62,7 @@ export class TokenNalogaService {
         await this.posalji(napraviMail(email, this.link(svrha, token)), token);
       }
     } catch (greska) {
-      this.logger.error(`Link (${svrha}) nije poslat.`, greska);
+      this.logger.error(`Link (${svrha}) nije poslat.`, stekGreske(greska));
     }
   }
 
